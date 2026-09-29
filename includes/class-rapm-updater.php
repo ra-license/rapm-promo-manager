@@ -79,6 +79,23 @@ class RAPM_Updater {
 			10,
 			2
 		);
+
+		// Daily check-in to R&A's Plugin Monitor (help.ramarketing.com), via
+		// the shared lib/ra-monitor-client — the same file bundled into every
+		// R&A plugin (Woo Native Dimensions has shipped it since its v1.25).
+		// Reports this site's R&A plugins, their versions, and whether the
+		// last update check actually reached GitHub. No tokens or customer
+		// data. Turn off per site with define( 'RA_MONITOR_DISABLE', true );
+		require_once RAPM_DIR . 'lib/ra-monitor-client/ra-monitor-client.php';
+		RA_Monitor_Client::register(
+			array(
+				'file'      => $plugin_file,
+				'slug'      => 'rapm-promo-manager',
+				'checker'   => $checker,
+				'has_token' => (bool) $token,
+				'channel'   => self::channel(),
+			)
+		);
 	}
 
 	public static function sanitize_channel( $value ) {

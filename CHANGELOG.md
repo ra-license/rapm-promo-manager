@@ -4,6 +4,15 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.25.0
+
+**New: this site now checks in once a day with R&A's Plugin Monitor (help.ramarketing.com).** Until now the monitor couldn't see Promo Manager on its own. On sites that also ran Woo Native Dimensions it listed Promo Manager as "too old to report", and sites running only Promo Manager didn't appear at all. So an expired GitHub token or a stuck update went unnoticed.
+- Bundles the shared `lib/ra-monitor-client/ra-monitor-client.php` (RA Monitor Client 1.1.0, byte-identical to the copy Woo Native Dimensions has shipped since its v1.25) and registers it in `RAPM_Updater::init()`, right after the update checker is built, passing the checker, whether a token is set, and the channel.
+- Each check-in lists this site's R&A plugins, their versions, on/off state, update channel, and whether the last update check actually reached GitHub (with GitHub's error when it didn't). It sends the site's address and name plus WordPress/WooCommerce/PHP versions. Never tokens, customer data, orders or promotion content.
+- Checks in within a minute or two of an install, update or activation, then daily. The Plugins screen shows the last check-in's result under Promo Manager, with a "Check in now" link.
+- Turn off on a site with `define( 'RA_MONITOR_DISABLE', true );` in wp-config.php.
+- **Not yet run in real PHP** (standing constraint). Final confirmation is on staging: update, then check that Promo Manager's row on the Plugins screen says the check-in was delivered, and that the staging site shows Promo Manager on the monitor.
+
 ## 1.24.2
 
 **Fix: pasting a Drive folder into the Mobile image box blocked saving when the folder had no tall picture yet.** Phil hit this setting up the England demo. The folder held only the wide desktop picture, so the Mobile slot found nothing its shape, and the save bounced back to the form with "None of the newest pictures in that Google Drive folder are the right shape for Hero — Mobile". A mobile picture has always been optional for normal uploads (phones fall back to the desktop picture), so a folder with no tall picture yet shouldn't be treated as an error either.
