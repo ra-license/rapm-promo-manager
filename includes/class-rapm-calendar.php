@@ -103,6 +103,7 @@ class RAPM_Calendar {
 		$instance_id = 'rapm-cal-' . wp_unique_id();
 
 		ob_start();
+		echo RAPM_Assets::need( 'calendar' ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-generated link and style tags.
 		?>
 		<div class="rapm-calendar <?php echo esc_attr( $instance_id ); ?>" data-rapm-calendar>
 			<div class="rapm-calendar-header">
@@ -343,10 +344,16 @@ class RAPM_Calendar {
 		return ob_get_clean();
 	}
 
+	/**
+	 * Early <head> loading only; shortcode() loads the files wherever the
+	 * calendar appears (see RAPM_Hero_Carousel::should_load_assets()). The
+	 * brand-color line now lives in RAPM_Assets::need() so it's added once,
+	 * whichever path loads the stylesheet.
+	 */
 	public static function should_load_assets() {
 		if ( is_singular() ) {
 			global $post;
-			if ( $post && ( has_shortcode( $post->post_content, 'rapm_promotions_calendar' ) || has_shortcode( apply_filters( 'the_content', $post->post_content ), 'rapm_promotions_calendar' ) ) ) {
+			if ( $post && has_shortcode( $post->post_content, 'rapm_promotions_calendar' ) ) {
 				return true;
 			}
 		}
@@ -357,17 +364,6 @@ class RAPM_Calendar {
 		if ( ! self::should_load_assets() ) {
 			return;
 		}
-		wp_enqueue_style( 'rapm-calendar-css', RAPM_URL . 'assets/css/rapm-calendar.css', array(), RAPM_VERSION );
-		// Defines the one custom property the stylesheet above reads for
-		// its accent color — see RAPM_Elementor::resolve_accent_color_css()
-		// for the manual-override / Elementor-auto-detect / fallback
-		// precedence this value comes from. Declared on body, not :root:
-		// Elementor defines its --e-global-color-* variables on the kit
-		// class it adds to <body>, so a var() declared on :root can never
-		// see them and always fell back to the default orange.
-		wp_add_inline_style(
-			'rapm-calendar-css',
-			'body{--rapm-calendar-accent:' . RAPM_Elementor::resolve_accent_color_css( '#b5651d' ) . ';}'
-		);
+		RAPM_Assets::need( 'calendar' );
 	}
 }

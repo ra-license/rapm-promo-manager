@@ -38,6 +38,7 @@ Fields, across whichever view you're in:
 `[rapm_fold_banner]` — the shorter fold-banner carousel, "default" placement.
 `[rapm_hero placement="category-living-room"]` — a separate carousel scoped to just that placement (works the same for `[rapm_fold_banner]`).
 An Elementor widget ("Promo Carousel," under the Promo Manager category) wraps either shortcode via its own Kind control.
+Every display works wherever it's placed: on a page, inside an Elementor popup, in a Theme Builder header or footer, or on a product or category template. Each one loads its own files when it appears.
 `[rapm_curated_results]` — put this on one plain page, then set its address under Promo Manager > Settings > Curated Results Page. Every "hand-picked list" link on the site reuses this one page automatically.
 
 == Other display modes ==

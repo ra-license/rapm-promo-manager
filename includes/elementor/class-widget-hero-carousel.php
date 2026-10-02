@@ -53,9 +53,40 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 		$this->end_controls_section();
 	}
 
-	protected function render() {
+	/**
+	 * Files Elementor should load wherever this widget is used, including
+	 * popups and Theme Builder templates. The shortcode loads them too
+	 * (RAPM_Assets::need()); this lets Elementor's own asset loading cover
+	 * it as well.
+	 */
+	public function get_style_depends() {
+		RAPM_Assets::register();
+		return array( 'rapm-hero-css' );
+	}
+
+	public function get_script_depends() {
+		RAPM_Assets::register();
+		return array( 'rapm-swiper-js', 'rapm-schedule-js' );
+	}
+
+	private function shortcode_string() {
 		$settings = $this->get_settings_for_display();
 		$tag      = 'fold_banner' === $settings['kind'] ? 'rapm_fold_banner' : 'rapm_hero';
-		echo do_shortcode( '[' . $tag . ' placement="' . esc_attr( $settings['placement'] ) . '"]' );
+		return '[' . $tag . ' placement="' . esc_attr( $settings['placement'] ) . '"]';
+	}
+
+	protected function render() {
+		echo do_shortcode( $this->shortcode_string() ); // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+
+	/**
+	 * What Elementor saves as the page's plain-text content. Saving the
+	 * shortcode itself (like Elementor's own Shortcode widget does) instead
+	 * of the rendered carousel lets has_shortcode() find it and load the
+	 * files in <head>, and still shows the carousel if Elementor is ever
+	 * switched off.
+	 */
+	public function render_plain_content() {
+		echo $this->shortcode_string(); // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 }

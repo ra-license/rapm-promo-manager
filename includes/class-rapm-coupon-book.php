@@ -51,14 +51,21 @@ class RAPM_Coupon_Book {
 		$instance_id = 'rapm-coupons-' . $placement . '-' . wp_unique_id();
 
 		ob_start();
+		echo RAPM_Assets::need( 'coupon_book' ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-generated link and script tags.
 		?>
 		<div class="rapm-coupon-book <?php echo esc_attr( $instance_id ); ?>" data-rapm-coupon-book style="display:none;">
 			<?php foreach ( $query->posts as $post ) : self::render_card( $post->ID ); endforeach; ?>
 		</div>
 		<script>
 			( function () {
+				var waited = false;
 				function init() {
-					if ( typeof RAPM_Schedule === 'undefined' ) { return; }
+					// The script can arrive late when the row renders late (a
+					// popup, a footer template): wait for page load once.
+					if ( typeof RAPM_Schedule === 'undefined' ) {
+						if ( ! waited ) { waited = true; window.addEventListener( 'load', init ); }
+						return;
+					}
 					var root = document.querySelector( '.<?php echo esc_js( $instance_id ); ?>' );
 
 					RAPM_Schedule.watch( root, '.rapm-coupon-card', function ( active ) {
@@ -123,10 +130,14 @@ class RAPM_Coupon_Book {
 		<?php
 	}
 
+	/**
+	 * Early <head> loading only; shortcode() loads the files wherever the
+	 * row appears (see RAPM_Hero_Carousel::should_load_assets()).
+	 */
 	public static function should_load_assets() {
 		if ( is_singular() ) {
 			global $post;
-			if ( $post && ( has_shortcode( $post->post_content, 'rapm_coupon_book' ) || has_shortcode( apply_filters( 'the_content', $post->post_content ), 'rapm_coupon_book' ) ) ) {
+			if ( $post && has_shortcode( $post->post_content, 'rapm_coupon_book' ) ) {
 				return true;
 			}
 		}
@@ -137,8 +148,6 @@ class RAPM_Coupon_Book {
 		if ( ! self::should_load_assets() ) {
 			return;
 		}
-		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
-		wp_enqueue_style( 'rapm-coupon-book-css', RAPM_URL . 'assets/css/rapm-coupon-book.css', array( 'rapm-hero-css' ), RAPM_VERSION );
-		wp_enqueue_script( 'rapm-schedule-js', RAPM_URL . 'assets/js/rapm-schedule.js', array(), RAPM_VERSION, true );
+		RAPM_Assets::need( 'coupon_book' );
 	}
 }

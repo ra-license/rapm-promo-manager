@@ -69,6 +69,9 @@ class RAPM_Hero_Carousel {
 		$mobile_slot  = $slots[ $kind['mobile'] ];
 
 		ob_start();
+		// Loads this carousel's files wherever it renders (popup, template,
+		// widget). Prints them inline only if the footer already went out.
+		echo RAPM_Assets::need( 'hero' ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-generated link and script tags.
 		?>
 		<style>
 			.<?php echo esc_attr( $instance_id ); ?> { width: 100%; margin: 0 auto; overflow: hidden; position: relative; }
@@ -109,8 +112,15 @@ class RAPM_Hero_Carousel {
 		</div>
 		<script>
 			( function () {
+				var waited = false;
 				function init() {
-					if ( typeof RAPM_Schedule === 'undefined' ) { return; }
+					// The script can arrive after this point when the carousel
+					// renders late (a popup, a footer template): wait for the
+					// page to finish loading once, then try again.
+					if ( typeof RAPM_Schedule === 'undefined' ) {
+						if ( ! waited ) { waited = true; window.addEventListener( 'load', init ); }
+						return;
+					}
 					RAPM_Schedule.init( '.<?php echo esc_js( $instance_id ); ?>', {
 						loopMinSlides: 2,
 						effect: 'slide',
@@ -205,6 +215,18 @@ class RAPM_Hero_Carousel {
 
 	const SHORTCODE_TAGS = array( 'rapm_hero', 'rapm_fold_banner' );
 
+	/**
+	 * Whether to load the files early, in <head>, on this request. Only an
+	 * optimization now: render() loads them anyway wherever a carousel
+	 * actually appears (RAPM_Assets::need()).
+	 *
+	 * Elementor's own Shortcode widget, and this plugin's Promo Carousel
+	 * widget, save the raw shortcode as the page's plain content, so
+	 * has_shortcode() on post_content sees both. The old second check ran
+	 * apply_filters( 'the_content' ) here, which rendered the whole page an
+	 * extra time on every request and could never find a shortcode tag in
+	 * already-rendered output.
+	 */
 	public static function should_load_assets() {
 		$force_load_on = apply_filters( 'rapm_force_load_ids', array() );
 
@@ -216,13 +238,6 @@ class RAPM_Hero_Carousel {
 				}
 				foreach ( self::SHORTCODE_TAGS as $tag ) {
 					if ( has_shortcode( $post->post_content, $tag ) ) {
-						return true;
-					}
-					// Elementor's Shortcode widget stores content in
-					// _elementor_data, not post_content, so has_shortcode()
-					// above can't see it directly — check the fully-built
-					// content too.
-					if ( has_shortcode( apply_filters( 'the_content', $post->post_content ), $tag ) ) {
 						return true;
 					}
 				}
@@ -240,21 +255,6 @@ class RAPM_Hero_Carousel {
 		if ( ! self::should_load_assets() ) {
 			return;
 		}
-
-		wp_enqueue_style( 'rapm-swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css', array(), '11.0' );
-		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array( 'rapm-swiper-css' ), RAPM_VERSION );
-		wp_enqueue_script( 'rapm-swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0', true );
-		wp_enqueue_script( 'rapm-schedule-js', RAPM_URL . 'assets/js/rapm-schedule.js', array( 'rapm-swiper-js' ), RAPM_VERSION, true );
-	}
-
-	/**
-	 * If WP Rocket's "Delay JavaScript Execution" is on, it can hold
-	 * Swiper back until the visitor scrolls/clicks, leaving the carousel
-	 * as a static image stack until then. No-op on sites without WP Rocket.
-	 */
-	public static function exclude_from_rocket_delay( $exclusions ) {
-		$exclusions[] = 'swiper-bundle';
-		$exclusions[] = 'rapm-schedule';
-		return $exclusions;
+		RAPM_Assets::need( 'hero' );
 	}
 }

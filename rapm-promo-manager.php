@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.25.0
+ * Version: 1.26.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,12 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.25.0' );
+define( 'RAPM_VERSION', '1.26.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
 require_once RAPM_DIR . 'includes/class-rapm-post-types.php';
 require_once RAPM_DIR . 'includes/class-rapm-slots.php';
+require_once RAPM_DIR . 'includes/class-rapm-assets.php';
 require_once RAPM_DIR . 'includes/class-rapm-webp-converter.php';
 require_once RAPM_DIR . 'includes/class-rapm-destination.php';
 require_once RAPM_DIR . 'includes/class-rapm-admin-settings.php';
@@ -91,11 +92,12 @@ final class RAPM_Plugin {
 		add_shortcode( 'rapm_marquee', array( 'RAPM_Marquee', 'shortcode' ) );
 		add_shortcode( 'rapm_coupon_book', array( 'RAPM_Coupon_Book', 'shortcode' ) );
 		add_shortcode( 'rapm_promotions_calendar', array( 'RAPM_Calendar', 'shortcode' ) );
+		add_action( 'wp_enqueue_scripts', array( 'RAPM_Assets', 'register' ), 5 );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Hero_Carousel', 'enqueue' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Marquee', 'enqueue' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Coupon_Book', 'enqueue' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Calendar', 'enqueue' ) );
-		add_filter( 'rocket_delay_js_exclusions', array( 'RAPM_Hero_Carousel', 'exclude_from_rocket_delay' ) );
+		add_filter( 'rocket_delay_js_exclusions', array( 'RAPM_Assets', 'exclude_from_rocket_delay' ) );
 
 		add_action( 'elementor/widgets/register', array( 'RAPM_Elementor', 'register_widgets' ) );
 		add_action( 'elementor/elements/categories_registered', array( 'RAPM_Elementor', 'register_category' ) );

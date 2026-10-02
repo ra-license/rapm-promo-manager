@@ -13,6 +13,10 @@
 ( function ( window ) {
 	'use strict';
 
+	// Every live Swiper instance, so they can all be re-measured when an
+	// Elementor popup opens (see refreshCarousels below).
+	var liveCarousels = [];
+
 	function isActive( el ) {
 		var start = el.getAttribute( 'data-rapm-start' );
 		var end   = el.getAttribute( 'data-rapm-end' );
@@ -53,6 +57,7 @@
 			root.style.display = '';
 
 			if ( instance ) {
+				liveCarousels = liveCarousels.filter( function ( s ) { return s !== instance; } );
 				instance.destroy( true, true );
 				instance = null;
 			}
@@ -72,6 +77,12 @@
 				// for a mobile picture it doesn't have. autoHeight keeps the
 				// visible carousel sized to match whichever slide is active.
 				autoHeight: true,
+				// A carousel inside an Elementor popup starts while the popup
+				// is still hidden, so Swiper measures a zero-width box. These
+				// two tell Swiper to re-measure itself when it or any parent
+				// changes, such as the popup becoming visible.
+				observer: true,
+				observeParents: true,
 			};
 			if ( 'fade' === config.effect ) {
 				config.fadeEffect = { crossFade: true };
@@ -90,6 +101,7 @@
 			}
 
 			instance = new window.Swiper( selector, config );
+			liveCarousels.push( instance );
 		}
 
 		build();
@@ -134,6 +146,29 @@
 
 		apply();
 		setInterval( apply, 60000 );
+	}
+
+	/**
+	 * Backup for the observer settings above: Elementor Pro announces every
+	 * popup it opens with an 'elementor/popup/show' event. Re-measure every
+	 * carousel then, so one inside the popup sizes to the popup. Since
+	 * Elementor Pro 3.9 the event is a native CustomEvent on window; older
+	 * versions sent it as a jQuery event on document. Listening for both
+	 * covers either version (an extra update() is harmless).
+	 */
+	function refreshCarousels() {
+		liveCarousels.forEach( function ( s ) {
+			if ( s && ! s.destroyed ) { s.update(); }
+		} );
+	}
+	window.addEventListener( 'elementor/popup/show', refreshCarousels );
+	function bindJqueryPopupRefresh() {
+		if ( ! window.jQuery ) { return false; }
+		window.jQuery( window.document ).on( 'elementor/popup/show', refreshCarousels );
+		return true;
+	}
+	if ( ! bindJqueryPopupRefresh() ) {
+		window.document.addEventListener( 'DOMContentLoaded', bindJqueryPopupRefresh );
 	}
 
 	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch };
