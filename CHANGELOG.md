@@ -4,6 +4,15 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.26.1
+
+**Fix: pages with no promotions no longer load every Promo Manager file.** Found while checking 1.26.0 on staging. The front page loaded all four stylesheets plus Swiper (about 150 KB of script) and the schedule script, even though it showed no promotion at all.
+- **Root cause.** Every display mode's early `<head>` check had a fallback: if any classic Text widget was active anywhere on the site, it loaded its files on every page. The staging site has four, in the WoodMart footer (`text-46`, `text-13`, `text-14`, `text-15`). WoodMart's demo footers use Text widgets, so many WoodMart sites are likely the same.
+- That fallback also hid the 1.26.0 bug. On a site with any Text widget, promotions outside the page's own content happened to work, because everything was already loaded. That's why the demos never showed the problem.
+- **The fix.** The fallback is removed from all four display modes. It's no longer needed: since 1.26.0, a shortcode loads its own files when it renders. WordPress core runs shortcodes in both classic Text widgets and block widgets (`widget_text_content` and `widget_block_content` → `do_shortcode`, confirmed in core's `default-filters.php`), so a promotion in a sidebar still loads what it needs. Its files print in the footer instead of the head. That's harmless, because every display stays hidden until its script runs.
+- The `rapm_force_load_ids` filter for the hero carousel is unchanged.
+- Checked with the structural PHP checker (0 issues in 23 files). Final confirmation is on staging. The front page should now load only the hero's files. A promotion placed outside a page's own content (for example in a reusable block pattern) should still show. With the fallback gone, staging can now actually catch that bug if it ever comes back.
+
 ## 1.26.0
 
 **Fix: promotions now show anywhere they're placed, including inside Elementor popups, Theme Builder headers and footers, and product and category pages.** Found while planning VFM's sign-up and offer popups. A promotion placed in an Elementor popup would have stayed invisible.

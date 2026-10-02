@@ -141,7 +141,11 @@ class RAPM_Coupon_Book {
 				return true;
 			}
 		}
-		return is_active_widget( false, false, 'text', true ) || is_active_widget( false, false, 'shortcode', true );
+		// No sidebar-widget fallback (removed in 1.26.1): a shortcode in a
+		// classic Text widget loads its files when it renders, like anywhere
+		// else. The fallback loaded every file on every page of any site with
+		// an active Text widget, which hid the 1.26.0 bug and slowed pages.
+		return false;
 	}
 
 	public static function enqueue() {
