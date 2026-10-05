@@ -39,8 +39,22 @@ class RAPM_Assets {
 		wp_register_style( 'rapm-coupon-book-css', RAPM_URL . 'assets/css/rapm-coupon-book.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_register_style( 'rapm-calendar-css', RAPM_URL . 'assets/css/rapm-calendar.css', array(), RAPM_VERSION );
 		wp_register_script( 'rapm-swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), self::SWIPER_VERSION, true );
+		// Keep our Swiper 11 under its own name, and give back any Swiper the
+		// page already had. Both files set window.Swiper, and whichever runs
+		// last wins: Elementor's own Swiper 8 (its Image Carousel and the
+		// editor preview load it) would otherwise run our carousels, and ours
+		// would run Elementor's (it uses window.Swiper when one is already
+		// there). rapm-schedule.js uses RAPM_Swiper first. If our file hasn't
+		// actually run yet (e.g. an optimizer deferred it), nothing changes
+		// and rapm-schedule.js falls back to window.Swiper, as before 1.27.1.
+		wp_add_inline_script( 'rapm-swiper-js', 'window.RAPM_SwiperBefore = window.Swiper;', 'before' );
+		wp_add_inline_script(
+			'rapm-swiper-js',
+			'( function () { var before = window.RAPM_SwiperBefore; if ( window.Swiper && window.Swiper !== before ) { window.RAPM_Swiper = window.Swiper; if ( before ) { window.Swiper = before; } } } )();',
+			'after'
+		);
 		// No hard dependency on Swiper: Marquee and Coupon Book use this file
-		// without it, and init() already checks for window.Swiper at run time.
+		// without it, and init() already checks for Swiper at run time.
 		wp_register_script( 'rapm-schedule-js', RAPM_URL . 'assets/js/rapm-schedule.js', array(), RAPM_VERSION, true );
 	}
 
@@ -106,12 +120,14 @@ class RAPM_Assets {
 	 * keywords in a script's address or in an inline script's own text, so
 	 * this covers the two files and the small inline start-up scripts each
 	 * display prints (they mention RAPM_Schedule, or the calendar's own
-	 * "rapm-cal-" id). No-op on sites without WP Rocket.
+	 * "rapm-cal-" id), plus the two around the Swiper file (RAPM_Swiper).
+	 * No-op on sites without WP Rocket.
 	 */
 	public static function exclude_from_rocket_delay( $exclusions ) {
 		$exclusions[] = 'swiper-bundle';
 		$exclusions[] = 'rapm-schedule';
 		$exclusions[] = 'RAPM_Schedule';
+		$exclusions[] = 'RAPM_Swiper';
 		$exclusions[] = 'rapm-cal-';
 		return $exclusions;
 	}

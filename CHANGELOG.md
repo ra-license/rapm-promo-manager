@@ -4,6 +4,29 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.27.1
+
+**Fix: our carousels and Elementor's own carousels no longer take over each other's Swiper.** Found while checking 1.27.0 on staging.
+- **Root cause.** Both our Swiper 11 file and Elementor's Swiper 8 file (`assets/lib/swiper/v8/swiper.min.js`) set the same global, `window.Swiper`, so whichever runs last wins for everyone on the page. Elementor's Image Carousel asks for its Swiper 8 file directly (`get_script_depends()` returns `swiper`), and the editor preview always loads it. Elementor builds its carousels with whatever `window.Swiper` already is (`assets/dev/js/frontend/utils/swiper.js`, `createSwiperInstance()`). All checked in Elementor's source. So:
+  - **Elementor's file runs last** (the editor preview's order): our carousel runs on Swiper 8. Swiper 8 loops by adding copies of the slides, which our script and `rapm-hero.css` weren't built for. Our once-a-minute re-check counted the copies, so it rebuilt the carousel every minute even when nothing had changed.
+  - **Ours runs last:** Elementor's carousels run on our Swiper 11 instead of the version Elementor was built and styled for.
+- **The fix, part 1: each keeps its own.** A one-line script right before our Swiper file notes what `window.Swiper` was, and one right after it saves ours as `window.RAPM_Swiper`. If the page already had a different Swiper, it puts that one back. `rapm-schedule.js` now builds carousels with `RAPM_Swiper`, falling back to `window.Swiper` only if ours wasn't saved. If the page had no Swiper before ours, `window.Swiper` is left as ours, the same as before. Elementor's carousel loads its own file anyway.
+- **The fix, part 2: the re-check counts only the carousel's own slides,** not every `.swiper-slide` in it. That way, even if a carousel does end up on Swiper 8 (for example our Swiper file was blocked), it isn't rebuilt every minute.
+- WP Rocket "Delay JavaScript execution" exclusions now also cover the two new one-line scripts (`RAPM_Swiper`). Not tested on a WP Rocket site.
+- **How it was checked.** No PHP runtime is available here (standing constraint).
+  - **PHP:** the structural PHP checker found 0 issues in all 22 plugin files, after catching all three planted bugs.
+  - **Behavior:** tested in a browser with real Swiper 11.2.10, Elementor's real Swiper 8.4.5 file (from Elementor's wordpress.org trunk), and a stand-in for an Elementor Image Carousel that starts the way Elementor's does. The two one-line scripts were copied word for word out of `class-rapm-assets.php`.
+
+    | Case | 1.27.0 | 1.27.1 |
+    |---|---|---|
+    | Elementor's Swiper 8 runs after ours | Ours on Swiper 8 (2 slide copies), rebuilt on a quiet re-check; Elementor's on 8 | Ours on 11, Elementor's on 8, not rebuilt |
+    | Elementor's Swiper 8 runs before ours | Ours on 11; **Elementor's on 11** | Ours on 11, Elementor's on 8 |
+    | Our Swiper file missing, only Elementor's | On 8, rebuilt on a quiet re-check | On 8, not rebuilt; a promotion starting mid-visit lands in the right spot |
+    | No Elementor | Unchanged | Unchanged |
+
+    The full 1.27.0 cap sequence (7 steps) and the slide-order test came out the same on 1.27.1.
+  - **Known gap:** if an optimizer delays our Swiper file but not the small scripts around it, nothing is saved. Both carousels then share whichever Swiper loads last, the same as before 1.27.1 (tested: no worse, no better).
+
 ## 1.27.0
 
 **New: a carousel can show only the first few promotions ("Show at most").** Built for Tyner. A carousel can now be set to show, for example, only 3 promotions even when more are live. It shows the first ones that are live right now, starting from the top of the Sliders list.
@@ -38,7 +61,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - A draft page with `[rapm_hero placement="home" max="2"]` showed 2 slides and 2 dots: The Fall Living Room Event, then Gather Around for Less (Dining Days), the first two in Sliders order. All 3 were still in the page HTML; Mattress Month was left out in the browser.
   - The real Elementor editor shows **Show at most** (0–20, default 0, new wording). Setting it to 2 previewed 2 slides. Saving wrote `[rapm_hero placement="home" max="2"]` as the page's plain content. On the front end, the widget and the shortcode on the same page each showed the same 2 slides.
   - Help & FAQ and Settings > Shortcodes show the new text. The test page was moved to the trash, not deleted.
-- **Found on staging, not fixed in this version: Elementor's own Swiper 8 can take over our carousel.** The Elementor editor preview loads both our Swiper 11 and Elementor's `assets/lib/swiper/v8/swiper.min.js`. Elementor's loads second, so `window.Swiper` is Swiper 8, which loops by adding copies of the slides (`swiper-slide-duplicate`). The once-a-minute re-check counts every `.swiper-slide`, copies included (4 against 2 real ones), so it rebuilds the carousel every minute even when nothing changed. Seen in the real editor: a different carousel after 65 seconds. This dates back to the re-check itself, not to 1.27.0. On the front end it can only happen on a page that also has an Elementor widget built on Swiper (such as Image Carousel). No staging page has one, so that case is untested. WoodMart's own Swiper doesn't clash: it uses its own name (`wdSwiper`), and the Promotions page carousel ran on ours.
+- **Found on staging, not fixed in this version (fixed in 1.27.1): Elementor's own Swiper 8 can take over our carousel.** The Elementor editor preview loads both our Swiper 11 and Elementor's `assets/lib/swiper/v8/swiper.min.js`. Elementor's loads second, so `window.Swiper` is Swiper 8, which loops by adding copies of the slides (`swiper-slide-duplicate`). The once-a-minute re-check counts every `.swiper-slide`, copies included (4 against 2 real ones), so it rebuilds the carousel every minute even when nothing changed. Seen in the real editor: a different carousel after 65 seconds. This dates back to the re-check itself, not to 1.27.0. On the front end it can only happen on a page that also has an Elementor widget built on Swiper (such as Image Carousel). No staging page has one, so that case is untested. WoodMart's own Swiper doesn't clash: it uses its own name (`wdSwiper`), and the Promotions page carousel ran on ours.
 
 ## 1.26.1
 

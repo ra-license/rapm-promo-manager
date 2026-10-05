@@ -17,6 +17,15 @@
 	// Elementor popup opens (see refreshCarousels below).
 	var liveCarousels = [];
 
+	// Our own Swiper 11, saved right after its file runs (RAPM_Assets). It
+	// has to be ours: Elementor's Swiper 8 can take over window.Swiper, and
+	// Swiper 8 loops by adding copies of the slides, which this file and
+	// rapm-hero.css weren't built for. Falls back to whatever window.Swiper
+	// is if ours wasn't saved.
+	function swiperClass() {
+		return window.RAPM_Swiper || window.Swiper;
+	}
+
 	function isActive( el ) {
 		var start = el.getAttribute( 'data-rapm-start' );
 		var end   = el.getAttribute( 'data-rapm-end' );
@@ -78,7 +87,8 @@
 			active.forEach( function ( s ) { wrapper.appendChild( s ); } );
 			root.style.display = '';
 
-			if ( typeof window.Swiper === 'undefined' ) {
+			var SwiperClass = swiperClass();
+			if ( typeof SwiperClass === 'undefined' ) {
 				return; // Not loaded yet (e.g. delayed by a JS optimizer) — slides stay visible as a static stack.
 			}
 
@@ -116,7 +126,7 @@
 				config.pagination = { el: selector + ' .swiper-pagination', clickable: true };
 			}
 
-			instance = new window.Swiper( selector, config );
+			instance = new SwiperClass( selector, config );
 			liveCarousels.push( instance );
 		}
 
@@ -127,9 +137,13 @@
 		// from a full-page cache — without a reload.
 		// Compares against the same capped list build() uses, so a capped
 		// carousel isn't rebuilt (and reset to slide one) every minute.
+		// Counts only this carousel's own slides, not every .swiper-slide
+		// in the wrapper: Swiper 8 adds copies of the slides in loop mode,
+		// and counting those (before 1.27.1) rebuilt the carousel every
+		// minute even when nothing had changed.
 		setInterval( function () {
 			var stillShown     = shownSlides();
-			var currentlyShown = wrapper.querySelectorAll( '.swiper-slide' ).length;
+			var currentlyShown = allSlides.filter( function ( s ) { return s.parentNode === wrapper; } ).length;
 			var changed = stillShown.length !== currentlyShown ||
 				stillShown.some( function ( s ) { return s.parentNode !== wrapper; } );
 			if ( changed ) { build(); }
