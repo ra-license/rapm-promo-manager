@@ -135,6 +135,7 @@ class RAPM_Promotions_Screen {
 					'hideRa'      => __( 'Hide R&A setup details', 'rapm' ),
 					'nameSaved'   => __( 'Name saved.', 'rapm' ),
 					'noResults'   => __( 'No promotions match “%s”.', 'rapm' ),
+					'confirmRemove' => __( 'Remove "%s"? It has no promotions and isn\'t on any page.', 'rapm' ),
 				),
 			)
 		);
@@ -470,7 +471,7 @@ class RAPM_Promotions_Screen {
 				echo esc_html( sprintf( __( '"%s" is ready.', 'rapm' ), $name ) );
 				?>
 				</strong>
-				<?php if ( RAPM_Spots::can_be_main_heading( $kind ) ) : ?>
+				<?php if ( RAPM_Spots::is_carousel( $kind ) ) : ?>
 					<?php
 					/* translators: %s: the new spot's name */
 					echo esc_html( sprintf( __( 'Next, put it on a page: in Elementor, add the Promo Carousel widget and pick "%s" from its Spot list.', 'rapm' ), $name ) );
@@ -480,6 +481,10 @@ class RAPM_Promotions_Screen {
 				<?php endif; ?>
 				<?php esc_html_e( 'Code:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code>
 			</p></div>
+			<?php
+		} elseif ( isset( $_GET['rapm_spot_removed'] ) ) {
+			?>
+			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Spot removed.', 'rapm' ); ?></p></div>
 			<?php
 		} elseif ( isset( $_GET['untrashed'] ) ) {
 			?>
@@ -552,14 +557,11 @@ class RAPM_Promotions_Screen {
 							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
 							<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
 						</form>
-						<?php if ( RAPM_Spots::can_be_main_heading( $kind ) ) : ?>
-							<label class="rapm-h1-setting">
-								<input type="checkbox" class="rapm-h1-toggle"<?php checked( RAPM_Spots::main_heading( $kind, $placement ) ); ?> />
-								<span>
-									<strong><?php esc_html_e( 'Main heading (H1) for search engines', 'rapm' ); ?></strong><br />
-									<?php esc_html_e( 'The first promotion showing gets its big words as the page\'s H1; the rest stay H2. Turn on only for a spot at the top of pages that have no other H1, like a home page slider.', 'rapm' ); ?>
-								</span>
-							</label>
+						<?php if ( RAPM_Spots::is_carousel( $kind ) ) : ?>
+							<p><?php esc_html_e( 'Main heading (H1) for search engines: set it where the spot is placed, only on pages with no other H1. In Elementor, turn on "Main heading (H1)" in its Promo Carousel widget, or add heading="h1" to its code on that page.', 'rapm' ); ?></p>
+						<?php endif; ?>
+						<?php if ( RAPM_Spots::removable( $kind, $placement ) ) : ?>
+							<button type="button" class="button-link rapm-remove-spot"><?php esc_html_e( 'Remove this spot', 'rapm' ); ?></button>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -723,27 +725,19 @@ class RAPM_Promotions_Screen {
 		wp_send_json_success( array( 'url' => self::url( array( 'rapm_spot_created' => $kind . '|' . $placement ) ) ) );
 	}
 
-	/** R&A's "Main heading (H1)" box for a slider or feature banner spot. */
-	public static function ajax_spot_settings() {
+	/** "Remove this spot" (R&A, 1.29.1): only a spot with no promotions that isn't on any page. */
+	public static function ajax_remove_spot() {
 		check_ajax_referer( self::NONCE, 'nonce' );
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
 		}
 		$kind      = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : '';
 		$placement = isset( $_POST['placement'] ) ? sanitize_title( wp_unslash( $_POST['placement'] ) ) : '';
-		if ( ! $placement || ! RAPM_Spots::can_be_main_heading( $kind ) ) {
-			wp_send_json_error( array( 'message' => __( 'This spot can\'t be a main heading.', 'rapm' ) ), 400 );
+		if ( ! RAPM_Spots::removable( $kind, $placement ) ) {
+			wp_send_json_error( array( 'message' => __( 'This spot still has promotions or is on a page, so it stays.', 'rapm' ) ), 400 );
 		}
-		$on = isset( $_POST['h1'] ) && '1' === $_POST['h1'];
-		RAPM_Spots::update( $kind, $placement, array( 'h1' => $on ? 1 : null ) );
-		// The pages it shows on change, so their cached copies have to go.
-		RAPM_Cache::queue_spot( $kind . '|' . $placement );
-		wp_send_json_success(
-			array(
-				'h1'      => $on,
-				'message' => $on ? __( 'Saved. Its first promotion showing now uses an H1.', 'rapm' ) : __( 'Saved. Its promotions use H2 again.', 'rapm' ),
-			)
-		);
+		RAPM_Spots::remove( $kind, $placement );
+		wp_send_json_success( array( 'url' => self::url( array( 'rapm_spot_removed' => 1 ) ) ) );
 	}
 
 	/**

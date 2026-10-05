@@ -228,28 +228,30 @@
 		} ).catch( function () { say( section, T.saveFailed ); } );
 	} );
 
-	/* ---- Main heading (H1), R&A only (1.29.0) ------------------------------ */
+	/* ---- "Remove this spot", R&A only (1.29.1) ------------------------------ */
 
-	root.addEventListener( 'change', function ( e ) {
-		var box = e.target.closest ? e.target.closest( '.rapm-h1-toggle' ) : null;
-		if ( ! box ) { return; }
-		var section = box.closest( '.rapm-spot' );
-		var on      = box.checked;
-		box.disabled = true;
+	root.addEventListener( 'click', function ( e ) {
+		var button = e.target.closest ? e.target.closest( '.rapm-remove-spot' ) : null;
+		if ( ! button ) { return; }
+		var section = button.closest( '.rapm-spot' );
+		var name    = section.querySelector( '.rapm-spot-name' ).textContent;
+		if ( ! window.confirm( ( T.confirmRemove || '' ).replace( '%s', name ) ) ) { return; }
+		button.disabled = true;
 		say( section, T.saving );
 		post( {
-			action: 'rapm_spot_settings',
+			action: 'rapm_remove_spot',
 			nonce: cfg.nonce,
 			kind: section.getAttribute( 'data-kind' ),
-			placement: section.getAttribute( 'data-placement' ),
-			h1: on ? '1' : '0'
+			placement: section.getAttribute( 'data-placement' )
 		} ).then( function ( res ) {
-			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
-			box.disabled = false;
-			say( section, res.data.message );
+			if ( ! res || ! res.success ) {
+				button.disabled = false;
+				say( section, res && res.data && res.data.message ? res.data.message : T.saveFailed );
+				return;
+			}
+			window.location.href = res.data.url;
 		} ).catch( function () {
-			box.disabled = false;
-			box.checked  = ! on;
+			button.disabled = false;
 			say( section, T.saveFailed );
 		} );
 	} );

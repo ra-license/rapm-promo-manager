@@ -11,8 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  *   not its page, because one spot can go on several pages.
  * - Any number of spots of the same type can exist. R&A adds them with
  *   "+ New spot" on the Promotions screen.
- * - Sliders and feature banners can be marked as the page's main heading
- *   (H1) for SEO, one spot at a time (main_heading()).
+ * - A spot with no promotions that isn't on any page can be removed
+ *   (removable(), 1.29.1).
+ *
+ * The main heading (H1) is not a spot setting: one spot can sit on pages
+ * that already have an H1 and pages that don't, so since 1.29.1 it is set
+ * where the spot is placed (the Promo Carousel widget's "Main heading"
+ * switch, or heading="h1" in the shortcode).
  *
  * Stored in one option, 'rapm_spots': 'kind|placement' => array( 'name',
  * 'h1' ). A spot also exists without an entry here, as soon as a promotion
@@ -25,9 +30,6 @@ class RAPM_Spots {
 
 	/** 1.28.0 kept renames here; read once and folded into OPTION. */
 	const OLD_NAMES_OPTION = 'rapm_spot_names';
-
-	/** Types whose big words can be the page's main heading. A row of coupons or tiles has no single headline. */
-	const MAIN_HEADING_KINDS = array( 'hero', 'fold_banner' );
 
 	public static function all() {
 		$spots = get_option( self::OPTION, null );
@@ -100,17 +102,9 @@ class RAPM_Spots {
 		return 'default' === $placement ? '[' . $info['shortcode'] . ']' : '[' . $info['shortcode'] . ' placement="' . $placement . '"]';
 	}
 
-	public static function can_be_main_heading( $kind ) {
-		return in_array( $kind, self::MAIN_HEADING_KINDS, true );
-	}
-
-	/** True when this spot's first promotion should use an H1 instead of an H2. */
-	public static function main_heading( $kind, $placement ) {
-		if ( ! self::can_be_main_heading( $kind ) ) {
-			return false;
-		}
-		$spot = self::get( $kind, $placement );
-		return ! empty( $spot['h1'] );
+	/** Sliders and feature banners: the two types the Promo Carousel widget shows, and the only ones with a single headline. */
+	public static function is_carousel( $kind ) {
+		return in_array( $kind, array( 'hero', 'fold_banner' ), true );
 	}
 
 	/**
@@ -176,6 +170,42 @@ class RAPM_Spots {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Only a spot that would vanish anyway can be removed: one that only
+	 * exists because it was named here, with no promotions (not counting
+	 * the trash) and no page, template or widget carrying its code. Its
+	 * promotions or placements would keep it on the screen otherwise.
+	 */
+	public static function removable( $kind, $placement ) {
+		$all = self::all();
+		if ( ! isset( $all[ $kind . '|' . $placement ] ) ) {
+			return false;
+		}
+		if ( RAPM_Spot_Usage::for_spot( $kind, $placement ) ) {
+			return false;
+		}
+		$posts = get_posts(
+			array(
+				'post_type'      => 'rapm_asset',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private' ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery
+					'relation' => 'AND',
+					array( 'key' => '_rapm_kind', 'value' => $kind ),
+					array( 'key' => '_rapm_placement', 'value' => $placement ),
+				),
+			)
+		);
+		return empty( $posts );
+	}
+
+	public static function remove( $kind, $placement ) {
+		$all = self::all();
+		unset( $all[ $kind . '|' . $placement ] );
+		update_option( self::OPTION, $all, false );
 	}
 
 	/**

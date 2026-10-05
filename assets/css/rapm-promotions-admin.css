@@ -82,9 +82,8 @@
 /* 1.29.0: spot type label, main-heading setting, "+ New spot" window. */
 .rapm-spot-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rapm-type-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #f0f0f1; color: #50575e; font-size: 12px; font-weight: 600; line-height: 1.5; }
-.rapm-h1-setting { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 12px; color: #50575e; max-width: 640px; }
-.rapm-h1-setting input { margin-top: 2px; }
-.rapm-h1-setting strong { color: #1d2327; }
+.rapm-remove-spot.button-link { margin-top: 4px; color: #b32d2e; font-size: 12px; }
+.rapm-remove-spot.button-link:hover, .rapm-remove-spot.button-link:focus { color: #8a2424; }
 
 .rapm-new-spot { width: 640px; max-width: calc(100% - 32px); padding: 0; border: 0; border-radius: 6px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
 .rapm-new-spot::backdrop { background: rgba(29, 35, 39, 0.5); }

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.29.0
+ * Version: 1.29.1
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.29.0' );
+define( 'RAPM_VERSION', '1.29.1' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -78,7 +78,7 @@ final class RAPM_Plugin {
 		add_action( 'wp_ajax_rapm_toggle_asset', array( 'RAPM_Promotions_Screen', 'ajax_toggle' ) );
 		add_action( 'wp_ajax_rapm_rename_spot', array( 'RAPM_Promotions_Screen', 'ajax_rename' ) );
 		add_action( 'wp_ajax_rapm_create_spot', array( 'RAPM_Promotions_Screen', 'ajax_create_spot' ) );
-		add_action( 'wp_ajax_rapm_spot_settings', array( 'RAPM_Promotions_Screen', 'ajax_spot_settings' ) );
+		add_action( 'wp_ajax_rapm_remove_spot', array( 'RAPM_Promotions_Screen', 'ajax_remove_spot' ) );
 		add_filter( 'wp_untrash_post_status', array( 'RAPM_Promotions_Screen', 'untrash_status' ), 10, 3 );
 
 		// Clear the page cache for the pages a changed promotion shows on (RAPM_Cache).

@@ -37,7 +37,7 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 		$spots = array( '' => __( 'Pick a spot…', 'rapm' ) );
 		if ( is_admin() || isset( $_GET['elementor-preview'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			foreach ( RAPM_Spots::known() as $spot ) {
-				if ( RAPM_Spots::can_be_main_heading( $spot['kind'] ) ) {
+				if ( RAPM_Spots::is_carousel( $spot['kind'] ) ) {
 					$spots[ $spot['kind'] . '|' . $spot['placement'] ] = $spot['name'] . ' (' . $spot['type'] . ')';
 				}
 			}
@@ -91,6 +91,17 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'main_heading',
+			array(
+				'label'        => __( 'Main heading (H1)', 'rapm' ),
+				'type'         => \Elementor\Controls_Manager::SWITCHER,
+				'return_value' => 'yes',
+				'default'      => '',
+				'description'  => __( 'For search engines. Turn on only where this is the top of a page with no other H1, like the home page. The first promotion showing gets an H1; the rest stay H2.', 'rapm' ),
+			)
+		);
+
 		$this->end_controls_section();
 	}
 
@@ -120,7 +131,8 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 		}
 		$tag = 'fold_banner' === $kind ? 'rapm_fold_banner' : 'rapm_hero';
 		$max = isset( $settings['max_slides'] ) ? max( 0, (int) $settings['max_slides'] ) : 0;
-		return '[' . $tag . ' placement="' . esc_attr( $placement ) . '"' . ( $max ? ' max="' . $max . '"' : '' ) . ']';
+		$h1  = isset( $settings['main_heading'] ) && 'yes' === $settings['main_heading'];
+		return '[' . $tag . ' placement="' . esc_attr( $placement ) . '"' . ( $max ? ' max="' . $max . '"' : '' ) . ( $h1 ? ' heading="h1"' : '' ) . ']';
 	}
 
 	protected function render() {

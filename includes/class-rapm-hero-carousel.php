@@ -34,6 +34,10 @@ class RAPM_Hero_Carousel {
 				// cap is applied in the visitor's browser, after the schedule
 				// check, so it works behind a full-page cache (rapm-schedule.js).
 				'max'       => '0',
+				// heading="h1": this placement is the page's main heading
+				// (1.29.1). Set where the spot is placed, not on the spot,
+				// because one spot can be on pages that already have an H1.
+				'heading'   => 'h2',
 			),
 			$atts,
 			$tag
@@ -71,11 +75,11 @@ class RAPM_Hero_Carousel {
 		$instance_id  = 'rapm-' . $placement . '-' . wp_unique_id();
 		$desktop_slot = $slots[ $kind['desktop'] ];
 		$mobile_slot  = $slots[ $kind['mobile'] ];
-		// R&A can mark a spot as the page's main heading (1.29.0): its
-		// first promotion with words gets an h1, the rest keep h2.
+		// The page's main heading (heading="h1", 1.29.1): the first
+		// promotion with words gets an h1, the rest keep h2.
 		// rapm-schedule.js moves the h1 to the first one actually
 		// showing, since the schedule can hide the first one here.
-		$main_heading = RAPM_Spots::main_heading( $kind_key, $placement );
+		$main_heading = 'h1' === strtolower( trim( (string) $atts['heading'] ) );
 
 		ob_start();
 		// Loads this carousel's files wherever it renders (popup, template,

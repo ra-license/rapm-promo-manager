@@ -4,6 +4,20 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.29.1
+
+**Change: the main heading (H1) is set where a spot is placed, not on the spot.** Phil's call, after staging showed the per-spot switch from 1.29.0 put two H1s on the Promotions page. Home page slider also shows there, and that page already has its own H1. A spot can sit on pages that need an H1 and pages that don't, so only the placement knows.
+- **Shortcode:** `heading="h1"` on `[rapm_hero]` or `[rapm_fold_banner]`, for example `[rapm_hero placement="home" heading="h1"]`. The default stays `h2`. It works the same as 1.29.0: the first promotion showing gets the `h1`, the rest `h2`, `rapm-schedule.js` moves it to whichever promotion is actually showing, and the `h1` keeps the headline's look.
+- **Elementor:** the Promo Carousel widget has a "Main heading (H1)" switch: "Turn on only where this is the top of a page with no other H1, like the home page." It adds `heading="h1"` to the code the widget saves and renders.
+- **Removed:** the per-spot checkbox, its AJAX action and its cache hook. In R&A setup details, each slider and feature banner now says where to set it instead. The staging test had switched the per-spot setting back off, so nothing was left set.
+
+**New: "Remove this spot" (R&A setup details).** It only appears for a spot that exists just because it was named: no promotions (the trash doesn't count) and not on any page, template or widget. Removing it asks first, deletes the spot's name and settings, and shows "Spot removed." A spot with promotions or placements can't be removed (`RAPM_Spots::removable()`). The server checks that again, not just the screen. Built to clean up the 1.29.0 staging test spot, and any spot made by mistake.
+
+**How it was checked.**
+- **PHP:** the structural checker found 0 issues in 26 files. A search confirmed nothing still calls the per-spot H1.
+- **Remove spot:** tested in a browser on the admin test page. Cancelling the question sends nothing; confirming sends the spot and reloads the screen.
+- **To confirm on staging:** removing the test spot, the widget switch, and a draft page using `heading="h1"`.
+
 ## 1.29.0
 
 **New: spots you can name and add, plain type names, and a per-spot main heading (H1) for search engines.** Phil approved the spot names and type labels in the mockup (2026-10-05) and asked for the H1 setting. He wants several of each type of banner: the home page slider may also go on other pages, and the "home page banner" is really a feature banner.

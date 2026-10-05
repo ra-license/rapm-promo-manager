@@ -27,7 +27,7 @@
 	}
 
 	/**
-	 * A spot marked as the page's main heading (1.29.0, data-rapm-h1): the
+	 * A placement marked as the page's main heading (heading="h1", 1.29.1; data-rapm-h1): the
 	 * first slide showing that has big words gets an h1, every other one an
 	 * h2. The server gives the h1 to the first slide in order, but the
 	 * schedule may be hiding that one, so it's set again here from what is
