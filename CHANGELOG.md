@@ -10,6 +10,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - `RAPM_Cache` now records each clear: the time, the pages, whether the whole site was cleared, and one line per cache it reached. For Rocket.net, it also records what that plugin's call answered. If the expected Rocket.net class isn't there, it lists the cache-related classes that are loaded, or the class's methods if the call doesn't exist, so the right name can be found without guessing. It catches and records any error too.
 - Shown under "Last page-cache clear" in R&A setup details. Stored in the `rapm_last_cache_clear` option (not autoloaded).
 - Staging's must-use plugin is Rocket.net's "CDN Cache Plugin" 1.1.13 (Plugins > Must-Use).
+- **What it showed on staging (2026-10-05). Rocket.net page clearing is still not solved.**
+  - The call runs and Rocket.net answers `{"success":true,…,"result":{"status":"success"}}` for all four pages, but Home 2's CDN copy is not cleared: the same copy kept aging (`age` 228, 231, 234…). That held even 3½ minutes after the previous clear, so it isn't a repeat-request limit.
+  - The one earlier `MISS` right after a switch was most likely the plugin update clearing everything just before.
+  - A phone browser gets its own separate CDN copy (`MISS` while the computer copy was a `HIT`). A plain "clear this address" call may not reach those per-device copies. That's a lead, not a confirmed cause.
+  - Rocket.net's own **CDN Cache → Purge Everything** (an admin link with `cdn-action=purge`) did clear it: Home 2 came back `MISS` with the banner. So a whole-CDN clear works.
+  - **Next:** read the real `CDN Cache Plugin` 1.1.13 source (wp-content/mu-plugins, from Rocket.net's file manager or SFTP), or ask Rocket.net support how to clear specific pages including every device copy. Then call that instead.
+
 
 ## 1.28.1
 
