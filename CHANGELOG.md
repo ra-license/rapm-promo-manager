@@ -4,6 +4,19 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.28.1
+
+**Fix: switching a promotion off on a Rocket.net site left it showing to visitors on its own page.** Found checking 1.28.0 on staging. Free Design Help (the Home page banner, shown only on "Home 2") was switched off.
+- A fresh render of Home 2 no longer had the banner, so the switch itself worked.
+- Rocket.net's CDN kept serving its cached copy of Home 2, banner included (`cf-cache-status: HIT`).
+- The home page was cleared at the same moment (`MISS`).
+- **Root cause.** Rocket.net's must-use plugin clears only its own short list of pages when a promotion is saved, not the pages that show it. 1.28.0 assumed it cleared everything, based on one save that cleared the home page. The other pages that came back `MISS` that time had simply not been cached yet.
+- **The fix.** `RAPM_Cache` now asks Rocket.net to clear the exact pages a spot shows on: `CDN_Clear_Cache_Api::cache_api_call( $urls, 'purge' )`.
+  - Rocket.net publishes no developer API. This is the call its own plugin makes to clear a post's pages, as quoted from that plugin's code in WP Rocket issue #5252 (github.com/wp-media/wp-rocket/issues/5252, 2024).
+  - It only runs if that class and method exist, and any error is caught, so a renamed class or changed method can't break a save.
+  - When a spot sits in a template or widget, Rocket.net still gets the spot's known pages. No "clear everything" call is known for Rocket.net, so that case is a gap: use the admin bar's CDN Cache > Purge Everything.
+- **To confirm on staging:** switch Free Design Help back on and off, and check that Home 2 comes back `MISS` with the banner present, then absent.
+
 ## 1.28.0
 
 **New: the Promotions screen.** This is the first release of the redesign, built from the clickable mockup Phil approved on 2026-10-05. Clients no longer manage promotions from the 12-row All Assets list with its Kind, Shortcode and Date columns. They get one screen that matches how they think about the site: where each picture shows.
@@ -30,7 +43,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **When it runs.** Switching on or off, saving, reordering, trashing or restoring, and deleting. Changes are collected and cleared once at the end of the request, after everything is saved. For a new promotion, WordPress fires its first save before its spot is stored, so the spot is looked up at the end.
 - **What it clears.** The pages that spot shows on, plus any Promotions Calendar pages. If the spot sits in a template or widget, there's no single page, so it clears the whole cache.
 - **Which caches.** WP Rocket, LiteSpeed, W3 Total Cache, WP Super Cache, SiteGround, Nginx Helper and WP Engine. Every function name was checked against that plugin's current source (WP Rocket 3.23.5.1, LiteSpeed 7.9.1, W3TC 2.10.7, WP Super Cache 3.1.4, SiteGround 7.8.3, Nginx Helper 2.4.1) or WP Engine's docs. Each runs only if that plugin is active. Other hosts can hook the new `rapm_cache_cleared` action.
-- **Rocket.net (the staging host)** publishes no developer API, so it isn't called directly. Measured on staging instead: the home page CDN copy was `HIT`, 39 minutes old. After one promotion save, home, Promotions and About Us all came back `MISS`. Rocket.net's own plugin clears its CDN on a WordPress save, and every change above goes through one.
+- **Rocket.net (the staging host)** publishes no developer API, so it isn't called directly. Measured on staging instead: the home page CDN copy was `HIT`, 39 minutes old. After one promotion save, home, Promotions and About Us all came back `MISS`. Rocket.net's own plugin clears its CDN on a WordPress save, and every change above goes through one. **Corrected in 1.28.1:** Rocket.net clears only its own short list (the home page). Promotions and About Us had simply not been cached yet.
 - **Also fixed: a picture swapped in by the hourly Drive-folder sync could show as broken on cached pages.** The sync deleted the old picture file but changed only hidden details, never saving the promotion, so no cache was cleared and cached pages kept pointing at the deleted file. The sync now saves the promotion when its picture changes. That clears the cache through `RAPM_Cache`, and Rocket.net's plugin clears its CDN too.
 
 **How it was checked.** No PHP runtime is available here (standing constraint).

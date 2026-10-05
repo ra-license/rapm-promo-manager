@@ -16,11 +16,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * decided in the visitor's browser, rapm-schedule.js), but the on/off
  * switch and edits do.
  *
- * Rocket.net (the staging host) publishes no developer API, but its own
- * must-use plugin already clears its CDN when a promotion is saved
- * (measured on staging, 2026-10-05: home, Promotions and About Us went from
- * HIT to MISS right after a save). So every change here also goes through
- * a normal WordPress save.
+ * Rocket.net (the staging host): its own must-use plugin clears only its
+ * own short list of pages (the home page) when a promotion is saved, so
+ * the pages a spot shows on are cleared directly (clear_rocket_net()).
  *
  * Every call below was checked against the plugin's own source
  * (WP Rocket 3.23.5.1, LiteSpeed Cache 7.9.1, W3 Total Cache 2.10.7,
@@ -119,6 +117,7 @@ class RAPM_Cache {
 
 		if ( $sitewide ) {
 			self::clear_everything();
+			self::clear_rocket_net( $urls ); // No "everything" call is known for Rocket.net, so at least its known pages.
 		} elseif ( $ids || $urls ) {
 			self::clear_pages( $ids, $urls );
 		}
@@ -160,6 +159,30 @@ class RAPM_Cache {
 			if ( isset( $GLOBALS['nginx_purger'] ) && is_object( $GLOBALS['nginx_purger'] ) && method_exists( $GLOBALS['nginx_purger'], 'purge_url' ) ) {
 				$GLOBALS['nginx_purger']->purge_url( $url );
 			}
+		}
+		self::clear_rocket_net( $urls );
+	}
+
+	/**
+	 * Rocket.net's CDN (1.28.1). Its must-use plugin clears only its own
+	 * list of pages when a promotion is saved: on staging, switching a
+	 * promotion off cleared the home page but left "Home 2", the one page
+	 * that promotion shows on, cached with the old banner. Rocket.net
+	 * publishes no developer API. This is the call its own plugin makes to
+	 * clear one post's pages, as quoted from that plugin in WP Rocket
+	 * issue #5252 (github.com/wp-media/wp-rocket/issues/5252):
+	 * CDN_Clear_Cache_Api::cache_api_call( $list_of_urls, 'purge' ).
+	 * Guarded so a renamed class or changed method can never break a save.
+	 */
+	private static function clear_rocket_net( $urls ) {
+		if ( ! $urls || ! class_exists( 'CDN_Clear_Cache_Api' ) || ! is_callable( array( 'CDN_Clear_Cache_Api', 'cache_api_call' ) ) ) {
+			return;
+		}
+		try {
+			CDN_Clear_Cache_Api::cache_api_call( array_values( $urls ), 'purge' );
+		} catch ( Throwable $e ) {
+			// Nothing to do: the page refreshes when its CDN copy expires.
+			unset( $e );
 		}
 	}
 
