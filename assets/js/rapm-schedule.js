@@ -26,6 +26,28 @@
 		return window.RAPM_Swiper || window.Swiper;
 	}
 
+	/**
+	 * A spot marked as the page's main heading (1.29.0, data-rapm-h1): the
+	 * first slide showing that has big words gets an h1, every other one an
+	 * h2. The server gives the h1 to the first slide in order, but the
+	 * schedule may be hiding that one, so it's set again here from what is
+	 * actually showing.
+	 */
+	function setMainHeading( slides ) {
+		var used = false;
+		slides.forEach( function ( slide ) {
+			var heading = slide.querySelector( '.rapm-headline' );
+			if ( ! heading ) { return; }
+			var want = used ? 'H2' : 'H1';
+			used = true;
+			if ( heading.tagName === want ) { return; }
+			var swap = document.createElement( want );
+			Array.prototype.slice.call( heading.attributes ).forEach( function ( a ) { swap.setAttribute( a.name, a.value ); } );
+			while ( heading.firstChild ) { swap.appendChild( heading.firstChild ); }
+			heading.parentNode.replaceChild( swap, heading );
+		} );
+	}
+
 	function isActive( el ) {
 		var start = el.getAttribute( 'data-rapm-start' );
 		var end   = el.getAttribute( 'data-rapm-end' );
@@ -85,6 +107,7 @@
 				return;
 			}
 			active.forEach( function ( s ) { wrapper.appendChild( s ); } );
+			if ( root.hasAttribute( 'data-rapm-h1' ) ) { setMainHeading( active ); }
 			root.style.display = '';
 
 			var SwiperClass = swiperClass();

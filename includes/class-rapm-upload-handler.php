@@ -258,28 +258,36 @@ class RAPM_Upload_Handler {
 						</td>
 					</tr>
 					<tr>
-						<th><label for="rapm_placement"><?php esc_html_e( 'Which Spot on the Site', 'rapm' ); ?></label></th>
-						<td><input type="text" id="rapm_placement" name="rapm_placement" value="<?php echo esc_attr( $placement ); ?>" />
-							<p class="description"><?php echo esc_html( sprintf( __( 'This is just a label for grouping — it has nothing to do with any page\'s actual web address. Every %s left with the same name here shares one carousel and rotates together, wherever that carousel ends up placed.', 'rapm' ), strtolower( $kind['label'] ) ) ); ?></p>
-							<p class="description"><?php esc_html_e( 'What actually decides which page it shows on is separate — it\'s the code shown below, pasted by hand onto whatever page you want. Naming this to match that page (like "dining-room" for a page about dining rooms) is a helpful habit for your own memory, but the site never reads or checks any real web address here — leave it as "default" unless you specifically need a second, separate carousel somewhere else.', 'rapm' ); ?></p>
-							<?php if ( $has_images ) : ?>
-								<p class="description"><strong><?php esc_html_e( 'This is not about phones vs. computers', 'rapm' ); ?></strong> — <?php esc_html_e( 'every promotion already shows the right picture on both automatically once you upload one of each below. Leave this as "default" for that.', 'rapm' ); ?></p>
-							<?php endif; ?>
+						<th><label for="rapm_placement"><?php esc_html_e( 'Where it shows', 'rapm' ); ?></label></th>
+						<td>
 							<?php
-							$placement_slug = sanitize_title( $placement ?: 'default' );
-							$shortcode_text = 'default' === $placement_slug
-								? '[' . $kind['shortcode'] . ']'
-								: '[' . $kind['shortcode'] . ' placement="' . $placement_slug . '"]';
+							// Spots by name (1.29.0) instead of a typed code, so a typo
+							// can't quietly start a new spot nobody placed on a page.
+							$spot_choices = RAPM_Spots::known( $kind_key );
+							$in_list      = false;
+							foreach ( $spot_choices as $choice ) {
+								if ( $choice['placement'] === $placement ) {
+									$in_list = true;
+								}
+							}
+							if ( ! $in_list ) {
+								array_unshift(
+									$spot_choices,
+									array(
+										'placement' => $placement,
+										'name'      => RAPM_Spots::name( $kind_key, $placement ),
+									)
+								);
+							}
 							?>
-							<div class="rapm-shortcode-hint" style="margin-top:10px;padding:10px 12px;background:#f0f6fc;border-left:4px solid #72aee6;max-width:480px;">
-								<p style="margin:0 0 4px;"><?php esc_html_e( 'This is what actually puts this promotion on the website — this exact code, pasted onto a page:', 'rapm' ); ?></p>
-								<p style="margin:0 0 4px;"><code id="rapm-shortcode-preview"><?php echo esc_html( $shortcode_text ); ?></code></p>
-								<p style="margin:0 0 4px;font-style:italic;" id="rapm-placement-summary"></p>
-								<?php if ( $kind['has_elementor_widget'] ) : ?>
-									<p style="margin:0 0 4px;"><?php esc_html_e( 'If this site uses Elementor, the "Promo Carousel" widget (under the Promo Manager category) can add it instead of typing that code.', 'rapm' ); ?></p>
-								<?php endif; ?>
-								<p style="margin:0;"><?php esc_html_e( 'Ask whoever manages the website if you\'re not sure it\'s already been added — it only needs to be added once per spot, not again for every new promotion.', 'rapm' ); ?></p>
-							</div>
+							<select id="rapm_placement" name="rapm_placement">
+								<?php foreach ( $spot_choices as $choice ) : ?>
+									<option value="<?php echo esc_attr( $choice['placement'] ); ?>" <?php selected( $placement, $choice['placement'] ); ?>><?php echo esc_html( $choice['name'] ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description"><?php esc_html_e( 'The spot on your website it shows in. Every spot is on the Promotions page with the pages it shows on. R&A Marketing adds new spots.', 'rapm' ); ?></p>
+							<p class="description" id="rapm-placement-summary"></p>
+							<p class="description"><?php esc_html_e( 'Spot code, for R&A Marketing:', 'rapm' ); ?> <code id="rapm-shortcode-preview"></code></p>
 						</td>
 					</tr>
 				</table>
@@ -330,6 +338,7 @@ class RAPM_Upload_Handler {
 							fetchSummary( slug );
 						}
 						placementInput.addEventListener( 'input', updatePreview );
+						placementInput.addEventListener( 'change', updatePreview );
 						updatePreview();
 					} )();
 				</script>

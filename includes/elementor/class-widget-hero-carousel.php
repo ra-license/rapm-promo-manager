@@ -27,26 +27,54 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 			array( 'label' => __( 'Content', 'rapm' ) )
 		);
 
+		// Pick a spot by its name (1.29.0). Only sliders and feature banners
+		// fit this widget. A widget saved before 1.29.0 has no spot yet and
+		// keeps using its Kind and Placement below until one is picked.
+		// The list is only needed in the editor: Elementor also builds a
+		// widget's controls on the live site, and uses a saved value as-is
+		// without checking it against the options (Control_Base_Data::
+		// get_value() in Elementor's source), so the live site skips it.
+		$spots = array( '' => __( 'Pick a spot…', 'rapm' ) );
+		if ( is_admin() || isset( $_GET['elementor-preview'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			foreach ( RAPM_Spots::known() as $spot ) {
+				if ( RAPM_Spots::can_be_main_heading( $spot['kind'] ) ) {
+					$spots[ $spot['kind'] . '|' . $spot['placement'] ] = $spot['name'] . ' (' . $spot['type'] . ')';
+				}
+			}
+		}
+		$this->add_control(
+			'spot',
+			array(
+				'label'       => __( 'Spot', 'rapm' ),
+				'type'        => \Elementor\Controls_Manager::SELECT,
+				'default'     => '',
+				'options'     => $spots,
+				'description' => __( 'Pick the same spot on several pages to show the same promotions on each. New spots are added on the Promotions screen.', 'rapm' ),
+			)
+		);
+
 		$this->add_control(
 			'kind',
 			array(
-				'label'   => __( 'Kind', 'rapm' ),
-				'type'    => \Elementor\Controls_Manager::SELECT,
-				'default' => 'hero',
-				'options' => array(
-					'hero'        => __( 'Hero (full carousel)', 'rapm' ),
-					'fold_banner' => __( 'Fold Banner (shorter, near the fold)', 'rapm' ),
+				'label'     => __( 'Type', 'rapm' ),
+				'type'      => \Elementor\Controls_Manager::SELECT,
+				'default'   => 'hero',
+				'options'   => array(
+					'hero'        => __( 'Slider', 'rapm' ),
+					'fold_banner' => __( 'Feature banner', 'rapm' ),
 				),
+				'condition' => array( 'spot' => '' ),
 			)
 		);
 
 		$this->add_control(
 			'placement',
 			array(
-				'label'       => __( 'Placement', 'rapm' ),
+				'label'       => __( 'Placement code', 'rapm' ),
 				'type'        => \Elementor\Controls_Manager::TEXT,
 				'default'     => 'default',
-				'description' => __( 'Matches the "Placement" field set on each asset under Promo > Add New Asset.', 'rapm' ),
+				'description' => __( 'Only for widgets made before spots had names. Picking a spot above replaces this.', 'rapm' ),
+				'condition'   => array( 'spot' => '' ),
 			)
 		);
 
@@ -83,10 +111,16 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 	}
 
 	private function shortcode_string() {
-		$settings = $this->get_settings_for_display();
-		$tag      = 'fold_banner' === $settings['kind'] ? 'rapm_fold_banner' : 'rapm_hero';
-		$max      = isset( $settings['max_slides'] ) ? max( 0, (int) $settings['max_slides'] ) : 0;
-		return '[' . $tag . ' placement="' . esc_attr( $settings['placement'] ) . '"' . ( $max ? ' max="' . $max . '"' : '' ) . ']';
+		$settings  = $this->get_settings_for_display();
+		$spot      = isset( $settings['spot'] ) ? (string) $settings['spot'] : '';
+		$kind      = isset( $settings['kind'] ) ? $settings['kind'] : 'hero';
+		$placement = isset( $settings['placement'] ) ? $settings['placement'] : 'default';
+		if ( false !== strpos( $spot, '|' ) ) {
+			list( $kind, $placement ) = explode( '|', $spot, 2 );
+		}
+		$tag = 'fold_banner' === $kind ? 'rapm_fold_banner' : 'rapm_hero';
+		$max = isset( $settings['max_slides'] ) ? max( 0, (int) $settings['max_slides'] ) : 0;
+		return '[' . $tag . ' placement="' . esc_attr( $placement ) . '"' . ( $max ? ' max="' . $max . '"' : '' ) . ']';
 	}
 
 	protected function render() {

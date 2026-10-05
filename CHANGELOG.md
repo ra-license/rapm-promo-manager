@@ -4,6 +4,48 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.29.0
+
+**New: spots you can name and add, plain type names, and a per-spot main heading (H1) for search engines.** Phil approved the spot names and type labels in the mockup (2026-10-05) and asked for the H1 setting. He wants several of each type of banner: the home page slider may also go on other pages, and the "home page banner" is really a feature banner.
+- **Plain type names everywhere clients look:**
+  - The four types are now Slider (was Hero), Feature banner (was Fold Banner), Coupon row and Tile row (was Marquee). Each has a one-line description.
+  - This covers the add/edit form's type list, picture-size labels in error messages ("Slider — Mobile"), the Elementor widget, Settings, Help & FAQ and the Training Guide.
+  - The codes stay the same (`hero`, `fold_banner`, `coupon`, `marquee`), so shortcodes and saved promotions don't change.
+- **Spots by name (`RAPM_Spots`).** A spot is named for its job ("Main slider", "Living Room slider"), not its page, because one spot can go on several pages. Names and settings live in the `rapm_spots` option. 1.28.0's `rapm_spot_names` renames are folded in on first read. A spot without a saved name keeps its automatic name ("Home page slider", "Home page banner", "Promotions coupons", "Living Room tiles"). Each section on the Promotions screen shows its type as a small gray label next to its name.
+- **"+ New spot" (R&A setup details).** It opens a window with the four types as picture cards and a name box ("Name it for its job, not its page"), with a live "Clients will see" preview.
+  - Creating the spot makes its placement code from the name (`living-room-slider`, adding `-2`, `-3`… if that type already uses it).
+  - The screen then shows the new spot as its own section, with "Add a picture". A message explains how to put it on a page: pick it in the Promo Carousel widget, or paste the code given.
+- **Elementor's Promo Carousel widget picks a spot by name** from a new Spot list, showing each spot's type. It lists only sliders and feature banners, the two types the widget can show.
+  - Widgets saved before 1.29.0 have no spot yet and keep using their old Kind and Placement fields, now labeled Type and Placement code. Those fields show only until a spot is picked, so nothing already on a page changes.
+  - The list is built only in the editor. Elementor also builds widget controls on the live site, but uses a saved value as-is without checking it against the options (`Control_Base_Data::get_value()` in Elementor's source), so live pages skip the lookups.
+  - The "Shows on" scan reads the new Spot setting too.
+- **The add/edit form's "Which Spot on the Site" text box is now "Where it shows",** a list of this type's spots by name. A typo can no longer quietly start a new spot that isn't on any page. The three paragraphs explaining placements and the shortcode box are replaced by one line, plus the spot code in small type for R&A.
+- **Main heading (H1) for search engines**, a checkbox per slider or feature banner in R&A setup details:
+  - **What it does.** When it's on, the first promotion showing in that spot uses an `h1` for its big words and every other promotion keeps `h2`. Coupon and tile rows don't get the option: a row of cards has no single headline.
+  - **Why it's per spot, not on every promotion.** Checked on staging, logged out: the home page and Home 2 have no H1 at all (the slider headlines are their only top headings, all H2). About Us, Promotions and Living Room Collection already have one. Making every promotion an H1 would put four on the Promotions page.
+  - **Sources.** Google is fine with several H1s (Search Engine Journal on Google's guidance). Accessibility guidance treats the H1 as the page's main heading (W3C WAI headings tutorial) and warns against several (BOIA).
+  - **On the page.** The server gives the `h1` to the first promotion in order that has words, and marks the carousel `data-rapm-h1`. The schedule may be hiding that one, so `rapm-schedule.js` moves the `h1` to the first promotion actually showing every time the carousel rebuilds.
+  - **Same look.** Themes and Elementor's site styles can make an `h1` bigger than an `h2` (`.elementor-kit-N h1` outranks `.rapm-headline`). A new rule in `rapm-hero.css` holds the `h1` to the same size, weight, line height, color and spacing as the headline it replaces. The font family stays the site's or the promotion's Typeface.
+  - **Cache.** Changing the setting clears the cache for that spot's pages (`RAPM_Cache::queue_spot()`).
+  - **Measured on staging first:** turning the slider headline on Promotions into an `h1` in the browser changed no style at all on this WoodMart + Elementor site.
+
+**How it was checked.** No PHP runtime is available here (standing constraint).
+- **PHP:** the structural checker found 0 issues in all 26 files. A pattern search found no `isset()` on a function result.
+  - Two bugs were caught by reading: a match pattern that failed on an indentation mismatch, which wrote nothing; and a loop variable `$tag` that would have overwritten the shortcode's own `$tag` in `RAPM_Hero_Carousel::render()`, renamed `$heading`.
+  - Apostrophes in new strings were checked for escaping.
+- **Main heading, in a browser** with real Swiper 11.2.10, the plugin's own `rapm-hero.css` and a deliberately aggressive `.elementor-kit-1 h1` rule (60px, red, uppercase):
+  - The first promotion gets the `h1`, and the rest `h2`.
+  - When it ends, the `h1` moves to the next one showing; when it comes back, the `h1` goes back. There's exactly one `h1` throughout.
+  - Loading with the first one already ended gives the second the `h1`.
+  - With the setting off, there's no `h1`.
+  - The aggressive theme rule was held off: 28px, 700, white, no uppercase.
+- **Admin screen**, on a page with the same markup and WordPress's admin CSS, with server replies faked:
+  - "+ New spot" is hidden until R&A details are on.
+  - The window opens with focus in the name box. Picking a type updates the example and the "Clients will see" type, and typing updates the name.
+  - Create sends the type and name. A failed create shows the error in red and keeps the window open; Cancel closes it.
+  - The H1 checkbox saves, and a failed save puts the box back and says so.
+- **Still to confirm on staging:** creating a real spot, the Elementor Spot list, the form's "Where it shows" list, and the H1 on the real home page through Rocket.net's CDN. Rocket.net's page clearing is still the open problem from 1.28.2.
+
 ## 1.28.2
 
 **New: R&A setup details show what the last page-cache clear did.** Built to find out why 1.28.1 didn't clear Rocket.net's copy of "Home 2". After the update, switching Free Design Help on still left Home 2 cached without the banner (`HIT`).

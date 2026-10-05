@@ -70,20 +70,20 @@ class RAPM_Help {
 
 			<h2><?php esc_html_e( 'Types of Promotions', 'rapm' ); ?></h2>
 			<details>
-				<summary><?php esc_html_e( 'What\'s the difference between Hero, Fold Banner, Coupon, and Marquee?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Hero is the big slider at the top of a page. Fold Banner is a shorter strip meant to sit lower down. Coupon is a small card shown in a horizontal scrolling row alongside other coupons. Marquee is a compact row of small square tiles — like "Design Services," "Current Promotions," "Financing," "Visit Us" — good for quick links or small promo squares near the top of a page.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'What\'s the difference between a Slider, Feature banner, Coupon row and Tile row?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'A Slider is big rotating pictures, usually at the top of a page. A Feature banner is a wide strip lower on a page that features one thing. A Coupon row is small coupon cards in a row people can scroll. A Tile row is small square tiles, like "Design Services," "Current Promotions," "Financing," "Visit Us" — good for quick links.', 'rapm' ); ?></p>
 			</details>
 			<details>
-				<summary><?php esc_html_e( 'Why does Marquee only accept square pictures?', 'rapm' ); ?></summary>
+				<summary><?php esc_html_e( 'Why does a Tile row only accept square pictures?', 'rapm' ); ?></summary>
 				<p><?php esc_html_e( 'So every tile in the row looks the same size. If different tiles used pictures with different shapes, the row would look uneven — one tile taller than the next. A square picture (the same width and height) crops predictably no matter what you upload.', 'rapm' ); ?></p>
 			</details>
 			<details>
-				<summary><?php esc_html_e( 'What does "Which Spot on the Site" actually do?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'It groups promotions into one rotating carousel — that\'s all it is, just a label. It is not connected to any page\'s actual web address, and typing a real URL here does nothing. Every promotion left on "default" shares one carousel and takes turns rotating together, wherever that carousel gets placed. Only type something different here if you specifically want a second, separate carousel — for example, one set of promotions rotating on the homepage, and a completely different set rotating on a category page. As you type, the box below shows exactly which other promotions (by name) already share whatever you\'ve typed, so you can see it working with your own real promotions instead of just reading a description of it.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'What does "Where it shows" mean?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'It is the spot on your website the promotion shows in, like "Home page slider." Promotions in the same spot take turns. Pick one from the list. R&A Marketing makes new spots, and the Promotions page lists every spot with the pages it shows on.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'So how does the promotion actually end up on the right page?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Through the code shown below the "Which Spot on the Site" field, not through anything you type into that field itself. That code gets pasted, by hand, onto whichever page you want the carousel to appear on — that\'s the one and only thing that controls which page it shows on. Naming your spot after that page (like "dining-room") is a good habit purely so you remember what it\'s for, but it has no technical effect.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'R&A Marketing puts each spot on the pages where it belongs. After that, every promotion you add to that spot shows there by itself. One spot can be on several pages, and then the same promotions show on each.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I show a calendar of upcoming promotions?', 'rapm' ); ?></summary>
@@ -131,7 +131,7 @@ class RAPM_Help {
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'Do I need to create a separate promotion for mobile and desktop?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'No. One promotion covers both — that\'s exactly what the Desktop Promotion and Mobile Promotion pictures are for. Upload both, and visitors on a computer automatically see the desktop one while visitors on a phone automatically see the mobile one. "Which Spot on the Site" further up the form is for something different (multiple promotions in different page locations) — leave it as "default" unless someone has specifically told you otherwise.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'No. One promotion covers both — that\'s exactly what the Desktop Promotion and Mobile Promotion pictures are for. Upload both, and visitors on a computer automatically see the desktop one while visitors on a phone automatically see the mobile one. "Where it shows" further up the form is something different: which spot on your website it goes in.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I check what the mobile version will actually look like?', 'rapm' ); ?></summary>
@@ -183,7 +183,7 @@ class RAPM_Help {
 
 			<details>
 				<summary><?php esc_html_e( 'Can I use a Google Drive folder instead of one picture?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Yes, and it is the easiest way to keep a promotion up to date. Make one folder for each promotion (for example "England - Hero Slider"), share it as "Anyone with the link," and paste the folder\'s link into the box. The newest picture in the folder is used. To change the promotion, just add a new picture to the folder — the file name doesn\'t matter. You can put the wide desktop picture and the tall phone picture in the same folder and paste that folder into both boxes; each one picks the picture that fits its shape.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Yes, and it is the easiest way to keep a promotion up to date. Make one folder for each promotion (for example "England - Slider"), share it as "Anyone with the link," and paste the folder\'s link into the box. The newest picture in the folder is used. To change the promotion, just add a new picture to the folder — the file name doesn\'t matter. You can put the wide desktop picture and the tall phone picture in the same folder and paste that folder into both boxes; each one picks the picture that fits its shape.', 'rapm' ); ?></p>
 			</details>
 
 			<details>

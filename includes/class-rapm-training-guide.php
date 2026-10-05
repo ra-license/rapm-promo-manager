@@ -226,8 +226,8 @@ class RAPM_Training_Guide {
 
 						<ul class="rapm-tg-plain">
 							<li><span><strong><?php esc_html_e( 'Promotion', 'rapm' ); ?></strong> — <?php esc_html_e( 'one sale banner, coupon, or offer. Each one is its own entry in the tool.', 'rapm' ); ?></span></li>
-							<li><span><strong><?php esc_html_e( 'Type', 'rapm' ); ?></strong> — <?php esc_html_e( 'which kind of promotion it is: Hero, Fold Banner, Coupon, or Marquee. Each type is a different shape and goes in a different spot on the page.', 'rapm' ); ?></span></li>
-							<li><span><strong><?php esc_html_e( 'Spot on the Site', 'rapm' ); ?></strong> — <?php esc_html_e( 'a label that groups promotions together so they take turns rotating in the same place. Most of the time you\'ll leave this as "default."', 'rapm' ); ?></span></li>
+							<li><span><strong><?php esc_html_e( 'Type', 'rapm' ); ?></strong> — <?php esc_html_e( 'which kind of promotion it is: Slider, Feature banner, Coupon row or Tile row. Each type is a different shape and goes in a different spot on the page.', 'rapm' ); ?></span></li>
+							<li><span><strong><?php esc_html_e( 'Where it shows', 'rapm' ); ?></strong> — <?php esc_html_e( 'the spot on your website it goes in, like "Home page slider." Promotions in the same spot take turns. Pick it from the list.', 'rapm' ); ?></span></li>
 							<li><span><strong><?php esc_html_e( 'Desktop / Mobile picture', 'rapm' ); ?></strong> — <?php esc_html_e( 'every promotion needs two pictures, because a computer screen and a phone screen are different shapes. The tool shows the right one to each visitor automatically.', 'rapm' ); ?></span></li>
 						</ul>
 
@@ -245,25 +245,25 @@ class RAPM_Training_Guide {
 						<div class="rapm-tg-type-grid">
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:100%;height:24px;"></div></div>
-								<h3><?php esc_html_e( 'Hero', 'rapm' ); ?></h3>
+								<h3><?php esc_html_e( 'Slider', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">1920 &times; 600 &middot; <?php esc_html_e( 'wide banner', 'rapm' ); ?></p>
 								<p><?php esc_html_e( 'The big, full-width slider at the top of a page. Usually the first thing a visitor sees.', 'rapm' ); ?></p>
 							</div>
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:100%;height:12px;"></div></div>
-								<h3><?php esc_html_e( 'Fold Banner', 'rapm' ); ?></h3>
+								<h3><?php esc_html_e( 'Feature banner', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">1920 &times; 300 &middot; <?php esc_html_e( 'thin strip', 'rapm' ); ?></p>
-								<p><?php esc_html_e( 'A shorter strip, usually placed further down the page.', 'rapm' ); ?></p>
+								<p><?php esc_html_e( 'A wide strip that features one thing, usually lower on a page.', 'rapm' ); ?></p>
 							</div>
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:54px;height:68px;"></div></div>
-								<h3><?php esc_html_e( 'Coupon', 'rapm' ); ?></h3>
+								<h3><?php esc_html_e( 'Coupon row', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">600 &times; 750 &middot; <?php esc_html_e( 'tall card', 'rapm' ); ?></p>
 								<p><?php esc_html_e( 'A small card shown in a row of coupons that visitors scroll through sideways.', 'rapm' ); ?></p>
 							</div>
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:58px;height:58px;"></div></div>
-								<h3><?php esc_html_e( 'Marquee', 'rapm' ); ?></h3>
+								<h3><?php esc_html_e( 'Tile row', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">1080 &times; 1080 &middot; <?php esc_html_e( 'square tile', 'rapm' ); ?></p>
 								<p><?php esc_html_e( 'A small square tile in a compact row, like quick links (Financing, Visit Us, and so on).', 'rapm' ); ?></p>
 							</div>
@@ -285,7 +285,7 @@ class RAPM_Training_Guide {
 								<div class="rapm-tg-mockup">
 									<div class="mk-card">
 										<div class="mk-label"><span class="rapm-tg-chip" style="width:18px;height:18px;font-size:10px;">i</span><?php esc_html_e( 'Type of Promotion', 'rapm' ); ?></div>
-										<div class="mk-input" style="display:flex;align-items:center;padding:0 8px;color:#1D2327;">Hero &mdash; 1920x600, Mobile 1080x1920 &#9660;</div>
+										<div class="mk-input" style="display:flex;align-items:center;padding:0 8px;color:#1D2327;">Slider &mdash; Desktop 1920x600, Mobile 1080x1920 &#9660;</div>
 										<div class="mk-desc"><?php esc_html_e( 'Choose which one before uploading pictures below.', 'rapm' ); ?></div>
 									</div>
 								</div>
@@ -329,7 +329,7 @@ class RAPM_Training_Guide {
 							</div>
 							<div class="rapm-tg-callouts-col">
 								<ol>
-									<li><span class="rapm-tg-chip">1</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Internal Name', 'rapm' ); ?></strong><span><?php esc_html_e( 'Any name that helps you remember what this is, like "Fall Sale Hero."', 'rapm' ); ?></span></span></li>
+									<li><span class="rapm-tg-chip">1</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Internal Name', 'rapm' ); ?></strong><span><?php esc_html_e( 'Any name that helps you remember what this is, like "Fall Sale Slider."', 'rapm' ); ?></span></span></li>
 									<li><span class="rapm-tg-chip">2</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Desktop Promotion picture', 'rapm' ); ?></strong><span><?php esc_html_e( "Required. Upload the picture, or paste a link to one. If it's the wrong shape, a small grid of buttons appears — click the part of the picture you want kept, and the rest is trimmed automatically.", 'rapm' ); ?></span></span></li>
 								</ol>
 								<div class="rapm-tg-callout rapm-tg-callout-warn" style="margin-top:12px;">
@@ -475,10 +475,10 @@ class RAPM_Training_Guide {
 							<table class="rapm-tg-sizes">
 								<thead><tr><th><?php esc_html_e( 'Type', 'rapm' ); ?></th><th><?php esc_html_e( 'Desktop size', 'rapm' ); ?></th><th><?php esc_html_e( 'Mobile size', 'rapm' ); ?></th><th><?php esc_html_e( 'Max file size', 'rapm' ); ?></th></tr></thead>
 								<tbody>
-									<tr><td><?php esc_html_e( 'Hero', 'rapm' ); ?></td><td>1920 &times; 600 px</td><td>1080 &times; 1920 px</td><td>300 KB</td></tr>
-									<tr><td><?php esc_html_e( 'Fold Banner', 'rapm' ); ?></td><td>1920 &times; 300 px</td><td>1080 &times; 400 px</td><td>200 KB</td></tr>
-									<tr><td><?php esc_html_e( 'Coupon', 'rapm' ); ?></td><td>600 &times; 750 px</td><td>600 &times; 750 px</td><td>150 KB</td></tr>
-									<tr><td><?php esc_html_e( 'Marquee', 'rapm' ); ?></td><td>1080 &times; 1080 px</td><td>1080 &times; 1080 px</td><td>200 KB</td></tr>
+									<tr><td><?php esc_html_e( 'Slider', 'rapm' ); ?></td><td>1920 &times; 600 px</td><td>1080 &times; 1920 px</td><td>300 KB</td></tr>
+									<tr><td><?php esc_html_e( 'Feature banner', 'rapm' ); ?></td><td>1920 &times; 300 px</td><td>1080 &times; 400 px</td><td>200 KB</td></tr>
+									<tr><td><?php esc_html_e( 'Coupon row', 'rapm' ); ?></td><td>600 &times; 750 px</td><td>600 &times; 750 px</td><td>150 KB</td></tr>
+									<tr><td><?php esc_html_e( 'Tile row', 'rapm' ); ?></td><td>1080 &times; 1080 px</td><td>1080 &times; 1080 px</td><td>200 KB</td></tr>
 								</tbody>
 							</table>
 						</div>
@@ -522,8 +522,8 @@ class RAPM_Training_Guide {
 							<p class="rapm-tg-a"><?php esc_html_e( 'On the Promotions page, check that its switch is on (blue) and that its section says which pages it shows on. If the section says "Not on any page yet," ask whoever manages the website to place it.', 'rapm' ); ?></p>
 						</div>
 						<div class="rapm-tg-problem">
-							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( 'I\'m not sure what "Spot on the Site" should be.', 'rapm' ); ?></div>
-							<p class="rapm-tg-a"><?php esc_html_e( 'Leave it as "default" unless someone specifically told you to use a different one. It\'s just a label for grouping — it has nothing to do with any web address.', 'rapm' ); ?></p>
+							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( 'I\'m not sure which spot to pick in "Where it shows."', 'rapm' ); ?></div>
+							<p class="rapm-tg-a"><?php esc_html_e( 'Start from the Promotions page instead: find the section where it should show and click "Add a picture." The spot is picked for you.', 'rapm' ); ?></p>
 						</div>
 						<div class="rapm-tg-problem">
 							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( "My headline and my picture's own text overlap.", 'rapm' ); ?></div>

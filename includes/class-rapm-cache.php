@@ -56,6 +56,12 @@ class RAPM_Cache {
 		}
 	}
 
+	/** A spot's own setting changed (its main heading): clear the pages it shows on. */
+	public static function queue_spot( $key ) {
+		self::$keys[ $key ] = true;
+		self::hook();
+	}
+
 	public static function on_delete( $post_id ) {
 		if ( 'rapm_asset' !== get_post_type( $post_id ) ) {
 			return;

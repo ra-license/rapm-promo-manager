@@ -157,3 +157,23 @@
 	.rapm-slide-copy { padding: 24px 20px; }
 	.rapm-headline { font-size: 22px; }
 }
+
+/* A spot set as the page's main heading (1.29.0) uses an h1 for its first
+   promotion's big words instead of an h2. Themes and Elementor's site
+   settings often style h1 bigger than h2 (".elementor-kit-N h1" outranks
+   ".rapm-headline"), so the h1 is held to the same look as the h2 it
+   replaces. Font family stays with the site or the promotion's Typeface. */
+.rapm-slide-copy h1.rapm-headline {
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1.4;
+	letter-spacing: normal;
+	text-transform: none;
+	color: inherit;
+	margin: 0 0 6px;
+	padding: 0;
+}
+
+@media (max-width: 768px) {
+	.rapm-slide-copy h1.rapm-headline { font-size: 22px; }
+}

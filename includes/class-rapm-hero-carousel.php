@@ -71,6 +71,11 @@ class RAPM_Hero_Carousel {
 		$instance_id  = 'rapm-' . $placement . '-' . wp_unique_id();
 		$desktop_slot = $slots[ $kind['desktop'] ];
 		$mobile_slot  = $slots[ $kind['mobile'] ];
+		// R&A can mark a spot as the page's main heading (1.29.0): its
+		// first promotion with words gets an h1, the rest keep h2.
+		// rapm-schedule.js moves the h1 to the first one actually
+		// showing, since the schedule can hide the first one here.
+		$main_heading = RAPM_Spots::main_heading( $kind_key, $placement );
 
 		ob_start();
 		// Loads this carousel's files wherever it renders (popup, template,
@@ -102,9 +107,17 @@ class RAPM_Hero_Carousel {
 				.<?php echo esc_attr( $instance_id ); ?> .rapm-slide.has-mobile-img picture { position: absolute; inset: 0; }
 			}
 		</style>
-		<div class="swiper rapm-hero <?php echo esc_attr( $instance_id ); ?>" style="display:none;" data-rapm-carousel>
+		<div class="swiper rapm-hero <?php echo esc_attr( $instance_id ); ?>" style="display:none;" data-rapm-carousel<?php echo $main_heading ? ' data-rapm-h1' : ''; ?>>
 			<div class="swiper-wrapper">
-				<?php foreach ( $query->posts as $post ) : self::render_slide( $post->ID ); endforeach; ?>
+				<?php
+				$h1_used = false;
+				foreach ( $query->posts as $post ) {
+					$heading = $main_heading && ! $h1_used ? 'h1' : 'h2';
+					if ( self::render_slide( $post->ID, $heading ) && 'h1' === $heading ) {
+						$h1_used = true;
+					}
+				}
+				?>
 			</div>
 			<?php if ( 'both' === $atts['nav'] || 'arrows' === $atts['nav'] ) : ?>
 				<div class="swiper-button-next rapm-nav-btn"></div>
@@ -146,7 +159,11 @@ class RAPM_Hero_Carousel {
 		return ob_get_clean();
 	}
 
-	private static function render_slide( $asset_id ) {
+	/**
+	 * @param string $heading_tag 'h1' or 'h2' for the big words.
+	 * @return bool True if a headline was printed (so an h1 was used up).
+	 */
+	private static function render_slide( $asset_id, $heading_tag = 'h2' ) {
 		$headline     = get_post_meta( $asset_id, '_rapm_headline', true );
 		$subhead      = get_post_meta( $asset_id, '_rapm_subhead', true );
 		$cta_text     = get_post_meta( $asset_id, '_rapm_cta_text', true );
@@ -166,8 +183,9 @@ class RAPM_Hero_Carousel {
 		$mobile_src   = $mobile_id ? wp_get_attachment_image_url( $mobile_id, 'full' ) : '';
 
 		if ( ! $desktop_src ) {
-			return; // No usable image — nothing to show for this asset.
+			return false; // No usable image — nothing to show for this asset.
 		}
+		$heading_tag = 'h1' === $heading_tag ? 'h1' : 'h2';
 		?>
 		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
 			<picture>
@@ -191,7 +209,7 @@ class RAPM_Hero_Carousel {
 			</picture>
 			<?php if ( $headline || $subhead || $cta_text ) : ?>
 				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>" data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">
-					<?php if ( $headline ) : ?><h2 class="rapm-headline"><?php echo esc_html( $headline ); ?></h2><?php endif; ?>
+					<?php if ( $headline ) : ?><<?php echo $heading_tag; // phpcs:ignore WordPress.Security.EscapeOutput -- only 'h1' or 'h2'. ?> class="rapm-headline"><?php echo esc_html( $headline ); ?></<?php echo $heading_tag; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php endif; ?>
 					<?php if ( $subhead ) : ?><p class="rapm-subhead"><?php echo esc_html( $subhead ); ?></p><?php endif; ?>
 					<?php if ( $cta_text ) : ?><span class="rapm-cta-btn"><?php echo esc_html( $cta_text ); ?></span><?php endif; ?>
 				</div>
@@ -202,6 +220,7 @@ class RAPM_Hero_Carousel {
 		</div>
 		<?php
 		echo '<script type="application/ld+json">' . wp_json_encode( self::schema_for_asset( $asset_id, $desktop_src, $url ), JSON_UNESCAPED_SLASHES ) . '</script>'; // phpcs:ignore
+		return (bool) $headline;
 	}
 
 	private static function schema_for_asset( $asset_id, $image_url, $url ) {

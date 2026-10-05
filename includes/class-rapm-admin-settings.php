@@ -219,7 +219,7 @@ class RAPM_Admin_Settings {
 					} )();
 				</script>
 
-				<h2><?php esc_html_e( 'Marquee Defaults', 'rapm' ); ?></h2>
+				<h2><?php esc_html_e( 'Tile Row Defaults', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'Applied to [rapm_marquee] unless a specific one overrides it with its own items="..." attribute.', 'rapm' ); ?></p>
 				<table class="form-table">
 					<tr>

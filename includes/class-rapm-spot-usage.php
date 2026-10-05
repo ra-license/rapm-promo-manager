@@ -162,7 +162,13 @@ class RAPM_Spot_Usage {
 			$settings  = isset( $node['settings'] ) && is_array( $node['settings'] ) ? $node['settings'] : array();
 			$kind      = isset( $settings['kind'] ) && 'fold_banner' === $settings['kind'] ? 'fold_banner' : 'hero';
 			$placement = ! empty( $settings['placement'] ) ? sanitize_title( $settings['placement'] ) : 'default';
-			$keys[]    = $kind . '|' . $placement;
+			// The Spot list (1.29.0) wins over the older Kind/Placement fields.
+			if ( ! empty( $settings['spot'] ) && is_string( $settings['spot'] ) && false !== strpos( $settings['spot'], '|' ) ) {
+				list( $kind, $placement ) = explode( '|', $settings['spot'], 2 );
+				$kind      = 'fold_banner' === $kind ? 'fold_banner' : 'hero';
+				$placement = sanitize_title( $placement );
+			}
+			$keys[] = $kind . '|' . $placement;
 		}
 		foreach ( $node as $child ) {
 			$keys = array_merge( $keys, self::keys_in_elementor( $child ) );

@@ -19,7 +19,7 @@ class RAPM_Slots {
 	public static function defaults() {
 		return array(
 			'hero_desktop'        => array(
-				'label'                  => __( 'Hero — Desktop', 'rapm' ),
+				'label'                  => __( 'Slider — Desktop', 'rapm' ),
 				'width'                  => 1920,
 				'height'                 => 600,
 				'aspect_ratio_tolerance' => 0.02,
@@ -27,7 +27,7 @@ class RAPM_Slots {
 				'format'                 => 'webp',
 			),
 			'hero_mobile'         => array(
-				'label'                  => __( 'Hero — Mobile', 'rapm' ),
+				'label'                  => __( 'Slider — Mobile', 'rapm' ),
 				'width'                  => 1080,
 				'height'                 => 1920,
 				'aspect_ratio_tolerance' => 0.02,
@@ -42,7 +42,7 @@ class RAPM_Slots {
 			// otherwise. Kept far smaller than the hero's file-size budget
 			// since it's proportionally a much smaller image.
 			'fold_banner_desktop' => array(
-				'label'                  => __( 'Fold Banner — Desktop', 'rapm' ),
+				'label'                  => __( 'Feature banner — Desktop', 'rapm' ),
 				'width'                  => 1920,
 				'height'                 => 300,
 				'aspect_ratio_tolerance' => 0.02,
@@ -53,7 +53,7 @@ class RAPM_Slots {
 			// give (1080x170) — kept taller for text legibility on a small
 			// screen, a deliberate judgment call given no standard exists.
 			'fold_banner_mobile'  => array(
-				'label'                  => __( 'Fold Banner — Mobile', 'rapm' ),
+				'label'                  => __( 'Feature banner — Mobile', 'rapm' ),
 				'width'                  => 1080,
 				'height'                 => 400,
 				'aspect_ratio_tolerance' => 0.02,
@@ -83,7 +83,7 @@ class RAPM_Slots {
 			// the original tile row look inconsistent — every image was a
 			// different aspect ratio, forced into the same small box).
 			'marquee_tile'        => array(
-				'label'                  => __( 'Marquee Tile', 'rapm' ),
+				'label'                  => __( 'Tile', 'rapm' ),
 				'width'                  => 1080,
 				'height'                 => 1080,
 				'aspect_ratio_tolerance' => 0.02,
@@ -94,6 +94,11 @@ class RAPM_Slots {
 	}
 
 	/**
+	 * Labels are the plain type names clients see (1.29.0, approved by
+	 * Phil): Slider, Feature banner, Coupon row, Tile row. The keys stay
+	 * hero / fold_banner / coupon / marquee, the codes used in shortcodes
+	 * and saved promotions.
+	 *
 	 * Which two slots (desktop/mobile) apply for each asset "kind" — the
 	 * one other place, besides here, that would need updating to add a
 	 * third kind later.
@@ -101,14 +106,16 @@ class RAPM_Slots {
 	public static function kinds() {
 		return array(
 			'hero'        => array(
-				'label'                 => __( 'Hero (full carousel)', 'rapm' ),
+				'label'                 => __( 'Slider', 'rapm' ),
+				'help'                  => __( 'Big rotating pictures, usually at the top of a page.', 'rapm' ),
 				'desktop'               => 'hero_desktop',
 				'mobile'                => 'hero_mobile',
 				'shortcode'             => 'rapm_hero',
 				'has_elementor_widget'  => true,
 			),
 			'fold_banner' => array(
-				'label'                 => __( 'Fold Banner (shorter, near the fold)', 'rapm' ),
+				'label'                 => __( 'Feature banner', 'rapm' ),
+				'help'                  => __( 'A wide strip that features one thing, lower on a page.', 'rapm' ),
 				'desktop'               => 'fold_banner_desktop',
 				'mobile'                => 'fold_banner_mobile',
 				'shortcode'             => 'rapm_fold_banner',
@@ -118,7 +125,8 @@ class RAPM_Slots {
 			// shape either way since it's always shown at a small, fixed
 			// card size (see coupon_card above), not a full-width hero.
 			'coupon'      => array(
-				'label'                 => __( 'Coupon (card in a scrolling row)', 'rapm' ),
+				'label'                 => __( 'Coupon row', 'rapm' ),
+				'help'                  => __( 'Coupon cards in a row people can scroll.', 'rapm' ),
 				'desktop'               => 'coupon_card',
 				'mobile'                => 'coupon_card',
 				'shortcode'             => 'rapm_coupon_book',
@@ -128,7 +136,8 @@ class RAPM_Slots {
 			// same reasoning as coupon_card above — always shown small, in
 			// a fixed-count row, never full-bleed.
 			'marquee'     => array(
-				'label'                 => __( 'Marquee (small tiles in a row)', 'rapm' ),
+				'label'                 => __( 'Tile row', 'rapm' ),
+				'help'                  => __( 'Small square tiles in a row.', 'rapm' ),
 				'desktop'               => 'marquee_tile',
 				'mobile'                => 'marquee_tile',
 				'shortcode'             => 'rapm_marquee',

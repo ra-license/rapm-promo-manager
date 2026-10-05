@@ -78,3 +78,39 @@
 .rapm-promos-foot p { margin: 0; font-size: 13px; color: #50575e; max-width: 760px; }
 .rapm-ra-panel ul { margin: 8px 0 0 18px; list-style: disc; }
 .rapm-no-results { margin: 0 0 20px; padding: 24px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; font-size: 14px; }
+
+/* 1.29.0: spot type label, main-heading setting, "+ New spot" window. */
+.rapm-spot-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rapm-type-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #f0f0f1; color: #50575e; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.rapm-h1-setting { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 12px; color: #50575e; max-width: 640px; }
+.rapm-h1-setting input { margin-top: 2px; }
+.rapm-h1-setting strong { color: #1d2327; }
+
+.rapm-new-spot { width: 640px; max-width: calc(100% - 32px); padding: 0; border: 0; border-radius: 6px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+.rapm-new-spot::backdrop { background: rgba(29, 35, 39, 0.5); }
+.rapm-ns-form { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.rapm-promos .rapm-ns-form h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.rapm-ns-types { margin: 0; padding: 0; border: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr)); gap: 8px; }
+.rapm-ns-types legend { margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+.rapm-ns-type { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid #c3c4c7; border-radius: 4px; cursor: pointer; font-size: 12px; color: #50575e; }
+.rapm-ns-type strong { font-size: 14px; color: #1d2327; }
+.rapm-ns-type input { position: absolute; opacity: 0; }
+.rapm-ns-type:has(input:checked) { border: 2px solid #2271b1; padding: 11px; background: #f0f6fc; }
+.rapm-ns-type:has(input:focus-visible) { outline: 2px solid #2271b1; outline-offset: 2px; }
+.rapm-ns-shape { height: 24px; display: flex; align-items: center; gap: 3px; }
+.rapm-ns-shape i { display: none; background: #8c8f94; border-radius: 2px; }
+.rapm-ns-type:has(input:checked) .rapm-ns-shape i { background: #2271b1; }
+.rapm-ns-shape-hero i:first-child { display: block; width: 64px; height: 20px; }
+.rapm-ns-shape-fold_banner i:first-child { display: block; width: 72px; height: 11px; }
+.rapm-ns-shape-coupon i:nth-child(-n+3) { display: block; width: 16px; height: 20px; }
+.rapm-ns-shape-marquee i { display: block; width: 14px; height: 14px; }
+.rapm-ns-field { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.rapm-ns-field label { font-size: 14px; font-weight: 600; }
+.rapm-ns-field input { min-height: 40px; font-size: 15px; }
+.rapm-ns-help { font-size: 12px; color: #50575e; }
+.rapm-ns-preview { margin: 0; padding: 12px 14px; background: #f6f7f7; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 16px; }
+.rapm-ns-preview > span:first-child { width: 100%; font-size: 12px; color: #50575e; }
+.rapm-ns-status { margin: 0; font-size: 13px; color: #50575e; }
+.rapm-ns-status.is-error { color: #b32d2e; }
+.rapm-ns-status:empty { display: none; }
+.rapm-ns-actions { margin: 0; display: flex; justify-content: flex-end; gap: 8px; }

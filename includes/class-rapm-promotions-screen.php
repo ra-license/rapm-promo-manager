@@ -170,8 +170,10 @@ class RAPM_Promotions_Screen {
 			}
 			$spots[ $key ]['posts'][] = $post;
 		}
-		foreach ( array_keys( RAPM_Spot_Usage::get() ) as $key ) {
-			if ( 'calendar' === $key || isset( $spots[ $key ] ) ) {
+		// Spots placed on a page, or made with "+ New spot", that have no promotions yet.
+		$empty = array_merge( array_keys( RAPM_Spot_Usage::get() ), array_keys( RAPM_Spots::all() ) );
+		foreach ( $empty as $key ) {
+			if ( 'calendar' === $key || isset( $spots[ $key ] ) || false === strpos( $key, '|' ) ) {
 				continue;
 			}
 			list( $kind, $placement ) = explode( '|', $key, 2 );
@@ -197,34 +199,9 @@ class RAPM_Promotions_Screen {
 		return $spots;
 	}
 
-	/** A spot's plain name: the one R&A gave it, or one made from its kind and placement ("Home page slider"). */
+	/** A spot's plain name (RAPM_Spots::name()). */
 	public static function spot_name( $kind, $placement ) {
-		$names = get_option( 'rapm_spot_names', array() );
-		$key   = $kind . '|' . $placement;
-		if ( is_array( $names ) && ! empty( $names[ $key ] ) ) {
-			return $names[ $key ];
-		}
-		$nouns = array(
-			'hero'        => __( 'slider', 'rapm' ),
-			'fold_banner' => __( 'banner', 'rapm' ),
-			'coupon'      => __( 'coupons', 'rapm' ),
-			'marquee'     => __( 'tiles', 'rapm' ),
-		);
-		if ( 'home' === $placement ) {
-			$where = __( 'Home page', 'rapm' );
-		} elseif ( 'default' === $placement ) {
-			$where = __( 'Main', 'rapm' );
-		} else {
-			$where = ucwords( str_replace( array( '-', '_' ), ' ', $placement ) );
-		}
-		$noun = isset( $nouns[ $kind ] ) ? $nouns[ $kind ] : __( 'promotions', 'rapm' );
-		/* translators: 1: where on the site, e.g. "Home page"; 2: what it is, e.g. "slider" */
-		return sprintf( __( '%1$s %2$s', 'rapm' ), $where, $noun );
-	}
-
-	private static function shortcode_for( $kind, $placement ) {
-		$info = RAPM_Slots::kind( $kind );
-		return 'default' === $placement ? '[' . $info['shortcode'] . ']' : '[' . $info['shortcode'] . ' placement="' . $placement . '"]';
+		return RAPM_Spots::name( $kind, $placement );
 	}
 
 	/**
@@ -335,6 +312,7 @@ class RAPM_Promotions_Screen {
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Promotions', 'rapm' ); ?></h1>
 					<p class="rapm-promos-sub"><?php esc_html_e( 'The pictures on your website, grouped by where they show.', 'rapm' ); ?></p>
 				</div>
+				<button type="button" class="button button-primary rapm-ra rapm-new-spot-open" hidden><?php esc_html_e( '+ New spot', 'rapm' ); ?></button>
 				<?php if ( $spots ) : ?>
 					<div class="rapm-promos-search">
 						<label for="rapm-promo-search"><?php esc_html_e( 'Find a promotion', 'rapm' ); ?></label>
@@ -417,7 +395,52 @@ class RAPM_Promotions_Screen {
 					<p><?php esc_html_e( 'None yet. It runs when a promotion is switched on or off, saved, reordered or trashed.', 'rapm' ); ?></p>
 				<?php endif; ?>
 			</div>
+
+			<?php self::render_new_spot_dialog(); ?>
 		</div>
+		<?php
+	}
+
+	/** "+ New spot" (R&A): pick a type, name it for its job. Approved in the 2026-10-05 mockup. */
+	private static function render_new_spot_dialog() {
+		$examples = array(
+			'hero'        => __( 'For example: Living Room slider', 'rapm' ),
+			'fold_banner' => __( 'For example: Seasonal feature banner', 'rapm' ),
+			'coupon'      => __( 'For example: Clearance coupons', 'rapm' ),
+			'marquee'     => __( 'For example: Shop by room tiles', 'rapm' ),
+		);
+		?>
+		<dialog class="rapm-new-spot" aria-labelledby="rapm-ns-title">
+			<form class="rapm-ns-form">
+				<h2 id="rapm-ns-title"><?php esc_html_e( 'New spot', 'rapm' ); ?></h2>
+				<fieldset class="rapm-ns-types">
+					<legend><?php esc_html_e( 'What kind is it?', 'rapm' ); ?></legend>
+					<?php foreach ( self::KIND_ORDER as $i => $kind ) : ?>
+						<?php $info = RAPM_Slots::kind( $kind ); ?>
+						<label class="rapm-ns-type">
+							<input type="radio" name="kind" value="<?php echo esc_attr( $kind ); ?>" data-example="<?php echo esc_attr( $examples[ $kind ] ); ?>" data-label="<?php echo esc_attr( $info['label'] ); ?>"<?php checked( 0, $i ); ?> />
+							<span class="rapm-ns-shape rapm-ns-shape-<?php echo esc_attr( $kind ); ?>" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+							<strong><?php echo esc_html( $info['label'] ); ?></strong>
+							<span><?php echo esc_html( $info['help'] ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+				<p class="rapm-ns-field">
+					<label for="rapm-ns-name"><?php esc_html_e( 'Name it for its job, not its page', 'rapm' ); ?></label>
+					<input type="text" id="rapm-ns-name" name="name" maxlength="60" required placeholder="<?php echo esc_attr( $examples['hero'] ); ?>" />
+					<span class="rapm-ns-help"><?php esc_html_e( 'A spot can go on more than one page, so a page name stops being true. Good names: "Main slider", "Seasonal feature banner", "Living Room slider".', 'rapm' ); ?></span>
+				</p>
+				<p class="rapm-ns-preview">
+					<span><?php esc_html_e( 'Clients will see', 'rapm' ); ?></span>
+					<strong class="rapm-ns-preview-name"></strong> <span class="rapm-type-chip rapm-ns-preview-type"><?php echo esc_html( RAPM_Slots::kind( 'hero' )['label'] ); ?></span>
+				</p>
+				<p class="rapm-ns-status" aria-live="polite"></p>
+				<p class="rapm-ns-actions">
+					<button type="button" class="button rapm-ns-cancel"><?php esc_html_e( 'Cancel', 'rapm' ); ?></button>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Create spot', 'rapm' ); ?></button>
+				</p>
+			</form>
+		</dialog>
 		<?php
 	}
 
@@ -432,6 +455,30 @@ class RAPM_Promotions_Screen {
 				<?php if ( $undo ) : ?>
 					<a href="<?php echo esc_url( $undo ); ?>"><?php esc_html_e( 'Undo', 'rapm' ); ?></a>
 				<?php endif; ?>
+			</p></div>
+			<?php
+		} elseif ( isset( $_GET['rapm_spot_created'] ) && false !== strpos( sanitize_text_field( wp_unslash( $_GET['rapm_spot_created'] ) ), '|' ) ) {
+			list( $kind, $placement ) = explode( '|', sanitize_text_field( wp_unslash( $_GET['rapm_spot_created'] ) ), 2 );
+			$kind      = sanitize_key( $kind );
+			$placement = sanitize_title( $placement );
+			$name      = RAPM_Spots::name( $kind, $placement );
+			?>
+			<div class="notice notice-success is-dismissible"><p>
+				<strong>
+				<?php
+				/* translators: %s: the new spot's name */
+				echo esc_html( sprintf( __( '"%s" is ready.', 'rapm' ), $name ) );
+				?>
+				</strong>
+				<?php if ( RAPM_Spots::can_be_main_heading( $kind ) ) : ?>
+					<?php
+					/* translators: %s: the new spot's name */
+					echo esc_html( sprintf( __( 'Next, put it on a page: in Elementor, add the Promo Carousel widget and pick "%s" from its Spot list.', 'rapm' ), $name ) );
+					?>
+				<?php else : ?>
+					<?php esc_html_e( 'Next, put it on a page: in Elementor, add a Shortcode widget and paste this code.', 'rapm' ); ?>
+				<?php endif; ?>
+				<?php esc_html_e( 'Code:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code>
 			</p></div>
 			<?php
 		} elseif ( isset( $_GET['untrashed'] ) ) {
@@ -475,7 +522,10 @@ class RAPM_Promotions_Screen {
 		<section class="rapm-spot" aria-labelledby="<?php echo esc_attr( $heading ); ?>" data-kind="<?php echo esc_attr( $kind ); ?>" data-placement="<?php echo esc_attr( $placement ); ?>">
 			<div class="rapm-spot-head">
 				<div class="rapm-spot-info">
-					<h2 id="<?php echo esc_attr( $heading ); ?>" class="rapm-spot-name"><?php echo esc_html( $name ); ?></h2>
+					<div class="rapm-spot-title">
+						<h2 id="<?php echo esc_attr( $heading ); ?>" class="rapm-spot-name"><?php echo esc_html( $name ); ?></h2>
+						<span class="rapm-type-chip"><?php echo esc_html( RAPM_Spots::type_label( $kind ) ); ?></span>
+					</div>
 					<p class="rapm-spot-on">
 						<?php if ( $used_on ) : ?>
 							<?php esc_html_e( 'Shows on:', 'rapm' ); ?>
@@ -496,12 +546,21 @@ class RAPM_Promotions_Screen {
 						<?php endif; ?>
 					</p>
 					<div class="rapm-ra rapm-spot-ra" hidden>
-						<p><?php esc_html_e( 'R&A only. Spot code:', 'rapm' ); ?> <code><?php echo esc_html( self::shortcode_for( $kind, $placement ) ); ?></code></p>
+						<p><?php esc_html_e( 'R&A only. Spot code:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
 						<form class="rapm-rename">
 							<label for="<?php echo esc_attr( $heading ); ?>-name"><?php esc_html_e( 'Name clients see', 'rapm' ); ?></label>
 							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
 							<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
 						</form>
+						<?php if ( RAPM_Spots::can_be_main_heading( $kind ) ) : ?>
+							<label class="rapm-h1-setting">
+								<input type="checkbox" class="rapm-h1-toggle"<?php checked( RAPM_Spots::main_heading( $kind, $placement ) ); ?> />
+								<span>
+									<strong><?php esc_html_e( 'Main heading (H1) for search engines', 'rapm' ); ?></strong><br />
+									<?php esc_html_e( 'The first promotion showing gets its big words as the page\'s H1; the rest stay H2. Turn on only for a spot at the top of pages that have no other H1, like a home page slider.', 'rapm' ); ?>
+								</span>
+							</label>
+						<?php endif; ?>
 					</div>
 				</div>
 				<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
@@ -641,16 +700,50 @@ class RAPM_Promotions_Screen {
 		if ( ! $kind || ! $placement ) {
 			wp_send_json_error( array( 'message' => __( 'Missing spot.', 'rapm' ) ), 400 );
 		}
-		$names = get_option( 'rapm_spot_names', array() );
-		$names = is_array( $names ) ? $names : array();
-		$key   = $kind . '|' . $placement;
-		if ( '' === $name ) {
-			unset( $names[ $key ] ); // Blank goes back to the automatic name.
-		} else {
-			$names[ $key ] = mb_substr( $name, 0, 60 );
-		}
-		update_option( 'rapm_spot_names', $names, false );
+		// Blank goes back to the automatic name.
+		RAPM_Spots::update( $kind, $placement, array( 'name' => '' === $name ? null : mb_substr( $name, 0, 60 ) ) );
 		wp_send_json_success( array( 'name' => self::spot_name( $kind, $placement ) ) );
+	}
+
+	/** "+ New spot": makes the spot and sends the screen to show it with a "ready" message. */
+	public static function ajax_create_spot() {
+		check_ajax_referer( self::NONCE, 'nonce' );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
+		}
+		$kind = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : '';
+		$name = isset( $_POST['name'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['name'] ) ), 0, 60 ) : '';
+		if ( ! in_array( $kind, self::KIND_ORDER, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Pick what kind of spot it is.', 'rapm' ) ), 400 );
+		}
+		if ( '' === trim( $name ) ) {
+			wp_send_json_error( array( 'message' => __( 'Give the spot a name.', 'rapm' ) ), 400 );
+		}
+		$placement = RAPM_Spots::create( $kind, $name );
+		wp_send_json_success( array( 'url' => self::url( array( 'rapm_spot_created' => $kind . '|' . $placement ) ) ) );
+	}
+
+	/** R&A's "Main heading (H1)" box for a slider or feature banner spot. */
+	public static function ajax_spot_settings() {
+		check_ajax_referer( self::NONCE, 'nonce' );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
+		}
+		$kind      = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : '';
+		$placement = isset( $_POST['placement'] ) ? sanitize_title( wp_unslash( $_POST['placement'] ) ) : '';
+		if ( ! $placement || ! RAPM_Spots::can_be_main_heading( $kind ) ) {
+			wp_send_json_error( array( 'message' => __( 'This spot can\'t be a main heading.', 'rapm' ) ), 400 );
+		}
+		$on = isset( $_POST['h1'] ) && '1' === $_POST['h1'];
+		RAPM_Spots::update( $kind, $placement, array( 'h1' => $on ? 1 : null ) );
+		// The pages it shows on change, so their cached copies have to go.
+		RAPM_Cache::queue_spot( $kind . '|' . $placement );
+		wp_send_json_success(
+			array(
+				'h1'      => $on,
+				'message' => $on ? __( 'Saved. Its first promotion showing now uses an H1.', 'rapm' ) : __( 'Saved. Its promotions use H2 again.', 'rapm' ),
+			)
+		);
 	}
 
 	/**

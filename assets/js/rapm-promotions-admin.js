@@ -228,6 +228,83 @@
 		} ).catch( function () { say( section, T.saveFailed ); } );
 	} );
 
+	/* ---- Main heading (H1), R&A only (1.29.0) ------------------------------ */
+
+	root.addEventListener( 'change', function ( e ) {
+		var box = e.target.closest ? e.target.closest( '.rapm-h1-toggle' ) : null;
+		if ( ! box ) { return; }
+		var section = box.closest( '.rapm-spot' );
+		var on      = box.checked;
+		box.disabled = true;
+		say( section, T.saving );
+		post( {
+			action: 'rapm_spot_settings',
+			nonce: cfg.nonce,
+			kind: section.getAttribute( 'data-kind' ),
+			placement: section.getAttribute( 'data-placement' ),
+			h1: on ? '1' : '0'
+		} ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
+			box.disabled = false;
+			say( section, res.data.message );
+		} ).catch( function () {
+			box.disabled = false;
+			box.checked  = ! on;
+			say( section, T.saveFailed );
+		} );
+	} );
+
+	/* ---- "+ New spot", R&A only (1.29.0) ----------------------------------- */
+
+	var dialog = root.querySelector( '.rapm-new-spot' );
+	if ( dialog ) {
+		var form        = dialog.querySelector( '.rapm-ns-form' );
+		var nameInput   = form.querySelector( 'input[name="name"]' );
+		var previewName = form.querySelector( '.rapm-ns-preview-name' );
+		var previewType = form.querySelector( '.rapm-ns-preview-type' );
+		var status      = form.querySelector( '.rapm-ns-status' );
+
+		var refresh = function () {
+			var picked = form.querySelector( 'input[name="kind"]:checked' );
+			nameInput.placeholder   = picked.getAttribute( 'data-example' );
+			previewType.textContent = picked.getAttribute( 'data-label' );
+			previewName.textContent = nameInput.value.trim() || picked.getAttribute( 'data-example' ).replace( /^[^:]*:\s*/, '' );
+		};
+		form.addEventListener( 'change', refresh );
+		nameInput.addEventListener( 'input', refresh );
+		refresh();
+
+		root.querySelector( '.rapm-new-spot-open' ).addEventListener( 'click', function () {
+			status.textContent = '';
+			status.classList.remove( 'is-error' );
+			if ( dialog.showModal ) { dialog.showModal(); } else { dialog.setAttribute( 'open', '' ); }
+			nameInput.focus();
+		} );
+		form.querySelector( '.rapm-ns-cancel' ).addEventListener( 'click', function () {
+			if ( dialog.close ) { dialog.close(); } else { dialog.removeAttribute( 'open' ); }
+		} );
+		var setStatus = function ( text, isError ) {
+			status.textContent = text;
+			status.classList.toggle( 'is-error', !! isError );
+		};
+		form.addEventListener( 'submit', function ( e ) {
+			e.preventDefault();
+			setStatus( T.saving );
+			post( {
+				action: 'rapm_create_spot',
+				nonce: cfg.nonce,
+				kind: form.querySelector( 'input[name="kind"]:checked' ).value,
+				name: nameInput.value
+			} ).then( function ( res ) {
+				if ( ! res || ! res.success ) {
+					setStatus( res && res.data && res.data.message ? res.data.message : T.saveFailed, true );
+					return;
+				}
+				window.location.href = res.data.url;
+			} ).catch( function () { setStatus( T.saveFailed, true ); } );
+		} );
+	}
+
 	/* ---- Clicks ------------------------------------------------------------ */
 
 	document.addEventListener( 'click', function ( e ) {
