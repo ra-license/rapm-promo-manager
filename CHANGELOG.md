@@ -26,6 +26,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
     The full 1.27.0 cap sequence (7 steps) and the slide-order test came out the same on 1.27.1.
   - **Known gap:** if an optimizer delays our Swiper file but not the small scripts around it, nothing is saved. Both carousels then share whichever Swiper loads last, the same as before 1.27.1 (tested: no worse, no better).
+  - **Confirmed on staging (real WordPress, 2026-10-05),** after updating from 1.27.0 through the normal GitHub update:
+    - Home page: the hero shows its 3 slides on our saved Swiper 11 (`RAPM_Swiper` is set, so the script after our Swiper file ran).
+    - A draft page with our Promo Carousel widget (Show at most 2) and a real Elementor **Image Carousel** (3 pictures):
+      - **Elementor editor:** ours ran on Swiper 11 with 2 slides and no copies, and Elementor's on Swiper 8. After 67 seconds ours was still the same carousel, still on slide 2. Under 1.27.0 it had been rebuilt by then.
+      - **Front end:** both Swiper files loaded, ours first and then Elementor's, the order that broke 1.27.0. Ours ran on Swiper 11 (The Fall Living Room Event, then Gather Around for Less). Elementor's ran on Swiper 8, showed its pictures and moved 1 → 2 → 3 → 1. Both checked by screenshot.
+    - The test page was moved to the trash, not deleted.
 
 ## 1.27.0
 
