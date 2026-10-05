@@ -132,6 +132,11 @@ class RAPM_Sync {
 			if ( $old_id ) {
 				wp_delete_attachment( $old_id, true );
 			}
+			// A normal save, so cached pages stop pointing at the deleted
+			// old picture: it clears the cache for the pages this promotion
+			// shows on (RAPM_Cache), and hosts like Rocket.net clear their
+			// CDN on any save (1.28.0).
+			wp_update_post( array( 'ID' => $asset_id ) );
 		}
 
 		update_post_meta( $asset_id, '_rapm_image_' . $which . '_synced_at', current_time( 'mysql' ) );

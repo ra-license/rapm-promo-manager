@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.27.1
+ * Version: 1.28.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.27.1' );
+define( 'RAPM_VERSION', '1.28.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -24,6 +24,9 @@ require_once RAPM_DIR . 'includes/class-rapm-admin-settings.php';
 require_once RAPM_DIR . 'includes/class-rapm-upload-handler.php';
 require_once RAPM_DIR . 'includes/class-rapm-admin-list.php';
 require_once RAPM_DIR . 'includes/class-rapm-sliders-dashboard.php';
+require_once RAPM_DIR . 'includes/class-rapm-spot-usage.php';
+require_once RAPM_DIR . 'includes/class-rapm-promotions-screen.php';
+require_once RAPM_DIR . 'includes/class-rapm-cache.php';
 require_once RAPM_DIR . 'includes/class-rapm-help.php';
 require_once RAPM_DIR . 'includes/class-rapm-training-guide.php';
 require_once RAPM_DIR . 'includes/class-rapm-link-source.php';
@@ -63,6 +66,31 @@ final class RAPM_Plugin {
 		add_filter( 'post_row_actions', array( 'RAPM_Admin_List', 'row_actions' ), 10, 2 );
 		add_filter( 'get_edit_post_link', array( 'RAPM_Admin_List', 'filter_edit_post_link' ), 10, 2 );
 		add_action( 'admin_post_rapm_duplicate_asset', array( 'RAPM_Admin_List', 'handle_duplicate' ) );
+
+		// Promotions screen (1.28.0) and the shorter menu: "All promotions" and "Help".
+		add_action( 'admin_menu', array( 'RAPM_Promotions_Screen', 'add_menu' ) );
+		add_action( 'admin_menu', array( 'RAPM_Promotions_Screen', 'tidy_menu' ), 999 );
+		add_filter( 'submenu_file', array( 'RAPM_Promotions_Screen', 'submenu_file' ) );
+		add_filter( 'admin_title', array( 'RAPM_Promotions_Screen', 'admin_title' ), 10, 2 );
+		add_action( 'admin_init', array( 'RAPM_Promotions_Screen', 'maybe_redirect_list' ) );
+		add_action( 'admin_enqueue_scripts', array( 'RAPM_Promotions_Screen', 'enqueue' ) );
+		add_action( 'wp_ajax_rapm_toggle_asset', array( 'RAPM_Promotions_Screen', 'ajax_toggle' ) );
+		add_action( 'wp_ajax_rapm_rename_spot', array( 'RAPM_Promotions_Screen', 'ajax_rename' ) );
+		add_filter( 'wp_untrash_post_status', array( 'RAPM_Promotions_Screen', 'untrash_status' ), 10, 3 );
+
+		// Clear the page cache for the pages a changed promotion shows on (RAPM_Cache).
+		add_action( 'save_post_rapm_asset', array( 'RAPM_Cache', 'queue_asset' ) );
+		add_action( 'transition_post_status', array( 'RAPM_Cache', 'on_transition' ), 10, 3 );
+		add_action( 'before_delete_post', array( 'RAPM_Cache', 'on_delete' ) );
+
+		// "Shows on:" is cached; any saved page, template or widget can change it.
+		add_action( 'save_post', array( 'RAPM_Spot_Usage', 'maybe_flush_on_save' ) );
+		add_action( 'deleted_post', array( 'RAPM_Spot_Usage', 'maybe_flush_on_save' ) );
+		add_action( 'trashed_post', array( 'RAPM_Spot_Usage', 'maybe_flush_on_save' ) );
+		add_action( 'untrashed_post', array( 'RAPM_Spot_Usage', 'maybe_flush_on_save' ) );
+		foreach ( array( 'widget_text', 'widget_custom_html', 'widget_block', 'sidebars_widgets' ) as $rapm_widget_option ) {
+			add_action( 'update_option_' . $rapm_widget_option, array( 'RAPM_Spot_Usage', 'flush' ) );
+		}
 
 		add_action( 'admin_menu', array( 'RAPM_Upload_Handler', 'add_menu' ) );
 		add_action( 'admin_menu', array( 'RAPM_Sliders_Dashboard', 'add_menu' ) );

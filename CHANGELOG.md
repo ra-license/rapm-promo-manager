@@ -4,6 +4,50 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.28.0
+
+**New: the Promotions screen.** This is the first release of the redesign, built from the clickable mockup Phil approved on 2026-10-05. Clients no longer manage promotions from the 12-row All Assets list with its Kind, Shortcode and Date columns. They get one screen that matches how they think about the site: where each picture shows.
+- **One section per spot,** named in plain words ("Home page slider", "Living Room tiles"). Each says which pages it actually shows on, as links. Spots placed on a page but with no promotions yet appear too. A spot with promotions that isn't on any page says "Not on any page yet. Ask R&A Marketing to place it."
+  - Where a spot shows is found by scanning (`RAPM_Spot_Usage`): page content (Elementor's Shortcode widget and our Promo Carousel widget save their shortcode there), Elementor's own `_elementor_data` (for pages whose plain content is out of date, and Promo Carousel widgets saved before 1.26.0), and classic Text, Custom HTML and block widgets. Templates and widgets are labeled as such.
+  - The result is cached for 12 hours and dropped whenever any post or widget is saved.
+- **Large picture cards** in each spot's real shape: wide for sliders and banners, tall for coupons, square for tiles.
+  - Each card has a plain status worked out in the site's timezone: "Showing now · Until Oct 31", "Ends in 7 days (Oct 12)" in amber, "Starts Nov 20", "Hidden", or "Ended".
+  - A count at the top of each section says how many are showing now, starting later and hidden.
+- **An on/off switch on every card.** On = published, off = draft. The live site only ever shows published promotions, so off really means off. A copy made with "Make a copy" starts hidden.
+- **A "…" menu:** Edit, Make a copy, Move earlier, Move later, Move to trash. Trashing asks first, then shows "Moved to the trash. Undo". Undo brings the promotion back exactly as it was: WordPress 5.6+ would otherwise restore it as a draft, quietly switching it off (`wp_untrash_post_status`, checked in core).
+- **Drag a card to change the order it plays in.** It saves through the existing reorder action. "Move earlier/later" does the same from the keyboard or a touch screen, where drag and drop doesn't work.
+- **Ended promotions fold away** under "Show N ended", each with a "Use again" button that opens it to set new dates.
+- **"Find a promotion"** filters by name. Ended matches show too.
+- **Shorter menu:** "Promotions" with "All promotions" and "Help". Add New Asset, Add Post, Sliders, Training Guide and Settings are out of the menu, but every one still works at its usual address.
+  - The old list's own address now opens the new screen. Any more specific address still opens the old list: a search, a filter, WordPress's own return after a bulk action, or `&rapm_list=1`.
+  - The Training Guide is linked from Help, and Settings from R&A setup details.
+  - The add/edit form has a "← All promotions" link back.
+- **R&A setup details,** a link at the bottom of the screen (Phil's call: anyone can open it, it's just clearly labeled). It shows each spot's shortcode and a box to rename the spot (`rapm_spot_names` option; blank goes back to the automatic name), plus links to the old list, Sliders and Settings. Your browser remembers it's open.
+- **Help & FAQ and the Training Guide** now describe this screen instead of Sliders and All Assets. That includes the 1.27.0 "Show at most" answer and new answers for switching off, ordering, ended promotions, copying and deleting, and finding a promotion.
+
+**New: changes now clear the site's page cache (`RAPM_Cache`).** Phil's call: clear only the pages a spot shows on.
+- **Why it's needed.** Promotions are a private post type, so caching plugins don't know which public pages display them. In their own source: WP Rocket, WP Super Cache, SiteGround, Cloudflare and Kinsta all skip non-public post types. W3 Total Cache only clears the post itself and the blog home. The schedule never needed this, because it's decided in the visitor's browser, but the new switch does. Without it, a promotion switched off would stay on cached pages until the cache expired.
+- **When it runs.** Switching on or off, saving, reordering, trashing or restoring, and deleting. Changes are collected and cleared once at the end of the request, after everything is saved. For a new promotion, WordPress fires its first save before its spot is stored, so the spot is looked up at the end.
+- **What it clears.** The pages that spot shows on, plus any Promotions Calendar pages. If the spot sits in a template or widget, there's no single page, so it clears the whole cache.
+- **Which caches.** WP Rocket, LiteSpeed, W3 Total Cache, WP Super Cache, SiteGround, Nginx Helper and WP Engine. Every function name was checked against that plugin's current source (WP Rocket 3.23.5.1, LiteSpeed 7.9.1, W3TC 2.10.7, WP Super Cache 3.1.4, SiteGround 7.8.3, Nginx Helper 2.4.1) or WP Engine's docs. Each runs only if that plugin is active. Other hosts can hook the new `rapm_cache_cleared` action.
+- **Rocket.net (the staging host)** publishes no developer API, so it isn't called directly. Measured on staging instead: the home page CDN copy was `HIT`, 39 minutes old. After one promotion save, home, Promotions and About Us all came back `MISS`. Rocket.net's own plugin clears its CDN on a WordPress save, and every change above goes through one.
+- **Also fixed: a picture swapped in by the hourly Drive-folder sync could show as broken on cached pages.** The sync deleted the old picture file but changed only hidden details, never saving the promotion, so no cache was cleared and cached pages kept pointing at the deleted file. The sync now saves the promotion when its picture changes. That clears the cache through `RAPM_Cache`, and Rocket.net's plugin clears its CDN too.
+
+**How it was checked.** No PHP runtime is available here (standing constraint).
+- **PHP:** the structural checker found 0 issues in all 25 files, after catching all three planted bugs. It can't see an `isset()` on a function result, which is a fatal error in PHP: one was caught by reading and fixed before testing, and a pattern search found no others. A separate search found no syntax newer than PHP 7.
+- **WordPress behavior relied on was read in core's source, not assumed:**
+  - When the first submenu item is a plugin page, the top-level menu link becomes `admin.php?page=…` (`menu-header.php`). That's why the top link points at the old list's address and is forwarded instead.
+  - After trash and untrash, WordPress returns to the screen you came from with `trashed`/`untrashed` and `ids` (`post.php`).
+  - `wp_untrash_post_status` passes the previous status.
+- **Screen behavior:** tested in a browser on a page with the same markup the PHP prints and WordPress's own admin CSS, with the server's replies faked:
+  - **Switch:** off → "Hidden" and section count updates; back on; a failed save puts the switch back and says so.
+  - **Menu:** opens with focus on Edit; closes on an outside click or Escape, with focus returned.
+  - **Ordering:** Move later and earlier send the right order, with ended promotions kept last; "Move earlier" on the first card sends nothing; dragging onto the right half of a card drops it after that card.
+  - **Search:** filters by name, includes ended matches, and shows "No promotions match" when nothing fits.
+  - **Other controls:** Show/Hide ended; R&A details on/off, remembered; rename; cancelling the trash question stays on the page.
+  - **Phone width (375px):** one card per row, no sideways scroll.
+- **Still to confirm on staging:** the screen with real data, the switch really hiding a promotion for logged-out visitors through Rocket.net's CDN, trash and Undo, the menu, and the old list's redirect.
+
 ## 1.27.1
 
 **Fix: our carousels and Elementor's own carousels no longer take over each other's Swiper.** Found while checking 1.27.0 on staging.

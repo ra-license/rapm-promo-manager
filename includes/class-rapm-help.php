@@ -17,7 +17,7 @@ class RAPM_Help {
 		add_submenu_page(
 			'edit.php?post_type=rapm_asset',
 			__( 'Help & FAQ', 'rapm' ),
-			__( 'Help & FAQ', 'rapm' ),
+			__( 'Help', 'rapm' ),
 			'edit_posts',
 			'rapm-help',
 			array( __CLASS__, 'render_page' )
@@ -52,10 +52,10 @@ class RAPM_Help {
 			</style>
 
 			<h2><?php esc_html_e( 'Adding a New Promotion — Step by Step', 'rapm' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'The Add New Asset form walks you through this in order, one screen at a time, with Back and Next buttons — you can\'t get lost or skip something by accident.', 'rapm' ); ?></p>
+			<p class="description"><?php esc_html_e( 'The form for a new promotion walks you through this in order, one screen at a time, with Back and Next buttons — you can\'t get lost or skip something by accident.', 'rapm' ); ?></p>
 			<ol>
-				<li><?php esc_html_e( 'On the left menu, click "Add New Asset."', 'rapm' ); ?></li>
-				<li><?php esc_html_e( 'Pick the type of promotion: Hero (the big slider) or Fold Banner (a shorter strip).', 'rapm' ); ?></li>
+				<li><?php esc_html_e( 'On the left menu, click "Promotions." Find the section for the spot where it should show (for example "Home page slider") and click "Add a picture" at the end of it.', 'rapm' ); ?></li>
+				<li><?php esc_html_e( 'The type of promotion is already picked for you, from the section you started in.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Type a name for your own records. Visitors will never see this name.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Upload your desktop picture and your phone picture. The page will tell you the exact size each one needs to be.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Answer the question about sale text: does your picture already show the price or sale? Pick Yes or No.', 'rapm' ); ?></li>
@@ -66,7 +66,7 @@ class RAPM_Help {
 				<li><?php esc_html_e( 'Click the button at the bottom to save.', 'rapm' ); ?></li>
 			</ol>
 
-			<div class="rapm-help-note"><?php esc_html_e( 'Tip: You can always come back and change anything later. Just find your promotion in "All Assets" and click Edit — editing shows everything on one page (no steps to click through), so you can jump straight to the one thing you want to change.', 'rapm' ); ?></div>
+			<div class="rapm-help-note"><?php esc_html_e( 'Tip: You can always come back and change anything later. Just find your promotion on the Promotions page and click its picture — editing shows everything on one page (no steps to click through), so you can jump straight to the one thing you want to change.', 'rapm' ); ?></div>
 
 			<h2><?php esc_html_e( 'Types of Promotions', 'rapm' ); ?></h2>
 			<details>
@@ -89,7 +89,7 @@ class RAPM_Help {
 				<summary><?php esc_html_e( 'How do I show a calendar of upcoming promotions?', 'rapm' ); ?></summary>
 				<p><?php esc_html_e( 'Ask whoever manages the website to add [rapm_promotions_calendar] to a page. It automatically shows every promotion that has both a start date and an end date set — nothing else to configure. This is a calendar of your own promotions, separate from any community events calendar the site might also have.', 'rapm' ); ?></p>
 				<p><?php esc_html_e( "Each promotion shows as a named bar stretching across the days it runs, so a visitor can see what's happening at a glance without clicking anything — the same way a personal calendar app shows a multi-day trip or event. If more promotions overlap on the same days than there's room to show, a small \"+N more\" link appears — clicking it, or clicking any day, lists everything active then.", 'rapm' ); ?></p>
-				<p><?php esc_html_e( 'You can also find this code, plus a live count of how many promotions currently show on it, on the Sliders page.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'The bottom of the Promotions page lists the pages that already have the calendar, and how many promotions are on it right now.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I know if a promotion will show up on the calendar?', 'rapm' ); ?></summary>
@@ -143,33 +143,35 @@ class RAPM_Help {
 				<p><?php esc_html_e( 'Adding something brand new walks you through it step by step, since there\'s more to figure out the first time. Editing something that already exists shows every part on one page instead — no steps, nothing hidden — so you can go straight to whatever you want to change (like a date, or a picture) without clicking through parts you don\'t need to touch. The numbered boxes at the top still work on this page too — click one to jump straight down to that part.', 'rapm' ); ?></p>
 			</details>
 
-			<h2><?php esc_html_e( 'The Sliders Page', 'rapm' ); ?></h2>
-			<p><?php esc_html_e( 'The Sliders page (on the left menu, under Promo Manager) is the easiest way to see and manage everything — better than the plain "All Assets" list for most day-to-day work.', 'rapm' ); ?></p>
+			<h2><?php esc_html_e( 'The Promotions Page', 'rapm' ); ?></h2>
+			<p><?php esc_html_e( 'Click "Promotions" on the left menu. This is where you see and manage everything.', 'rapm' ); ?></p>
 			<details>
-				<summary><?php esc_html_e( 'What am I looking at on the Sliders page?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'One card per carousel — every card is a group of promotions that share the same type and the same "Which Spot on the Site" value, and rotate together wherever that carousel is placed. Each card shows a thumbnail, how many promotions are in it, how many are live right now, and the shortcode that displays it.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'What am I looking at on the Promotions page?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'One section for each spot on your website where promotions show, like "Home page slider." Each section says which pages it shows on and how many promotions are showing now. Each picture card says whether that promotion is showing now, hidden, starting later, or ended, and when it ends.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'How do I take a promotion off the website without deleting it?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Click its switch. Blue means it shows on your website. Gray means it is hidden. Click it again any time to bring it back.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I change the order promotions rotate in?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Click "Manage Slides" on a card to open that carousel\'s slide list, then drag a slide up or down by its handle on the left. The new order saves automatically — no need to click anything else.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Drag a picture to a new place in its section. Or click the three dots on its card and choose "Move earlier" or "Move later." The new order saves by itself.', 'rapm' ); ?></p>
 			</details>
 			<details>
-				<summary><?php esc_html_e( 'Why does the carousel show fewer promotions than the Sliders page says are live?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Some carousels are set to show only a few promotions, like 3. It shows the first 3 that are live right now, starting from the top of the Sliders list. To show a different one, drag it higher in the list. The number is set on the page itself, in a box called "Show at most." Ask R&A Marketing if you want it changed.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'Why does the carousel show fewer promotions than the Promotions page says are showing?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Some carousels are set to show only a few promotions, like 3. It shows the first 3 that are showing now, starting from the first one in its section. To show a different one, move it earlier. The number is set on the page itself, in a box called "Show at most." Ask R&A Marketing if you want it changed.', 'rapm' ); ?></p>
 			</details>
 			<details>
-				<summary><?php esc_html_e( 'Can I edit, duplicate, or delete a slide from this page?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Yes — each slide in the list has Edit, Duplicate, and Trash links on the right, the same actions available from "All Assets."', 'rapm' ); ?></p>
-			</details>
-
-			<h2><?php esc_html_e( 'Finding and Managing Promotions in "All Assets"', 'rapm' ); ?></h2>
-			<details>
-				<summary><?php esc_html_e( 'How do I find just the Hero banners, or just one spot\'s promotions?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'At the top of "All Assets," use the Type and Spot dropdowns to narrow the list down, then click Filter. This is especially useful once you have a lot of promotions saved.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'Where did my ended promotions go?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'They are folded away at the bottom of their section. Click "Show ended" to see them. To run one again, click "Use again" and give it new dates.', 'rapm' ); ?></p>
 			</details>
 			<details>
-				<summary><?php esc_html_e( 'How do I make a new promotion that\'s almost the same as one I already have?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Hover over the promotion in "All Assets" (or find it on the Sliders page) and click "Duplicate." A copy is created as a draft with the same picture, text, and settings — open it, change what\'s different, and publish it.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'How do I copy or delete a promotion?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Click the three dots on its card. "Make a copy" makes a hidden copy with the same picture, words and settings, and opens it so you can change what is different. When it is ready, switch it on. "Move to trash" removes it. If you trash one by mistake, click "Undo" in the message at the top of the page.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'How do I find one promotion?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Type part of its name in the "Find a promotion" box at the top of the Promotions page.', 'rapm' ); ?></p>
 			</details>
 
 			<h2><?php esc_html_e( 'Linking to an Outside Picture — Questions and Answers', 'rapm' ); ?></h2>
@@ -191,7 +193,7 @@ class RAPM_Help {
 
 			<details>
 				<summary><?php esc_html_e( 'What happens if the link stops working?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Nothing breaks on your site — the last picture that worked keeps showing. You\'ll get an email, and you\'ll also see a red "Link issue" note next to that promotion in "All Assets," so you know to check it.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Nothing breaks on your site — the last picture that worked keeps showing. You\'ll get an email, and you\'ll also see a red note under that promotion on the Promotions page, so you know to check it.', 'rapm' ); ?></p>
 			</details>
 
 			<div class="rapm-help-note"><?php esc_html_e( 'A linked picture still has to be the exact right size, just like an uploaded one — if a brand\'s picture is the wrong size, it will be turned down with a note explaining why, the same as an upload would be.', 'rapm' ); ?></div>

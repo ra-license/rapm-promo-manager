@@ -1,0 +1,80 @@
+/* Promotions screen (RAPM_Promotions_Screen). Colors are WordPress admin's own. */
+
+.rapm-promos { max-width: 1400px; }
+.rapm-promos [hidden] { display: none !important; }
+
+.rapm-promos-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 4px 0 16px; }
+.rapm-promos .rapm-promos-title { margin: 0; padding: 0; font-size: 23px; font-weight: 400; line-height: 1.3; }
+.rapm-promos-sub { margin: 4px 0 0; font-size: 14px; color: #50575e; }
+.rapm-promos-search { display: flex; flex-direction: column; gap: 4px; }
+.rapm-promos-search label { font-size: 12px; color: #50575e; }
+.rapm-promos-search input { width: 260px; max-width: 100%; min-height: 36px; font-size: 14px; }
+
+.rapm-spot { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin: 0 0 20px; }
+.rapm-spot-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 24px; margin-bottom: 16px; }
+.rapm-spot-info { min-width: 0; }
+.rapm-promos .rapm-spot-name { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.3; }
+.rapm-spot-on { margin: 4px 0 0; font-size: 13px; color: #50575e; }
+.rapm-spot-unplaced { color: #8a4b00; }
+.rapm-spot-count { margin: 0; font-size: 13px; font-weight: 600; color: #1d2327; }
+.rapm-spot-status { margin: 12px 0 0; font-size: 13px; color: #50575e; }
+.rapm-spot-status:empty { display: none; }
+
+.rapm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--rapm-min, 220px), 100%), 1fr)); gap: 16px; }
+
+.rapm-card { position: relative; display: flex; flex-direction: column; border: 1px solid #dcdcde; border-radius: 4px; background: #fff; }
+.rapm-card[draggable="true"] { cursor: grab; }
+.rapm-card.is-dragging { opacity: 0.4; }
+.rapm-card-pic { display: block; background: #f0f0f1; border-radius: 4px 4px 0 0; overflow: hidden; }
+.rapm-card-pic img { display: block; width: 100%; height: auto; aspect-ratio: var(--rapm-ratio, 16 / 9); object-fit: cover; transition: opacity 0.15s; }
+.rapm-card-nopic { display: flex; align-items: center; justify-content: center; aspect-ratio: var(--rapm-ratio, 16 / 9); color: #50575e; font-size: 13px; }
+.rapm-card.is-hidden .rapm-card-pic img { opacity: 0.45; }
+.rapm-card.is-ended .rapm-card-pic img { opacity: 0.55; }
+
+.rapm-card-body { display: flex; flex-direction: column; gap: 8px; padding: 10px 8px 8px 12px; }
+.rapm-card-top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; }
+.rapm-promos .rapm-card-title { margin: 0; padding-top: 8px; font-size: 14px; font-weight: 600; line-height: 1.35; color: #1d2327; overflow-wrap: anywhere; }
+.rapm-card-more { flex: 0 0 auto; width: 40px; height: 36px; border: 0; border-radius: 4px; background: transparent; color: #50575e; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.rapm-card-more:hover, .rapm-card-more[aria-expanded="true"] { background: #f0f0f1; color: #1d2327; }
+.rapm-card-menu { position: absolute; right: 0; top: 38px; z-index: 20; min-width: 170px; display: flex; flex-direction: column; padding: 4px 0; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+.rapm-card-menu a, .rapm-card-menu button { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; background: transparent; font-size: 14px; line-height: 1.4; color: #1d2327; text-decoration: none; cursor: pointer; }
+.rapm-card-menu a:hover, .rapm-card-menu button:hover, .rapm-card-menu a:focus, .rapm-card-menu button:focus { background: #f0f0f1; color: #1d2327; }
+.rapm-card-menu .rapm-card-trash, .rapm-card-menu .rapm-card-trash:hover { color: #b32d2e; }
+
+.rapm-card-status { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.rapm-card-state { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.rapm-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0f0f1; color: #50575e; }
+.rapm-dot { width: 7px; height: 7px; border-radius: 50%; background: #8c8f94; }
+.rapm-card.is-showing .rapm-pill { background: #e6f4ea; color: #00561b; }
+.rapm-card.is-showing .rapm-dot { background: #00a32a; }
+.rapm-card.is-upcoming .rapm-pill { background: #e5f0fa; color: #0a4b78; }
+.rapm-card.is-upcoming .rapm-dot { background: #2271b1; }
+.rapm-when { font-size: 12px; color: #50575e; }
+.rapm-when.is-soon { color: #8a4b00; }
+.rapm-card-issue { margin: 0; font-size: 12px; color: #b32d2e; }
+
+.rapm-switch { flex: 0 0 auto; width: 48px; height: 44px; padding: 0; border: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.rapm-switch-track { position: relative; display: block; width: 36px; height: 20px; border-radius: 999px; background: #8c8f94; transition: background 0.15s; }
+.rapm-switch-knob { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: left 0.15s; }
+.rapm-switch[aria-checked="true"] .rapm-switch-track { background: #2271b1; }
+.rapm-switch[aria-checked="true"] .rapm-switch-knob { left: 19px; }
+.rapm-switch:disabled { opacity: 0.6; cursor: progress; }
+
+.rapm-card-more:focus-visible, .rapm-switch:focus-visible, .rapm-card-pic:focus-visible, .rapm-add:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; box-shadow: none; }
+
+.rapm-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 140px; padding: 16px; border: 2px dashed #8c8f94; border-radius: 4px; background: #f6f7f7; color: #2271b1; font-size: 14px; font-weight: 600; text-decoration: none; }
+.rapm-add:hover, .rapm-add:focus { border-color: #2271b1; background: #f0f6fc; color: #135e96; }
+
+.rapm-ended-row { margin: 16px 0 0; }
+
+.rapm-spot-ra { margin-top: 8px; padding: 10px 12px; background: #f6f7f7; border-radius: 4px; }
+.rapm-spot-ra p { margin: 0 0 8px; font-size: 12px; color: #50575e; }
+.rapm-spot-ra code { color: #1d2327; }
+.rapm-rename { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rapm-rename label { font-size: 12px; color: #50575e; }
+.rapm-rename input { min-width: 220px; }
+
+.rapm-promos-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 20px; }
+.rapm-promos-foot p { margin: 0; font-size: 13px; color: #50575e; max-width: 760px; }
+.rapm-ra-panel ul { margin: 8px 0 0 18px; list-style: disc; }
+.rapm-no-results { margin: 0 0 20px; padding: 24px; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; font-size: 14px; }

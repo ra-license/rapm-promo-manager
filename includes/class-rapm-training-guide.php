@@ -210,7 +210,7 @@ class RAPM_Training_Guide {
 						<li><a href="#rapm-tg-editing"><?php esc_html_e( 'Changing One Already Made', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-calendar"><?php esc_html_e( 'Showing a Calendar', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-sizes"><?php esc_html_e( 'Picture Size Cheat Sheet', 'rapm' ); ?></a></li>
-						<li><a href="#rapm-tg-sliders"><?php esc_html_e( 'The Sliders Page', 'rapm' ); ?></a></li>
+						<li><a href="#rapm-tg-sliders"><?php esc_html_e( 'The Promotions Page', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-problems"><?php esc_html_e( 'Common Problems', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-checklist"><?php esc_html_e( 'Quick Checklist', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-help"><?php esc_html_e( 'Getting Help', 'rapm' ); ?></a></li>
@@ -274,7 +274,7 @@ class RAPM_Training_Guide {
 						<p class="rapm-tg-kicker"><?php esc_html_e( 'The main task', 'rapm' ); ?></p>
 						<h2><?php esc_html_e( 'Adding a New Promotion', 'rapm' ); ?></h2>
 						<p class="rapm-tg-intro">
-							<?php esc_html_e( 'Go to', 'rapm' ); ?> <strong><?php esc_html_e( 'Promo Manager → Add New Asset', 'rapm' ); ?></strong>.
+							<?php esc_html_e( 'Go to', 'rapm' ); ?> <strong><?php esc_html_e( 'Promotions', 'rapm' ); ?></strong> <?php esc_html_e( 'and click', 'rapm' ); ?> <strong><?php esc_html_e( 'Add a picture', 'rapm' ); ?></strong> <?php esc_html_e( 'in the section where it should show.', 'rapm' ); ?>
 							<?php esc_html_e( 'The tool walks you through 4 steps, one at a time, with a bar at the top showing where you are. You cannot go to the next step until the current one is filled in correctly.', 'rapm' ); ?>
 						</p>
 
@@ -443,7 +443,7 @@ class RAPM_Training_Guide {
 						<h2><?php esc_html_e( 'Changing a Promotion That Already Exists', 'rapm' ); ?></h2>
 						<p class="rapm-tg-intro"><?php esc_html_e( "Editing works differently on purpose — you don't have to click through every step again to fix one small thing.", 'rapm' ); ?></p>
 						<ul class="rapm-tg-plain">
-							<li><span><?php esc_html_e( 'Find it under', 'rapm' ); ?> <strong><?php esc_html_e( 'Promo Manager → All Assets', 'rapm' ); ?></strong> (<?php esc_html_e( 'or the', 'rapm' ); ?> <strong><?php esc_html_e( 'Sliders', 'rapm' ); ?></strong> <?php esc_html_e( 'page) and click', 'rapm' ); ?> <strong><?php esc_html_e( 'Edit', 'rapm' ); ?></strong>.</span></li>
+							<li><span><?php esc_html_e( 'Find it on the', 'rapm' ); ?> <strong><?php esc_html_e( 'Promotions', 'rapm' ); ?></strong> <?php esc_html_e( 'page and click its picture.', 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'Every section shows on one page — nothing is hidden. Scroll to whatever you want to change.', 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'The 4 numbered boxes at the top still work — click one to jump straight down to that part of the page.', 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'Click', 'rapm' ); ?> <strong><?php esc_html_e( 'Save Asset', 'rapm' ); ?></strong> <?php esc_html_e( "when you're done.", 'rapm' ); ?></span></li>
@@ -458,8 +458,8 @@ class RAPM_Training_Guide {
 							<li><span><?php esc_html_e( "Each promotion shows as its own named bar, stretching across the days it runs — like a trip or event on a personal calendar app — so a visitor sees what's happening without clicking anything.", 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( "It's a good way to let potential customers see everything you have scheduled at a glance, in one place, without you maintaining a second list by hand.", 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'It updates itself automatically as you add, edit, or reschedule promotions elsewhere in the tool — nothing to keep in sync yourself.', 'rapm' ); ?></span></li>
-							<li><span><?php esc_html_e( 'Go to', 'rapm' ); ?> <strong><?php esc_html_e( 'Promo Manager → Sliders', 'rapm' ); ?></strong> <?php esc_html_e( 'to find this code again any time, along with a live count of how many promotions currently show on it.', 'rapm' ); ?></span></li>
-							<li><span><?php esc_html_e( "Its color automatically matches this website's own brand color, if the site is built with Elementor. Whoever manages the website can set an exact color instead under Promo Manager → Settings → Brand Color.", 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'The bottom of the', 'rapm' ); ?> <strong><?php esc_html_e( 'Promotions', 'rapm' ); ?></strong> <?php esc_html_e( 'page lists the pages that already have the calendar, and how many promotions are on it right now.', 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( "Its color automatically matches this website's own brand color, if the site is built with Elementor. Whoever manages the website can set an exact color instead in Promo Manager's Settings, under Brand Color.", 'rapm' ); ?></span></li>
 						</ul>
 						<div class="rapm-tg-callout rapm-tg-callout-tip">
 							<span class="rapm-tg-callout-title"><?php esc_html_e( 'How do I know if a promotion will be on it?', 'rapm' ); ?></span>
@@ -498,12 +498,14 @@ class RAPM_Training_Guide {
 
 					<section class="rapm-tg-section" id="rapm-tg-sliders">
 						<p class="rapm-tg-kicker"><?php esc_html_e( 'Seeing the big picture', 'rapm' ); ?></p>
-						<h2><?php esc_html_e( 'The Sliders Page', 'rapm' ); ?></h2>
-						<p class="rapm-tg-intro"><?php esc_html_e( 'Go to', 'rapm' ); ?> <strong><?php esc_html_e( 'Promo Manager → Sliders', 'rapm' ); ?></strong> <?php esc_html_e( 'to see everything at a glance instead of one long list.', 'rapm' ); ?></p>
+						<h2><?php esc_html_e( 'The Promotions Page', 'rapm' ); ?></h2>
+						<p class="rapm-tg-intro"><?php esc_html_e( 'Click', 'rapm' ); ?> <strong><?php esc_html_e( 'Promotions', 'rapm' ); ?></strong> <?php esc_html_e( 'on the left menu to see everything at a glance.', 'rapm' ); ?></p>
 						<ul class="rapm-tg-plain">
-							<li><span><?php esc_html_e( 'Each card is one rotating group — every promotion inside it shares the same Type and "Spot on the Site," and takes turns showing.', 'rapm' ); ?></span></li>
-							<li><span><?php esc_html_e( 'Click a card to see its promotions in order. Drag one up or down by the handle on the left to change the order it plays in — it saves by itself.', 'rapm' ); ?></span></li>
-							<li><span><?php esc_html_e( 'Use', 'rapm' ); ?> <strong><?php esc_html_e( 'Duplicate', 'rapm' ); ?></strong> <?php esc_html_e( "on any promotion to start a new one that's almost the same, instead of typing everything from scratch.", 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'Each section is one spot on your website, like "Home page slider," and says which pages it shows on. Its promotions take turns showing there.', 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'Each picture says whether it is showing now, hidden, starting later, or ended, and when it ends.', 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'Click the switch on a picture to take it off the website without deleting it. Blue means showing, gray means hidden.', 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'Drag a picture to change the order it plays in, or use "Move earlier" and "Move later" in its three-dot menu. It saves by itself.', 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'Use', 'rapm' ); ?> <strong><?php esc_html_e( 'Make a copy', 'rapm' ); ?></strong> <?php esc_html_e( "in the three-dot menu to start a new one that's almost the same, instead of typing everything from scratch. The copy starts hidden, so switch it on when it's ready.", 'rapm' ); ?></span></li>
 						</ul>
 					</section>
 
@@ -517,7 +519,7 @@ class RAPM_Training_Guide {
 						</div>
 						<div class="rapm-tg-problem">
 							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( "I saved it, but I don't see it on the website.", 'rapm' ); ?></div>
-							<p class="rapm-tg-a"><?php esc_html_e( 'Saving only stores the promotion — someone still has to add its short code to a page, once, the first time that spot is used. Ask whoever manages the website to check.', 'rapm' ); ?></p>
+							<p class="rapm-tg-a"><?php esc_html_e( 'On the Promotions page, check that its switch is on (blue) and that its section says which pages it shows on. If the section says "Not on any page yet," ask whoever manages the website to place it.', 'rapm' ); ?></p>
 						</div>
 						<div class="rapm-tg-problem">
 							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( 'I\'m not sure what "Spot on the Site" should be.', 'rapm' ); ?></div>

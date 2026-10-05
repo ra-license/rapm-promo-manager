@@ -141,6 +141,7 @@ class RAPM_Upload_Handler {
 		$error_message = isset( $_GET['rapm_error'] ) ? sanitize_text_field( wp_unslash( $_GET['rapm_error'] ) ) : '';
 		?>
 		<div class="wrap">
+			<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::url() ); ?>">&larr; <?php esc_html_e( 'All promotions', 'rapm' ); ?></a></p>
 			<h1>
 				<?php echo $is_edit ? esc_html__( 'Edit Promotional Asset', 'rapm' ) : esc_html__( 'Add New Promotional Asset', 'rapm' ); ?>
 				<?php if ( ! $is_edit ) : ?>
