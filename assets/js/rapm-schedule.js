@@ -34,6 +34,7 @@
 	 * @param {boolean} options.autoplay
 	 * @param {number} options.autoplaySpeed
 	 * @param {string} options.nav            'both'|'arrows'|'dots'|'none'.
+	 * @param {number} options.max            Show at most this many slides (0 = no limit).
 	 */
 	function init( selector, options ) {
 		var root = document.querySelector( selector + '[data-rapm-carousel]' );
@@ -42,12 +43,33 @@
 		var wrapper    = root.querySelector( '.swiper-wrapper' );
 		var allSlides  = Array.prototype.slice.call( wrapper.querySelectorAll( '.swiper-slide' ) );
 		var instance   = null;
+		var max        = Math.max( 0, parseInt( options.max, 10 ) || 0 );
+
+		// The slides to show right now: everything live today, in the order
+		// set on the Sliders screen, then cut to "show at most" if set. The
+		// cap is applied after the schedule check, so a promotion that hasn't
+		// started yet (or has ended) never takes up one of the spots.
+		function shownSlides() {
+			var active = allSlides.filter( isActive );
+			return max ? active.slice( 0, max ) : active;
+		}
 
 		function build() {
+			// Shut the old carousel down FIRST. In loop mode, Swiper's
+			// destroy() re-sorts the wrapper's slides by the numbers it gave
+			// them. Destroying after the new set was appended (as before
+			// 1.27.0) let it re-sort that new set, so a slide the old carousel
+			// never had (no number) jumped to the front.
+			if ( instance ) {
+				liveCarousels = liveCarousels.filter( function ( s ) { return s !== instance; } );
+				instance.destroy( true, true );
+				instance = null;
+			}
+
 			allSlides.forEach( function ( s ) {
 				if ( s.parentNode === wrapper ) { wrapper.removeChild( s ); }
 			} );
-			var active = allSlides.filter( isActive );
+			var active = shownSlides();
 
 			if ( 0 === active.length ) {
 				root.style.display = 'none';
@@ -55,12 +77,6 @@
 			}
 			active.forEach( function ( s ) { wrapper.appendChild( s ); } );
 			root.style.display = '';
-
-			if ( instance ) {
-				liveCarousels = liveCarousels.filter( function ( s ) { return s !== instance; } );
-				instance.destroy( true, true );
-				instance = null;
-			}
 
 			if ( typeof window.Swiper === 'undefined' ) {
 				return; // Not loaded yet (e.g. delayed by a JS optimizer) — slides stay visible as a static stack.
@@ -109,11 +125,13 @@
 		// Re-check periodically so a scheduled asset can appear or
 		// disappear on a page a visitor left open — or one served straight
 		// from a full-page cache — without a reload.
+		// Compares against the same capped list build() uses, so a capped
+		// carousel isn't rebuilt (and reset to slide one) every minute.
 		setInterval( function () {
-			var stillActive   = allSlides.filter( isActive );
+			var stillShown     = shownSlides();
 			var currentlyShown = wrapper.querySelectorAll( '.swiper-slide' ).length;
-			var changed = stillActive.length !== currentlyShown ||
-				stillActive.some( function ( s ) { return s.parentNode !== wrapper; } );
+			var changed = stillShown.length !== currentlyShown ||
+				stillShown.some( function ( s ) { return s.parentNode !== wrapper; } );
 			if ( changed ) { build(); }
 		}, 60000 );
 	}

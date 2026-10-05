@@ -50,6 +50,19 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 			)
 		);
 
+		$this->add_control(
+			'max_slides',
+			array(
+				'label'       => __( 'Show at most', 'rapm' ),
+				'type'        => \Elementor\Controls_Manager::NUMBER,
+				'min'         => 0,
+				'max'         => 20,
+				'step'        => 1,
+				'default'     => 0,
+				'description' => __( 'The most promotions this carousel will show. It shows the first ones that are live right now, starting from the top of the Sliders list. 0 shows them all.', 'rapm' ),
+			)
+		);
+
 		$this->end_controls_section();
 	}
 
@@ -72,7 +85,8 @@ class RAPM_Widget_Hero_Carousel extends \Elementor\Widget_Base {
 	private function shortcode_string() {
 		$settings = $this->get_settings_for_display();
 		$tag      = 'fold_banner' === $settings['kind'] ? 'rapm_fold_banner' : 'rapm_hero';
-		return '[' . $tag . ' placement="' . esc_attr( $settings['placement'] ) . '"]';
+		$max      = isset( $settings['max_slides'] ) ? max( 0, (int) $settings['max_slides'] ) : 0;
+		return '[' . $tag . ' placement="' . esc_attr( $settings['placement'] ) . '"' . ( $max ? ' max="' . $max . '"' : '' ) . ']';
 	}
 
 	protected function render() {

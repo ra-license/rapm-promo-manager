@@ -312,6 +312,7 @@ class RAPM_Admin_Settings {
 				<tr><td><code>[rapm_hero]</code></td><td><?php esc_html_e( 'Full hero carousel for the "default" placement.', 'rapm' ); ?></td></tr>
 				<tr><td><code>[rapm_fold_banner]</code></td><td><?php esc_html_e( 'The shorter fold-banner carousel for the "default" placement — a separate kind of asset from the hero, added the same way under Promo > Add New Asset with "Kind" set to Fold Banner.', 'rapm' ); ?></td></tr>
 				<tr><td><code>[rapm_hero placement="category-living-room"]</code></td><td><?php esc_html_e( 'A separate carousel scoped to just that placement — set the same placement value when adding assets. Works the same way for [rapm_fold_banner].', 'rapm' ); ?></td></tr>
+				<tr><td><code>[rapm_hero placement="home" max="3"]</code></td><td><?php esc_html_e( 'Shows only the first 3 promotions that are live right now, starting from the top of the Sliders list. Leave max out (or set it to 0) to show them all. Works the same way for [rapm_fold_banner]. The Promo Carousel widget in Elementor has the same setting, called "Show at most."', 'rapm' ); ?></td></tr>
 				<?php if ( class_exists( 'WooCommerce' ) ) : ?>
 					<tr><td><code>[rapm_curated_results]</code></td><td><?php esc_html_e( 'Put this on the one page set as "Curated Results Page" above. Renders whichever hand-picked product list + fill-in results a given asset\'s link points to — nothing to configure on the page itself.', 'rapm' ); ?></td></tr>
 				<?php endif; ?>

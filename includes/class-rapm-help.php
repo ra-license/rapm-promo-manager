@@ -154,6 +154,10 @@ class RAPM_Help {
 				<p><?php esc_html_e( 'Click "Manage Slides" on a card to open that carousel\'s slide list, then drag a slide up or down by its handle on the left. The new order saves automatically — no need to click anything else.', 'rapm' ); ?></p>
 			</details>
 			<details>
+				<summary><?php esc_html_e( 'Why does the carousel show fewer promotions than the Sliders page says are live?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Some carousels are set to show only a few promotions, like 3. It shows the first 3 that are live right now, starting from the top of the Sliders list. To show a different one, drag it higher in the list. The number is set on the page itself, in a box called "Show at most." Ask R&A Marketing if you want it changed.', 'rapm' ); ?></p>
+			</details>
+			<details>
 				<summary><?php esc_html_e( 'Can I edit, duplicate, or delete a slide from this page?', 'rapm' ); ?></summary>
 				<p><?php esc_html_e( 'Yes — each slide in the list has Edit, Duplicate, and Trash links on the right, the same actions available from "All Assets."', 'rapm' ); ?></p>
 			</details>

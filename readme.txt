@@ -37,7 +37,8 @@ Fields, across whichever view you're in:
 `[rapm_hero]` — the full hero carousel, "default" placement.
 `[rapm_fold_banner]` — the shorter fold-banner carousel, "default" placement.
 `[rapm_hero placement="category-living-room"]` — a separate carousel scoped to just that placement (works the same for `[rapm_fold_banner]`).
-An Elementor widget ("Promo Carousel," under the Promo Manager category) wraps either shortcode via its own Kind control.
+`[rapm_hero placement="home" max="3"]` — shows only the first 3 promotions that are live right now, in Sliders-screen order (works the same for `[rapm_fold_banner]`). Leave `max` out, or set it to 0, to show them all. The limit is applied in the visitor's browser after the schedule check, so it works behind a full-page cache, and a promotion that hasn't started yet or has ended never takes one of the spots.
+An Elementor widget ("Promo Carousel," under the Promo Manager category) wraps either shortcode via its own Kind control, plus a "Show at most" box that sets `max`.
 Every display works wherever it's placed: on a page, inside an Elementor popup, in a Theme Builder header or footer, or on a product or category template. Each one loads its own files when it appears.
 `[rapm_curated_results]` — put this on one plain page, then set its address under Promo Manager > Settings > Curated Results Page. Every "hand-picked list" link on the site reuses this one page automatically.
 

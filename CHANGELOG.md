@@ -4,6 +4,37 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.27.0
+
+**New: a carousel can show only the first few promotions ("Show at most").** Built for Tyner. A carousel can now be set to show, for example, only 3 promotions even when more are live. It shows the first ones that are live right now, starting from the top of the Sliders list.
+- **Two ways to set it.** A `max` shortcode attribute, for example `[rapm_hero placement="home" max="3"]` (also `[rapm_fold_banner]`), and a matching **Show at most** number box on the Promo Carousel Elementor widget (0 to 20). The default is 0, meaning no limit, so existing carousels don't change.
+- **The limit is applied in the visitor's browser, after the schedule check** (`rapm-schedule.js`), like the schedule itself. So it works behind a full-page cache, and a promotion that hasn't started yet or has already ended never takes one of the spots. When one ends, the next one in line moves up on its own, within a minute, without a reload.
+- The once-a-minute re-check compares against the same capped list, so a capped carousel isn't rebuilt (and sent back to slide one) every minute when nothing changed.
+- **Help & FAQ:** new answer for "Why does the carousel show fewer promotions than the Sliders page says are live?" The Sliders page counts every live promotion in a group. It can't know a page's cap, since the cap is set on each page, not on the group.
+- **Settings > Shortcodes** and the readme list the new `max` attribute.
+
+**Fix: when a promotion started or ended while a page was open, the carousel could play its slides in the wrong order.** Found while testing the cap. The bug was already in 1.26.1 and earlier; the cap would have triggered it much more often.
+- **Root cause.** On a change, the carousel put the new set of slides in place and *then* shut the old Swiper carousel down. In loop mode, Swiper's `destroy()` re-sorts the slides in the wrapper by the numbers it gave them (`loopDestroy()` in Swiper 11.2.10, reads `data-swiper-slide-index`). By then the wrapper held the new set, and a slide the old carousel never had has no number, so Swiper read it as slide 0 and moved it.
+- **The fix.** The old carousel is now shut down first, while the wrapper still holds exactly its own slides, and the new set goes in after.
+- **Proven against the old code.** Same test page, real Swiper 11.2.10 (the version `swiper@11` resolves to on the CDN today), slides A, B, D, E live and C starting while the page is open. **1.26.1 played A, C, B, D, E. 1.27.0 played A, B, C, D, E.**
+
+**How it was checked.** No PHP runtime is available here (standing constraint).
+- **PHP:** the structural PHP checker found 0 issues in all 22 plugin files. It was re-calibrated first: it caught all three planted bugs (unescaped apostrophe, missing brace, missing `endforeach`). The Elementor NUMBER control's `min` / `max` / `step` settings were checked against Elementor's source (`includes/controls/number.php`).
+- **Behavior:** tested in a browser with real Swiper 11.2.10, the real `rapm-hero.css`, and the same start-up script the shortcode prints. Cap of 3, with B already ended:
+
+  | Step | Shown |
+  |---|---|
+  | Start | A, C, D |
+  | Two re-checks, nothing changed | A, C, D (same carousel, not rebuilt) |
+  | A ends | C, D, E |
+  | B starts again | B, C, D |
+  | C and D end | B, E |
+  | Everything ends | carousel hidden |
+  | E comes back | E (loop off for one slide) |
+
+  Paging through the capped A, C, D carousel wraps A → C → D → A both ways, and never reaches B or E. A cap of 1 shows one slide with loop off; a cap of 0 shows all five.
+- **Still to confirm on staging:** the Show at most box in the real Elementor editor, and a capped carousel on a real page.
+
 ## 1.26.1
 
 **Fix: pages with no promotions no longer load every Promo Manager file.** Found while checking 1.26.0 on staging. The front page loaded all four stylesheets plus Swiper (about 150 KB of script) and the schedule script, even though it showed no promotion at all.

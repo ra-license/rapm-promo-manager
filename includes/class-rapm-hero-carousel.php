@@ -30,6 +30,10 @@ class RAPM_Hero_Carousel {
 				'autoplay'  => $defaults['default_autoplay'] ? 'yes' : 'no',
 				'speed'     => $defaults['default_autoplay_speed'],
 				'nav'       => $defaults['default_nav_style'],
+				// Show at most this many slides at once (0 = no limit). The
+				// cap is applied in the visitor's browser, after the schedule
+				// check, so it works behind a full-page cache (rapm-schedule.js).
+				'max'       => '0',
 			),
 			$atts,
 			$tag
@@ -126,7 +130,8 @@ class RAPM_Hero_Carousel {
 						effect: 'slide',
 						autoplay: <?php echo 'yes' === $atts['autoplay'] ? 'true' : 'false'; ?>,
 						autoplaySpeed: <?php echo (int) $atts['speed']; ?>,
-						nav: <?php echo wp_json_encode( $atts['nav'] ); ?>
+						nav: <?php echo wp_json_encode( $atts['nav'] ); ?>,
+						max: <?php echo max( 0, (int) $atts['max'] ); ?>
 					} );
 				}
 				if ( document.readyState === 'loading' ) {
