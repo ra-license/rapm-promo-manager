@@ -33,7 +33,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   | E comes back | E (loop off for one slide) |
 
   Paging through the capped A, C, D carousel wraps A → C → D → A both ways, and never reaches B or E. A cap of 1 shows one slide with loop off; a cap of 0 shows all five.
-- **Still to confirm on staging:** the Show at most box in the real Elementor editor, and a capped carousel on a real page.
+- **Confirmed on staging (real WordPress, 2026-10-05),** after updating from 1.26.1 through the normal GitHub update:
+  - The home page hero still shows all 3 slides (no cap set, so nothing changed).
+  - A draft page with `[rapm_hero placement="home" max="2"]` showed 2 slides and 2 dots: The Fall Living Room Event, then Gather Around for Less (Dining Days), the first two in Sliders order. All 3 were still in the page HTML; Mattress Month was left out in the browser.
+  - The real Elementor editor shows **Show at most** (0–20, default 0, new wording). Setting it to 2 previewed 2 slides. Saving wrote `[rapm_hero placement="home" max="2"]` as the page's plain content. On the front end, the widget and the shortcode on the same page each showed the same 2 slides.
+  - Help & FAQ and Settings > Shortcodes show the new text. The test page was moved to the trash, not deleted.
+- **Found on staging, not fixed in this version: Elementor's own Swiper 8 can take over our carousel.** The Elementor editor preview loads both our Swiper 11 and Elementor's `assets/lib/swiper/v8/swiper.min.js`. Elementor's loads second, so `window.Swiper` is Swiper 8, which loops by adding copies of the slides (`swiper-slide-duplicate`). The once-a-minute re-check counts every `.swiper-slide`, copies included (4 against 2 real ones), so it rebuilds the carousel every minute even when nothing changed. Seen in the real editor: a different carousel after 65 seconds. This dates back to the re-check itself, not to 1.27.0. On the front end it can only happen on a page that also has an Elementor widget built on Swiper (such as Image Carousel). No staging page has one, so that case is untested. WoodMart's own Swiper doesn't clash: it uses its own name (`wdSwiper`), and the Promotions page carousel ran on ours.
 
 ## 1.26.1
 
