@@ -392,6 +392,30 @@ class RAPM_Promotions_Screen {
 						<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-settings' ) ); ?>"><?php esc_html_e( 'Settings (picture sizes, updates, brand color)', 'rapm' ); ?></a></li>
 					<?php endif; ?>
 				</ul>
+				<?php $report = RAPM_Cache::last_report(); ?>
+				<h3><?php esc_html_e( 'Last page-cache clear', 'rapm' ); ?></h3>
+				<?php if ( $report ) : ?>
+					<p>
+						<?php echo esc_html( mysql2date( 'M j, g:i:s a', $report['time'] ) ); ?> ·
+						<?php
+						echo esc_html(
+							! empty( $report['urls'] )
+								? implode( ', ', $report['urls'] )
+								: __( 'no single pages', 'rapm' )
+						);
+						?>
+						<?php if ( ! empty( $report['sitewide'] ) ) : ?>
+							· <?php esc_html_e( 'plus the whole site (the spot is in a template or widget)', 'rapm' ); ?>
+						<?php endif; ?>
+					</p>
+					<ul>
+						<?php foreach ( (array) $report['results'] as $line ) : ?>
+							<li><?php echo esc_html( $line ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				<?php else : ?>
+					<p><?php esc_html_e( 'None yet. It runs when a promotion is switched on or off, saved, reordered or trashed.', 'rapm' ); ?></p>
+				<?php endif; ?>
 			</div>
 		</div>
 		<?php

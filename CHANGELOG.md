@@ -4,6 +4,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.28.2
+
+**New: R&A setup details show what the last page-cache clear did.** Built to find out why 1.28.1 didn't clear Rocket.net's copy of "Home 2". After the update, switching Free Design Help on still left Home 2 cached without the banner (`HIT`).
+- `RAPM_Cache` now records each clear: the time, the pages, whether the whole site was cleared, and one line per cache it reached. For Rocket.net, it also records what that plugin's call answered. If the expected Rocket.net class isn't there, it lists the cache-related classes that are loaded, or the class's methods if the call doesn't exist, so the right name can be found without guessing. It catches and records any error too.
+- Shown under "Last page-cache clear" in R&A setup details. Stored in the `rapm_last_cache_clear` option (not autoloaded).
+- Staging's must-use plugin is Rocket.net's "CDN Cache Plugin" 1.1.13 (Plugins > Must-Use).
+
 ## 1.28.1
 
 **Fix: switching a promotion off on a Rocket.net site left it showing to visitors on its own page.** Found checking 1.28.0 on staging. Free Design Help (the Home page banner, shown only on "Home 2") was switched off.
