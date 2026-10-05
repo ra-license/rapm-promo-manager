@@ -16,7 +16,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 **How it was checked.**
 - **PHP:** the structural checker found 0 issues in 26 files. A search confirmed nothing still calls the per-spot H1.
 - **Remove spot:** tested in a browser on the admin test page. Cancelling the question sends nothing; confirming sends the spot and reloads the screen.
-- **To confirm on staging:** removing the test spot, the widget switch, and a draft page using `heading="h1"`.
+- **Confirmed on staging (real WordPress, 2026-10-05),** after the normal GitHub update:
+  - **R&A setup details:** only "Test spot (Claude, remove me)" offered "Remove this spot". The five real spots didn't, since they have promotions and are on pages. No per-spot H1 checkbox is left, and the slider and both feature banners show the "set it where it's placed" note.
+  - **Remove:** removing the test spot asked first, then showed "Spot removed.", and the list went back to the five real spots.
+  - **Shortcode:** a draft page with `[rapm_hero placement="home" heading="h1"]` and `[rapm_fold_banner placement="home"]` had exactly one H1 ("The Fall Living Room Event"). The slider's other two promotions and the banner stayed H2.
+  - **Elementor:** the Promo Carousel widget has the "Main heading (H1)" switch. With the spot "Home page slider" picked and the switch on, it rendered the first promotion as an H1 and the rest as H2. Not saved.
+  - The test page was moved to the trash, not deleted. The live home page is unchanged (no H1 yet). R&A turns on the switch, or adds `heading="h1"`, where the slider sits on the home page.
 
 ## 1.29.0
 
