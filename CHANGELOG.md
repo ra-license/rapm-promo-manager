@@ -44,7 +44,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The window opens with focus in the name box. Picking a type updates the example and the "Clients will see" type, and typing updates the name.
   - Create sends the type and name. A failed create shows the error in red and keeps the window open; Cancel closes it.
   - The H1 checkbox saves, and a failed save puts the box back and says so.
-- **Still to confirm on staging:** creating a real spot, the Elementor Spot list, the form's "Where it shows" list, and the H1 on the real home page through Rocket.net's CDN. Rocket.net's page clearing is still the open problem from 1.28.2.
+- **Confirmed on staging (real WordPress, 2026-10-05),** after the normal GitHub update:
+  - **Promotions screen:** the five spots kept their names ("Home page slider", "Home page banner", "About banner", "Promotions coupons", "Living Room tiles"), each with its type label. The H1 box appears only on the slider and the two feature banners. "+ New spot" appears only with R&A details on.
+  - **Add/edit form:** "Where it shows" is a list by name: About banner, and Home page banner (selected). The type list reads "Slider — Desktop 1920x600, Mobile 1080x1920" and so on.
+  - **Elementor editor:** the Promo Carousel's Spot list offers "About banner (Feature banner)", "Home page banner (Feature banner)" and "Home page slider (Slider)". Type and Placement code show only while no spot is picked. Nothing was saved.
+  - **"+ New spot":** created "Test spot (Claude, remove me)" as a Slider. The message gave the next step and the code `[rapm_hero placement="test-spot-claude-remove-me"]`. The new section showed "Not on any page yet" and "0 showing now", and its "Add a picture" opened the form with that spot. **It's still on staging:** there's no way to remove a spot yet.
+  - **Main heading:** switched on for Home page slider, a fresh home page had exactly one H1, "The Fall Living Room Event" (before: none).
+- **Found on staging: the per-spot H1 is the wrong level.** Home page slider also shows on Promotions, which already has its own H1 ("This month's best deals"). With the setting on, Promotions had two. A spot can sit on several pages, and only some of them lack an H1, so a per-spot switch can't get both right. Switched back off on staging. Next: Phil to choose whether the H1 choice moves to each placement (the widget or shortcode on each page).
 
 ## 1.28.2
 
