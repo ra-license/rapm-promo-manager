@@ -150,6 +150,10 @@ class RAPM_Help {
 				<p><?php esc_html_e( 'One section for each spot on your website where promotions show, like "Home page slider." Each section says which pages it shows on and how many promotions are showing now. Each picture card says whether that promotion is showing now, hidden, starting later, or ended, and when it ends.', 'rapm' ); ?></p>
 			</details>
 			<details>
+				<summary><?php esc_html_e( 'How do I add a new spot?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Click "+ New spot" at the top of the Promotions page. Pick its type, like Slider or Shop the Look, and give it a name for its job, like "Main slider." The new spot shows as its own section with its code. To show it on your website, paste that code on a page. In Elementor, use a Shortcode widget, or for a slider or feature banner, the Promo Carousel widget.', 'rapm' ); ?></p>
+			</details>
+			<details>
 				<summary><?php esc_html_e( 'How do I take a promotion off the website without deleting it?', 'rapm' ); ?></summary>
 				<p><?php esc_html_e( 'Click its switch. Blue means it shows on your website. Gray means it is hidden. Click it again any time to bring it back.', 'rapm' ); ?></p>
 			</details>

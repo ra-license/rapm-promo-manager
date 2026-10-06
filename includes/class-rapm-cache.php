@@ -37,7 +37,7 @@ class RAPM_Cache {
 
 	private static $hooked = false;
 
-	/** What the last clear did, for R&A setup details (1.28.2). */
+	/** What the last clear did, for the Setup panel on the Promotions screen (1.28.2). */
 	private static $report = array();
 	const REPORT_OPTION    = 'rapm_last_cache_clear';
 
@@ -194,7 +194,7 @@ class RAPM_Cache {
 		}
 	}
 
-	/** The last clear, for R&A setup details. */
+	/** The last clear, for the Setup panel on the Promotions screen. */
 	public static function last_report() {
 		$report = get_option( self::REPORT_OPTION );
 		return is_array( $report ) ? $report : array();

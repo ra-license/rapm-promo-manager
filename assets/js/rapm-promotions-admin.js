@@ -1,7 +1,7 @@
 /**
  * Promotions screen (RAPM_Promotions_Screen): the on/off switches, the
  * "…" menus, drag (and Move earlier/later) to reorder, Find a promotion,
- * Show ended, and the R&A setup details. Plain script, no dependencies.
+ * Show ended, renaming and adding spots. Plain script, no dependencies.
  */
 ( function () {
 	'use strict';
@@ -225,22 +225,6 @@
 		if ( orderOf( section ).join( ',' ) !== dragBefore ) { saveOrder( section ); }
 	} );
 
-	/* ---- R&A setup details ------------------------------------------------- */
-
-	function setRa( on ) {
-		root.querySelectorAll( '.rapm-ra' ).forEach( function ( el ) { el.hidden = ! on; } );
-		var button = root.querySelector( '.rapm-ra-toggle' );
-		if ( button ) {
-			button.setAttribute( 'aria-expanded', on ? 'true' : 'false' );
-			button.textContent = on ? T.hideRa : T.showRa;
-		}
-		try { window.localStorage.setItem( 'rapmRaDetails', on ? '1' : '0' ); } catch ( err ) {}
-	}
-
-	try {
-		if ( '1' === window.localStorage.getItem( 'rapmRaDetails' ) ) { setRa( true ); }
-	} catch ( err ) {}
-
 	root.addEventListener( 'submit', function ( e ) {
 		var form = e.target.closest ? e.target.closest( '.rapm-rename' ) : null;
 		if ( ! form ) { return; }
@@ -261,7 +245,7 @@
 		} ).catch( function () { say( section, T.saveFailed ); } );
 	} );
 
-	/* ---- "Remove this spot", R&A only (1.29.1) ------------------------------ */
+	/* ---- "Remove this spot" (1.29.1) ---------------------------------------- */
 
 	root.addEventListener( 'click', function ( e ) {
 		var button = e.target.closest ? e.target.closest( '.rapm-remove-spot' ) : null;
@@ -289,7 +273,7 @@
 		} );
 	} );
 
-	/* ---- "+ New spot", R&A only (1.29.0) ----------------------------------- */
+	/* ---- "+ New spot" (1.29.0) ---------------------------------------------- */
 
 	var dialog = root.querySelector( '.rapm-new-spot' );
 	if ( dialog ) {
@@ -377,9 +361,6 @@
 
 		var ended = t.closest( '.rapm-ended-toggle' );
 		if ( ended ) { toggleEnded( ended ); return; }
-
-		var ra = t.closest( '.rapm-ra-toggle' );
-		if ( ra ) { setRa( 'true' !== ra.getAttribute( 'aria-expanded' ) ); return; }
 
 		if ( ! t.closest( '.rapm-card-menu' ) ) { closeMenus(); }
 	} );

@@ -4,6 +4,33 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.31.3
+
+**Change: every screen is back in the menu, and the spot tools show for everyone.** Phil: "All menu options need to be available to everyone on the backend." Found on Gates. Its Promotions menu had only "All promotions" and "Help", so there was no visible way to reach Settings (for the update key) or to add a spot.
+
+- **Why they were hidden:** 1.28.0 shortened the menu to "All promotions" and "Help" for store staff. Add New Asset, the old list, Sliders, Training Guide and Settings were only reachable through "Show R&A setup details" at the bottom of the Promotions screen. 1.29.0 put "+ New spot", spot codes and renaming behind that same link. This was recorded in the 1.28.0 and 1.29.0 notes, but not raised with Phil as a loss of menu items.
+- **The menu now reads:** All promotions, Add New Asset, All Assets (list), Sliders, Training Guide, Help, Settings.
+  - "All Assets (list)" is the old list with bulk actions and filters (`&rapm_list=1`).
+  - Each screen keeps the permission it always had. Settings is for administrators (`manage_options`), as it was before 1.28.0, because it holds the GitHub update key. Everything else needs `edit_posts`.
+  - **Two duplicates stay out of the menu:**
+    - The Promotions screen's own item, because "All promotions" opens it.
+    - WordPress's own "Add New", which has only ever forwarded to "Add New Asset".
+  - Editing a promotion highlights "All promotions". The old list highlights its own item.
+- **The Promotions screen shows everything all the time.** No more "Show R&A setup details" toggle.
+  - "+ New spot" is at the top.
+  - Each section shows its spot code, a rename box, the H1 note for sliders and banners, and "Remove this spot" where allowed.
+  - A "Setup" panel at the bottom keeps the links and the last page-cache clear.
+  - Wording made for R&A only now speaks to everyone:
+    - "R&A only. Spot code:" now reads "Spot code:".
+    - "Name clients see" now reads "Spot name".
+    - "Not on any page yet. Ask R&A Marketing to place it." now reads "…Put its spot code (below) on a page to show it."
+    - The empty screen now says how to add a spot, instead of "R&A Marketing sets up the spots".
+- **Docs:** Help has a new answer, "How do I add a new spot?". The readme describes the full menu.
+- **How it was checked:**
+  - **PHP:** the in-browser PHP 8.4 check found 0 issues in all 27 files.
+  - **Menu:** `tidy_menu()` was run on a WordPress-style menu built in the real registration order. It gave the seven items above, in order, with their permissions. Highlighting was checked for editing a promotion, the Promotions screen and the old list.
+  - **Promotions screen:** rendered with the real CSS and JS. "+ New spot" is visible and opens the dialog with all five types. Spot codes are visible, and the panel reads "Setup". No script errors.
+
 ## 1.31.2
 
 **Fix: product cards under Shop the Look's photo stay short when names are long.**

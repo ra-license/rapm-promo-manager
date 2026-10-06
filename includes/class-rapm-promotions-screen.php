@@ -11,9 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * switch, and drag (or "Move earlier/later") to change the order.
  *
  * Nothing is removed: the old list, Sliders, Settings and the Training
- * Guide still work at their usual addresses. They're only taken out of the
- * menu, which becomes "All promotions" and "Help". R&A reaches the rest
- * through "Show R&A setup details" at the bottom of this screen.
+ * Guide are all still in the menu (1.31.3: Phil wants every screen in the
+ * menu for everyone; 1.28.0–1.31.2 had taken them out). The spot tools
+ * (+ New spot, codes, renaming) show to everyone too, with no toggle.
  */
 class RAPM_Promotions_Screen {
 
@@ -31,14 +31,29 @@ class RAPM_Promotions_Screen {
 		'marquee'     => 170,
 	);
 
-	/** Screens taken out of the menu (still reachable), and the browser-tab title each needs once it's out. */
+	/**
+	 * This screen's own menu item, taken out because "All promotions"
+	 * already opens it, and the browser-tab title it needs once it's out.
+	 */
 	private static function hidden_pages() {
 		return array(
-			self::PAGE            => __( 'Promotions', 'rapm' ),
-			'rapm-add-asset'      => __( 'Promotion', 'rapm' ),
-			'rapm-sliders'        => __( 'Sliders', 'rapm' ),
-			'rapm-training-guide' => __( 'Training Guide', 'rapm' ),
-			'rapm-settings'       => __( 'Promo Manager Settings', 'rapm' ),
+			self::PAGE => __( 'Promotions', 'rapm' ),
+		);
+	}
+
+	/** The old list of every promotion (bulk actions, filters), as a menu item. */
+	const LIST_SLUG = 'edit.php?post_type=rapm_asset&rapm_list=1';
+
+	/** Menu order (1.31.3). Anything not listed keeps its place after these. */
+	private static function menu_order() {
+		return array(
+			self::PARENT,
+			'rapm-add-asset',
+			self::LIST_SLUG,
+			'rapm-sliders',
+			'rapm-training-guide',
+			'rapm-help',
+			'rapm-settings',
 		);
 	}
 
@@ -51,6 +66,15 @@ class RAPM_Promotions_Screen {
 			self::PAGE,
 			array( __CLASS__, 'render_page' )
 		);
+		// A plain link, no screen of its own: WordPress links a submenu
+		// slug that isn't a plugin page straight to that address.
+		add_submenu_page(
+			self::PARENT,
+			__( 'All Assets (list)', 'rapm' ),
+			__( 'All Assets (list)', 'rapm' ),
+			'edit_posts',
+			self::LIST_SLUG
+		);
 	}
 
 	/**
@@ -59,23 +83,52 @@ class RAPM_Promotions_Screen {
 	 * maybe_redirect_list() forwards here, so the top-level "Promotions"
 	 * link works without depending on how WordPress links a menu whose
 	 * first item is a plugin page.
+	 *
+	 * Only two duplicates come out: this screen's own item ("All
+	 * promotions" opens it) and WordPress's own "Add New", which only ever
+	 * forwarded to "Add New Asset" (RAPM_Upload_Handler::maybe_redirect_native_add_new()).
 	 */
 	public static function tidy_menu() {
+		global $submenu;
 		remove_submenu_page( self::PARENT, 'post-new.php?post_type=rapm_asset' );
 		foreach ( array_keys( self::hidden_pages() ) as $slug ) {
 			remove_submenu_page( self::PARENT, $slug );
 		}
+		if ( empty( $submenu[ self::PARENT ] ) ) {
+			return;
+		}
+		$order = array_flip( self::menu_order() );
+		$items = array_values( $submenu[ self::PARENT ] );
+		foreach ( $items as $i => $item ) {
+			$items[ $i ]['rapm_rank'] = isset( $order[ $item[2] ] ) ? $order[ $item[2] ] * 1000 : 100000 + $i;
+		}
+		usort(
+			$items,
+			function ( $a, $b ) {
+				return $a['rapm_rank'] - $b['rapm_rank'];
+			}
+		);
+		$sorted = array();
+		foreach ( $items as $i => $item ) {
+			unset( $item['rapm_rank'] );
+			// WordPress keeps submenu items under numeric keys and reads them in key order.
+			$sorted[ ( $i + 1 ) * 5 ] = $item;
+		}
+		$submenu[ self::PARENT ] = $sorted; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 	}
 
-	/** Keeps "All promotions" (or "Help") highlighted on screens that are no longer in the menu. */
+	/** Which menu item is highlighted: this screen and editing a promotion use "All promotions", the old list its own item. */
 	public static function submenu_file( $submenu_file ) {
-		global $plugin_page;
-		if ( 'rapm-training-guide' === $plugin_page ) {
-			return 'rapm-help';
-		}
+		global $plugin_page, $pagenow;
 		$pages = self::hidden_pages();
 		if ( $plugin_page && isset( $pages[ $plugin_page ] ) ) {
 			return self::PARENT;
+		}
+		if ( 'rapm-add-asset' === $plugin_page && ! empty( $_GET['edit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return self::PARENT;
+		}
+		if ( 'edit.php' === $pagenow && ! $plugin_page && isset( $_GET['post_type'] ) && 'rapm_asset' === $_GET['post_type'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return self::LIST_SLUG;
 		}
 		return $submenu_file;
 	}
@@ -132,8 +185,6 @@ class RAPM_Promotions_Screen {
 					'confirmTrash' => __( 'Move this promotion to the trash? You can bring it back right after.', 'rapm' ),
 					'showEnded'   => __( 'Show %d ended', 'rapm' ),
 					'hideEnded'   => __( 'Hide ended', 'rapm' ),
-					'showRa'      => __( 'Show R&A setup details', 'rapm' ),
-					'hideRa'      => __( 'Hide R&A setup details', 'rapm' ),
 					'nameSaved'   => __( 'Name saved.', 'rapm' ),
 					'noResults'   => __( 'No promotions match “%s”.', 'rapm' ),
 					'confirmRemove' => __( 'Remove "%s"? It has no promotions and isn\'t on any page.', 'rapm' ),
@@ -314,7 +365,7 @@ class RAPM_Promotions_Screen {
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Promotions', 'rapm' ); ?></h1>
 					<p class="rapm-promos-sub"><?php esc_html_e( 'The pictures on your website, grouped by where they show.', 'rapm' ); ?></p>
 				</div>
-				<button type="button" class="button button-primary rapm-ra rapm-new-spot-open" hidden><?php esc_html_e( '+ New spot', 'rapm' ); ?></button>
+				<button type="button" class="button button-primary rapm-new-spot-open"><?php esc_html_e( '+ New spot', 'rapm' ); ?></button>
 				<?php if ( $spots ) : ?>
 					<div class="rapm-promos-search">
 						<label for="rapm-promo-search"><?php esc_html_e( 'Find a promotion', 'rapm' ); ?></label>
@@ -329,7 +380,7 @@ class RAPM_Promotions_Screen {
 			<?php if ( ! $spots ) : ?>
 				<div class="rapm-spot rapm-empty">
 					<h2><?php esc_html_e( 'No promotions yet', 'rapm' ); ?></h2>
-					<p><?php esc_html_e( 'R&A Marketing sets up the spots on your website where promotions show. Once one is set up, it appears here with an "Add a picture" button.', 'rapm' ); ?></p>
+					<p><?php esc_html_e( 'Promotions go in spots: places on your website, like a slider at the top of the home page. Click "+ New spot" at the top to add one. It then shows here with an "Add a picture" button and the code to put on a page.', 'rapm' ); ?></p>
 				</div>
 			<?php endif; ?>
 
@@ -355,15 +406,12 @@ class RAPM_Promotions_Screen {
 						);
 						?>
 					</p>
-				<?php else : ?>
-					<p></p>
 				<?php endif; ?>
-				<button type="button" class="button-link rapm-ra-toggle" aria-expanded="false"><?php esc_html_e( 'Show R&A setup details', 'rapm' ); ?></button>
 			</div>
 
-			<div class="rapm-spot rapm-ra-panel rapm-ra" hidden>
-				<h2><?php esc_html_e( 'R&A setup', 'rapm' ); ?></h2>
-				<p><?php esc_html_e( 'Each section above now shows its spot code and a box to rename it. A new spot appears here as soon as its code is placed on a page, or a promotion is added with a new spot name.', 'rapm' ); ?></p>
+			<div class="rapm-spot rapm-ra-panel">
+				<h2><?php esc_html_e( 'Setup', 'rapm' ); ?></h2>
+				<p><?php esc_html_e( 'Each section above shows its spot code and a box to rename it. A new spot shows here when you click "+ New spot", when its code is placed on a page, or when a promotion is added with a new spot name.', 'rapm' ); ?></p>
 				<ul>
 					<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset' ) ); ?>"><?php esc_html_e( 'Add a promotion to a new spot', 'rapm' ); ?></a></li>
 					<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&rapm_list=1' ) ); ?>"><?php esc_html_e( 'The old list of every promotion (bulk actions, filters)', 'rapm' ); ?></a></li>
@@ -546,16 +594,16 @@ class RAPM_Promotions_Screen {
 							echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput -- each part escaped above.
 							?>
 						<?php else : ?>
-							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Ask R&A Marketing to place it.', 'rapm' ); ?></span>
+							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Put its spot code (below) on a page to show it.', 'rapm' ); ?></span>
 						<?php endif; ?>
 						<?php if ( count( $spot['posts'] ) > 1 ) : ?>
 							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ); ?></span>
 						<?php endif; ?>
 					</p>
-					<div class="rapm-ra rapm-spot-ra" hidden>
-						<p><?php esc_html_e( 'R&A only. Spot code:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
+					<div class="rapm-spot-ra">
+						<p><?php esc_html_e( 'Spot code:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
 						<form class="rapm-rename">
-							<label for="<?php echo esc_attr( $heading ); ?>-name"><?php esc_html_e( 'Name clients see', 'rapm' ); ?></label>
+							<label for="<?php echo esc_attr( $heading ); ?>-name"><?php esc_html_e( 'Spot name', 'rapm' ); ?></label>
 							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
 							<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
 						</form>
