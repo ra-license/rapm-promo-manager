@@ -4,6 +4,41 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.31.1
+
+Three fixes in the "Place the Pieces" step, found while placing dots on staging in 1.31.0.
+
+**Fix: after clicking the photo, typing goes into the new dot's search box.**
+- **Problem:** clicking the photo added a dot, but its search box didn't have focus. Typing went nowhere, and the space bar scrolled the page to the bottom.
+- **Root cause:** the editor focused the search box during `pointerdown`. The browser's own `mousedown` comes right after it, and its default action moved focus to the photo. The photo can't hold focus, so focus ended up on the page itself. The 1.31.0 test page used simulated pointer events, which skip the browser's `mousedown` step, so it didn't show this.
+- **Fix:** a `mousedown` on the photo (not on a dot) now has its default action prevented, so focus stays in the search box.
+
+**Fix: searching words that aren't side by side in the product name.**
+- **Problem:** on staging, "Apple Cider Console Loveseat" found nothing, though "Hancock – Apple Cider Power Zero Gravity Console Loveseat" exists.
+- **Root cause:** this store's search only matches the words in the order they're typed, as one phrase. Checked against staging's Store API: "Console Loveseat" found 24 products and "Cider Power" found 3, but "Apple Cider Loveseat", "loveseat apple" and "hancock loveseat" each found 0.
+- **Fix:** when a search of two or more words finds nothing:
+  1. The editor asks the store how many products match each word (up to 5 words, `per_page=1`, reading `X-WP-Total`).
+  2. It loads up to 100 products for the word with the fewest matches.
+  3. It keeps the ones whose name or SKU contains every word.
+- **Limits:**
+  - If any word matches nothing, the search shows "Nothing matches" as before.
+  - If even the rarest word matches more than 100 products, only its first 100 are checked.
+  - A search that finds something the normal way doesn't change.
+
+**Fix: a dot keeps focus after it's dragged.**
+- **Problem:** after a drag, the arrow keys didn't move the dot.
+- **Root cause:** the dots are redrawn when a drag ends, and the one that had focus is replaced.
+- **Fix:** the redrawn dot gets focus back, so the arrow keys keep working.
+
+**Also:** more space under "How it fits on screens", which sat right against the next step's heading when editing.
+
+**How it was checked.**
+- **Real clicks and typing** in the browser on the test page, using the real CSS and JS and a stand-in store that, like staging, only matches a phrase:
+  - **Click focus:** clicking the photo added dot 4, its search box had focus, and the typing landed there.
+  - **Fallback search:** "ottoman cocktail" found nothing as a phrase. The editor then asked the store about "ottoman" and "cocktail", loaded the "ottoman" matches and found "XL Square Cocktail Ottoman 33867".
+  - **No match:** "ottoman purple" showed "Nothing matches…".
+  - **Drag:** a real drag moved dot 1 from 38% to 48.4%, focus stayed on the dot, and ArrowLeft moved it to 47.4%.
+
 ## 1.31.0
 
 **New: numbered dots and products on Shop the Look.** This is the second part of the plan Phil approved on 2026-10-06; Add to cart comes in 1.32.0. Each look can have up to 12 numbered dots on the pieces in its photo. Each dot is linked to a WooCommerce product, and shoppers see the product's live price and stock. The system can't know where a sofa is in a photo, so staff place the dots by hand.
@@ -62,7 +97,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Planted HTML in the stock text did not run.
   - No sideways page scroll.
 - **Form, edit and new, with the real CSS and JS and a stand-in Store API:**
-  - **Adding and searching:** clicking the photo added dot 4 and focused its search. Typing "otto" sent both `search=otto` and `sku=otto`, and picking the result filled the row.
+  - **Adding and searching:** a simulated click on the photo added dot 4 and focused its search. With real clicks on staging the focus was lost; fixed in 1.31.1. Typing "otto" sent both `search=otto` and `sku=otto`, and picking the result filled the row.
   - **Moving:** dragging moved dot 1 to (30, 50). Shift+→ moved a dot from 50 to 55.
   - **Cut-off warnings:** "Top" and "Center" for which part to keep produced the expected warnings.
   - **Checks:** Next and Save were blocked with "Missing: dot 4".

@@ -146,6 +146,34 @@
 		} );
 	}
 
+	// Some stores only find the words in the order they're typed ("Console
+	// Loveseat" works, "Apple Cider Loveseat" doesn't). So when a search of
+	// several words finds nothing, look up the word with the fewest products
+	// and keep the ones whose name or SKU has every word.
+	function wordSearch( q ) {
+		var words = [];
+		q.toLowerCase().split( /\s+/ ).forEach( function ( w ) {
+			w = w.replace( /^[.,;:!?"'()\[\]–—-]+|[.,;:!?"'()\[\]–—-]+$/g, '' );
+			if ( w.length > 1 && words.indexOf( w ) === -1 ) { words.push( w ); }
+		} );
+		if ( words.length < 2 ) { return Promise.resolve( { items: [], total: 0 } ); }
+		words = words.slice( 0, 5 );
+		return Promise.all( words.map( function ( w ) {
+			return store( 'search=' + encodeURIComponent( w ) + '&per_page=1' );
+		} ) ).then( function ( counts ) {
+			var best = 0;
+			counts.forEach( function ( c, i ) { if ( c.total < counts[ best ].total ) { best = i; } } );
+			if ( ! counts[ best ].total ) { return { items: [], total: 0 }; }
+			return store( 'search=' + encodeURIComponent( words[ best ] ) + '&per_page=100' ).then( function ( res ) {
+				var items = res.items.filter( function ( item ) {
+					var hay = ( plain( item.name ) + ' ' + ( item.sku || '' ) ).toLowerCase();
+					return words.every( function ( w ) { return hay.indexOf( w ) > -1; } );
+				} );
+				return { items: items, total: items.length };
+			} );
+		} );
+	}
+
 	function loadPrices() {
 		var ids = state.dots.map( function ( d ) { return d.p; } ).filter( Boolean );
 		if ( ! ids.length ) { return; }
@@ -290,6 +318,11 @@
 			}
 			addDot( Math.round( ( e.clientX - box.left ) / box.width * 1000 ) / 10, Math.round( ( e.clientY - box.top ) / box.height * 1000 ) / 10 );
 		} );
+		// Clicking the photo itself would move focus to nowhere right after
+		// addDot() put it in the new dot's search box, so keep it where it is.
+		stage.addEventListener( 'mousedown', function ( e ) {
+			if ( ! e.target.closest( '.rapm-pieces-dot' ) ) { e.preventDefault(); }
+		} );
 		stage.addEventListener( 'pointermove', function ( e ) {
 			if ( ! drag ) { return; }
 			var box = stage.getBoundingClientRect(), d = state.dots[ drag.k ];
@@ -308,6 +341,8 @@
 			drag.el.classList.remove( 'is-dragging' );
 			drag = null;
 			select( k );
+			var again = stage.querySelector( '.rapm-pieces-dot[data-k="' + k + '"]' );
+			if ( again ) { again.focus( { preventScroll: true } ); }
 		};
 		stage.addEventListener( 'pointerup', endDrag );
 		stage.addEventListener( 'pointercancel', endDrag );
@@ -476,11 +511,15 @@
 				var byName = store( 'search=' + encodeURIComponent( q ) + '&per_page=8' );
 				var bySku  = /\s/.test( q ) ? Promise.resolve( { items: [], total: 0 } ) : store( 'sku=' + encodeURIComponent( q ) + '&per_page=8' ).catch( function () { return { items: [], total: 0 }; } );
 				Promise.all( [ byName, bySku ] ).then( function ( res ) {
-					if ( mine !== searchSeq ) { return; }
 					var seen = {}, items = [];
 					res[1].items.concat( res[0].items ).forEach( function ( item ) {
 						if ( ! seen[ item.id ] ) { seen[ item.id ] = true; items.push( item ); }
 					} );
+					if ( items.length || ! /\s/.test( q ) || mine !== searchSeq ) { return { items: items, total: res[0].total }; }
+					return wordSearch( q );
+				} ).then( function ( res ) {
+					if ( mine !== searchSeq ) { return; }
+					var items = res.items;
 					box.innerHTML = '';
 					if ( ! items.length ) {
 						box.appendChild( el( 'div', 'rapm-pieces-note', fmt( T.noMatch, q ) ) );
@@ -505,7 +544,7 @@
 						b.appendChild( text );
 						box.appendChild( b );
 					} );
-					if ( res[0].total > 8 ) { box.appendChild( el( 'div', 'rapm-pieces-note', fmt( T.more, 8, res[0].total ) ) ); }
+					if ( res.total > 8 ) { box.appendChild( el( 'div', 'rapm-pieces-note', fmt( T.more, 8, res.total ) ) ); }
 				} ).catch( function () {
 					if ( mine === searchSeq ) {
 						box.innerHTML = '';
