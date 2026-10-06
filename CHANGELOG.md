@@ -4,6 +4,16 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.31.4
+
+**Fix: the menu marks the screen you're on.**
+- **Problem:** on Help, Settings and the other Promo Manager screens, the Promotions menu opened with no item marked. Seen on staging (1.31.3) and on Gates (1.31.2, the Help page), so it was there before 1.31.3.
+- **Root cause, partly confirmed:** WordPress's own marking didn't work on these screens. The menu shows no item marked, but the exact core condition that fails wasn't confirmed without WordPress's source on hand.
+- **Fix:** `RAPM_Promotions_Screen::submenu_file()` now names the current item itself whenever the screen is one of Promo Manager's own menu items. Editing a promotion still marks "All promotions", and the old list still marks "All Assets (list)". Other plugins' screens are left alone.
+- **Checked:**
+  - **PHP:** the PHP 8.4 check passes.
+  - **Highlighting:** `submenu_file()` was run for each screen on the 1.31.3 menu. The Promotions screen marks "All promotions", Add New Asset, Sliders, Training Guide, Help and Settings each mark themselves, editing marks "All promotions", the old list marks its item, and another plugin's page gets nothing.
+
 ## 1.31.3
 
 **Change: every screen is back in the menu, and the spot tools show for everyone.** Phil: "All menu options need to be available to everyone on the backend." Found on Gates. Its Promotions menu had only "All promotions" and "Help", so there was no visible way to reach Settings (for the update key) or to add a spot.

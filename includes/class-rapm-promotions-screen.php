@@ -130,6 +130,17 @@ class RAPM_Promotions_Screen {
 		if ( 'edit.php' === $pagenow && ! $plugin_page && isset( $_GET['post_type'] ) && 'rapm_asset' === $_GET['post_type'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return self::LIST_SLUG;
 		}
+		// Each of our screens marks its own item. Left to WordPress, Help,
+		// Settings and the rest opened the menu with nothing marked (seen on
+		// staging and on Gates, 1.31.2–1.31.3).
+		global $submenu;
+		if ( $plugin_page && ! empty( $submenu[ self::PARENT ] ) ) {
+			foreach ( $submenu[ self::PARENT ] as $item ) {
+				if ( isset( $item[2] ) && $item[2] === $plugin_page ) {
+					return $plugin_page;
+				}
+			}
+		}
 		return $submenu_file;
 	}
 
