@@ -14,6 +14,10 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - On phones the card picture is 64px instead of 84px.
   - The Review step's preview uses the same stylesheet, so it matches.
 - **Checked:** the new rules were added to staging's real home page at 375px, with the real theme, before release. The Dining Room cards went from 189px to 96px tall, with names at 3 lines.
+- **Confirmed on staging (real WordPress, 2026-10-06),** after updating only RA Promo Manager from Dashboard > Updates (1.31.1 to 1.31.2, "updated successfully"; the other plugin updates were left alone):
+  - **Logged out (home page fetched without cookies):** `rapm-looks.css?ver=1.31.2` and `rapm-looks.js?ver=1.31.2`. The served CSS has the 3-line limit.
+  - **375px (the home page in a 375px frame):** the cards are 96px tall and the three tabs fit with no fade. No sideways scroll.
+  - **Desktop:** the Living Room cards are 84px tall.
 
 ## 1.31.1
 
@@ -49,6 +53,10 @@ Three fixes in the "Place the Pieces" step, found while placing dots on staging 
   - **Fallback search:** "ottoman cocktail" found nothing as a phrase. The editor then asked the store about "ottoman" and "cocktail", loaded the "ottoman" matches and found "XL Square Cocktail Ottoman 33867".
   - **No match:** "ottoman purple" showed "Nothing matches…".
   - **Drag:** a real drag moved dot 1 from 38% to 48.4%, focus stayed on the dot, and ArrowLeft moved it to 47.4%.
+- **Confirmed on staging (real WordPress, 2026-10-06),** after updating only RA Promo Manager (1.31.0 to 1.31.1, "updated successfully"):
+  - **Click focus:** the Dining Room and Bedroom dots (8 in all) were placed by clicking the photo and typing straight away. Every time, the typing landed in the new dot's search box.
+  - **Fallback search:** "trestle table 88" found the 88-112″ trestle table and the 10-piece trestle set, though neither name has those words side by side. "breckenridge nightstand" found the Breckenridge 3 Drawer Nightstand.
+  - **Speed:** each store search took about 2.3–2.7 seconds on this server. The fallback added about 1.2 seconds: three word counts at once (~0.5s), then one 100-product request (~0.7s).
 
 ## 1.31.0
 
@@ -118,7 +126,27 @@ Three fixes in the "Place the Pieces" step, found while placing dots on staging 
   - The unpublished-product note shared a CSS class with the cut-off note, so updating cut-off notes erased or duplicated it.
   - The preview showed a "#303" card for an unpublished product, and its numbers didn't match the website.
   - `setPointerCapture` could throw and stop a drag. It's now wrapped.
-- **Not yet checked:** real WordPress and the real Store API on staging.
+- **Confirmed on staging (real WordPress, 2026-10-06),** after updating only RA Promo Manager (1.30.1 to 1.31.0, "updated successfully"):
+  - **The form:** a look's form has the five steps, loads `rapm-look-editor.js?ver=1.31.0`, and points at staging's Store API.
+  - **Search:** a name search ("Apple Cider Power Zero Gravity Sofa") and an exact SKU ("MHAN-812P3Z-APCI", and later "DAME#2218" with its "#") found their products, with "No price shown online · Available on backorder".
+  - **Moving and saving:** a real drag moved the sofa's dot from 57.9% to 51%, and the save kept it.
+  - **Bugs found here:** clicking the photo didn't leave focus in the search box, a search with words out of order found nothing, and a dragged dot lost focus. All three were fixed in 1.31.1.
+  - **Dots placed on the three test looks,** each product matched by comparing its product photos to the room photo:
+    - **Living Room:** Hancock Apple Cider Power Zero Gravity Sofa Group (MHAN-421P3Z-APCI), Recliner (MHAN-812P3Z-APCI) and Console Loveseat (MHAN-822CP3Z-APCI).
+    - **Dining Room:** Americana Modern Trestle Dining Table 88-112″ (DAME#88TRES-2-COT), Upholstered Dining Chair (DAME#2218), and the 69″ Buffet / Display Hutch (DAME#69-2-COT). The hutch was picked over the 66″ Bar hutch because it has the narrow side shelves in the photo.
+    - **Bedroom:** Breckenridge Queen Panel Bed (BBRE-KIT-Q-PNL; wood frame with a fabric inset, not the all-fabric Upholstered Bed), 3 Drawer Nightstand (BBRE-50), 5 Drawer Chest (BBRE-70), 7 Drawer Dresser (BBRE-60) and Mirror (BBRE-65).
+    - Every dot shows on computers and phones.
+  - **Promotions screen:** "Tab: Living Room · 3 pieces", "Tab: Dining Room · 3 pieces", "Tab: Bedroom · 5 pieces". The tab order is unchanged.
+  - **Home page, logged out (fetched without cookies):** 3, 3 and 5 dots, 11 cards, and the Store API address.
+  - **Home page, desktop:**
+    - One Store API request, and all 11 dots visible.
+    - Stock reads "Available on backorder". No price shows, because every test product on staging is priced 0.
+    - Clicking dot 1 opened its pop-up with the name, stock and "View product", linking to the real sofa-group product page. The dot and its card turned the brand red, and the tour stopped. Escape closed it and returned focus to the dot.
+    - No sideways scroll.
+  - **375px:** all 11 dots show. This is where the long-name card problem fixed in 1.31.2 was found.
+  - **Still not checked on real WordPress:**
+    - Prices and sale prices. Staging's test products are all priced 0, so the crossed-out sale price has only been seen on the test page.
+    - A product unpublished after its dot was placed.
 
 ## 1.30.1
 
