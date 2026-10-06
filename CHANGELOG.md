@@ -4,6 +4,17 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.31.2
+
+**Fix: product cards under Shop the Look's photo stay short when names are long.**
+- **Problem:** on staging at 375px, the cards were 189px tall. "Americana Modern Dining Trestle Dining Table 88-112″ X 42″ (24″ Butterfly Leaf)" wrapped to seven lines. Every card in the row stretched to match, so "Breckenridge Bedroom Queen Panel Bed" had a big empty gap.
+- **Root cause:** the card name had no size of its own, so it used the theme's 16px bold link style. ABC-style catalog names are long.
+- **Fix:**
+  - Card names are 15px, or 14px on phones, and stop at 3 lines with "…" (`-webkit-line-clamp`, supported by all current browsers). The pop-up and the product page still show the whole name, and screen readers read the whole name.
+  - On phones the card picture is 64px instead of 84px.
+  - The Review step's preview uses the same stylesheet, so it matches.
+- **Checked:** the new rules were added to staging's real home page at 375px, with the real theme, before release. The Dining Room cards went from 189px to 96px tall, with names at 3 lines.
+
 ## 1.31.1
 
 Three fixes in the "Place the Pieces" step, found while placing dots on staging in 1.31.0.

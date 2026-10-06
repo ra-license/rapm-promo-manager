@@ -117,7 +117,13 @@
 }
 .rapm-look-card.is-hot .rapm-look-num { background: var(--rapm-looks-accent); }
 .rapm-look-card-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.rapm-look-card-name { color: inherit; font-weight: 600; line-height: 1.35; text-decoration: none; overflow-wrap: anywhere; }
+.rapm-look-card-name {
+	color: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; text-decoration: none; overflow-wrap: anywhere;
+	/* 1.31.2: catalog names run long ("… Trestle Dining Table 88-112″ X 42″
+	   (24″ Butterfly Leaf)"), so cards stop at 3 lines; the pop-up and the
+	   product page show the whole name. */
+	display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
 .rapm-look-card-name:hover { color: var(--rapm-looks-accent); }
 .rapm-look-price { font-weight: 700; font-variant-numeric: tabular-nums; }
 .rapm-look-price:empty, .rapm-look-stock:empty { display: none; }
@@ -145,7 +151,9 @@
 	.rapm-looks-stage { height: auto; aspect-ratio: 4 / 3; }
 	.rapm-looks .rapm-look-dot { width: 32px; height: 32px; margin: -16px 0 0 -16px; line-height: 32px; font-size: 13px; }
 	.rapm-look-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 6px 0 6px 6px; }
-	.rapm-look-card { flex: 0 0 82%; scroll-snap-align: start; }
+	.rapm-look-card { flex: 0 0 82%; scroll-snap-align: start; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px; }
+	.rapm-look-card-img img { width: 64px; height: 64px; }
+	.rapm-look-card-name { font-size: 14px; }
 	/* 1.30.1: the theme's page gutter can leave the bar ~50px narrower than
 	   the phone (staging: 277px for the tabs at a 375px screen), so tighter
 	   tabs and a narrower tour button let three short tab names fit. */
