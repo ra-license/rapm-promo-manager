@@ -13,6 +13,11 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Checked:**
   - **PHP:** the PHP 8.4 check passes.
   - **Highlighting:** `submenu_file()` was run for each screen on the 1.31.3 menu. The Promotions screen marks "All promotions", Add New Asset, Sliders, Training Guide, Help and Settings each mark themselves, editing marks "All promotions", the old list marks its item, and another plugin's page gets nothing.
+- **Confirmed on staging (real WordPress, 2026-10-06),** after updating only RA Promo Manager from Dashboard > Updates, first 1.31.2 to 1.31.3, then 1.31.3 to 1.31.4 (each "updated successfully"):
+  - **Menu:** All promotions, Add New Asset, All Assets (list), Sliders, Training Guide, Help, Settings.
+  - **Marked item:** Help marks "Help", Settings marks "Settings", and the Promotions screen marks "All promotions".
+  - **The old list:** "All Assets (list)" opens the old list (15 rows, not forwarded to the Promotions screen) and marks itself.
+  - **Promotions screen (1.31.3):** "+ New spot" shows at the top. Every section shows its spot code and a "Spot name" box. The bottom panel reads "Setup". There's no "Show R&A setup details" link.
 
 ## 1.31.3
 
