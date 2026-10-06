@@ -4,6 +4,76 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.31.0
+
+**New: numbered dots and products on Shop the Look.** This is the second part of the plan Phil approved on 2026-10-06; Add to cart comes in 1.32.0. Each look can have up to 12 numbered dots on the pieces in its photo. Each dot is linked to a WooCommerce product, and shoppers see the product's live price and stock. The system can't know where a sofa is in a photo, so staff place the dots by hand.
+
+- **Saved data:** `_rapm_dots`, a list of `{p, x, y}`:
+  - `p` is the product ID.
+  - `x` and `y` are percent of the photo, 0–100, rounded to 0.1.
+  - `RAPM_Looks::sanitize_dots()` clamps the numbers, drops dots without a product and caps the list at 12 (`MAX_DOTS`).
+  - On save it also drops IDs that aren't products (`get_post_type()`).
+- **On the website (`[rapm_looks]`):**
+  - **Dots:** white numbered dots sit on the photo. `placeDots()` uses the same cover-fit math as the photo itself (`object-fit: cover` plus the look's "Which part to keep"), so a dot stays on its sofa at every screen size. It runs again on resize through `ResizeObserver`.
+  - **Cut-off dots:** a dot that a screen's crop cuts off is hidden on that screen. Its card still shows.
+  - **Pop-up:** clicking a dot opens a small card with the picture, name, price, stock, "View product" and a close button.
+    - The tour pauses while it's open.
+    - Escape, the close button or a click outside closes it, and Escape returns focus to the dot.
+    - Hovering a dot lights up its card, and the other way around.
+  - **Cards under the photo:** the look's words sit on the left and numbered product cards on the right. One column under 1023px. On phones the cards are a sideways-scrolling row.
+  - **Live prices and stock:** one WooCommerce Store API request per page load (`/wc/store/v1/products?include=…&per_page=100`), so they're current behind a page cache.
+    - Sale prices show the old price crossed out.
+    - Variable products show a range.
+    - A product priced 0 shows no price, since ABC-style "call for price" products are common.
+    - Stock text goes through an inert `DOMParser` document and is set as text, never as live HTML.
+    - If the request fails, the cards just have no price.
+  - **Unpublished or deleted products:** `product_info()` only returns published products. A product that's unpublished or deleted loses its dot and card, and the rest are renumbered.
+    - Because that's decided when the page is built, a cached page keeps the dot until the cache clears.
+    - The browser doesn't hide dots the Store API leaves out. It isn't confirmed whether the Store API skips published products that are hidden from the catalog, and hiding those would be wrong.
+- **The form: a new "Place the Pieces" step.** Looks now have 5 steps: basics, Place the Pieces, words, link, review. Sliders, banners, coupons and tiles keep their 4.
+  - **Placing dots:**
+    - Click the photo to add a dot. Its row opens with a search box already focused.
+    - Search by product name (Store API `search=`) and by exact SKU (`sku=`) at the same time.
+    - Drag a dot to move it. Arrow keys move it 1% at a time, or 5% with Shift.
+    - "Add a dot in the middle" is there for keyboard users.
+  - **Each row:** the product's picture, name, SKU, price and stock, with "Change product", "Move up", "Move down" and "Remove dot".
+  - **Which part to keep:** the crop grid moved here from step 1, next to small Computer (2.6:1) and Phone (4:3) previews with the numbered dots on them.
+    - A row says "Cut off on computers", "Cut off on phones" or both when that screen's crop would hide its dot (2% margin).
+    - A line under the previews says whether every dot fits.
+  - **A dot whose product is now unpublished or deleted:** its row (amber) says shoppers don't see it and asks for another product or removal. Its dot on the photo is amber too.
+  - **Checks:** Next and Save are blocked while any dot has no product, naming the dots ("Missing: dot 4"). A look with no dots is allowed.
+  - **Review step:** the Live Preview shows the dots and the cards with live prices, placed and numbered the way the website does it, for computers and phones.
+  - **Without WooCommerce:** the step says dots can't be added, and nothing breaks.
+- **Promotions screen:** a look's card reads "Tab: Living Room · 2 pieces". Only dots whose product is on the website are counted.
+- **Files:**
+  - New `assets/js/rapm-look-editor.js` and `assets/css/rapm-look-editor.css` (the preview's styles moved here from inline).
+  - Front-end additions are in `rapm-looks.js` and `rapm-looks.css`.
+- **Docs:**
+  - **Help:** four new Shop the Look questions: placing dots, what shoppers see, "Cut off on phones", and products taken off the website.
+  - **Training Guide:** the type card mentions dots, and there's a new "dot doesn't show on phones" problem.
+  - **readme:** the `[rapm_looks]` section is updated.
+
+**How it was checked.**
+- **PHP:** the in-browser PHP 8.4 check (parse plus compile) found 0 issues in all 27 files. The Help and Training Guide pages rendered with no warnings.
+- **Website, run with the real CSS and JS and a stand-in Store API:**
+  - One request: `include=301,302&per_page=100`.
+  - Cards show "~~$5,500.00~~ $4,399.98" and "~~$1,300.00~~ $799.93" with stock.
+  - A dot opens its pop-up, which pauses the tour. Hover links dot and card. Escape closes it.
+  - Planted HTML in the stock text did not run.
+  - No sideways page scroll.
+- **Form, edit and new, with the real CSS and JS and a stand-in Store API:**
+  - **Adding and searching:** clicking the photo added dot 4 and focused its search. Typing "otto" sent both `search=otto` and `sku=otto`, and picking the result filled the row.
+  - **Moving:** dragging moved dot 1 to (30, 50). Shift+→ moved a dot from 50 to 55.
+  - **Cut-off warnings:** "Top" and "Center" for which part to keep produced the expected warnings.
+  - **Checks:** Next and Save were blocked with "Missing: dot 4".
+  - **Unpublished product:** a product set to draft showed the amber row. The preview left it out and numbered the rest 1, 2, 3.
+  - **New look:** step 2 asks for a photo first. Picking a 1500px photo showed it with "a little soft".
+- **Fixed during testing, before release:**
+  - The unpublished-product note shared a CSS class with the cut-off note, so updating cut-off notes erased or duplicated it.
+  - The preview showed a "#303" card for an unpublished product, and its numbers didn't match the website.
+  - `setPointerCapture` could throw and stop a drag. It's now wrapped.
+- **Not yet checked:** real WordPress and the real Store API on staging.
+
 ## 1.30.1
 
 Two fixes found on staging in 1.30.0.

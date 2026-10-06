@@ -11,6 +11,14 @@
  * - never starts for visitors who have reduced motion turned on.
  * The timer is a CSS animation on the tab's top line, so pausing is just a
  * class, and the next look starts when the animation ends.
+ *
+ * The pieces (1.31.0): each look's numbered dots are placed on the photo as
+ * it's actually cropped (cover-fit at the look's "Which part to keep"), so
+ * they stay on the furniture at any screen size; a dot cut off by the crop
+ * is hidden. A dot opens a small card (photo, name, price, stock, View
+ * product), and hovering a dot or a card lights up its partner. Price and
+ * stock come from WooCommerce's Store API, read once per page in the
+ * visitor's browser, so a full-page cache can't serve stale prices.
  */
 ( function ( window ) {
 	'use strict';
@@ -40,6 +48,10 @@
 		var live         = [];
 		var tabs         = [];
 		var index        = 0;
+		var popOpen      = null;
+		var pop          = null;
+		var products     = {};
+		var storeUrl     = root.getAttribute( 'data-rapm-store' ) || '';
 
 		function keyOf( el ) { return el.getAttribute( 'data-rapm-key' ); }
 		function textFor( photo ) {
@@ -57,7 +69,179 @@
 		}
 
 		function setPaused() {
-			root.classList.toggle( 'is-paused', hovering || focused );
+			root.classList.toggle( 'is-paused', hovering || focused || !! popOpen );
+		}
+
+		/* ---- The pieces: dots, product card, live prices (1.31.0) ---- */
+
+		function cardsFor( photo ) {
+			var text = textFor( photo );
+			return text ? Array.prototype.slice.call( text.querySelectorAll( '.rapm-look-card' ) ) : [];
+		}
+
+		// Cover-fit math: where a point of the photo lands in the stage.
+		function placeDots() {
+			var cw = stage.clientWidth, ch = stage.clientHeight;
+			if ( ! cw || ! ch ) { return; }
+			photos.forEach( function ( photo ) {
+				var img = photo.querySelector( 'img' );
+				var w   = parseFloat( photo.getAttribute( 'data-w' ) ) || ( img && img.naturalWidth ) || 0;
+				var h   = parseFloat( photo.getAttribute( 'data-h' ) ) || ( img && img.naturalHeight ) || 0;
+				if ( ! w || ! h ) { return; }
+				var fx = parseFloat( photo.getAttribute( 'data-fx' ) ), fy = parseFloat( photo.getAttribute( 'data-fy' ) );
+				fx = isNaN( fx ) ? 0.5 : fx;
+				fy = isNaN( fy ) ? 0.5 : fy;
+				var scale = Math.max( cw / w, ch / h ), dw = w * scale, dh = h * scale;
+				var ox = ( cw - dw ) * fx, oy = ( ch - dh ) * fy, r = 20;
+				Array.prototype.forEach.call( photo.querySelectorAll( '.rapm-look-dot' ), function ( dot ) {
+					var x = ox + parseFloat( dot.getAttribute( 'data-x' ) ) / 100 * dw;
+					var y = oy + parseFloat( dot.getAttribute( 'data-y' ) ) / 100 * dh;
+					dot.hidden = x < 4 || x > cw - 4 || y < 4 || y > ch - 4; // cut off by this screen's crop
+					dot.style.left = Math.min( Math.max( x, r ), cw - r ) + 'px';
+					dot.style.top  = Math.min( Math.max( y, r ), ch - r ) + 'px';
+				} );
+			} );
+			placePop();
+		}
+
+		function esc( text ) {
+			var span = document.createElement( 'span' );
+			span.textContent = text == null ? '' : String( text );
+			return span.innerHTML;
+		}
+
+		// Text only: the store's words go through an inert document, never live HTML.
+		function plain( html ) {
+			return window.DOMParser ? new window.DOMParser().parseFromString( String( html || '' ), 'text/html' ).body.textContent.trim() : '';
+		}
+
+		function money( value, p ) {
+			var minor = p.currency_minor_unit || 0;
+			var n     = ( parseInt( value, 10 ) || 0 ) / Math.pow( 10, minor );
+			var parts = n.toFixed( minor ).split( '.' );
+			parts[0]  = parts[0].replace( /\B(?=(\d{3})+(?!\d))/g, p.currency_thousand_separator || ',' );
+			return esc( ( p.currency_prefix || '' ) + parts.join( p.currency_decimal_separator || '.' ) + ( p.currency_suffix || '' ) );
+		}
+
+		// The store's own price, as WooCommerce shows it: a sale shows the old price crossed out.
+		function priceHtml( item ) {
+			var p = item && item.prices;
+			if ( ! p ) { return ''; }
+			if ( p.price_range && p.price_range.min_amount !== p.price_range.max_amount ) {
+				return money( p.price_range.min_amount, p ) + ' – ' + money( p.price_range.max_amount, p );
+			}
+			if ( ! parseInt( p.price, 10 ) ) { return ''; }
+			var now = money( p.price, p );
+			if ( item.on_sale && parseInt( p.regular_price, 10 ) > parseInt( p.price, 10 ) ) {
+				return '<del>' + money( p.regular_price, p ) + '</del> <ins>' + now + '</ins>';
+			}
+			return now;
+		}
+
+		function fillCards() {
+			Array.prototype.forEach.call( root.querySelectorAll( '.rapm-look-card' ), function ( card ) {
+				var item = products[ card.getAttribute( 'data-pid' ) ];
+				if ( ! item ) { return; }
+				var price = card.querySelector( '.rapm-look-price' );
+				var stock = card.querySelector( '.rapm-look-stock' );
+				price.innerHTML = priceHtml( item );
+				var avail = item.stock_availability || {};
+				stock.textContent = plain( avail.text );
+				stock.className = 'rapm-look-stock' + ( avail['class'] ? ' ' + String( avail['class'] ).split( ' ' )[0] : '' );
+			} );
+			if ( popOpen ) { openPop( popOpen, true ); }
+		}
+
+		function loadPrices() {
+			var ids = {};
+			Array.prototype.forEach.call( root.querySelectorAll( '.rapm-look-card' ), function ( card ) {
+				ids[ card.getAttribute( 'data-pid' ) ] = true;
+			} );
+			var list = Object.keys( ids );
+			if ( ! storeUrl || ! list.length || ! window.fetch ) { return; }
+			var url = storeUrl + ( storeUrl.indexOf( '?' ) === -1 ? '?' : '&' ) + 'include=' + list.join( ',' ) + '&per_page=100';
+			window.fetch( url, { credentials: 'same-origin' } )
+				.then( function ( r ) { return r.ok ? r.json() : []; } )
+				.then( function ( items ) {
+					( items || [] ).forEach( function ( item ) { products[ String( item.id ) ] = item; } );
+					fillCards();
+				} )
+				.catch( function () {} ); // No prices is better than a broken look.
+		}
+
+		function hot( photo, k, on ) {
+			var dot  = photo.querySelector( '.rapm-look-dot[data-k="' + k + '"]' );
+			var card = cardsFor( photo ).filter( function ( c ) { return c.getAttribute( 'data-k' ) === String( k ); } )[0];
+			if ( dot ) { dot.classList.toggle( 'is-hot', on ); }
+			if ( card ) { card.classList.toggle( 'is-hot', on ); }
+		}
+
+		function closePop( returnFocus ) {
+			if ( ! popOpen ) { return; }
+			popOpen.setAttribute( 'aria-expanded', 'false' );
+			if ( returnFocus ) { popOpen.focus(); }
+			popOpen = null;
+			pop.hidden = true;
+			setPaused();
+		}
+
+		function openPop( dot, refresh ) {
+			if ( popOpen === dot && ! refresh ) { closePop( false ); return; }
+			if ( ! refresh ) { closePop( false ); }
+			var photo = dot.closest( '.rapm-look-photo' );
+			var card  = cardsFor( photo ).filter( function ( c ) { return c.getAttribute( 'data-k' ) === dot.getAttribute( 'data-k' ); } )[0];
+			if ( ! card ) { return; }
+			if ( ! pop ) {
+				pop = document.createElement( 'div' );
+				pop.className = 'rapm-look-pop';
+				pop.setAttribute( 'role', 'dialog' );
+				pop.hidden = true;
+				stage.appendChild( pop );
+				pop.addEventListener( 'click', function ( e ) {
+					if ( e.target.closest( '.rapm-look-pop-x' ) ) { closePop( true ); }
+				} );
+			}
+			var name  = card.querySelector( '.rapm-look-card-name' );
+			var img   = card.querySelector( '.rapm-look-card-img img' );
+			var cardStock = card.querySelector( '.rapm-look-stock' );
+			pop.setAttribute( 'aria-label', name.textContent );
+			pop.innerHTML = '<span class="rapm-look-pop-img"></span><div class="rapm-look-pop-meta"><p class="rapm-look-pop-name"></p>' +
+				'<span class="rapm-look-price"></span><span></span><a class="rapm-look-view"></a></div>' +
+				'<button type="button" class="rapm-look-pop-x">&times;</button>';
+			if ( img ) {
+				var copy = document.createElement( 'img' );
+				copy.src = img.getAttribute( 'src' );
+				copy.alt = '';
+				pop.querySelector( '.rapm-look-pop-img' ).appendChild( copy );
+			}
+			var meta = pop.querySelector( '.rapm-look-pop-meta' );
+			meta.querySelector( '.rapm-look-pop-name' ).textContent = name.textContent;
+			meta.querySelector( '.rapm-look-price' ).innerHTML = card.querySelector( '.rapm-look-price' ).innerHTML; // built by priceHtml()
+			meta.children[2].className = cardStock.className;
+			meta.children[2].textContent = cardStock.textContent;
+			meta.querySelector( '.rapm-look-view' ).textContent = T.view || 'View product';
+			meta.querySelector( '.rapm-look-view' ).setAttribute( 'href', name.getAttribute( 'href' ) );
+			pop.querySelector( '.rapm-look-pop-x' ).setAttribute( 'aria-label', T.close || 'Close' );
+			pop.hidden = false;
+			popOpen = dot;
+			dot.setAttribute( 'aria-expanded', 'true' );
+			setPaused();
+			placePop();
+		}
+
+		function placePop() {
+			if ( ! popOpen || ! pop ) { return; }
+			var cw = stage.clientWidth, ch = stage.clientHeight;
+			var x = parseFloat( popOpen.style.left ), y = parseFloat( popOpen.style.top );
+			var pw = pop.offsetWidth, ph = pop.offsetHeight, gap = 26, m = 8, left, top;
+			if ( x + gap + pw <= cw - m ) { left = x + gap; top = y - ph / 2; }
+			else if ( x - gap - pw >= m ) { left = x - gap - pw; top = y - ph / 2; }
+			else {
+				left = Math.min( Math.max( x - pw / 2, m ), cw - pw - m );
+				top  = y + gap + ph <= ch - m ? y + gap : y - gap - ph;
+			}
+			pop.style.left = left + 'px';
+			pop.style.top  = Math.min( Math.max( top, m ), ch - ph - m ) + 'px';
 		}
 
 		function tourLabel() {
@@ -78,6 +262,7 @@
 
 		function show( n ) {
 			if ( ! live.length ) { return; }
+			closePop( false );
 			index = ( n + live.length ) % live.length;
 			var current = live[ index ];
 			var text    = textFor( current );
@@ -145,7 +330,33 @@
 			live.forEach( function ( p, i ) { if ( keyOf( p ) === currentKey ) { keep = i; } } );
 			show( keep );
 			updateMore();
+			placeDots();
 		}
+
+		stage.addEventListener( 'click', function ( e ) {
+			var dot = e.target.closest( '.rapm-look-dot' );
+			if ( dot ) { openPop( dot, false ); }
+		} );
+		document.addEventListener( 'click', function ( e ) {
+			if ( popOpen && ! stage.contains( e.target ) ) { closePop( false ); }
+		} );
+		root.addEventListener( 'keydown', function ( e ) {
+			if ( 'Escape' === e.key && popOpen ) { closePop( true ); }
+		} );
+		root.addEventListener( 'mouseover', function ( e ) {
+			var el = e.target.closest( '.rapm-look-dot, .rapm-look-card' );
+			if ( el && live[ index ] ) { hot( live[ index ], el.getAttribute( 'data-k' ), true ); }
+		} );
+		root.addEventListener( 'mouseout', function ( e ) {
+			var el = e.target.closest( '.rapm-look-dot, .rapm-look-card' );
+			if ( el && live[ index ] ) { hot( live[ index ], el.getAttribute( 'data-k' ), false ); }
+		} );
+		photos.forEach( function ( photo ) {
+			var img = photo.querySelector( 'img' );
+			if ( img && ! img.complete ) { img.addEventListener( 'load', placeDots ); }
+		} );
+		if ( window.ResizeObserver ) { new window.ResizeObserver( placeDots ).observe( stage ); }
+		window.addEventListener( 'resize', placeDots );
 
 		tabsEl.addEventListener( 'scroll', updateMore, { passive: true } );
 		window.addEventListener( 'resize', updateMore );
@@ -191,7 +402,7 @@
 		// Swipe between looks on touch screens.
 		var startX = null, startY = null;
 		stage.addEventListener( 'pointerdown', function ( e ) {
-			if ( 'mouse' === e.pointerType || ( e.target.closest && e.target.closest( '.rapm-looks-arrows' ) ) ) { startX = null; return; }
+			if ( 'mouse' === e.pointerType || ( e.target.closest && e.target.closest( '.rapm-looks-arrows, .rapm-look-dot, .rapm-look-pop' ) ) ) { startX = null; return; }
 			startX = e.clientX;
 			startY = e.clientY;
 		} );
@@ -204,6 +415,7 @@
 
 		tourLabel();
 		window.RAPM_Schedule.watch( root, '.rapm-look-photo', build );
+		loadPrices();
 	}
 
 	window.RAPM_Looks = { init: init };

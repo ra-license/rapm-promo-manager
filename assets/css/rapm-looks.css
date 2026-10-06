@@ -65,8 +65,67 @@
 
 .rapm-looks button:focus-visible, .rapm-look-btn:focus-visible { outline: 2px solid var(--rapm-looks-accent); outline-offset: 2px; }
 
-/* The look's words. */
+/* The pieces (1.31.0): numbered dots on the photo, placed by rapm-looks.js. */
+.rapm-looks .rapm-look-dot {
+	position: absolute; left: 0; top: 0; z-index: 2;
+	width: 36px; height: 36px; min-width: 0; min-height: 0; margin: -18px 0 0 -18px; padding: 0;
+	border: 0; border-radius: 50%; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+	background: #fff; color: #242424; cursor: pointer;
+	font: inherit; font-size: 14px; font-weight: 700; line-height: 36px; letter-spacing: normal; text-transform: none; text-align: center;
+	transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.rapm-looks .rapm-look-dot::after {
+	content: ""; position: absolute; inset: -7px; border-radius: 50%; pointer-events: none;
+	border: 2px solid rgba(255, 255, 255, 0.85); animation: rapm-looks-ring 2.4s ease-out infinite;
+}
+@keyframes rapm-looks-ring { 0% { transform: scale(0.7); opacity: 1; } 80%, 100% { transform: scale(1.35); opacity: 0; } }
+.rapm-looks .rapm-look-dot:hover, .rapm-looks .rapm-look-dot.is-hot, .rapm-looks .rapm-look-dot[aria-expanded="true"] {
+	background: var(--rapm-looks-accent); color: #fff; transform: scale(1.08);
+}
+
+/* The small card a dot opens. */
+.rapm-look-pop {
+	position: absolute; z-index: 5; width: 280px; max-width: calc(100% - 16px);
+	display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px;
+	padding: 12px 34px 12px 12px; background: #fff; color: #333; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+	font-size: 14px; line-height: 1.4; text-align: left;
+}
+.rapm-look-pop-img img { display: block; width: 72px; height: 72px; object-fit: cover; }
+.rapm-look-pop-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rapm-look-pop-name { margin: 0; font-weight: 600; color: #242424; }
+.rapm-look-view { margin-top: 6px; color: var(--rapm-looks-accent); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; }
+.rapm-look-view:hover { text-decoration: underline; }
+.rapm-looks .rapm-look-pop-x {
+	position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; min-width: 0; min-height: 0; margin: 0; padding: 0;
+	border: 0; border-radius: 0; box-shadow: none; background: transparent; color: #777; cursor: pointer; font-size: 20px; line-height: 1; text-transform: none;
+}
+
+/* The look's words, and the pieces' cards beside them. */
 .rapm-looks-shelf { max-width: 1400px; margin: 0 auto; padding: 24px 16px 8px; }
+.rapm-look-text.has-cards { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px 36px; align-items: start; }
+.rapm-look-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.rapm-look-card {
+	display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: start; margin: 0;
+	padding: 12px; border: 1px solid var(--rapm-looks-line); background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.rapm-look-card.is-hot { border-color: var(--rapm-looks-accent); box-shadow: 0 0 0 1px var(--rapm-looks-accent); }
+.rapm-look-card-img { position: relative; display: block; }
+.rapm-look-card-img img { display: block; width: 84px; height: 84px; object-fit: cover; }
+.rapm-look-num {
+	position: absolute; left: -6px; top: -6px; width: 24px; height: 24px; border-radius: 50%;
+	background: #242424; color: #fff; font-size: 12px; font-weight: 700; line-height: 24px; text-align: center;
+}
+.rapm-look-card.is-hot .rapm-look-num { background: var(--rapm-looks-accent); }
+.rapm-look-card-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rapm-look-card-name { color: inherit; font-weight: 600; line-height: 1.35; text-decoration: none; overflow-wrap: anywhere; }
+.rapm-look-card-name:hover { color: var(--rapm-looks-accent); }
+.rapm-look-price { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rapm-look-price:empty, .rapm-look-stock:empty { display: none; }
+.rapm-look-price del { margin-right: 6px; font-weight: 400; opacity: 0.7; }
+.rapm-look-price ins { text-decoration: none; }
+.rapm-look-stock { font-size: 12px; line-height: 1.3; }
+.rapm-look-stock.in-stock { color: #3c8a4a; }
+.rapm-look-stock.out-of-stock { color: #b5502b; }
 .rapm-look-eyebrow { margin: 0 0 6px; color: var(--rapm-looks-accent); font-size: 12px; font-weight: 700; line-height: 1.3; letter-spacing: 0.1em; text-transform: uppercase; }
 .rapm-look-eyebrow span { opacity: 0.75; color: currentColor; }
 .rapm-looks .rapm-look-title { margin: 0 0 8px; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.15; }
@@ -78,8 +137,15 @@
 }
 .rapm-looks .rapm-look-btn:hover { color: #fff; filter: brightness(0.92); }
 
+@media (max-width: 1023px) {
+	.rapm-look-text.has-cards { grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (max-width: 767px) {
 	.rapm-looks-stage { height: auto; aspect-ratio: 4 / 3; }
+	.rapm-looks .rapm-look-dot { width: 32px; height: 32px; margin: -16px 0 0 -16px; line-height: 32px; font-size: 13px; }
+	.rapm-look-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 6px 0 6px 6px; }
+	.rapm-look-card { flex: 0 0 82%; scroll-snap-align: start; }
 	/* 1.30.1: the theme's page gutter can leave the bar ~50px narrower than
 	   the phone (staging: 277px for the tabs at a 375px screen), so tighter
 	   tabs and a narrower tour button let three short tab names fit. */
@@ -90,4 +156,5 @@
 
 @media (prefers-reduced-motion: reduce) {
 	.rapm-look-photo { transition: none; }
+	.rapm-looks .rapm-look-dot::after { animation: none; opacity: 0; }
 }

@@ -250,7 +250,23 @@ class RAPM_Help {
 
 			<details>
 				<summary><?php esc_html_e( 'What is Shop the Look?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'A big room photo across the page, with a bar of tabs under it. Each tab is one "look": a room photo, the name on its tab, and a few words with a button. Shoppers click a tab to see that room. The tabs also change by themselves every 8 seconds, until a shopper clicks one.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'A big room photo across the page, with a bar of tabs under it. Each tab is one "look": a room photo, the name on its tab, numbered dots on the pieces you sell, and a few words with a button. Shoppers click a tab to see that room. The tabs also change by themselves every 8 seconds, until a shopper clicks one.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'How do I put the dots on the pieces?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Go to the "Place the Pieces" step. Click the photo on a piece you sell, like the sofa. A numbered dot shows up there. Type the product\'s name or SKU in the box next to it, then click the right product. Drag a dot to move it. You can add up to 12 dots.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'What do shoppers see when they click a dot?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'A small card with the product\'s picture, name, price and whether it\'s in stock, plus a "View product" button. The same pieces also show as numbered cards under the photo. The price and stock come from the website each time the page loads, so they are always up to date.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'A dot says "Cut off on phones." What does that mean?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Phones and computers show different parts of the photo. A dot near the edge may be outside the part a phone shows, so phone shoppers won\'t see that dot. Its card under the photo still shows. To fix it, move the dot, or change "Which part to keep" on the same step. The small Computer and Phone boxes show which dots fit.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'What happens if a product is taken off the website?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Its dot and card go away by themselves, and the other dots are numbered again. If your website keeps saved copies of its pages so they load faster, this happens when those copies are refreshed. When you open the look, that row says the product isn\'t on the website. Pick another product for it, or remove the dot.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'What should the tab name say?', 'rapm' ); ?></summary>
@@ -262,7 +278,7 @@ class RAPM_Help {
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'Why is there only one picture, not a desktop and a phone picture?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Computers and phones use the same room photo. Computers show a wide strip of it, and phones show a squarer part. Use "Which part to keep" to choose the part of the room that stays in view. The small Computer and Phone boxes next to it show what each one will show.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Computers and phones use the same room photo. Computers show a wide strip of it, and phones show a squarer part. On the "Place the Pieces" step, use "Which part to keep" to choose the part of the room that stays in view. The small Computer and Phone boxes next to it show what each one will show.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'What size should the room photo be?', 'rapm' ); ?></summary>

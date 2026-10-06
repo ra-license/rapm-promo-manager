@@ -616,7 +616,15 @@ class RAPM_Promotions_Screen {
 		$trash_url  = get_delete_post_link( $id );
 		$link_issue = get_post_meta( $id, '_rapm_image_desktop_sync_error', true ) || get_post_meta( $id, '_rapm_image_mobile_sync_error', true );
 		$ended      = 'ended' === $d['state'];
-		$tab        = 'look' === get_post_meta( $id, '_rapm_kind', true ) ? self::tab_label( $post ) : '';
+		$is_look    = 'look' === get_post_meta( $id, '_rapm_kind', true );
+		$tab        = $is_look ? self::tab_label( $post ) : '';
+		// Pieces shoppers can see: dots whose product is still published.
+		$pieces     = 0;
+		if ( $is_look ) {
+			foreach ( RAPM_Looks::sanitize_dots( get_post_meta( $id, '_rapm_dots', true ) ) as $dot ) {
+				$pieces += RAPM_Looks::product_info( $dot['p'] ) ? 1 : 0;
+			}
+		}
 		?>
 		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?>" data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title . ( $tab ? ' ' . $tab : '' ) ) ); ?>"<?php echo $tab ? ' data-tab="' . esc_attr( $tab ) . '"' : ''; ?><?php echo $ended ? ' hidden' : ''; ?>>
 			<a class="rapm-card-pic" href="<?php echo esc_url( $edit_url ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'Edit %s', 'rapm' ), $title ) ); ?>" draggable="false">
@@ -631,7 +639,7 @@ class RAPM_Promotions_Screen {
 					<div>
 						<h3 class="rapm-card-title"><?php echo esc_html( $title ); ?></h3>
 						<?php if ( $tab ) : ?>
-							<p class="rapm-card-tab"><?php esc_html_e( 'Tab:', 'rapm' ); ?> <strong><?php echo esc_html( $tab ); ?></strong></p>
+							<p class="rapm-card-tab"><?php esc_html_e( 'Tab:', 'rapm' ); ?> <strong><?php echo esc_html( $tab ); ?></strong> &middot; <?php echo esc_html( sprintf( /* translators: %d: how many products have a dot on the look's photo */ _n( '%d piece', '%d pieces', $pieces, 'rapm' ), $pieces ) ); ?></p>
 						<?php endif; ?>
 					</div>
 					<button type="button" class="rapm-card-more" aria-haspopup="true" aria-expanded="false" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'More for %s', 'rapm' ), $title ) ); ?>">

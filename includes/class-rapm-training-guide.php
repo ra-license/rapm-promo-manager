@@ -253,7 +253,7 @@ class RAPM_Training_Guide {
 								<div class="rapm-tg-type-shape-wrap"><div style="width:100%;"><div class="rapm-tg-type-shape" style="width:100%;height:20px;"></div><div class="rapm-tg-type-shape" style="width:100%;height:5px;margin-top:3px;"></div></div></div>
 								<h3><?php esc_html_e( 'Shop the Look', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims"><?php esc_html_e( 'any shape, 2000+ wide is best', 'rapm' ); ?> &middot; <?php esc_html_e( 'room photo', 'rapm' ); ?></p>
-								<p><?php esc_html_e( 'A big room photo with a bar of tabs under it. Each tab is one room or collection, with its own photo and words.', 'rapm' ); ?></p>
+								<p><?php esc_html_e( 'A big room photo with a bar of tabs under it. Each tab is one room or collection, with its own photo and words. Numbered dots on the photo show the pieces you sell, with their prices.', 'rapm' ); ?></p>
 							</div>
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:100%;height:12px;"></div></div>
@@ -536,6 +536,10 @@ class RAPM_Training_Guide {
 						<div class="rapm-tg-problem">
 							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( "My headline and my picture's own text overlap.", 'rapm' ); ?></div>
 							<p class="rapm-tg-a"><?php esc_html_e( 'Go back to Step 2 and answer "Yes" to "does your picture already show the price or sale" — that hides the typed text so only the picture\'s own text shows.', 'rapm' ); ?></p>
+						</div>
+						<div class="rapm-tg-problem">
+							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( 'A dot on my Shop the Look photo doesn\'t show on phones.', 'rapm' ); ?></div>
+							<p class="rapm-tg-a"><?php esc_html_e( 'Phones show a squarer part of the photo, so a dot near the edge can fall outside it. Open the look and go to "Place the Pieces." Its row says "Cut off on phones." Move the dot, or change "Which part to keep." The small Phone box shows the dots that fit.', 'rapm' ); ?></p>
 						</div>
 					</section>
 

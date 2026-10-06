@@ -41,6 +41,10 @@ class RAPM_Upload_Handler {
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
 		// Shop the Look's preview (1.30.0) uses the live site's own styles too.
 		wp_enqueue_style( 'rapm-looks-css', RAPM_URL . 'assets/css/rapm-looks.css', array(), RAPM_VERSION );
+		// Shop the Look's form (1.31.0): Place the Pieces, the photo checks and
+		// the preview. Does nothing on other types' forms.
+		wp_enqueue_style( 'rapm-look-editor-css', RAPM_URL . 'assets/css/rapm-look-editor.css', array( 'rapm-looks-css' ), RAPM_VERSION );
+		wp_enqueue_script( 'rapm-look-editor-js', RAPM_URL . 'assets/js/rapm-look-editor.js', array(), RAPM_VERSION, true );
 	}
 
 	/**
@@ -136,6 +140,14 @@ class RAPM_Upload_Handler {
 		$is_look      = 'look' === $kind_key;
 		$tab_label    = $m( '_rapm_tab_label' );
 		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
+		// 1.31.0: the numbered dots (product + position on the photo).
+		$dots         = $is_look ? RAPM_Looks::sanitize_dots( $m( '_rapm_dots', array() ) ) : array();
+		// Step numbers. Shop the Look adds "Place the Pieces" as step 2
+		// (1.31.0, from the editor mockup Phil approved on 2026-10-06); every
+		// other type keeps its four steps.
+		$step         = $is_look
+			? array( 'basics' => 1, 'pieces' => 2, 'message' => 3, 'link' => 4, 'review' => 5 )
+			: array( 'basics' => 1, 'message' => 2, 'link' => 3, 'review' => 4 );
 		$desktop_slot = $has_images ? $slots[ $kind['desktop'] ] : null;
 		$mobile_slot  = $has_images ? $slots[ $kind['mobile'] ] : null;
 
@@ -241,10 +253,18 @@ class RAPM_Upload_Handler {
 				<?php wp_nonce_field( self::NONCE_ACTION, 'rapm_nonce' ); ?>
 
 				<div class="rapm-wizard-steps" id="rapm-wizard-steps" role="tablist" aria-label="<?php esc_attr_e( 'Steps for adding this promotion', 'rapm' ); ?>">
-					<button type="button" class="rapm-wizard-step is-current" data-step="1"><span class="rapm-wizard-step-num">1</span><span class="rapm-wizard-step-label"><?php esc_html_e( 'The Basics', 'rapm' ); ?></span></button>
-					<button type="button" class="rapm-wizard-step" data-step="2"><span class="rapm-wizard-step-num">2</span><span class="rapm-wizard-step-label"><?php esc_html_e( 'Your Message', 'rapm' ); ?></span></button>
-					<button type="button" class="rapm-wizard-step" data-step="3"><span class="rapm-wizard-step-num">3</span><span class="rapm-wizard-step-label"><?php esc_html_e( 'Where It Links', 'rapm' ); ?></span></button>
-					<button type="button" class="rapm-wizard-step" data-step="4"><span class="rapm-wizard-step-num">4</span><span class="rapm-wizard-step-label"><?php esc_html_e( 'Review & Schedule', 'rapm' ); ?></span></button>
+					<?php
+					$step_labels = array(
+						'basics'  => __( 'The Basics', 'rapm' ),
+						'pieces'  => __( 'Place the Pieces', 'rapm' ),
+						'message' => __( 'Your Message', 'rapm' ),
+						'link'    => __( 'Where It Links', 'rapm' ),
+						'review'  => __( 'Review & Schedule', 'rapm' ),
+					);
+					foreach ( $step as $step_key => $step_number ) :
+						?>
+						<button type="button" class="rapm-wizard-step<?php echo 1 === $step_number ? ' is-current' : ''; ?>" data-step="<?php echo (int) $step_number; ?>"><span class="rapm-wizard-step-num"><?php echo (int) $step_number; ?></span><span class="rapm-wizard-step-label"><?php echo esc_html( $step_labels[ $step_key ] ); ?></span></button>
+					<?php endforeach; ?>
 				</div>
 				<style>
 					.rapm-wizard-steps { display: flex; flex-wrap: wrap; gap: 4px; margin: 20px 0 28px; max-width: 700px; }
@@ -494,39 +514,6 @@ class RAPM_Upload_Handler {
 							<p class="description"><?php esc_html_e( 'A short, plain description of what the picture shows (not the sale/offer — that goes below). This helps people using a screen reader, and helps the picture show up in search results.', 'rapm' ); ?></p>
 						</td>
 					</tr>
-					<?php if ( $is_look ) : ?>
-					<tr>
-						<th><?php esc_html_e( 'Which part to keep', 'rapm' ); ?></th>
-						<td>
-							<p class="description" style="margin-top:0;"><?php esc_html_e( 'Computers show a wide strip of the photo and phones show a squarer part. Pick the part of the room to keep in view.', 'rapm' ); ?></p>
-							<div class="rapm-look-fit">
-								<div class="rapm-crop-anchors" id="rapm-look-focus" role="group" aria-label="<?php esc_attr_e( 'Which part of the photo to keep', 'rapm' ); ?>">
-									<?php
-									$focus_labels = array(
-										'left top'      => __( 'Top left', 'rapm' ),
-										'center top'    => __( 'Top center', 'rapm' ),
-										'right top'     => __( 'Top right', 'rapm' ),
-										'left center'   => __( 'Middle left', 'rapm' ),
-										'center center' => __( 'Center', 'rapm' ),
-										'right center'  => __( 'Middle right', 'rapm' ),
-										'left bottom'   => __( 'Bottom left', 'rapm' ),
-										'center bottom' => __( 'Bottom center', 'rapm' ),
-										'right bottom'  => __( 'Bottom right', 'rapm' ),
-									);
-									foreach ( $focus_labels as $anchor => $anchor_label ) :
-										?>
-										<button type="button" data-anchor="<?php echo esc_attr( $anchor ); ?>" class="<?php echo $anchor === $focus ? 'is-selected' : ''; ?>" aria-pressed="<?php echo $anchor === $focus ? 'true' : 'false'; ?>" aria-label="<?php echo esc_attr( $anchor_label ); ?>"></button>
-									<?php endforeach; ?>
-								</div>
-								<div class="rapm-look-frames">
-									<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-wide"><img alt="" /></div><span><?php esc_html_e( 'Computer', 'rapm' ); ?></span></div>
-									<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-phone"><img alt="" /></div><span><?php esc_html_e( 'Phone', 'rapm' ); ?></span></div>
-								</div>
-							</div>
-							<input type="hidden" id="rapm_focus" name="rapm_focus" value="<?php echo esc_attr( $focus ); ?>" />
-						</td>
-					</tr>
-					<?php endif; ?>
 				</table>
 				<style>
 					.rapm-source-choice { font-size: 13px; margin-right: 16px; font-weight: normal; }
@@ -559,8 +546,20 @@ class RAPM_Upload_Handler {
 				</p>
 				</div><!-- .rapm-step[data-step="1"] -->
 
-				<div class="rapm-step" id="rapm-step-2" data-step="2" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading">2. <?php esc_html_e( 'Your Message', 'rapm' ); ?></h2>
+				<?php if ( $is_look ) : ?>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['pieces']; ?>" data-step="<?php echo (int) $step['pieces']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
+				<h2 class="rapm-step-heading"><?php echo (int) $step['pieces']; ?>. <?php esc_html_e( 'Place the Pieces', 'rapm' ); ?></h2>
+				<?php self::render_look_pieces( $img_desktop, $dots, $focus ); ?>
+				<p class="rapm-wizard-next-warning" id="rapm-step-<?php echo (int) $step['pieces']; ?>-warning"></p>
+				<p class="rapm-wizard-nav">
+					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['basics']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
+					<button type="button" class="button button-primary rapm-wizard-next" data-goto="<?php echo (int) $step['message']; ?>"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
+				</p>
+				</div><!-- .rapm-step: Place the Pieces -->
+				<?php endif; ?>
+
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['message']; ?>" data-step="<?php echo (int) $step['message']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
+				<h2 class="rapm-step-heading"><?php echo (int) $step['message']; ?>. <?php esc_html_e( 'Your Message', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Words Under the Tabs', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'These show under the bar of tabs, below the photo, in your website\'s own fonts and colors. Nothing is printed on the photo.', 'rapm' ); ?></p>
@@ -662,13 +661,13 @@ class RAPM_Upload_Handler {
 				</script>
 				<?php endif; ?>
 				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="1"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
-					<button type="button" class="button button-primary rapm-wizard-next" data-goto="3"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
+					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) ( $step['message'] - 1 ); ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
+					<button type="button" class="button button-primary rapm-wizard-next" data-goto="<?php echo (int) $step['link']; ?>"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
 				</p>
-				</div><!-- .rapm-step[data-step="2"] -->
+				</div><!-- .rapm-step: Your Message -->
 
-				<div class="rapm-step" id="rapm-step-3" data-step="3" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading">3. <?php esc_html_e( 'Where It Links', 'rapm' ); ?></h2>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['link']; ?>" data-step="<?php echo (int) $step['link']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
+				<h2 class="rapm-step-heading"><?php echo (int) $step['link']; ?>. <?php esc_html_e( 'Where It Links', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Where the Button Goes', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'The button under the headline. It usually goes to the whole room, like the Living Room category. Leave the button words blank in step 2 for no button.', 'rapm' ); ?></p>
@@ -996,16 +995,16 @@ class RAPM_Upload_Handler {
 				</script>
 
 				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="2"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
-					<button type="button" class="button button-primary rapm-wizard-next" data-goto="4"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
+					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['message']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
+					<button type="button" class="button button-primary rapm-wizard-next" data-goto="<?php echo (int) $step['review']; ?>"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
 				</p>
-				</div><!-- .rapm-step[data-step="3"] -->
+				</div><!-- .rapm-step: Where It Links -->
 
-				<div class="rapm-step" id="rapm-step-4" data-step="4" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading">4. <?php esc_html_e( 'Review & Schedule', 'rapm' ); ?></h2>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['review']; ?>" data-step="<?php echo (int) $step['review']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
+				<h2 class="rapm-step-heading"><?php echo (int) $step['review']; ?>. <?php esc_html_e( 'Review & Schedule', 'rapm' ); ?></h2>
 
 				<?php if ( $is_look ) : ?>
-					<?php self::render_look_preview( $img_desktop, $tab_label, $focus ); ?>
+					<?php self::render_look_preview(); ?>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'This shows exactly what visitors will see, updating as you type or choose a picture. If something looks off — text overlapping, hard to read, etc. — fix it here before saving.', 'rapm' ); ?></p>
@@ -1298,10 +1297,10 @@ class RAPM_Upload_Handler {
 				</script>
 
 				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="3"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
+					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['link']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
 				</p>
 				<?php submit_button( $is_edit ? __( 'Save Asset', 'rapm' ) : __( 'Create Asset', 'rapm' ) ); ?>
-				</div><!-- .rapm-step[data-step="4"] -->
+				</div><!-- .rapm-step: Review & Schedule -->
 
 				<script>
 					( function () {
@@ -1401,6 +1400,10 @@ class RAPM_Upload_Handler {
 						Array.prototype.forEach.call( document.querySelectorAll( '.rapm-wizard-next' ), function ( btn ) {
 							btn.addEventListener( 'click', function () {
 								if ( 1 === currentStep && ! validateStep1() ) {
+									return;
+								}
+								// Shop the Look's Place the Pieces (1.31.0): every dot needs a product.
+								if ( <?php echo isset( $step['pieces'] ) ? (int) $step['pieces'] : 0; ?> === currentStep && window.RAPM_LookEditor && ! window.RAPM_LookEditor.validate() ) {
 									return;
 								}
 								showStep( parseInt( btn.getAttribute( 'data-goto' ), 10 ) );
@@ -1669,6 +1672,9 @@ class RAPM_Upload_Handler {
 		}
 		update_post_meta( $asset_id, '_rapm_destination_value', $dest_value );
 		if ( $is_look ) {
+			// 1.31.0: the numbered dots, as array( p => product ID, x, y => 0-100 % of the photo ).
+			$posted_dots = isset( $_POST['rapm_dots'] ) ? json_decode( wp_unslash( $_POST['rapm_dots'] ), true ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by sanitize_dots().
+			update_post_meta( $asset_id, '_rapm_dots', RAPM_Looks::sanitize_dots( is_array( $posted_dots ) ? $posted_dots : array(), true ) );
 			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
 			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
 		}
@@ -1843,226 +1849,176 @@ class RAPM_Upload_Handler {
 	}
 
 	/**
-	 * Shop the Look (1.30.0), step 4's preview plus the look-only parts of
-	 * the form: the photo size note and the "Which part to keep" previews
-	 * in step 1, the "Use a link" check (the Slider preview's own copy of it
-	 * is tied to its Desktop/Mobile pictures), and a live preview of the
-	 * photo, its tab and its words, drawn with the site's rapm-looks.css.
-	 * Wide frame 2.6:1 (a 1440px screen) and phone frame 4:3, the same
-	 * shapes the live site uses.
+	 * Shop the Look, step "Place the Pieces" (1.31.0, from the editor mockup
+	 * Phil approved on 2026-10-06): click the photo to add a numbered dot,
+	 * drag to move it, pick its product; plus "Which part to keep" (moved
+	 * here from step 1) with Computer/Phone previews that warn when a dot is
+	 * cut off. assets/js/rapm-look-editor.js runs all of it, and the look's
+	 * photo checks and preview, from the settings printed here.
 	 */
-	private static function render_look_preview( $image_id, $tab_label, $focus ) {
-		$src = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
-		$meta = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
-		$slot = RAPM_Slots::get( 'look_photo' );
+	private static function render_look_pieces( $image_id, $dots, $focus ) {
+		$focus_labels = array(
+			'left top'      => __( 'Top left', 'rapm' ),
+			'center top'    => __( 'Top center', 'rapm' ),
+			'right top'     => __( 'Top right', 'rapm' ),
+			'left center'   => __( 'Middle left', 'rapm' ),
+			'center center' => __( 'Center', 'rapm' ),
+			'right center'  => __( 'Middle right', 'rapm' ),
+			'left bottom'   => __( 'Bottom left', 'rapm' ),
+			'center bottom' => __( 'Bottom center', 'rapm' ),
+			'right bottom'  => __( 'Bottom right', 'rapm' ),
+		);
+		?>
+		<h2><?php esc_html_e( 'Put a numbered dot on each piece you sell', 'rapm' ); ?></h2>
+		<ol class="rapm-pieces-howto">
+			<li><?php esc_html_e( 'Click the photo on a piece to add a dot.', 'rapm' ); ?></li>
+			<li><?php esc_html_e( 'Drag a dot to move it.', 'rapm' ); ?></li>
+			<li><?php esc_html_e( 'Pick the product for each dot.', 'rapm' ); ?></li>
+		</ol>
+		<?php if ( ! class_exists( 'WooCommerce' ) ) : ?>
+			<p class="description rapm-pieces-nowoo"><?php esc_html_e( 'The products come from WooCommerce, which isn\'t active on this site, so dots can\'t be added yet.', 'rapm' ); ?></p>
+		<?php endif; ?>
+		<div class="rapm-pieces" id="rapm-pieces">
+			<div class="rapm-pieces-photo">
+				<div class="rapm-pieces-stage" id="rapm-pieces-stage" hidden><img alt="" draggable="false" /></div>
+				<div class="rapm-pieces-empty" id="rapm-pieces-empty"><?php esc_html_e( 'Add a room photo in step 1, then come back here to place the dots.', 'rapm' ); ?></div>
+				<p class="description"><?php esc_html_e( 'Each dot\'s number matches its row in "Dots and products." Shoppers see the same numbers on the product cards.', 'rapm' ); ?> <button type="button" class="button-link" id="rapm-pieces-add"><?php esc_html_e( 'Add a dot in the middle', 'rapm' ); ?></button> <?php esc_html_e( 'and move it with the arrow keys.', 'rapm' ); ?></p>
+			</div>
+			<div class="rapm-pieces-side">
+				<div class="rapm-pieces-head"><h3><?php esc_html_e( 'Dots and products', 'rapm' ); ?></h3><span class="rapm-pieces-count" id="rapm-pieces-count"></span></div>
+				<ol class="rapm-pieces-list" id="rapm-pieces-list"></ol>
+			</div>
+		</div>
+		<div class="rapm-pieces-fit">
+			<div>
+				<h3><?php esc_html_e( 'Which part to keep', 'rapm' ); ?></h3>
+				<p class="description"><?php esc_html_e( 'Computers show a wide strip of the photo and phones show a squarer part. Pick the part of the room to keep in view.', 'rapm' ); ?></p>
+				<div class="rapm-crop-anchors" id="rapm-look-focus" role="group" aria-label="<?php esc_attr_e( 'Which part of the photo to keep', 'rapm' ); ?>">
+					<?php foreach ( $focus_labels as $anchor => $anchor_label ) : ?>
+						<button type="button" data-anchor="<?php echo esc_attr( $anchor ); ?>" class="<?php echo $anchor === $focus ? 'is-selected' : ''; ?>" aria-pressed="<?php echo $anchor === $focus ? 'true' : 'false'; ?>" aria-label="<?php echo esc_attr( $anchor_label ); ?>"></button>
+					<?php endforeach; ?>
+				</div>
+			</div>
+			<div>
+				<h3><?php esc_html_e( 'How it fits on screens', 'rapm' ); ?></h3>
+				<div class="rapm-look-frames">
+					<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-wide"><img alt="" /></div><span><?php esc_html_e( 'Computer', 'rapm' ); ?></span></div>
+					<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-phone"><img alt="" /></div><span><?php esc_html_e( 'Phone', 'rapm' ); ?></span></div>
+				</div>
+			</div>
+			<p class="rapm-pieces-fit-msg" id="rapm-pieces-fit-msg" aria-live="polite"></p>
+		</div>
+		<input type="hidden" id="rapm_focus" name="rapm_focus" value="<?php echo esc_attr( $focus ); ?>" />
+		<input type="hidden" id="rapm_dots" name="rapm_dots" value="<?php echo esc_attr( wp_json_encode( $dots ) ); ?>" />
+		<script>
+			window.RAPM_LookEditorConfig = <?php echo wp_json_encode( self::look_editor_config( $image_id, $dots, $focus ) ); ?>;
+		</script>
+		<?php
+	}
+
+	/** Everything rapm-look-editor.js needs, including the words it shows (translatable here). */
+	private static function look_editor_config( $image_id, $dots, $focus ) {
+		$meta     = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
+		$slot     = RAPM_Slots::get( 'look_photo' );
+		$products = array();
+		foreach ( $dots as $dot ) {
+			$info = RAPM_Looks::product_info( $dot['p'] );
+			if ( $info ) {
+				$products[ $dot['p'] ] = $info;
+			}
+		}
+		return array(
+			'src'       => $image_id ? (string) wp_get_attachment_image_url( $image_id, 'full' ) : '',
+			'width'     => is_array( $meta ) && ! empty( $meta['width'] ) ? (int) $meta['width'] : 0,
+			'height'    => is_array( $meta ) && ! empty( $meta['height'] ) ? (int) $meta['height'] : 0,
+			'focus'     => $focus,
+			'minWidth'  => isset( $slot['min_width'] ) ? (int) $slot['min_width'] : 0,
+			'maxWidth'  => (int) $slot['width'],
+			'maxDots'   => RAPM_Looks::MAX_DOTS,
+			'dots'      => $dots,
+			'products'  => $products,
+			'store'     => class_exists( 'WooCommerce' ) ? esc_url_raw( rest_url( 'wc/store/v1/products' ) ) : '',
+			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+			'linkNonce' => wp_create_nonce( 'rapm_preview_link' ),
+			'text'      => array(
+				'sizeBad'       => __( 'This photo is %1$d pixels wide. It needs to be at least %2$d, so it would be turned down when you save.', 'rapm' ),
+				'sizeBlurry'    => __( 'This photo is %d pixels wide. It works, but it will look blurry across a big screen. 2000 or more looks best.', 'rapm' ),
+				'sizeSoft'      => __( 'This photo is %d pixels wide. It works, but it will look a little soft across a big screen.', 'rapm' ),
+				'sizeBig'       => __( 'This photo is %1$d pixels wide. Big enough; it will be made %2$d wide when you save.', 'rapm' ),
+				'sizeOk'        => __( 'This photo is %d pixels wide. Big enough for a full-width photo.', 'rapm' ),
+				'checking'      => __( 'Checking the link…', 'rapm' ),
+				'foundFolder'   => __( 'Using the newest picture in the folder: %s', 'rapm' ),
+				'found'         => __( 'Found the picture: %s', 'rapm' ),
+				'linkFailed'    => __( 'Couldn\'t check that link.', 'rapm' ),
+				'tabEmpty'      => __( '(tab name)', 'rapm' ),
+				'listEmpty'     => __( 'No dots yet. Click the photo on a piece you sell, like a sofa or a table.', 'rapm' ),
+				'oneDot'        => __( '1 dot', 'rapm' ),
+				'manyDots'      => __( '%d dots', 'rapm' ),
+				'dotLabel'      => __( 'Dot %1$d: %2$s. Use the arrow keys to move it.', 'rapm' ),
+				'dotEmpty'      => __( 'Dot %d: no product yet. Use the arrow keys to move it.', 'rapm' ),
+				'search'        => __( 'Search by product name or SKU…', 'rapm' ),
+				'searchLabel'   => __( 'Product for dot %d', 'rapm' ),
+				'searching'     => __( 'Searching…', 'rapm' ),
+				'noMatch'       => __( 'Nothing matches "%s". Try fewer words, or the SKU.', 'rapm' ),
+				'more'          => __( 'Showing %1$d of %2$d. Keep typing to narrow it down.', 'rapm' ),
+				'searchFailed'  => __( 'Couldn\'t search the products just now. Please try again.', 'rapm' ),
+				'sku'           => __( 'SKU %s', 'rapm' ),
+				'noPrice'       => __( 'No price shown online', 'rapm' ),
+				'change'        => __( 'Change product', 'rapm' ),
+				'moveUp'        => __( 'Move up', 'rapm' ),
+				'moveDown'      => __( 'Move down', 'rapm' ),
+				'remove'        => __( 'Remove dot', 'rapm' ),
+				'cutComputers'  => __( 'Cut off on computers', 'rapm' ),
+				'cutPhones'     => __( 'Cut off on phones', 'rapm' ),
+				'cutBoth'       => __( 'Cut off on computers and phones', 'rapm' ),
+				'fitOk'         => __( 'Every dot shows on computers and phones.', 'rapm' ),
+				'fitWarn'       => __( 'Some dots are cut off (see the list). Pick a different part to keep, or move those dots.', 'rapm' ),
+				'needProduct'   => __( 'Pick a product for every dot, or remove the dots without one. Missing: dot %s.', 'rapm' ),
+				'tooMany'       => __( 'A look can have up to %d dots.', 'rapm' ),
+				'added'         => __( 'Dot %d added. Now pick its product.', 'rapm' ),
+				'removed'       => __( 'Dot removed. The others were renumbered.', 'rapm' ),
+				'picked'        => __( 'Dot %1$d is now %2$s.', 'rapm' ),
+				'noProduct'     => __( 'No product picked yet', 'rapm' ),
+				'gone'          => __( 'This product isn\'t on the website right now (it may be a draft or deleted), so shoppers don\'t see this dot. Pick another product or remove the dot.', 'rapm' ),
+			),
+		);
+	}
+
+	/**
+	 * Shop the Look (1.30.0), step "Review & Schedule": the look as shoppers
+	 * see it, drawn with the site's rapm-looks.css (photo, dots, tab, words,
+	 * product cards with live prices). rapm-look-editor.js fills it in.
+	 */
+	private static function render_look_preview() {
 		?>
 		<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
-		<p class="description"><?php esc_html_e( 'This shows the photo, its tab and its words the way shoppers see them, updating as you type. Your website\'s fonts show on the real page.', 'rapm' ); ?></p>
+		<p class="description"><?php esc_html_e( 'This shows the photo, its dots, its tab and its words the way shoppers see them, updating as you work. Prices and stock come straight from your store. Your website\'s fonts show on the real page.', 'rapm' ); ?></p>
 		<p>
 			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-desktop" aria-pressed="true"><?php esc_html_e( 'Desktop', 'rapm' ); ?></button>
 			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-mobile" aria-pressed="false"><?php esc_html_e( 'Mobile', 'rapm' ); ?></button>
 		</p>
 		<div class="rapm-look-pv" id="rapm-look-pv">
 			<div class="rapm-looks" style="--rapm-looks-accent:<?php echo esc_attr( RAPM_Elementor::resolve_accent_color_css( '#2271b1' ) ); ?>;">
-				<div class="rapm-looks-stage">
+				<div class="rapm-looks-stage" id="rapm-look-pv-stage">
 					<div class="rapm-look-photo is-active"><img id="rapm-look-pv-img" alt="" /></div>
 				</div>
 				<div class="rapm-looks-bar">
 					<div class="rapm-looks-tabs"><span class="rapm-looks-tab" aria-selected="true"><span class="rapm-looks-track"></span><span id="rapm-look-pv-tab"></span></span></div>
 				</div>
 				<div class="rapm-looks-shelf">
-					<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <span id="rapm-look-pv-tab2"></span></span></p>
-					<h2 class="rapm-look-title" id="rapm-look-pv-title"></h2>
-					<p class="rapm-look-blurb" id="rapm-look-pv-blurb"></p>
-					<span class="rapm-look-btn" id="rapm-look-pv-btn"></span>
+					<div class="rapm-look-text" id="rapm-look-pv-text">
+						<div class="rapm-look-intro">
+							<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <span id="rapm-look-pv-tab2"></span></span></p>
+							<h2 class="rapm-look-title" id="rapm-look-pv-title"></h2>
+							<p class="rapm-look-blurb" id="rapm-look-pv-blurb"></p>
+							<span class="rapm-look-btn" id="rapm-look-pv-btn"></span>
+						</div>
+						<ol class="rapm-look-cards" id="rapm-look-pv-cards"></ol>
+					</div>
 				</div>
 			</div>
 			<p class="description" id="rapm-look-pv-empty"><?php esc_html_e( 'Choose a room photo in step 1 to preview it here.', 'rapm' ); ?></p>
 		</div>
-		<style>
-			.rapm-preview-toggle-btn[aria-pressed="true"] { background: #2271b1; border-color: #2271b1; color: #fff; }
-			.rapm-look-fit { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 22px; margin-top: 8px; }
-			.rapm-look-frames { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
-			.rapm-look-frame-wrap { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #50575e; }
-			.rapm-look-frame { overflow: hidden; background: #dcdcde; border: 1px solid #c3c4c7; }
-			.rapm-look-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
-			.rapm-look-frame-wide { width: 234px; aspect-ratio: 2.6 / 1; }
-			.rapm-look-frame-phone { width: 96px; aspect-ratio: 4 / 3; }
-			.rapm-look-size-note.is-warn { color: #8a4b00; font-weight: 600; }
-			.rapm-look-size-note.is-bad { color: #b32d2e; font-weight: 600; }
-			.rapm-look-size-note.is-ok { color: #00561b; }
-			.rapm-look-pv { max-width: 760px; margin-bottom: 24px; border: 1px solid #c3c4c7; background: #fff; transition: max-width .2s; }
-			.rapm-look-pv.is-mobile { max-width: 320px; }
-			.rapm-look-pv .rapm-looks-stage { height: auto; aspect-ratio: 2.6 / 1; }
-			.rapm-look-pv.is-mobile .rapm-looks-stage { aspect-ratio: 4 / 3; }
-			.rapm-look-pv .rapm-looks-tab { cursor: default; flex: 0 0 auto; display: flex; align-items: center; }
-			.rapm-look-pv .rapm-looks-shelf { padding: 18px 16px 16px; }
-			.rapm-look-pv .rapm-look-title { font-size: 24px; font-weight: 400; color: #1d2327; }
-			.rapm-look-pv #rapm-look-pv-empty { margin: 12px 16px; }
-		</style>
-		<script>
-			( function () {
-				var src        = <?php echo wp_json_encode( $src ? esc_url_raw( $src ) : '' ); ?>;
-				var width      = <?php echo (int) ( is_array( $meta ) && ! empty( $meta['width'] ) ? $meta['width'] : 0 ); ?>;
-				var maxWidth   = <?php echo (int) $slot['width']; ?>;
-				var minWidth   = <?php echo (int) ( isset( $slot['min_width'] ) ? $slot['min_width'] : 0 ); ?>;
-				var focus      = <?php echo wp_json_encode( $focus ); ?>;
-				var file       = document.getElementById( 'rapm_image_desktop' );
-				var urlInput   = document.getElementById( 'rapm_image_desktop_url' );
-				var linkStatus = document.getElementById( 'rapm-desktop-link-status' );
-				var sizeNote   = document.getElementById( 'rapm-look-size-note' );
-				var focusField = document.getElementById( 'rapm_focus' );
-				var focusGrid  = document.getElementById( 'rapm-look-focus' );
-				var frames     = document.querySelectorAll( '.rapm-look-frame img' );
-				var pv         = document.getElementById( 'rapm-look-pv' );
-				var pvImg      = document.getElementById( 'rapm-look-pv-img' );
-				var pvEmpty    = document.getElementById( 'rapm-look-pv-empty' );
-				var tabInput   = document.getElementById( 'rapm_tab_label' );
-				var fields     = {
-					title: document.getElementById( 'rapm_headline' ),
-					blurb: document.getElementById( 'rapm_subhead' ),
-					btn:   document.getElementById( 'rapm_cta_text' )
-				};
-
-				function sizeText() {
-					sizeNote.className = 'description rapm-look-size-note';
-					if ( ! width ) { sizeNote.textContent = ''; return; }
-					if ( width < minWidth ) {
-						sizeNote.classList.add( 'is-bad' );
-						sizeNote.textContent = <?php echo wp_json_encode( __( 'This photo is %1$d pixels wide. It needs to be at least %2$d, so it would be turned down when you save.', 'rapm' ) ); ?>.replace( '%1$d', width ).replace( '%2$d', minWidth );
-					} else if ( width < 1200 ) {
-						sizeNote.classList.add( 'is-warn' );
-						sizeNote.textContent = <?php echo wp_json_encode( __( 'This photo is %d pixels wide. It works, but it will look blurry across a big screen. 2000 or more looks best.', 'rapm' ) ); ?>.replace( '%d', width );
-					} else if ( width < 2000 ) {
-						sizeNote.classList.add( 'is-warn' );
-						sizeNote.textContent = <?php echo wp_json_encode( __( 'This photo is %d pixels wide. It works, but it will look a little soft across a big screen.', 'rapm' ) ); ?>.replace( '%d', width );
-					} else {
-						sizeNote.classList.add( 'is-ok' );
-						sizeNote.textContent = width > maxWidth
-							? <?php echo wp_json_encode( __( 'This photo is %1$d pixels wide. Big enough; it will be made %2$d wide when you save.', 'rapm' ) ); ?>.replace( '%1$d', width ).replace( '%2$d', maxWidth )
-							: <?php echo wp_json_encode( __( 'This photo is %d pixels wide. Big enough for a full-width photo.', 'rapm' ) ); ?>.replace( '%d', width );
-					}
-				}
-
-				function paint() {
-					Array.prototype.forEach.call( frames, function ( img ) {
-						if ( src ) { img.src = src; }
-						img.style.visibility = src ? 'visible' : 'hidden';
-						img.style.objectPosition = focus;
-					} );
-					pvImg.style.objectPosition = focus;
-					if ( src ) { pvImg.src = src; }
-					pvImg.style.visibility = src ? 'visible' : 'hidden';
-					pvEmpty.style.display = src ? 'none' : '';
-				}
-
-				function words() {
-					var tab = tabInput ? tabInput.value.trim() : '';
-					document.getElementById( 'rapm-look-pv-tab' ).textContent = tab || <?php echo wp_json_encode( __( '(tab name)', 'rapm' ) ); ?>;
-					document.getElementById( 'rapm-look-pv-tab2' ).textContent = tab;
-					[ 'title', 'blurb', 'btn' ].forEach( function ( k ) {
-						var el = document.getElementById( 'rapm-look-pv-' + k );
-						var v  = fields[ k ] ? fields[ k ].value : '';
-						el.textContent   = v;
-						el.style.display = v ? '' : 'none';
-					} );
-				}
-
-				if ( focusGrid ) {
-					focusGrid.addEventListener( 'click', function ( e ) {
-						var b = e.target.closest( 'button[data-anchor]' );
-						if ( ! b ) { return; }
-						focus = b.getAttribute( 'data-anchor' );
-						focusField.value = focus;
-						Array.prototype.forEach.call( focusGrid.querySelectorAll( 'button' ), function ( x ) {
-							var on = x === b;
-							x.classList.toggle( 'is-selected', on );
-							x.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
-						} );
-						paint();
-					} );
-				}
-
-				if ( file ) {
-					file.addEventListener( 'change', function () {
-						if ( ! this.files || ! this.files[0] ) { return; }
-						var url   = URL.createObjectURL( this.files[0] );
-						var probe = new Image();
-						probe.onload = function () {
-							src   = url;
-							width = probe.naturalWidth;
-							sizeText();
-							paint();
-						};
-						probe.src = url;
-					} );
-				}
-
-				// "Use a link": ask the server which picture the link really is.
-				var linkTimer = null, linkSeq = 0;
-				function showLink( text, isError ) {
-					if ( ! linkStatus ) { return; }
-					linkStatus.textContent = text;
-					linkStatus.style.color = isError ? '#b32d2e' : '';
-				}
-				function checkLink() {
-					var url  = urlInput.value.trim();
-					var mine = ++linkSeq;
-					if ( ! /^https?:\/\/\S+$/i.test( url ) ) { showLink( '', false ); return; }
-					showLink( <?php echo wp_json_encode( __( 'Checking the link…', 'rapm' ) ); ?>, false );
-					var body = new FormData();
-					body.append( 'action', 'rapm_preview_link' );
-					body.append( 'nonce', <?php echo wp_json_encode( wp_create_nonce( 'rapm_preview_link' ) ); ?> );
-					body.append( 'url', url );
-					body.append( 'which', 'desktop' );
-					body.append( 'kind', 'look' );
-					body.append( 'asset_id', document.querySelector( 'input[name="asset_id"]' ).value );
-					fetch( <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, { method: 'POST', body: body, credentials: 'same-origin' } )
-						.then( function ( r ) { return r.json(); } )
-						.then( function ( res ) {
-							if ( mine !== linkSeq ) { return; }
-							if ( ! res || ! res.success ) {
-								showLink( ( res && res.data && res.data.message ) || <?php echo wp_json_encode( __( 'Couldn\'t check that link.', 'rapm' ) ); ?>, true );
-								return;
-							}
-							src   = res.data.src;
-							width = res.data.width;
-							showLink( ( res.data.is_folder
-								? <?php echo wp_json_encode( __( 'Using the newest picture in the folder: %s', 'rapm' ) ); ?>
-								: <?php echo wp_json_encode( __( 'Found the picture: %s', 'rapm' ) ); ?> ).replace( '%s', res.data.name || url ), false );
-							sizeText();
-							paint();
-						} )
-						.catch( function () {
-							if ( mine === linkSeq ) { showLink( <?php echo wp_json_encode( __( 'Couldn\'t check that link.', 'rapm' ) ); ?>, true ); }
-						} );
-				}
-				if ( urlInput ) {
-					urlInput.addEventListener( 'input', function () {
-						clearTimeout( linkTimer );
-						linkTimer = setTimeout( checkLink, 700 );
-					} );
-				}
-
-				document.getElementById( 'rapm-look-pv-desktop' ).addEventListener( 'click', function () {
-					pv.classList.remove( 'is-mobile' );
-					this.setAttribute( 'aria-pressed', 'true' );
-					document.getElementById( 'rapm-look-pv-mobile' ).setAttribute( 'aria-pressed', 'false' );
-				} );
-				document.getElementById( 'rapm-look-pv-mobile' ).addEventListener( 'click', function () {
-					pv.classList.add( 'is-mobile' );
-					this.setAttribute( 'aria-pressed', 'true' );
-					document.getElementById( 'rapm-look-pv-desktop' ).setAttribute( 'aria-pressed', 'false' );
-				} );
-
-				[ tabInput, fields.title, fields.blurb, fields.btn ].forEach( function ( el ) {
-					if ( el ) { el.addEventListener( 'input', words ); }
-				} );
-				sizeText();
-				paint();
-				words();
-			} )();
-		</script>
 		<?php
 	}
 
