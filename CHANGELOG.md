@@ -29,6 +29,11 @@ Two fixes found on staging in 1.30.0.
   - Three tabs fit (285px of tabs in a 285px bar) with no fade.
   - Four tabs overflow: the right edge fades at the start. Picking the last tab scrolls it into view and moves the fade to the left. Going back to the first tab returns the bar to the start with only the right fade.
   - No sideways page scroll.
+- **Confirmed on staging (real WordPress, 2026-10-06),** after updating only RA Promo Manager from Dashboard > Updates (1.30.0 to 1.30.1, "updated successfully"; the other ten pending plugin updates were left alone):
+  - **Promotions screen:** the spot reads "Home Page Looks". The other six names are unchanged: "Home page slider", "Homepage Looks", "Home page banner", "About banner", "Promotions coupons", "Living Room tiles".
+  - **Home page, logged out, 375px:**
+    - The page loads `rapm-looks.css?ver=1.30.1`.
+    - "Living Room", "Dining Room" and "Bedroom" all fit the bar (285px of tabs in 285px), with no fade and no sideways scroll.
 
 ## 1.30.0
 
