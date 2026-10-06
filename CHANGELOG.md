@@ -4,6 +4,76 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.30.0
+
+**New: Shop the Look, a fifth type (`look`).** Built from the mockups Phil approved on 2026-10-06 for the Gates Furniture homepage (v3 front end and the look editor). The front end is a full-width room photo, a thin bar of tabs under it, and the look's headline, smaller line and button below. Each tab is one look, and the client names it: a room ("Living Room") or a collection ("Stanton 338"). This release has the type, the tabs, their order and dates. Numbered dots on the pieces in the photo, with live prices and stock, come in 1.31.0, and Add to cart in 1.32.0.
+- **One look = one promotion.** So it has what promotions already have: on/off switch, start and end dates, drag or "Move earlier/later" to reorder (the order is the tab order), Make a copy, Move to trash, and page-cache clearing (`[rapm_looks]` is in `RAPM_Spot_Usage::TAGS`). New fields:
+  - `_rapm_tab_label`, up to 24 characters, required.
+  - `_rapm_focus`, "Which part to keep", one of the nine positions the crop picker already uses, stored as a CSS `object-position`.
+- **One photo of any shape, not a Desktop and a Mobile picture.** Dots (1.31.0) are placed on one photo, so two photos would mean placing every dot twice.
+  - New slot `look_photo` marked `flexible` (`RAPM_Slots::is_flexible()`). Any shape fits, so there's no crop picker and a Drive folder uses its newest picture.
+  - A photo wider than 2400px is scaled down, keeping its shape. Under 800px wide it is turned down with the numbers. Then WebP, under 450KB, like every slot.
+  - 2400, 800 and 450KB are judgment calls, not a standard. Width and file size can be changed in Settings, where the slot reads "Any shape, up to 2400 wide".
+  - The card shape on the Promotions screen is 3:2.
+- **The form (Add/Edit, kind `look`):**
+  - **Step 1:**
+    - **Tab name** field.
+    - One **Room photo** box. Upload or link; no Mobile row.
+    - A live size note: under 800 "turned down when you save"; under 1200 "blurry across a big screen"; under 2000 "a little soft"; otherwise "big enough".
+    - **Which part to keep**: the 3×3 grid, with small Computer (2.6:1) and Phone (4:3) previews of the crop.
+  - **Step 2, "Words Under the Tabs":** Headline, Smaller line, Button text only. No "Sale Text" question and no alignment, color, style or typeface, since nothing is printed on the photo.
+  - **Step 3:** reads "Where the Button Goes".
+  - **Step 4:** the Live Preview is the look as shoppers see it, using `rapm-looks.css`: photo, tab, words, Desktop/Mobile.
+  - The step-1 check in the browser and the save both require a tab name and a photo.
+  - The "who else shares this spot" line talks about tabs instead of a carousel.
+  - Sliders, banners, coupons and tiles get exactly the same form as before.
+- **The Promotions screen:**
+  - A look spot shows **"Tabs on the website, in this order:"**, the looks showing now in card order. It redraws after a switch, a drag or "Move earlier/later" (`refreshTabOrder()` in `rapm-promotions-admin.js`).
+  - Each look card shows **Tab: Living Room**, and "Find a promotion" also matches tab names.
+  - The add card says **Add a look**, and the hint says "Drag to change the order of the tabs".
+  - Look spots sort right after sliders.
+  - "+ New spot" offers Shop the Look ("For example: Home page looks").
+- **Front end, `[rapm_looks placement="…"]` (`RAPM_Looks`, `rapm-looks.js`, `rapm-looks.css`):**
+  - **Looks:** all looks are printed with their dates, and `RAPM_Schedule.watch()` builds the tabs from the ones live in the visitor's browser, so dates work behind WP Rocket. Photos and words are printed as two groups (the bar sits between them on the page), matched by `data-rapm-key`.
+  - **Photo size:** 340–720px tall on computers (38% of the screen width), 4:3 on phones, cover-cropped at the look's "Which part to keep".
+  - **The tour:** 8 seconds per look (`speed`, `autoplay="no"`). It pauses while the mouse is over the photo or a control has keyboard focus, and stops for good when a shopper picks a tab, uses an arrow or swipes. It has a pause/play button and never runs with reduced motion on. The timer is a CSS animation on the active tab's top line, so pausing is a class and the next look starts on `animationend`.
+  - **Accessibility:** tabs are a tablist (arrow keys, Home, End); hidden looks are `inert`.
+  - **Colors:** the accent (timer line, button) is the calendar's: Settings > Brand Color, else a readable Elementor global color, else `#2271b1`. For Gates, set the brand color in Settings.
+  - **Theme styles:** WoodMart styles plain buttons (gray fill, uppercase, padding), so every button here sets those properties itself.
+  - **WP Rocket:** "Delay JavaScript" leaves `rapm-looks` / `RAPM_Looks` alone.
+  - **No Elementor widget yet:** place it with Elementor's Shortcode widget.
+- **Help & FAQ:** a "Shop the Look" Q&A (what it is, tab names, order, one photo, photo size, taking a tab off for a while), plus the type list and the step list. **Training Guide:** "The 5 Types", a Shop the Look card, a size-table row and a Promotions-page line. **readme.txt** updated.
+- **Worth knowing:** like every type, a look with both a start and an end date also shows on the Promotions Calendar.
+
+**How it was checked.** Still no PHP on this Mac (standing constraint), so a new method replaced the structural checker: real PHP 8.4.1, compiled to WebAssembly (php-wasm 0.2.0), running in the browser.
+- **Syntax and compile, PHP 8.4's own parser and compiler** (`token_get_all( …, TOKEN_PARSE )`, then `eval()` behind an early `return`, so nothing runs):
+  - It caught all four planted bugs: the 1.24.1-style unescaped apostrophe, a missing brace, a missing `endforeach`, and `isset()` on a function result. The old checker could never see that last one.
+  - 0 issues in the 26 shipped 1.29.1 files, and 0 in all 27 current files.
+  - A search found no syntax newer than PHP 7 in the new code.
+- **The real render code, run in that PHP** with stand-ins for the WordPress functions it calls and test data (three looks, one future-dated, one switched off, and one slider):
+  - The new-look form, the edit-look form, the unchanged slider form, the Promotions screen and the `[rapm_looks]` output all rendered with no PHP warnings or notices. Settings rendered through the picture-size table; the updater section wasn't loaded.
+  - All 26 inline scripts in those pages parse.
+- **Then in the browser,** with the plugin's own CSS and JS and a WoodMart-like button rule:
+  - **Front end:**
+    - 3 tabs: the future look is left out until its date and the switched-off one isn't printed.
+    - The first tab's timer runs, and `animationend` moves to the next look.
+    - Mouse over the photo pauses it; picking a tab stops the tour and shows that look's words.
+    - The next arrow works, and the pause button toggles.
+    - "center bottom" became `object-position: 50% 100%`, and the theme's uppercase gray buttons were overridden.
+    - At 375px wide the photo is 4:3, the three tabs and the pause button fit, and nothing scrolls sideways.
+  - **Form:**
+    - "Next" with nothing filled in lists all three missing things.
+    - A real 1420px photo chosen in the file box gets "a little soft"; 957px gets the same (now "blurry", under 1200).
+    - The focus grid sets the field and both small previews.
+    - The preview shows tab, headline and button and switches to Mobile.
+    - No script errors in the new-look, edit-look or slider forms.
+  - **Promotions screen:** "Move later" on Living Room redraws the tabs as Bedroom > Living Room > Dining Room. Switching Bedroom off and on removes it from the tabs and brings it back. Searching "dining" finds the look by its tab.
+- **What these can't show, so staging is still the confirmation:**
+  - Real WordPress saving and uploading (WebP conversion and scaling a wide photo down to 2400px).
+  - Page-cache clearing.
+  - The real WoodMart theme.
+  - The tour running on its own in a visible browser (the test browser was hidden, so CSS animations didn't play by themselves).
+
 ## 1.29.1
 
 **Change: the main heading (H1) is set where a spot is placed, not on the spot.** Phil's call, after staging showed the per-spot switch from 1.29.0 put two H1s on the Promotions page. Home page slider also shows there, and that page already has its own H1. A spot can sit on pages that need an H1 and pages that don't, so only the placement knows.

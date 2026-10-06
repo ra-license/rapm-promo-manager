@@ -137,7 +137,16 @@ class RAPM_Admin_Settings {
 					<tbody>
 						<?php foreach ( $slots as $key => $slot ) : $ov = isset( $opts['slot_overrides'][ $key ] ) ? $opts['slot_overrides'][ $key ] : array(); ?>
 							<tr>
-								<td><strong><?php echo esc_html( $slot['label'] ); ?></strong><br /><span class="description"><?php echo esc_html( sprintf( '%1$dx%2$d, %3$s, under %4$dKB', $slot['width'], $slot['height'], strtoupper( $slot['format'] ), $slot['max_kb'] ) ); ?></span></td>
+								<td><strong><?php echo esc_html( $slot['label'] ); ?></strong><br /><span class="description">
+									<?php
+									echo esc_html(
+										RAPM_Slots::is_flexible( $slot )
+											/* translators: 1: largest width kept, 2: format, 3: file size limit. Shop the Look's room photo (1.30.0); height only sets the card shape on the Promotions screen. */
+											? sprintf( __( 'Any shape, up to %1$d wide, %2$s, under %3$dKB', 'rapm' ), $slot['width'], strtoupper( $slot['format'] ), $slot['max_kb'] )
+											: sprintf( '%1$dx%2$d, %3$s, under %4$dKB', $slot['width'], $slot['height'], strtoupper( $slot['format'] ), $slot['max_kb'] )
+									);
+									?>
+								</span></td>
 								<td><input type="number" min="1" name="<?php echo esc_attr( self::OPTION ); ?>[slot_overrides][<?php echo esc_attr( $key ); ?>][width]" value="<?php echo esc_attr( $ov['width'] ?? '' ); ?>" placeholder="<?php echo esc_attr( $slot['width'] ); ?>" style="width:90px;" /></td>
 								<td><input type="number" min="1" name="<?php echo esc_attr( self::OPTION ); ?>[slot_overrides][<?php echo esc_attr( $key ); ?>][height]" value="<?php echo esc_attr( $ov['height'] ?? '' ); ?>" placeholder="<?php echo esc_attr( $slot['height'] ); ?>" style="width:90px;" /></td>
 								<td><input type="number" min="1" name="<?php echo esc_attr( self::OPTION ); ?>[slot_overrides][<?php echo esc_attr( $key ); ?>][max_kb]" value="<?php echo esc_attr( $ov['max_kb'] ?? '' ); ?>" placeholder="<?php echo esc_attr( $slot['max_kb'] ); ?>" style="width:90px;" /></td>

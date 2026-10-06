@@ -39,6 +39,8 @@ class RAPM_Upload_Handler {
 			return;
 		}
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
+		// Shop the Look's preview (1.30.0) uses the live site's own styles too.
+		wp_enqueue_style( 'rapm-looks-css', RAPM_URL . 'assets/css/rapm-looks.css', array(), RAPM_VERSION );
 	}
 
 	/**
@@ -129,6 +131,11 @@ class RAPM_Upload_Handler {
 		}
 		$kind         = RAPM_Slots::kind( $kind_key );
 		$has_images   = (bool) $kind['desktop']; // false for text-only kinds (Marquee)
+		// Shop the Look (1.30.0): one room photo of any shape, a tab name,
+		// and "Which part to keep"; words show under the photo, not on it.
+		$is_look      = 'look' === $kind_key;
+		$tab_label    = $m( '_rapm_tab_label' );
+		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
 		$desktop_slot = $has_images ? $slots[ $kind['desktop'] ] : null;
 		$mobile_slot  = $has_images ? $slots[ $kind['mobile'] ] : null;
 
@@ -182,7 +189,13 @@ class RAPM_Upload_Handler {
 						<select id="rapm_kind_selector">
 							<?php
 							foreach ( $kinds as $key => $info ) :
-								if ( $info['desktop'] ) {
+								if ( $info['desktop'] && RAPM_Slots::is_flexible( $slots[ $info['desktop'] ] ) ) {
+									$opt_label = sprintf(
+										/* translators: %s: kind label */
+										__( '%s — one room photo, any shape', 'rapm' ),
+										$info['label']
+									);
+								} elseif ( $info['desktop'] ) {
 									$opt_desktop = $slots[ $info['desktop'] ];
 									$opt_mobile  = $slots[ $info['mobile'] ];
 									$opt_label   = $info['desktop'] === $info['mobile']
@@ -290,6 +303,15 @@ class RAPM_Upload_Handler {
 							<p class="description"><?php esc_html_e( 'Spot code, for R&A Marketing:', 'rapm' ); ?> <code id="rapm-shortcode-preview"></code></p>
 						</td>
 					</tr>
+					<?php if ( $is_look ) : ?>
+					<tr>
+						<th><label for="rapm_tab_label"><?php esc_html_e( 'Tab name', 'rapm' ); ?></label></th>
+						<td>
+							<input type="text" id="rapm_tab_label" name="rapm_tab_label" class="regular-text" maxlength="24" value="<?php echo esc_attr( $tab_label ); ?>" placeholder="<?php esc_attr_e( 'e.g. Living Room', 'rapm' ); ?>" />
+							<p class="description"><?php esc_html_e( 'The word shoppers click in the bar under the photo. Use a room, like "Living Room", or a collection, like "Stanton 338". Keep it short so all the tabs fit.', 'rapm' ); ?></p>
+						</td>
+					</tr>
+					<?php endif; ?>
 				</table>
 				<script>
 					( function () {
@@ -317,7 +339,7 @@ class RAPM_Upload_Handler {
 									if ( ! res.success ) { return; }
 									var count = res.data.count;
 									if ( 0 === count ) {
-										summaryEl.textContent = <?php echo wp_json_encode( __( 'Nothing else is using this spot yet — this will be its own, separate carousel.', 'rapm' ) ); ?>;
+										summaryEl.textContent = <?php echo wp_json_encode( $is_look ? __( 'Nothing else is in this spot yet, so this will be its first tab.', 'rapm' ) : __( 'Nothing else is using this spot yet — this will be its own, separate carousel.', 'rapm' ) ); ?>;
 										return;
 									}
 									var names = res.data.titles.map( function ( t ) { return '"' + t + '"'; } ).join( ', ' );
@@ -327,7 +349,7 @@ class RAPM_Upload_Handler {
 									var lead = 1 === count
 										? <?php echo wp_json_encode( __( '1 other promotion already uses this spot', 'rapm' ) ); ?>
 										: count + <?php echo wp_json_encode( __( ' other promotions already use this spot', 'rapm' ) ); ?>;
-									summaryEl.textContent = lead + ' (' + names + <?php echo wp_json_encode( __( ') — they\'ll all take turns rotating together in the same carousel.', 'rapm' ) ); ?>;
+									summaryEl.textContent = lead + ' (' + names + <?php echo wp_json_encode( $is_look ? __( ') — each one is its own tab in the same bar.', 'rapm' ) : __( ') — they\'ll all take turns rotating together in the same carousel.', 'rapm' ) ); ?>;
 								} );
 							}, 300 );
 						}
@@ -343,13 +365,18 @@ class RAPM_Upload_Handler {
 					} )();
 				</script>
 
-				<?php if ( $has_images ) : ?>
+				<?php if ( $has_images && $is_look ) : ?>
+				<h2><?php esc_html_e( 'Room Photo', 'rapm' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'One photo of a whole room. Any shape works, and wide photos look best. Phones use this same photo, so there is no separate phone picture.', 'rapm' ); ?></p>
+				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Images', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'Upload whatever picture you have — any common format (JPG, PNG, whatever your phone or camera saves) is fine. This tool will automatically resize/convert it for you if needed, and will tell you clearly if it can\'t be used.', 'rapm' ); ?></p>
 				<p class="description"><?php esc_html_e( 'Upload both below on every promotion — visitors on a computer automatically see the Desktop one, visitors on a phone automatically see the Mobile one. You never need to create a separate promotion for each device.', 'rapm' ); ?></p>
+				<?php endif; ?>
+				<?php if ( $has_images ) : ?>
 				<table class="form-table">
 					<tr>
-						<th><label><?php esc_html_e( 'Desktop Promotion', 'rapm' ); ?></label></th>
+						<th><label><?php echo $is_look ? esc_html__( 'Room photo', 'rapm' ) : esc_html__( 'Desktop Promotion', 'rapm' ); ?></label></th>
 						<td>
 							<?php if ( $img_desktop ) : ?>
 								<?php echo wp_get_attachment_image( $img_desktop, array( 240, 75 ), false, array( 'style' => 'display:block;margin-bottom:8px;border-radius:6px;object-fit:cover;' ) ); ?>
@@ -360,6 +387,7 @@ class RAPM_Upload_Handler {
 
 							<div id="rapm-desktop-upload-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? 'display:none;' : ''; ?>">
 								<input type="file" id="rapm_image_desktop" name="rapm_image_desktop" accept="image/*" />
+								<?php if ( ! $is_look ) : ?>
 								<div id="rapm-desktop-crop-picker" class="rapm-crop-picker" style="display:none;">
 									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape than needed.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick which part to keep, or upload a different picture instead.', 'rapm' ); ?></p>
 									<div class="rapm-crop-layout">
@@ -378,11 +406,16 @@ class RAPM_Upload_Handler {
 									</div>
 								</div>
 								<input type="hidden" id="rapm_image_desktop_crop_anchor" name="rapm_image_desktop_crop_anchor" value="" />
+								<?php endif; ?>
 							</div>
 							<div id="rapm-desktop-link-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_desktop_url" name="rapm_image_desktop_url" class="regular-text" value="<?php echo esc_attr( $desktop_url ); ?>" placeholder="https://…" />
 								<p class="description"><?php esc_html_e( 'Paste a link to a Google Drive folder, a Google Drive link to one picture, or a direct link to a picture. Set its sharing to "Anyone with the link."', 'rapm' ); ?></p>
+								<?php if ( $is_look ) : ?>
+								<p class="description"><?php esc_html_e( 'With a folder, the newest picture in it is used. To change the photo, just add a new picture to the folder. It can have any file name. We check every hour, or use "Check link now" below.', 'rapm' ); ?></p>
+								<?php else : ?>
 								<p class="description"><?php esc_html_e( 'With a folder, the newest picture in it that is the right shape is used. To change the promotion, just add a new picture to the folder. It can have any file name. You can paste the same folder in both Desktop and Mobile: wide pictures go to Desktop and tall ones to Mobile. We check every hour, or use "Check link now" below.', 'rapm' ); ?></p>
+								<?php endif; ?>
 								<p class="description rapm-link-status" id="rapm-desktop-link-status" aria-live="polite"></p>
 								<?php if ( $is_edit && 'link' === $desktop_source ) : ?>
 									<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=rapm_check_link_now&asset_id=' . $asset_id ), 'rapm_check_link_now_' . $asset_id ) ); ?>"><?php esc_html_e( 'Check link now', 'rapm' ); ?></a></p>
@@ -394,9 +427,15 @@ class RAPM_Upload_Handler {
 								<?php endif; ?>
 							</div>
 
+							<?php if ( $is_look ) : ?>
+							<p class="description"><?php echo esc_html( sprintf( __( 'Photos 2000 pixels wide or more look best across a big screen. Anything wider than %1$d is made smaller for you, and it must be at least %2$d pixels wide.', 'rapm' ), $desktop_slot['width'], isset( $desktop_slot['min_width'] ) ? (int) $desktop_slot['min_width'] : 0 ) ); ?></p>
+							<p class="description rapm-look-size-note" id="rapm-look-size-note" aria-live="polite"></p>
+							<?php else : ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'This picture should be %1$d by %2$d (width by height, in pixels). If it\'s the same shape at a different size (say, an export at twice the resolution), it\'s resized automatically — no need to fix that yourself. If it\'s a different shape entirely, you\'ll see exactly what you uploaded vs. what\'s needed so you know what to fix.', 'rapm' ), $desktop_slot['width'], $desktop_slot['height'] ) ); ?></p>
+							<?php endif; ?>
 						</td>
 					</tr>
+					<?php if ( ! $is_look ) : ?>
 					<tr>
 						<th><label><?php esc_html_e( 'Mobile Promotion', 'rapm' ); ?></label></th>
 						<td>
@@ -448,12 +487,46 @@ class RAPM_Upload_Handler {
 							<p class="description"><?php echo esc_html( sprintf( __( 'The version shown on phones — needs to be exactly %1$d by %2$d.', 'rapm' ), $mobile_slot['width'], $mobile_slot['height'] ) ); ?></p>
 						</td>
 					</tr>
+					<?php endif; // ! $is_look ?>
 					<tr>
 						<th><label for="rapm_alt_text"><?php esc_html_e( 'What\'s in the Picture', 'rapm' ); ?></label></th>
 						<td><input type="text" id="rapm_alt_text" name="rapm_alt_text" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_alt_text' ) ); ?>" placeholder="<?php esc_attr_e( 'e.g. Living room with cream sectional and walnut coffee table', 'rapm' ); ?>" />
 							<p class="description"><?php esc_html_e( 'A short, plain description of what the picture shows (not the sale/offer — that goes below). This helps people using a screen reader, and helps the picture show up in search results.', 'rapm' ); ?></p>
 						</td>
 					</tr>
+					<?php if ( $is_look ) : ?>
+					<tr>
+						<th><?php esc_html_e( 'Which part to keep', 'rapm' ); ?></th>
+						<td>
+							<p class="description" style="margin-top:0;"><?php esc_html_e( 'Computers show a wide strip of the photo and phones show a squarer part. Pick the part of the room to keep in view.', 'rapm' ); ?></p>
+							<div class="rapm-look-fit">
+								<div class="rapm-crop-anchors" id="rapm-look-focus" role="group" aria-label="<?php esc_attr_e( 'Which part of the photo to keep', 'rapm' ); ?>">
+									<?php
+									$focus_labels = array(
+										'left top'      => __( 'Top left', 'rapm' ),
+										'center top'    => __( 'Top center', 'rapm' ),
+										'right top'     => __( 'Top right', 'rapm' ),
+										'left center'   => __( 'Middle left', 'rapm' ),
+										'center center' => __( 'Center', 'rapm' ),
+										'right center'  => __( 'Middle right', 'rapm' ),
+										'left bottom'   => __( 'Bottom left', 'rapm' ),
+										'center bottom' => __( 'Bottom center', 'rapm' ),
+										'right bottom'  => __( 'Bottom right', 'rapm' ),
+									);
+									foreach ( $focus_labels as $anchor => $anchor_label ) :
+										?>
+										<button type="button" data-anchor="<?php echo esc_attr( $anchor ); ?>" class="<?php echo $anchor === $focus ? 'is-selected' : ''; ?>" aria-pressed="<?php echo $anchor === $focus ? 'true' : 'false'; ?>" aria-label="<?php echo esc_attr( $anchor_label ); ?>"></button>
+									<?php endforeach; ?>
+								</div>
+								<div class="rapm-look-frames">
+									<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-wide"><img alt="" /></div><span><?php esc_html_e( 'Computer', 'rapm' ); ?></span></div>
+									<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-phone"><img alt="" /></div><span><?php esc_html_e( 'Phone', 'rapm' ); ?></span></div>
+								</div>
+							</div>
+							<input type="hidden" id="rapm_focus" name="rapm_focus" value="<?php echo esc_attr( $focus ); ?>" />
+						</td>
+					</tr>
+					<?php endif; ?>
 				</table>
 				<style>
 					.rapm-source-choice { font-size: 13px; margin-right: 16px; font-weight: normal; }
@@ -488,7 +561,10 @@ class RAPM_Upload_Handler {
 
 				<div class="rapm-step" id="rapm-step-2" data-step="2" <?php echo $is_edit ? '' : 'hidden'; ?>>
 				<h2 class="rapm-step-heading">2. <?php esc_html_e( 'Your Message', 'rapm' ); ?></h2>
-				<?php if ( $has_images ) : ?>
+				<?php if ( $is_look ) : ?>
+				<h2><?php esc_html_e( 'Words Under the Tabs', 'rapm' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'These show under the bar of tabs, below the photo, in your website\'s own fonts and colors. Nothing is printed on the photo.', 'rapm' ); ?></p>
+				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Sale Text', 'rapm' ); ?></h2>
 				<table class="form-table">
 					<tr>
@@ -515,16 +591,17 @@ class RAPM_Upload_Handler {
 					<table class="form-table">
 						<tr>
 							<th><label for="rapm_headline"><?php esc_html_e( 'Headline', 'rapm' ); ?></label></th>
-							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>" placeholder="<?php esc_attr_e( 'e.g. Labor Day Sale', 'rapm' ); ?>" /></td>
+							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Stanton 338 Living Room', 'rapm' ) : esc_attr__( 'e.g. Labor Day Sale', 'rapm' ); ?>" /></td>
 						</tr>
 						<tr>
 							<th><label for="rapm_subhead"><?php esc_html_e( 'Smaller line under the headline', 'rapm' ); ?></label></th>
-							<td><input type="text" id="rapm_subhead" name="rapm_subhead" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_subhead' ) ); ?>" placeholder="<?php esc_attr_e( 'e.g. Up to 30% off sofas and sectionals', 'rapm' ); ?>" /></td>
+							<td><input type="text" id="rapm_subhead" name="rapm_subhead" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_subhead' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. A deep gray sectional with its matching ottoman.', 'rapm' ) : esc_attr__( 'e.g. Up to 30% off sofas and sectionals', 'rapm' ); ?>" /></td>
 						</tr>
 						<tr>
 							<th><label for="rapm_cta_text"><?php esc_html_e( 'Button Text', 'rapm' ); ?></label></th>
-							<td><input type="text" id="rapm_cta_text" name="rapm_cta_text" value="<?php echo esc_attr( $m( '_rapm_cta_text' ) ); ?>" placeholder="<?php esc_attr_e( 'e.g. Shop Now', 'rapm' ); ?>" /></td>
+							<td><input type="text" id="rapm_cta_text" name="rapm_cta_text" value="<?php echo esc_attr( $m( '_rapm_cta_text' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Shop all Living Room', 'rapm' ) : esc_attr__( 'e.g. Shop Now', 'rapm' ); ?>" /></td>
 						</tr>
+						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
 						<tr>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
 							<td>
@@ -567,9 +644,10 @@ class RAPM_Upload_Handler {
 								</td>
 							</tr>
 						<?php endif; ?>
+						<?php endif; // ! $is_look ?>
 					</table>
 				</div>
-				<?php if ( $has_images ) : ?>
+				<?php if ( $has_images && ! $is_look ) : ?>
 				<script>
 					( function () {
 						var typeFields = document.getElementById( 'rapm-text-fields' );
@@ -591,7 +669,12 @@ class RAPM_Upload_Handler {
 
 				<div class="rapm-step" id="rapm-step-3" data-step="3" <?php echo $is_edit ? '' : 'hidden'; ?>>
 				<h2 class="rapm-step-heading">3. <?php esc_html_e( 'Where It Links', 'rapm' ); ?></h2>
+				<?php if ( $is_look ) : ?>
+				<h2><?php esc_html_e( 'Where the Button Goes', 'rapm' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'The button under the headline. It usually goes to the whole room, like the Living Room category. Leave the button words blank in step 2 for no button.', 'rapm' ); ?></p>
+				<?php else : ?>
 				<h2><?php esc_html_e( 'Where It Goes When Clicked', 'rapm' ); ?></h2>
+				<?php endif; ?>
 				<?php $curated = RAPM_Destination::decode_curated_value( 'curated' === $dest_type ? $dest_value : '' ); ?>
 				<table class="form-table">
 					<tr>
@@ -921,7 +1004,9 @@ class RAPM_Upload_Handler {
 				<div class="rapm-step" id="rapm-step-4" data-step="4" <?php echo $is_edit ? '' : 'hidden'; ?>>
 				<h2 class="rapm-step-heading">4. <?php esc_html_e( 'Review & Schedule', 'rapm' ); ?></h2>
 
-				<?php if ( $has_images ) : ?>
+				<?php if ( $is_look ) : ?>
+					<?php self::render_look_preview( $img_desktop, $tab_label, $focus ); ?>
+				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'This shows exactly what visitors will see, updating as you type or choose a picture. If something looks off — text overlapping, hard to read, etc. — fix it here before saving.', 'rapm' ); ?></p>
 				<p>
@@ -1284,6 +1369,12 @@ class RAPM_Upload_Handler {
 							if ( ! title.value.trim() ) {
 								messages.push( <?php echo wp_json_encode( __( 'Please type an internal name for this promotion before moving on.', 'rapm' ) ); ?> );
 							}
+							<?php if ( $is_look ) : ?>
+							var tabField = document.getElementById( 'rapm_tab_label' );
+							if ( tabField && ! tabField.value.trim() ) {
+								messages.push( <?php echo wp_json_encode( __( 'Please type a tab name, like "Living Room" or "Stanton 338", before moving on.', 'rapm' ) ); ?> );
+							}
+							<?php endif; ?>
 							<?php if ( $has_images ) : ?>
 							var desktopSourceChecked = document.querySelector( 'input[name="rapm_image_desktop_source"]:checked' );
 							var usingLink             = desktopSourceChecked && 'link' === desktopSourceChecked.value;
@@ -1292,10 +1383,10 @@ class RAPM_Upload_Handler {
 							var hasExistingDesktop    = <?php echo $img_desktop ? 'true' : 'false'; ?>;
 							if ( usingLink ) {
 								if ( ! hasExistingDesktop && ! ( desktopUrlField && desktopUrlField.value.trim() ) ) {
-									messages.push( <?php echo wp_json_encode( __( 'Please paste a link to a desktop picture before moving on.', 'rapm' ) ); ?> );
+									messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please paste a link to the room photo before moving on.', 'rapm' ) : __( 'Please paste a link to a desktop picture before moving on.', 'rapm' ) ); ?> );
 								}
 							} else if ( ! hasExistingDesktop && ! ( desktopFileInput.files && desktopFileInput.files[0] ) ) {
-								messages.push( <?php echo wp_json_encode( __( 'Please upload a desktop picture before moving on.', 'rapm' ) ); ?> );
+								messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please upload the room photo before moving on.', 'rapm' ) : __( 'Please upload a desktop picture before moving on.', 'rapm' ) ); ?> );
 							}
 							<?php endif; ?>
 							if ( messages.length ) {
@@ -1362,6 +1453,14 @@ class RAPM_Upload_Handler {
 		}
 		$kind       = RAPM_Slots::kind( $kind_key );
 		$has_images = (bool) $kind['desktop'];
+		$is_look    = 'look' === $kind_key;
+
+		// Shop the Look (1.30.0): the tab name is what shoppers click, so a
+		// look can't be saved without one.
+		$tab_label = isset( $_POST['rapm_tab_label'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['rapm_tab_label'] ) ), 0, 24 ) : '';
+		if ( $is_look && '' === trim( $tab_label ) ) {
+			self::fail( $back, __( 'Please type a tab name for this look, like "Living Room" or "Stanton 338".', 'rapm' ) );
+		}
 
 		// Validate + convert images BEFORE touching the post itself, so a
 		// bad upload never leaves a half-saved asset behind.
@@ -1427,9 +1526,15 @@ class RAPM_Upload_Handler {
 			// anywhere, with no error to explain why.
 			$has_desktop_image = $new_desktop_id || ( $is_edit && get_post_meta( $asset_id, '_rapm_image_desktop_id', true ) );
 			if ( ! $has_desktop_image ) {
-				$desktop_required_msg = 'link' === $desktop_source
-					? __( 'Please paste a link to a desktop picture — it\'s required for this asset to actually display anywhere.', 'rapm' )
-					: __( 'Please upload a desktop image — it\'s required for this asset to actually display anywhere.', 'rapm' );
+				if ( $is_look ) {
+					$desktop_required_msg = 'link' === $desktop_source
+						? __( 'Please paste a link to the room photo. A look needs one to show anywhere.', 'rapm' )
+						: __( 'Please upload the room photo. A look needs one to show anywhere.', 'rapm' );
+				} else {
+					$desktop_required_msg = 'link' === $desktop_source
+						? __( 'Please paste a link to a desktop picture — it\'s required for this asset to actually display anywhere.', 'rapm' )
+						: __( 'Please upload a desktop image — it\'s required for this asset to actually display anywhere.', 'rapm' );
+				}
 				self::fail( $back, $desktop_required_msg );
 			}
 		} else {
@@ -1563,6 +1668,10 @@ class RAPM_Upload_Handler {
 				$dest_value = '';
 		}
 		update_post_meta( $asset_id, '_rapm_destination_value', $dest_value );
+		if ( $is_look ) {
+			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
+			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
+		}
 		if ( empty( get_post_meta( $asset_id, '_rapm_placement', true ) ) ) {
 			update_post_meta( $asset_id, '_rapm_placement', 'default' );
 		}
@@ -1613,7 +1722,35 @@ class RAPM_Upload_Handler {
 
 		$was_resized = false;
 
-		if ( ! RAPM_Slots::dimensions_match( $slot, $width, $height ) ) {
+		if ( RAPM_Slots::is_flexible( $slot ) ) {
+			// Shop the Look's room photo (1.30.0): any shape is fine. Too
+			// narrow is turned down; wider than the slot is scaled down,
+			// keeping its shape, so nothing is cropped or stretched.
+			$min_width = isset( $slot['min_width'] ) ? (int) $slot['min_width'] : 0;
+			if ( $width < $min_width ) {
+				return new WP_Error(
+					'rapm_too_small',
+					sprintf(
+						/* translators: 1: the photo's width, 2: the smallest width allowed */
+						__( 'This photo is %1$d pixels wide. A room photo needs to be at least %2$d pixels wide, and 2000 or more looks best. Please use a bigger photo.', 'rapm' ),
+						$width,
+						$min_width
+					)
+				);
+			}
+			if ( $width > (int) $slot['width'] ) {
+				if ( ! RAPM_Webp_Converter::is_available() ) {
+					return new WP_Error( 'rapm_no_webp_support', __( 'This server can\'t auto-resize or auto-convert images (no Imagick or GD support found). Please crop or re-export this to the exact size and try again.', 'rapm' ) );
+				}
+				$target_height = max( 1, (int) round( $height * (int) $slot['width'] / $width ) );
+				$resized       = RAPM_Webp_Converter::resize_to( $tmp_path, (int) $slot['width'], $target_height );
+				if ( is_wp_error( $resized ) ) {
+					return $resized;
+				}
+				$tmp_path    = $resized;
+				$was_resized = true;
+			}
+		} elseif ( ! RAPM_Slots::dimensions_match( $slot, $width, $height ) ) {
 			if ( ! RAPM_Slots::aspect_ratio_matches( $slot, $width, $height ) ) {
 				$valid_anchors = array( 'left top', 'center top', 'right top', 'left center', 'center center', 'right center', 'left bottom', 'center bottom', 'right bottom' );
 				if ( $crop_anchor && in_array( $crop_anchor, $valid_anchors, true ) ) {
@@ -1703,6 +1840,230 @@ class RAPM_Upload_Handler {
 		}
 
 		return $attachment_id;
+	}
+
+	/**
+	 * Shop the Look (1.30.0), step 4's preview plus the look-only parts of
+	 * the form: the photo size note and the "Which part to keep" previews
+	 * in step 1, the "Use a link" check (the Slider preview's own copy of it
+	 * is tied to its Desktop/Mobile pictures), and a live preview of the
+	 * photo, its tab and its words, drawn with the site's rapm-looks.css.
+	 * Wide frame 2.6:1 (a 1440px screen) and phone frame 4:3, the same
+	 * shapes the live site uses.
+	 */
+	private static function render_look_preview( $image_id, $tab_label, $focus ) {
+		$src = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
+		$meta = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
+		$slot = RAPM_Slots::get( 'look_photo' );
+		?>
+		<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'This shows the photo, its tab and its words the way shoppers see them, updating as you type. Your website\'s fonts show on the real page.', 'rapm' ); ?></p>
+		<p>
+			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-desktop" aria-pressed="true"><?php esc_html_e( 'Desktop', 'rapm' ); ?></button>
+			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-mobile" aria-pressed="false"><?php esc_html_e( 'Mobile', 'rapm' ); ?></button>
+		</p>
+		<div class="rapm-look-pv" id="rapm-look-pv">
+			<div class="rapm-looks" style="--rapm-looks-accent:<?php echo esc_attr( RAPM_Elementor::resolve_accent_color_css( '#2271b1' ) ); ?>;">
+				<div class="rapm-looks-stage">
+					<div class="rapm-look-photo is-active"><img id="rapm-look-pv-img" alt="" /></div>
+				</div>
+				<div class="rapm-looks-bar">
+					<div class="rapm-looks-tabs"><span class="rapm-looks-tab" aria-selected="true"><span class="rapm-looks-track"></span><span id="rapm-look-pv-tab"></span></span></div>
+				</div>
+				<div class="rapm-looks-shelf">
+					<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <span id="rapm-look-pv-tab2"></span></span></p>
+					<h2 class="rapm-look-title" id="rapm-look-pv-title"></h2>
+					<p class="rapm-look-blurb" id="rapm-look-pv-blurb"></p>
+					<span class="rapm-look-btn" id="rapm-look-pv-btn"></span>
+				</div>
+			</div>
+			<p class="description" id="rapm-look-pv-empty"><?php esc_html_e( 'Choose a room photo in step 1 to preview it here.', 'rapm' ); ?></p>
+		</div>
+		<style>
+			.rapm-preview-toggle-btn[aria-pressed="true"] { background: #2271b1; border-color: #2271b1; color: #fff; }
+			.rapm-look-fit { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 22px; margin-top: 8px; }
+			.rapm-look-frames { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+			.rapm-look-frame-wrap { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #50575e; }
+			.rapm-look-frame { overflow: hidden; background: #dcdcde; border: 1px solid #c3c4c7; }
+			.rapm-look-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+			.rapm-look-frame-wide { width: 234px; aspect-ratio: 2.6 / 1; }
+			.rapm-look-frame-phone { width: 96px; aspect-ratio: 4 / 3; }
+			.rapm-look-size-note.is-warn { color: #8a4b00; font-weight: 600; }
+			.rapm-look-size-note.is-bad { color: #b32d2e; font-weight: 600; }
+			.rapm-look-size-note.is-ok { color: #00561b; }
+			.rapm-look-pv { max-width: 760px; margin-bottom: 24px; border: 1px solid #c3c4c7; background: #fff; transition: max-width .2s; }
+			.rapm-look-pv.is-mobile { max-width: 320px; }
+			.rapm-look-pv .rapm-looks-stage { height: auto; aspect-ratio: 2.6 / 1; }
+			.rapm-look-pv.is-mobile .rapm-looks-stage { aspect-ratio: 4 / 3; }
+			.rapm-look-pv .rapm-looks-tab { cursor: default; flex: 0 0 auto; display: flex; align-items: center; }
+			.rapm-look-pv .rapm-looks-shelf { padding: 18px 16px 16px; }
+			.rapm-look-pv .rapm-look-title { font-size: 24px; font-weight: 400; color: #1d2327; }
+			.rapm-look-pv #rapm-look-pv-empty { margin: 12px 16px; }
+		</style>
+		<script>
+			( function () {
+				var src        = <?php echo wp_json_encode( $src ? esc_url_raw( $src ) : '' ); ?>;
+				var width      = <?php echo (int) ( is_array( $meta ) && ! empty( $meta['width'] ) ? $meta['width'] : 0 ); ?>;
+				var maxWidth   = <?php echo (int) $slot['width']; ?>;
+				var minWidth   = <?php echo (int) ( isset( $slot['min_width'] ) ? $slot['min_width'] : 0 ); ?>;
+				var focus      = <?php echo wp_json_encode( $focus ); ?>;
+				var file       = document.getElementById( 'rapm_image_desktop' );
+				var urlInput   = document.getElementById( 'rapm_image_desktop_url' );
+				var linkStatus = document.getElementById( 'rapm-desktop-link-status' );
+				var sizeNote   = document.getElementById( 'rapm-look-size-note' );
+				var focusField = document.getElementById( 'rapm_focus' );
+				var focusGrid  = document.getElementById( 'rapm-look-focus' );
+				var frames     = document.querySelectorAll( '.rapm-look-frame img' );
+				var pv         = document.getElementById( 'rapm-look-pv' );
+				var pvImg      = document.getElementById( 'rapm-look-pv-img' );
+				var pvEmpty    = document.getElementById( 'rapm-look-pv-empty' );
+				var tabInput   = document.getElementById( 'rapm_tab_label' );
+				var fields     = {
+					title: document.getElementById( 'rapm_headline' ),
+					blurb: document.getElementById( 'rapm_subhead' ),
+					btn:   document.getElementById( 'rapm_cta_text' )
+				};
+
+				function sizeText() {
+					sizeNote.className = 'description rapm-look-size-note';
+					if ( ! width ) { sizeNote.textContent = ''; return; }
+					if ( width < minWidth ) {
+						sizeNote.classList.add( 'is-bad' );
+						sizeNote.textContent = <?php echo wp_json_encode( __( 'This photo is %1$d pixels wide. It needs to be at least %2$d, so it would be turned down when you save.', 'rapm' ) ); ?>.replace( '%1$d', width ).replace( '%2$d', minWidth );
+					} else if ( width < 1200 ) {
+						sizeNote.classList.add( 'is-warn' );
+						sizeNote.textContent = <?php echo wp_json_encode( __( 'This photo is %d pixels wide. It works, but it will look blurry across a big screen. 2000 or more looks best.', 'rapm' ) ); ?>.replace( '%d', width );
+					} else if ( width < 2000 ) {
+						sizeNote.classList.add( 'is-warn' );
+						sizeNote.textContent = <?php echo wp_json_encode( __( 'This photo is %d pixels wide. It works, but it will look a little soft across a big screen.', 'rapm' ) ); ?>.replace( '%d', width );
+					} else {
+						sizeNote.classList.add( 'is-ok' );
+						sizeNote.textContent = width > maxWidth
+							? <?php echo wp_json_encode( __( 'This photo is %1$d pixels wide. Big enough; it will be made %2$d wide when you save.', 'rapm' ) ); ?>.replace( '%1$d', width ).replace( '%2$d', maxWidth )
+							: <?php echo wp_json_encode( __( 'This photo is %d pixels wide. Big enough for a full-width photo.', 'rapm' ) ); ?>.replace( '%d', width );
+					}
+				}
+
+				function paint() {
+					Array.prototype.forEach.call( frames, function ( img ) {
+						if ( src ) { img.src = src; }
+						img.style.visibility = src ? 'visible' : 'hidden';
+						img.style.objectPosition = focus;
+					} );
+					pvImg.style.objectPosition = focus;
+					if ( src ) { pvImg.src = src; }
+					pvImg.style.visibility = src ? 'visible' : 'hidden';
+					pvEmpty.style.display = src ? 'none' : '';
+				}
+
+				function words() {
+					var tab = tabInput ? tabInput.value.trim() : '';
+					document.getElementById( 'rapm-look-pv-tab' ).textContent = tab || <?php echo wp_json_encode( __( '(tab name)', 'rapm' ) ); ?>;
+					document.getElementById( 'rapm-look-pv-tab2' ).textContent = tab;
+					[ 'title', 'blurb', 'btn' ].forEach( function ( k ) {
+						var el = document.getElementById( 'rapm-look-pv-' + k );
+						var v  = fields[ k ] ? fields[ k ].value : '';
+						el.textContent   = v;
+						el.style.display = v ? '' : 'none';
+					} );
+				}
+
+				if ( focusGrid ) {
+					focusGrid.addEventListener( 'click', function ( e ) {
+						var b = e.target.closest( 'button[data-anchor]' );
+						if ( ! b ) { return; }
+						focus = b.getAttribute( 'data-anchor' );
+						focusField.value = focus;
+						Array.prototype.forEach.call( focusGrid.querySelectorAll( 'button' ), function ( x ) {
+							var on = x === b;
+							x.classList.toggle( 'is-selected', on );
+							x.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+						} );
+						paint();
+					} );
+				}
+
+				if ( file ) {
+					file.addEventListener( 'change', function () {
+						if ( ! this.files || ! this.files[0] ) { return; }
+						var url   = URL.createObjectURL( this.files[0] );
+						var probe = new Image();
+						probe.onload = function () {
+							src   = url;
+							width = probe.naturalWidth;
+							sizeText();
+							paint();
+						};
+						probe.src = url;
+					} );
+				}
+
+				// "Use a link": ask the server which picture the link really is.
+				var linkTimer = null, linkSeq = 0;
+				function showLink( text, isError ) {
+					if ( ! linkStatus ) { return; }
+					linkStatus.textContent = text;
+					linkStatus.style.color = isError ? '#b32d2e' : '';
+				}
+				function checkLink() {
+					var url  = urlInput.value.trim();
+					var mine = ++linkSeq;
+					if ( ! /^https?:\/\/\S+$/i.test( url ) ) { showLink( '', false ); return; }
+					showLink( <?php echo wp_json_encode( __( 'Checking the link…', 'rapm' ) ); ?>, false );
+					var body = new FormData();
+					body.append( 'action', 'rapm_preview_link' );
+					body.append( 'nonce', <?php echo wp_json_encode( wp_create_nonce( 'rapm_preview_link' ) ); ?> );
+					body.append( 'url', url );
+					body.append( 'which', 'desktop' );
+					body.append( 'kind', 'look' );
+					body.append( 'asset_id', document.querySelector( 'input[name="asset_id"]' ).value );
+					fetch( <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, { method: 'POST', body: body, credentials: 'same-origin' } )
+						.then( function ( r ) { return r.json(); } )
+						.then( function ( res ) {
+							if ( mine !== linkSeq ) { return; }
+							if ( ! res || ! res.success ) {
+								showLink( ( res && res.data && res.data.message ) || <?php echo wp_json_encode( __( 'Couldn\'t check that link.', 'rapm' ) ); ?>, true );
+								return;
+							}
+							src   = res.data.src;
+							width = res.data.width;
+							showLink( ( res.data.is_folder
+								? <?php echo wp_json_encode( __( 'Using the newest picture in the folder: %s', 'rapm' ) ); ?>
+								: <?php echo wp_json_encode( __( 'Found the picture: %s', 'rapm' ) ); ?> ).replace( '%s', res.data.name || url ), false );
+							sizeText();
+							paint();
+						} )
+						.catch( function () {
+							if ( mine === linkSeq ) { showLink( <?php echo wp_json_encode( __( 'Couldn\'t check that link.', 'rapm' ) ); ?>, true ); }
+						} );
+				}
+				if ( urlInput ) {
+					urlInput.addEventListener( 'input', function () {
+						clearTimeout( linkTimer );
+						linkTimer = setTimeout( checkLink, 700 );
+					} );
+				}
+
+				document.getElementById( 'rapm-look-pv-desktop' ).addEventListener( 'click', function () {
+					pv.classList.remove( 'is-mobile' );
+					this.setAttribute( 'aria-pressed', 'true' );
+					document.getElementById( 'rapm-look-pv-mobile' ).setAttribute( 'aria-pressed', 'false' );
+				} );
+				document.getElementById( 'rapm-look-pv-mobile' ).addEventListener( 'click', function () {
+					pv.classList.add( 'is-mobile' );
+					this.setAttribute( 'aria-pressed', 'true' );
+					document.getElementById( 'rapm-look-pv-desktop' ).setAttribute( 'aria-pressed', 'false' );
+				} );
+
+				[ tabInput, fields.title, fields.blurb, fields.btn ].forEach( function ( el ) {
+					if ( el ) { el.addEventListener( 'input', words ); }
+				} );
+				sizeText();
+				paint();
+				words();
+			} )();
+		</script>
+		<?php
 	}
 
 	public static function sanitize_text_align( $value ) {

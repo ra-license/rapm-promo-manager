@@ -90,7 +90,33 @@ class RAPM_Slots {
 				'max_kb'                 => 200,
 				'format'                 => 'webp',
 			),
+			// Shop the Look (1.30.0): one room photo per look, any shape.
+			// 'flexible' means no required shape: the photo is shown
+			// cover-cropped to fill a wide hero on computers and a 4:3 box on
+			// phones, and the "Which part to keep" setting picks the crop.
+			// Wider than 'width' is scaled down (keeping its shape), narrower
+			// than 'min_width' is turned down. 2400 covers a 1920px screen
+			// with room to spare; 800 is a floor so a thumbnail-sized photo
+			// can't end up stretched across a page. Height is only used for
+			// the card shape on the Promotions screen (3:2, a common room
+			// photo shape). Both numbers are judgment calls; the width and
+			// the file size can be changed in Settings like any slot's.
+			'look_photo'          => array(
+				'label'                  => __( 'Shop the Look — Room photo', 'rapm' ),
+				'width'                  => 2400,
+				'height'                 => 1600,
+				'min_width'              => 800,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 450,
+				'format'                 => 'webp',
+				'flexible'               => true,
+			),
 		);
+	}
+
+	/** A slot that takes any shape of picture (Shop the Look's room photo). */
+	public static function is_flexible( $slot ) {
+		return is_array( $slot ) && ! empty( $slot['flexible'] );
 	}
 
 	/**
@@ -141,6 +167,18 @@ class RAPM_Slots {
 				'desktop'               => 'marquee_tile',
 				'mobile'                => 'marquee_tile',
 				'shortcode'             => 'rapm_marquee',
+				'has_elementor_widget'  => false,
+			),
+			// Shop the Look (1.30.0, from the mockup Phil approved on
+			// 2026-10-06): a wide room photo with a bar of tabs under it, one
+			// tab per look. One photo for every screen, so 'mobile' reuses the
+			// same slot and the form shows a single picture box.
+			'look'        => array(
+				'label'                 => __( 'Shop the Look', 'rapm' ),
+				'help'                  => __( 'Room photos with tabs under them. Each tab is one room or collection.', 'rapm' ),
+				'desktop'               => 'look_photo',
+				'mobile'                => 'look_photo',
+				'shortcode'             => 'rapm_looks',
 				'has_elementor_widget'  => false,
 			),
 		);
@@ -194,6 +232,11 @@ class RAPM_Slots {
 		if ( ! $slot ) {
 			return false;
 		}
+		if ( self::is_flexible( $slot ) ) {
+			// Any shape; only too narrow or wider than needed is "off".
+			$min = isset( $slot['min_width'] ) ? (int) $slot['min_width'] : 0;
+			return $width >= $min && $width <= (int) $slot['width'];
+		}
 		$tolerance = isset( $slot['aspect_ratio_tolerance'] ) ? (float) $slot['aspect_ratio_tolerance'] : 0;
 		$w_diff    = abs( $width - $slot['width'] ) / $slot['width'];
 		$h_diff    = abs( $height - $slot['height'] ) / $slot['height'];
@@ -218,6 +261,9 @@ class RAPM_Slots {
 	public static function aspect_ratio_matches( $slot, $width, $height ) {
 		if ( ! $slot || ! $width || ! $height ) {
 			return false;
+		}
+		if ( self::is_flexible( $slot ) ) {
+			return true; // Every shape fits; see the 'look_photo' slot.
 		}
 		$tolerance    = isset( $slot['aspect_ratio_tolerance'] ) ? (float) $slot['aspect_ratio_tolerance'] : 0;
 		$target_ratio = $slot['width'] / $slot['height'];

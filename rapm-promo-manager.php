@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.29.1
+ * Version: 1.30.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.29.1' );
+define( 'RAPM_VERSION', '1.30.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -35,6 +35,7 @@ require_once RAPM_DIR . 'includes/class-rapm-sync.php';
 require_once RAPM_DIR . 'includes/class-rapm-hero-carousel.php';
 require_once RAPM_DIR . 'includes/class-rapm-marquee.php';
 require_once RAPM_DIR . 'includes/class-rapm-coupon-book.php';
+require_once RAPM_DIR . 'includes/class-rapm-looks.php';
 require_once RAPM_DIR . 'includes/class-rapm-calendar.php';
 require_once RAPM_DIR . 'includes/class-rapm-curated-results.php';
 require_once RAPM_DIR . 'includes/class-rapm-elementor.php';
@@ -122,11 +123,13 @@ final class RAPM_Plugin {
 		add_shortcode( 'rapm_curated_results', array( 'RAPM_Curated_Results', 'shortcode' ) );
 		add_shortcode( 'rapm_marquee', array( 'RAPM_Marquee', 'shortcode' ) );
 		add_shortcode( 'rapm_coupon_book', array( 'RAPM_Coupon_Book', 'shortcode' ) );
+		add_shortcode( 'rapm_looks', array( 'RAPM_Looks', 'shortcode' ) );
 		add_shortcode( 'rapm_promotions_calendar', array( 'RAPM_Calendar', 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Assets', 'register' ), 5 );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Hero_Carousel', 'enqueue' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Marquee', 'enqueue' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Coupon_Book', 'enqueue' ) );
+		add_action( 'wp_enqueue_scripts', array( 'RAPM_Looks', 'enqueue' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Calendar', 'enqueue' ) );
 		add_filter( 'rocket_delay_js_exclusions', array( 'RAPM_Assets', 'exclude_from_rocket_delay' ) );
 

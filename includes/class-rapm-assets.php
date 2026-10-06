@@ -38,6 +38,7 @@ class RAPM_Assets {
 		wp_register_style( 'rapm-marquee-css', RAPM_URL . 'assets/css/rapm-marquee.css', array(), RAPM_VERSION );
 		wp_register_style( 'rapm-coupon-book-css', RAPM_URL . 'assets/css/rapm-coupon-book.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_register_style( 'rapm-calendar-css', RAPM_URL . 'assets/css/rapm-calendar.css', array(), RAPM_VERSION );
+		wp_register_style( 'rapm-looks-css', RAPM_URL . 'assets/css/rapm-looks.css', array(), RAPM_VERSION );
 		wp_register_script( 'rapm-swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), self::SWIPER_VERSION, true );
 		// Keep our Swiper 11 under its own name, and give back any Swiper the
 		// page already had. Both files set window.Swiper, and whichever runs
@@ -56,6 +57,9 @@ class RAPM_Assets {
 		// No hard dependency on Swiper: Marquee and Coupon Book use this file
 		// without it, and init() already checks for Swiper at run time.
 		wp_register_script( 'rapm-schedule-js', RAPM_URL . 'assets/js/rapm-schedule.js', array(), RAPM_VERSION, true );
+		// Shop the Look (1.30.0): the tab bar and tour, on top of the
+		// schedule's watch() for which looks are live.
+		wp_register_script( 'rapm-looks-js', RAPM_URL . 'assets/js/rapm-looks.js', array( 'rapm-schedule-js' ), RAPM_VERSION, true );
 	}
 
 	/**
@@ -71,6 +75,8 @@ class RAPM_Assets {
 				return array( array( 'rapm-coupon-book-css' ), array( 'rapm-schedule-js' ) );
 			case 'calendar':
 				return array( array( 'rapm-calendar-css' ), array() );
+			case 'looks':
+				return array( array( 'rapm-looks-css' ), array( 'rapm-schedule-js', 'rapm-looks-js' ) );
 		}
 		return array( array(), array() );
 	}
@@ -120,7 +126,8 @@ class RAPM_Assets {
 	 * keywords in a script's address or in an inline script's own text, so
 	 * this covers the two files and the small inline start-up scripts each
 	 * display prints (they mention RAPM_Schedule, or the calendar's own
-	 * "rapm-cal-" id), plus the two around the Swiper file (RAPM_Swiper).
+	 * "rapm-cal-" id), plus the two around the Swiper file (RAPM_Swiper),
+	 * and Shop the Look's file and start-up script (rapm-looks, RAPM_Looks).
 	 * No-op on sites without WP Rocket.
 	 */
 	public static function exclude_from_rocket_delay( $exclusions ) {
@@ -129,6 +136,8 @@ class RAPM_Assets {
 		$exclusions[] = 'RAPM_Schedule';
 		$exclusions[] = 'RAPM_Swiper';
 		$exclusions[] = 'rapm-cal-';
+		$exclusions[] = 'rapm-looks';
+		$exclusions[] = 'RAPM_Looks';
 		return $exclusions;
 	}
 }

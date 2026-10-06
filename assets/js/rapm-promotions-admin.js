@@ -89,6 +89,37 @@
 		} );
 	}
 
+	/* ---- Shop the Look: "Tabs on the website, in this order" (1.30.0) ---- */
+
+	// Same rule as RAPM_Promotions_Screen::render_tab_order(): the looks
+	// showing now, in card order, by tab name.
+	function refreshTabOrder( section ) {
+		var box = section && section.querySelector( '.rapm-tab-order' );
+		if ( ! box ) { return; }
+		var tabs = cardsIn( section )
+			.filter( function ( c ) { return c.classList.contains( 'is-showing' ) && c.getAttribute( 'data-tab' ); } )
+			.map( function ( c ) { return c.getAttribute( 'data-tab' ); } );
+		var label = box.querySelector( '.rapm-tab-order-label' );
+		Array.prototype.slice.call( box.children ).forEach( function ( el ) {
+			if ( el !== label ) { box.removeChild( el ); }
+		} );
+		if ( ! tabs.length ) {
+			var none = document.createElement( 'span' );
+			none.className   = 'rapm-tab-order-none';
+			none.textContent = box.getAttribute( 'data-none' ) || '';
+			box.appendChild( none );
+			return;
+		}
+		var list = document.createElement( 'ol' );
+		list.className = 'rapm-tab-order-list';
+		tabs.forEach( function ( tab ) {
+			var li = document.createElement( 'li' );
+			li.textContent = tab;
+			list.appendChild( li );
+		} );
+		box.appendChild( list );
+	}
+
 	/* ---- On/off switch ---------------------------------------------------- */
 
 	function applyState( card, d ) {
@@ -114,6 +145,7 @@
 				sw.disabled = false;
 				sw.setAttribute( 'aria-checked', res.data.on ? 'true' : 'false' );
 				applyState( card, res.data.card );
+				refreshTabOrder( section );
 				section.querySelector( '.rapm-spot-count' ).textContent = res.data.countLine;
 				say( section, title + ': ' + res.data.card.status );
 			} )
@@ -131,6 +163,7 @@
 	}
 
 	function saveOrder( section ) {
+		refreshTabOrder( section );
 		say( section, T.saving );
 		post( { action: 'rapm_reorder_slides', nonce: cfg.reorderNonce, order: orderOf( section ) } )
 			.then( function ( res ) { say( section, res && res.success ? T.orderSaved : T.saveFailed ); } )

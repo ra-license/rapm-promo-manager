@@ -22,9 +22,10 @@ class RAPM_Promotions_Screen {
 	const NONCE  = 'rapm_promotions';
 
 	/** Spot kinds in the order their sections appear, with the plain word for each and the narrowest card width. */
-	const KIND_ORDER = array( 'hero', 'fold_banner', 'coupon', 'marquee' );
+	const KIND_ORDER = array( 'hero', 'look', 'fold_banner', 'coupon', 'marquee' );
 	const CARD_MIN   = array(
 		'hero'        => 260,
+		'look'        => 260,
 		'fold_banner' => 420,
 		'coupon'      => 170,
 		'marquee'     => 170,
@@ -409,6 +410,7 @@ class RAPM_Promotions_Screen {
 			'fold_banner' => __( 'For example: Seasonal feature banner', 'rapm' ),
 			'coupon'      => __( 'For example: Clearance coupons', 'rapm' ),
 			'marquee'     => __( 'For example: Shop by room tiles', 'rapm' ),
+			'look'        => __( 'For example: Home page looks', 'rapm' ),
 		);
 		?>
 		<dialog class="rapm-new-spot" aria-labelledby="rapm-ns-title">
@@ -547,7 +549,7 @@ class RAPM_Promotions_Screen {
 							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Ask R&A Marketing to place it.', 'rapm' ); ?></span>
 						<?php endif; ?>
 						<?php if ( count( $spot['posts'] ) > 1 ) : ?>
-							<span class="rapm-spot-hint"> · <?php esc_html_e( 'Drag to change the order they play in', 'rapm' ); ?></span>
+							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ); ?></span>
 						<?php endif; ?>
 					</p>
 					<div class="rapm-ra rapm-spot-ra" hidden>
@@ -568,6 +570,10 @@ class RAPM_Promotions_Screen {
 				<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
 			</div>
 
+			<?php if ( 'look' === $kind ) : ?>
+				<?php self::render_tab_order( $live ); ?>
+			<?php endif; ?>
+
 			<div class="rapm-grid" style="<?php echo esc_attr( '--rapm-min:' . $min . 'px;--rapm-ratio:' . $ratio ); ?>">
 				<?php
 				foreach ( $live as $item ) {
@@ -579,7 +585,7 @@ class RAPM_Promotions_Screen {
 				?>
 				<a class="rapm-add" href="<?php echo esc_url( $add_url ); ?>">
 					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
-					<span><?php esc_html_e( 'Add a picture', 'rapm' ); ?></span>
+					<span><?php echo 'look' === $kind ? esc_html__( 'Add a look', 'rapm' ) : esc_html__( 'Add a picture', 'rapm' ); ?></span>
 				</a>
 			</div>
 
@@ -610,8 +616,9 @@ class RAPM_Promotions_Screen {
 		$trash_url  = get_delete_post_link( $id );
 		$link_issue = get_post_meta( $id, '_rapm_image_desktop_sync_error', true ) || get_post_meta( $id, '_rapm_image_mobile_sync_error', true );
 		$ended      = 'ended' === $d['state'];
+		$tab        = 'look' === get_post_meta( $id, '_rapm_kind', true ) ? self::tab_label( $post ) : '';
 		?>
-		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?>" data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title ) ); ?>"<?php echo $ended ? ' hidden' : ''; ?>>
+		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?>" data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title . ( $tab ? ' ' . $tab : '' ) ) ); ?>"<?php echo $tab ? ' data-tab="' . esc_attr( $tab ) . '"' : ''; ?><?php echo $ended ? ' hidden' : ''; ?>>
 			<a class="rapm-card-pic" href="<?php echo esc_url( $edit_url ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'Edit %s', 'rapm' ), $title ) ); ?>" draggable="false">
 				<?php if ( $image ) : ?>
 					<img src="<?php echo esc_url( $image ); ?>" alt="" loading="lazy" draggable="false" />
@@ -621,7 +628,12 @@ class RAPM_Promotions_Screen {
 			</a>
 			<div class="rapm-card-body">
 				<div class="rapm-card-top">
-					<h3 class="rapm-card-title"><?php echo esc_html( $title ); ?></h3>
+					<div>
+						<h3 class="rapm-card-title"><?php echo esc_html( $title ); ?></h3>
+						<?php if ( $tab ) : ?>
+							<p class="rapm-card-tab"><?php esc_html_e( 'Tab:', 'rapm' ); ?> <strong><?php echo esc_html( $tab ); ?></strong></p>
+						<?php endif; ?>
+					</div>
 					<button type="button" class="rapm-card-more" aria-haspopup="true" aria-expanded="false" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'More for %s', 'rapm' ), $title ) ); ?>">
 						<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="4" cy="10" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="16" cy="10" r="1.7"/></svg>
 					</button>
@@ -653,6 +665,43 @@ class RAPM_Promotions_Screen {
 				<?php endif; ?>
 			</div>
 		</article>
+		<?php
+	}
+
+	/** A look's tab name (Shop the Look, 1.30.0), or its internal name if it has none. */
+	private static function tab_label( $post ) {
+		$tab = trim( (string) get_post_meta( $post->ID, '_rapm_tab_label', true ) );
+		return '' !== $tab ? $tab : get_the_title( $post );
+	}
+
+	/**
+	 * "Tabs on the website, in this order:" for a Shop the Look spot (1.30.0),
+	 * from the looks showing now, in card order. rapm-promotions-admin.js
+	 * redraws it the same way after a switch or a drag, from each card's
+	 * data-tab and state.
+	 *
+	 * @param array $live List of array( $post, describe() ) that haven't ended.
+	 */
+	private static function render_tab_order( $live ) {
+		$tabs = array();
+		foreach ( $live as $item ) {
+			if ( 'showing' === $item[1]['state'] ) {
+				$tabs[] = self::tab_label( $item[0] );
+			}
+		}
+		?>
+		<div class="rapm-tab-order" data-none="<?php esc_attr_e( 'None showing. Switch a look on to give this spot a tab.', 'rapm' ); ?>">
+			<span class="rapm-tab-order-label"><?php esc_html_e( 'Tabs on the website, in this order:', 'rapm' ); ?></span>
+			<?php if ( $tabs ) : ?>
+				<ol class="rapm-tab-order-list">
+					<?php foreach ( $tabs as $tab ) : ?>
+						<li><?php echo esc_html( $tab ); ?></li>
+					<?php endforeach; ?>
+				</ol>
+			<?php else : ?>
+				<span class="rapm-tab-order-none"><?php esc_html_e( 'None showing. Switch a look on to give this spot a tab.', 'rapm' ); ?></span>
+			<?php endif; ?>
+		</div>
 		<?php
 	}
 

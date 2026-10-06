@@ -205,7 +205,7 @@ class RAPM_Training_Guide {
 					<p class="rapm-tg-toc-label"><?php esc_html_e( 'On this page', 'rapm' ); ?></p>
 					<ol>
 						<li><a href="#rapm-tg-before"><?php esc_html_e( 'Before You Start', 'rapm' ); ?></a></li>
-						<li><a href="#rapm-tg-types"><?php esc_html_e( 'The 4 Types of Promotions', 'rapm' ); ?></a></li>
+						<li><a href="#rapm-tg-types"><?php esc_html_e( 'The 5 Types of Promotions', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-adding"><?php esc_html_e( 'Adding a New Promotion', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-editing"><?php esc_html_e( 'Changing One Already Made', 'rapm' ); ?></a></li>
 						<li><a href="#rapm-tg-calendar"><?php esc_html_e( 'Showing a Calendar', 'rapm' ); ?></a></li>
@@ -239,7 +239,7 @@ class RAPM_Training_Guide {
 
 					<section class="rapm-tg-section" id="rapm-tg-types">
 						<p class="rapm-tg-kicker"><?php esc_html_e( 'Know your shapes', 'rapm' ); ?></p>
-						<h2><?php esc_html_e( 'The 4 Types of Promotions', 'rapm' ); ?></h2>
+						<h2><?php esc_html_e( 'The 5 Types of Promotions', 'rapm' ); ?></h2>
 						<p class="rapm-tg-intro"><?php esc_html_e( "Pick the type before you upload any pictures — it decides what size picture you'll need.", 'rapm' ); ?></p>
 
 						<div class="rapm-tg-type-grid">
@@ -248,6 +248,12 @@ class RAPM_Training_Guide {
 								<h3><?php esc_html_e( 'Slider', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">1920 &times; 600 &middot; <?php esc_html_e( 'wide banner', 'rapm' ); ?></p>
 								<p><?php esc_html_e( 'The big, full-width slider at the top of a page. Usually the first thing a visitor sees.', 'rapm' ); ?></p>
+							</div>
+							<div class="rapm-tg-type-card">
+								<div class="rapm-tg-type-shape-wrap"><div style="width:100%;"><div class="rapm-tg-type-shape" style="width:100%;height:20px;"></div><div class="rapm-tg-type-shape" style="width:100%;height:5px;margin-top:3px;"></div></div></div>
+								<h3><?php esc_html_e( 'Shop the Look', 'rapm' ); ?></h3>
+								<p class="rapm-tg-dims"><?php esc_html_e( 'any shape, 2000+ wide is best', 'rapm' ); ?> &middot; <?php esc_html_e( 'room photo', 'rapm' ); ?></p>
+								<p><?php esc_html_e( 'A big room photo with a bar of tabs under it. Each tab is one room or collection, with its own photo and words.', 'rapm' ); ?></p>
 							</div>
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:100%;height:12px;"></div></div>
@@ -476,6 +482,7 @@ class RAPM_Training_Guide {
 								<thead><tr><th><?php esc_html_e( 'Type', 'rapm' ); ?></th><th><?php esc_html_e( 'Desktop size', 'rapm' ); ?></th><th><?php esc_html_e( 'Mobile size', 'rapm' ); ?></th><th><?php esc_html_e( 'Max file size', 'rapm' ); ?></th></tr></thead>
 								<tbody>
 									<tr><td><?php esc_html_e( 'Slider', 'rapm' ); ?></td><td>1920 &times; 600 px</td><td>1080 &times; 1920 px</td><td>300 KB</td></tr>
+									<tr><td><?php esc_html_e( 'Shop the Look', 'rapm' ); ?></td><td><?php esc_html_e( 'Any shape, at least 800 px wide (2000+ is best)', 'rapm' ); ?></td><td><?php esc_html_e( 'Same photo', 'rapm' ); ?></td><td>450 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Feature banner', 'rapm' ); ?></td><td>1920 &times; 300 px</td><td>1080 &times; 400 px</td><td>200 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Coupon row', 'rapm' ); ?></td><td>600 &times; 750 px</td><td>600 &times; 750 px</td><td>150 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Tile row', 'rapm' ); ?></td><td>1080 &times; 1080 px</td><td>1080 &times; 1080 px</td><td>200 KB</td></tr>
@@ -505,6 +512,7 @@ class RAPM_Training_Guide {
 							<li><span><?php esc_html_e( 'Each picture says whether it is showing now, hidden, starting later, or ended, and when it ends.', 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'Click the switch on a picture to take it off the website without deleting it. Blue means showing, gray means hidden.', 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'Drag a picture to change the order it plays in, or use "Move earlier" and "Move later" in its three-dot menu. It saves by itself.', 'rapm' ); ?></span></li>
+							<li><span><?php esc_html_e( 'In a Shop the Look section, each picture is one tab, and the gray line above the pictures shows the tabs on the website in order. Each card also shows its tab name.', 'rapm' ); ?></span></li>
 							<li><span><?php esc_html_e( 'Use', 'rapm' ); ?> <strong><?php esc_html_e( 'Make a copy', 'rapm' ); ?></strong> <?php esc_html_e( "in the three-dot menu to start a new one that's almost the same, instead of typing everything from scratch. The copy starts hidden, so switch it on when it's ready.", 'rapm' ); ?></span></li>
 						</ul>
 					</section>

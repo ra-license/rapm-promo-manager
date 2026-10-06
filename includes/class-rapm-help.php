@@ -57,7 +57,7 @@ class RAPM_Help {
 				<li><?php esc_html_e( 'On the left menu, click "Promotions." Find the section for the spot where it should show (for example "Home page slider") and click "Add a picture" at the end of it.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'The type of promotion is already picked for you, from the section you started in.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Type a name for your own records. Visitors will never see this name.', 'rapm' ); ?></li>
-				<li><?php esc_html_e( 'Upload your desktop picture and your phone picture. The page will tell you the exact size each one needs to be.', 'rapm' ); ?></li>
+				<li><?php esc_html_e( 'Upload your desktop picture and your phone picture. The page will tell you the exact size each one needs to be. (Shop the Look is different: it has one room photo and a tab name. See "Shop the Look" below.)', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Answer the question about sale text: does your picture already show the price or sale? Pick Yes or No.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'If you picked No, type your headline, a smaller line under it, and your button words (like "Shop Now").', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Look at the preview box. It shows exactly what visitors will see.', 'rapm' ); ?></li>
@@ -70,8 +70,8 @@ class RAPM_Help {
 
 			<h2><?php esc_html_e( 'Types of Promotions', 'rapm' ); ?></h2>
 			<details>
-				<summary><?php esc_html_e( 'What\'s the difference between a Slider, Feature banner, Coupon row and Tile row?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'A Slider is big rotating pictures, usually at the top of a page. A Feature banner is a wide strip lower on a page that features one thing. A Coupon row is small coupon cards in a row people can scroll. A Tile row is small square tiles, like "Design Services," "Current Promotions," "Financing," "Visit Us" — good for quick links.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'What\'s the difference between a Slider, Shop the Look, Feature banner, Coupon row and Tile row?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'A Slider is big rotating pictures, usually at the top of a page. Shop the Look is a big room photo with a bar of tabs under it, one tab for each room or collection. A Feature banner is a wide strip lower on a page that features one thing. A Coupon row is small coupon cards in a row people can scroll. A Tile row is small square tiles, like "Design Services," "Current Promotions," "Financing," "Visit Us" — good for quick links.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'Why does a Tile row only accept square pictures?', 'rapm' ); ?></summary>
@@ -244,6 +244,33 @@ class RAPM_Help {
 			<details>
 				<summary><?php esc_html_e( 'I typed a name but nothing shows up in the list. What do I do?', 'rapm' ); ?></summary>
 				<p><?php esc_html_e( 'Try typing fewer words, or check your spelling — the search looks for an exact match on the name as it appears on the website. If you still can\'t find it after a few tries, ask whoever manages the website to check.', 'rapm' ); ?></p>
+			</details>
+
+			<h2><?php esc_html_e( 'Shop the Look — Questions and Answers', 'rapm' ); ?></h2>
+
+			<details>
+				<summary><?php esc_html_e( 'What is Shop the Look?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'A big room photo across the page, with a bar of tabs under it. Each tab is one "look": a room photo, the name on its tab, and a few words with a button. Shoppers click a tab to see that room. The tabs also change by themselves every 8 seconds, until a shopper clicks one.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'What should the tab name say?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'The word shoppers click. It can be a room, like "Living Room," or a collection, like "Stanton 338." Keep it short (24 letters at most) so all the tabs fit.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'How do I change the order of the tabs?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'On the Promotions page, drag the looks in their section, or use "Move earlier" and "Move later." The first look is the first tab. The gray line above the pictures shows the tabs on the website, in order.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'Why is there only one picture, not a desktop and a phone picture?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Computers and phones use the same room photo. Computers show a wide strip of it, and phones show a squarer part. Use "Which part to keep" to choose the part of the room that stays in view. The small Computer and Phone boxes next to it show what each one will show.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'What size should the room photo be?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Any shape works. A photo 2000 pixels wide or more looks best across a big screen. Bigger photos are made smaller for you. A photo less than 800 pixels wide is turned down, because it would look blurry.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'How do I take one tab off the website for a while?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Click the switch on that look. Its tab goes away and the other tabs close up. Click the switch again to bring it back. You can also give a look start and end dates, like a patio room for spring only.', 'rapm' ); ?></p>
 			</details>
 
 			<h2><?php esc_html_e( 'Scheduling — Questions and Answers', 'rapm' ); ?></h2>

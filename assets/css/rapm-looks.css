@@ -1,0 +1,76 @@
+/* Shop the Look (RAPM_Looks, 1.30.0): full-width room photo, a thin bar of
+   tabs under it, then the look's words. Fonts and text colors come from the
+   site; the accent (tour line, button) is --rapm-looks-accent, set from
+   Settings > brand color or the site's Elementor colors
+   (RAPM_Elementor::resolve_accent_color_css()). Themes style plain buttons
+   heavily (WoodMart: gray fill, uppercase, padding), so every button here
+   sets those properties itself. */
+
+.rapm-looks { --rapm-looks-line: rgba(0, 0, 0, 0.1); width: 100%; margin: 0 auto; }
+.rapm-looks [hidden] { display: none !important; }
+
+/* Photo: wide on computers (taller up to 720px, then the crop widens), 4:3 on phones. */
+.rapm-looks-stage { position: relative; overflow: hidden; height: clamp(340px, 38vw, 720px); background: #e9e9e9; touch-action: pan-y; }
+.rapm-look-photo { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
+.rapm-look-photo.is-active { opacity: 1; z-index: 1; }
+.rapm-looks .rapm-look-photo img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+
+.rapm-looks-arrows { position: absolute; right: 14px; bottom: 14px; z-index: 3; display: flex; gap: 6px; }
+.rapm-looks .rapm-looks-arrows button {
+	width: 44px; height: 44px; min-width: 0; min-height: 0; margin: 0; padding: 0;
+	display: grid; place-items: center; border: 0; border-radius: 0; box-shadow: none;
+	background: rgba(255, 255, 255, 0.92); color: #242424; cursor: pointer;
+}
+.rapm-looks .rapm-looks-arrows button:hover { background: #fff; color: var(--rapm-looks-accent); }
+
+/* The thin tab bar. The tour's timer runs along the top edge of the tab showing. */
+.rapm-looks-bar { display: flex; align-items: stretch; background: #fff; border-bottom: 1px solid var(--rapm-looks-line); }
+.rapm-looks-tabs { position: relative; display: flex; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.rapm-looks-tabs::-webkit-scrollbar { display: none; }
+.rapm-looks .rapm-looks-tab {
+	position: relative; flex: 1 0 auto; min-width: 0; min-height: 46px; margin: 0; padding: 0 20px;
+	border: 0; border-radius: 0; box-shadow: none; background: transparent; color: inherit; opacity: 0.72;
+	font: inherit; font-size: 15px; font-weight: 500; line-height: 1.2; letter-spacing: normal; text-transform: none;
+	white-space: nowrap; cursor: pointer;
+}
+.rapm-looks .rapm-looks-tab + .rapm-looks-tab { border-left: 1px solid var(--rapm-looks-line); }
+.rapm-looks .rapm-looks-tab:hover { opacity: 1; }
+.rapm-looks .rapm-looks-tab[aria-selected="true"] { opacity: 1; background: rgba(0, 0, 0, 0.04); }
+.rapm-looks-track { position: absolute; left: 0; right: 0; top: 0; height: 3px; pointer-events: none; }
+.rapm-looks-tab[aria-selected="true"] .rapm-looks-track { background: rgba(0, 0, 0, 0.08); }
+.rapm-looks-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--rapm-looks-accent); }
+.rapm-looks-tab[aria-selected="true"] .rapm-looks-fill.is-running { animation: rapm-looks-fill var(--rapm-looks-speed, 8000ms) linear forwards; }
+.rapm-looks.is-paused .rapm-looks-fill.is-running { animation-play-state: paused; }
+@keyframes rapm-looks-fill { from { width: 0; } to { width: 100%; } }
+
+.rapm-looks .rapm-looks-tour {
+	flex: none; width: 48px; min-width: 0; min-height: 0; margin: 0; padding: 0;
+	display: grid; place-items: center; border: 0; border-left: 1px solid var(--rapm-looks-line); border-radius: 0;
+	box-shadow: none; background: transparent; color: inherit; cursor: pointer;
+}
+.rapm-looks .rapm-looks-tour:hover { color: var(--rapm-looks-accent); }
+
+.rapm-looks button:focus-visible, .rapm-look-btn:focus-visible { outline: 2px solid var(--rapm-looks-accent); outline-offset: 2px; }
+
+/* The look's words. */
+.rapm-looks-shelf { max-width: 1400px; margin: 0 auto; padding: 24px 16px 8px; }
+.rapm-look-eyebrow { margin: 0 0 6px; color: var(--rapm-looks-accent); font-size: 12px; font-weight: 700; line-height: 1.3; letter-spacing: 0.1em; text-transform: uppercase; }
+.rapm-look-eyebrow span { opacity: 0.75; color: currentColor; }
+.rapm-looks .rapm-look-title { margin: 0 0 8px; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.15; }
+.rapm-look-blurb { margin: 0 0 14px; max-width: 60ch; }
+.rapm-looks .rapm-look-btn {
+	display: inline-flex; align-items: center; min-height: 44px; padding: 0 22px;
+	background: var(--rapm-looks-accent); color: #fff; text-decoration: none;
+	font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.rapm-looks .rapm-look-btn:hover { color: #fff; filter: brightness(0.92); }
+
+@media (max-width: 767px) {
+	.rapm-looks-stage { height: auto; aspect-ratio: 4 / 3; }
+	.rapm-looks .rapm-looks-tab { padding: 0 16px; font-size: 14px; }
+	.rapm-looks .rapm-looks-arrows button { width: 40px; height: 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rapm-look-photo { transition: none; }
+}
