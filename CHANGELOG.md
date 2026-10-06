@@ -73,6 +73,32 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Page-cache clearing.
   - The real WoodMart theme.
   - The tour running on its own in a visible browser (the test browser was hidden, so CSS animations didn't play by themselves).
+- **Confirmed on staging (real WordPress, ABC Furniture Retailer, 2026-10-06),** after the normal GitHub update, using the test site's own products. Three looks were added through the form in Phil's Chrome, each photo pasted as a link to the product's own image on the site:
+  - **The three looks:**
+    - "Hancock living room" (Apple Cider sofa group, 1000px).
+    - "Americana Modern dining room" (trestle table with eight upholstered chairs, 800px).
+    - "Breckenridge bedroom" (queen panel bed, nightstand, chest, dresser and mirror, 1000px).
+  - **Form:**
+    - The link check found each picture.
+    - The size note read "blurry" for all three (under 1200px).
+    - "Which part to keep" updated both small previews.
+    - The spot line went from "this will be its first tab" to "2 other promotions already use this spot … each one is its own tab".
+    - The category picker set Living Room (340), Dining Room (383) and Bedroom (355).
+    - Each save converted the photo to WebP in `/2026/10/` and kept the tab name and focus.
+  - **Promotions screen:** "Home Page Looks looks" shows 3 showing now, "Tabs on the website, in this order: Living Room, Dining Room, Bedroom", the tab name on each card, and "Add a look".
+  - **Home page, logged in, real WoodMart theme:**
+    - The three tabs appeared, with the timer line moving.
+    - The tour moved from Living Room to Dining Room by itself after 8 seconds.
+    - The accent came out as the site's own red (#971819); tabs are in Lato and the title in Poppins.
+    - The button goes to `/living-room/`.
+  - **Logged out:** the home page's HTML has all three looks (with and without a cache-busting query).
+  - **Phone, logged out, 375px:** 4:3 photo, words and button below, no sideways scroll.
+- **Not covered on staging yet:**
+  - Scaling a photo wider than 2400px: the test site has no product photo that wide.
+  - Switching a look off and watching its tab leave the logged-out page through Rocket.net's CDN.
+- **Found on staging, for a later fix:**
+  - **Doubled spot name.** A spot placed by its code alone gets a doubled automatic name when the code already ends in the type's word: `home-page-looks` reads "Home Page Looks looks". This happens to any type, for example `living-room-slider` would read "Living Room Slider slider". R&A can rename it in setup details.
+  - **Tab bar on phones.** At 375px the three tabs (309px) are a little wider than the bar (277px), so "Bedroom" is partly hidden until the bar is swiped.
 
 ## 1.29.1
 
