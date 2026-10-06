@@ -27,6 +27,19 @@
 .rapm-looks-bar { display: flex; align-items: stretch; background: #fff; border-bottom: 1px solid var(--rapm-looks-line); }
 .rapm-looks-tabs { position: relative; display: flex; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .rapm-looks-tabs::-webkit-scrollbar { display: none; }
+/* 1.30.1: when more tabs are off to one side, fade that edge so the bar reads as one you can swipe. */
+.rapm-looks-tabs.is-more {
+	-webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
+.rapm-looks-tabs.is-less {
+	-webkit-mask-image: linear-gradient(to right, transparent, #000 40px);
+	mask-image: linear-gradient(to right, transparent, #000 40px);
+}
+.rapm-looks-tabs.is-less.is-more {
+	-webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+	mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
 .rapm-looks .rapm-looks-tab {
 	position: relative; flex: 1 0 auto; min-width: 0; min-height: 46px; margin: 0; padding: 0 20px;
 	border: 0; border-radius: 0; box-shadow: none; background: transparent; color: inherit; opacity: 0.72;
@@ -67,7 +80,11 @@
 
 @media (max-width: 767px) {
 	.rapm-looks-stage { height: auto; aspect-ratio: 4 / 3; }
-	.rapm-looks .rapm-looks-tab { padding: 0 16px; font-size: 14px; }
+	/* 1.30.1: the theme's page gutter can leave the bar ~50px narrower than
+	   the phone (staging: 277px for the tabs at a 375px screen), so tighter
+	   tabs and a narrower tour button let three short tab names fit. */
+	.rapm-looks .rapm-looks-tab { padding: 0 12px; font-size: 13px; }
+	.rapm-looks .rapm-looks-tour { width: 40px; }
 	.rapm-looks .rapm-looks-arrows button { width: 40px; height: 40px; }
 }
 

@@ -4,6 +4,32 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.30.1
+
+Two fixes found on staging in 1.30.0.
+
+**Fix: a spot's automatic name no longer says its type twice.**
+- **Problem:** "Home page looks" showed as "Home Page Looks looks".
+- **Root cause:** `RAPM_Spots::name()` always added the type's word ("slider", "banner", "coupons", "tiles", "looks") after the words from the spot code. A code placed on a page without ever being named, like `home-page-looks`, already ends in that word.
+- **Fix:** the word is now left off when the code's last word is the same word, singular or plural.
+- **Examples:** `home-page-looks` reads "Home Page Looks", `living-room-slider` reads "Living Room Slider", and `clearance-coupon` reads "Clearance Coupon". `home`, `default` and every other code read as before ("Home page slider", "Main banner", "Living Room tiles").
+- **No data changes:** names R&A gave in setup details are untouched.
+
+**Fix: Shop the Look's tab bar on phones.**
+- **Problem:** on staging at 375px, the three tabs (309px) didn't fit the bar (277px), so "Bedroom" was cut off with nothing to show the bar scrolls.
+- **Root cause:** the tabs' spacing assumed the full phone width, but the theme's page gutter left the hero 50px narrower.
+- **Fix:**
+  - On phones the tabs use 12px side padding and 13px type, and the tour button is 40px wide.
+  - When tabs are hidden past either edge, that edge fades (`is-more` / `is-less` on `.rapm-looks-tabs`, set on build, scroll and resize). Shoppers can see there's more to swipe.
+
+**How it was checked.**
+- **PHP:** the in-browser PHP 8.4 check (parse plus compile) found 0 issues in all 27 files.
+- **Names:** `RAPM_Spots::name()` was run in that PHP on eight codes, giving the names listed above. Codes without a doubled word are unchanged.
+- **Tab bar:** run with the real CSS and JS at staging's exact width (375px screen, 25px page gutter):
+  - Three tabs fit (285px of tabs in a 285px bar) with no fade.
+  - Four tabs overflow: the right edge fades at the start. Picking the last tab scrolls it into view and moves the fade to the left. Going back to the first tab returns the bar to the start with only the right fade.
+  - No sideways page scroll.
+
 ## 1.30.0
 
 **New: Shop the Look, a fifth type (`look`).** Built from the mockups Phil approved on 2026-10-06 for the Gates Furniture homepage (v3 front end and the look editor). The front end is a full-width room photo, a thin bar of tabs under it, and the look's headline, smaller line and button below. Each tab is one look, and the client names it: a room ("Living Room") or a collection ("Stanton 338"). This release has the type, the tabs, their order and dates. Numbered dots on the pieces in the photo, with live prices and stock, come in 1.31.0, and Add to cart in 1.32.0.

@@ -94,6 +94,16 @@ class RAPM_Spots {
 			$where = ucwords( str_replace( array( '-', '_' ), ' ', $placement ) );
 		}
 		$noun = isset( $nouns[ $kind ] ) ? $nouns[ $kind ] : __( 'promotions', 'rapm' );
+		// A code that already ends in the type's word ("home-page-looks",
+		// "living-room-slider", "clearance-coupon") would read twice
+		// ("Home Page Looks looks"), found on staging in 1.30.0. Singular or
+		// plural counts as the same word.
+		$parts = explode( '-', str_replace( '_', '-', $placement ) );
+		$last  = strtolower( (string) end( $parts ) );
+		$word  = strtolower( $noun );
+		if ( $last === $word || $last . 's' === $word || $last === $word . 's' ) {
+			return $where;
+		}
 		/* translators: 1: where on the site, e.g. "Home page"; 2: what it is, e.g. "slider" */
 		return sprintf( __( '%1$s %2$s', 'rapm' ), $where, $noun );
 	}

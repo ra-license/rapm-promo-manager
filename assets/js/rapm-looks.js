@@ -50,6 +50,12 @@
 			return null;
 		}
 
+		// 1.30.1: fade an edge of the tab bar while more tabs are hidden past it.
+		function updateMore() {
+			tabsEl.classList.toggle( 'is-more', tabsEl.scrollLeft + tabsEl.clientWidth < tabsEl.scrollWidth - 2 );
+			tabsEl.classList.toggle( 'is-less', tabsEl.scrollLeft > 2 );
+		}
+
 		function setPaused() {
 			root.classList.toggle( 'is-paused', hovering || focused );
 		}
@@ -138,7 +144,11 @@
 			var keep = 0;
 			live.forEach( function ( p, i ) { if ( keyOf( p ) === currentKey ) { keep = i; } } );
 			show( keep );
+			updateMore();
 		}
+
+		tabsEl.addEventListener( 'scroll', updateMore, { passive: true } );
+		window.addEventListener( 'resize', updateMore );
 
 		tabsEl.addEventListener( 'animationend', function ( e ) {
 			if ( stopped || ! e.target.classList.contains( 'rapm-looks-fill' ) ) { return; }
