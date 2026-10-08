@@ -41,7 +41,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - **New Quick link:** the type shows as "Quick links — 1100x500", and the spot as "Category quick links" with its spot code. The name field is labeled and its placeholder set, and the five rows above are hidden. No PHP warnings and no script errors.
     - **Editing one:** loads its name and smaller line.
   - **The Promotions screen:** renders its section with "Showing now", "Starts Nov 20" and "Hidden", and "+ New spot" lists the new type. No warnings.
-- **Not yet checked:** saving one through a real WordPress install, the cache clear on save, and the row on WoodMart's real category template. Those happen on staging.
+- **Confirmed on staging (real WordPress with WoodMart, 2026-10-08),** after updating only RA Promo Manager from the staging repo, 1.36.0 to 1.37.0 ("Plugin updated successfully", still active):
+  - **Promotions screen:** "+ New spot" listed Quick links. A "Category quick links" spot was created with the code `[rapm_quick_links placement="category-quick-links"]`.
+  - **Three links saved through the real form** (Design Services, Current Promotions, Financing). Each JPG upload was converted to an 1100×500 WebP, and the links saved.
+  - **On a draft page with the code:** the row renders with `rapm-ql-m-compact`, its 1.37.0 stylesheet in the head, three links in order with their addresses, pictures at 332×151, and the smaller line under Design Services.
+  - **Left on staging:** the spot, the three "QL test" links and the draft page "Quick links test (1.37.0)".
+- **Pushed to the production repo (2026-10-08)** with Phil's OK ("You can push this to production so we can use it"): main and the `v1.37.0` tag.
+- **Not yet checked:** the row on WoodMart's real category template (it will be on Starfine's category layouts), and phone widths on real WoodMart.
 
 ## 1.36.0
 
