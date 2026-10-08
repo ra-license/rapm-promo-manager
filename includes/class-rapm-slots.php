@@ -93,7 +93,7 @@ class RAPM_Slots {
 			// Shop the Look (1.30.0): one room photo per look, any shape.
 			// 'flexible' means no required shape: the photo is shown
 			// cover-cropped to fill a wide hero on computers and a 4:3 box on
-			// phones, and "What each screen shows" (dragged per screen, 1.32.0) picks the crop.
+			// phones, and "What each screen shows" (dragged per screen, 1.36.0) picks the crop.
 			// Wider than 'width' is scaled down (keeping its shape), narrower
 			// than 'min_width' is turned down. 2400 covers a 1920px screen
 			// with room to spare; 800 is a floor so a thumbnail-sized photo

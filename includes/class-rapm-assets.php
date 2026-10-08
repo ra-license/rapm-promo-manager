@@ -39,6 +39,8 @@ class RAPM_Assets {
 		wp_register_style( 'rapm-coupon-book-css', RAPM_URL . 'assets/css/rapm-coupon-book.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_register_style( 'rapm-calendar-css', RAPM_URL . 'assets/css/rapm-calendar.css', array(), RAPM_VERSION );
 		wp_register_style( 'rapm-looks-css', RAPM_URL . 'assets/css/rapm-looks.css', array(), RAPM_VERSION );
+		// 1.35.0: product dots and the "Shop now" button on Slider and Feature banner slides.
+		wp_register_style( 'rapm-pins-css', RAPM_URL . 'assets/css/rapm-pins.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_register_script( 'rapm-swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), self::SWIPER_VERSION, true );
 		// Keep our Swiper 11 under its own name, and give back any Swiper the
 		// page already had. Both files set window.Swiper, and whichever runs
@@ -60,6 +62,7 @@ class RAPM_Assets {
 		// Shop the Look (1.30.0): the tab bar and tour, on top of the
 		// schedule's watch() for which looks are live.
 		wp_register_script( 'rapm-looks-js', RAPM_URL . 'assets/js/rapm-looks.js', array( 'rapm-schedule-js' ), RAPM_VERSION, true );
+		wp_register_script( 'rapm-pins-js', RAPM_URL . 'assets/js/rapm-pins.js', array(), RAPM_VERSION, true );
 	}
 
 	/**
@@ -68,7 +71,7 @@ class RAPM_Assets {
 	private static function handles( $mode ) {
 		switch ( $mode ) {
 			case 'hero':
-				return array( array( 'rapm-hero-css' ), array( 'rapm-swiper-js', 'rapm-schedule-js' ) );
+				return array( array( 'rapm-hero-css', 'rapm-pins-css' ), array( 'rapm-swiper-js', 'rapm-schedule-js', 'rapm-pins-js' ) );
 			case 'marquee':
 				return array( array( 'rapm-marquee-css' ), array( 'rapm-schedule-js' ) );
 			case 'coupon_book':
@@ -127,7 +130,8 @@ class RAPM_Assets {
 	 * this covers the two files and the small inline start-up scripts each
 	 * display prints (they mention RAPM_Schedule, or the calendar's own
 	 * "rapm-cal-" id), plus the two around the Swiper file (RAPM_Swiper),
-	 * and Shop the Look's file and start-up script (rapm-looks, RAPM_Looks).
+	 * Shop the Look's file and start-up script (rapm-looks, RAPM_Looks), and
+	 * the banner dots' file (rapm-pins, 1.35.0).
 	 * No-op on sites without WP Rocket.
 	 */
 	public static function exclude_from_rocket_delay( $exclusions ) {
@@ -138,6 +142,7 @@ class RAPM_Assets {
 		$exclusions[] = 'rapm-cal-';
 		$exclusions[] = 'rapm-looks';
 		$exclusions[] = 'RAPM_Looks';
+		$exclusions[] = 'rapm-pins'; // 1.35.0: banner dots and button.
 		return $exclusions;
 	}
 }

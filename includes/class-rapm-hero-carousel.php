@@ -111,7 +111,8 @@ class RAPM_Hero_Carousel {
 				.<?php echo esc_attr( $instance_id ); ?> .rapm-slide.has-mobile-img picture { position: absolute; inset: 0; }
 			}
 		</style>
-		<div class="swiper rapm-hero <?php echo esc_attr( $instance_id ); ?>" style="display:none;" data-rapm-carousel<?php echo $main_heading ? ' data-rapm-h1' : ''; ?>>
+		<?php // rapm-kind-* (1.32.2) lets the CSS fit a feature banner's words on phones. ?>
+		<div class="swiper rapm-hero rapm-kind-<?php echo esc_attr( str_replace( '_', '-', $kind_key ) ); ?> <?php echo esc_attr( $instance_id ); ?>" style="display:none;--rapm-pins-accent:<?php echo esc_attr( RAPM_Elementor::resolve_accent_color_css( '#2271b1' ) ); ?>;" data-rapm-carousel<?php echo $main_heading ? ' data-rapm-h1' : ''; ?> data-rapm-pins data-rapm-pins-view="<?php esc_attr_e( 'View product', 'rapm' ); ?>" data-rapm-pins-close="<?php esc_attr_e( 'Close', 'rapm' ); ?>"<?php echo class_exists( 'WooCommerce' ) ? ' data-rapm-store="' . esc_url( rest_url( 'wc/store/v1/products' ) ) . '"' : ''; ?>>
 			<div class="swiper-wrapper">
 				<?php
 				$h1_used = false;
@@ -221,10 +222,37 @@ class RAPM_Hero_Carousel {
 			<?php if ( $url ) : ?>
 				<a href="<?php echo esc_url( $url ); ?>" class="rapm-slide-link" aria-label="<?php echo esc_attr( $headline ? $headline : $alt ); ?>"></a>
 			<?php endif; ?>
+			<?php self::render_pins( $asset_id, $url, $cta_text ); ?>
 		</div>
 		<?php
 		echo '<script type="application/ld+json">' . wp_json_encode( self::schema_for_asset( $asset_id, $desktop_src, $url ), JSON_UNESCAPED_SLASHES ) . '</script>'; // phpcs:ignore
 		return (bool) $headline;
+	}
+
+	/**
+	 * 1.35.0: the slide's product dots and "Shop now" button, placed by
+	 * Place the Pieces in the form (the same _rapm_dots and _rapm_photo_btn
+	 * as Shop the Look, plus mx/my for the phone picture). rapm-pins.js
+	 * positions them; a product that's gone or unpublished loses its dot.
+	 */
+	private static function render_pins( $asset_id, $url, $cta_text ) {
+		$n = 0;
+		foreach ( RAPM_Looks::sanitize_dots( get_post_meta( $asset_id, '_rapm_dots', true ) ) as $dot ) {
+			$info = RAPM_Looks::product_info( $dot['p'] );
+			if ( ! $info ) {
+				continue;
+			}
+			$n++;
+			?>
+			<button type="button" class="rapm-pin-dot" data-pid="<?php echo (int) $dot['p']; ?>" data-x="<?php echo esc_attr( $dot['x'] ); ?>" data-y="<?php echo esc_attr( $dot['y'] ); ?>"<?php echo isset( $dot['mx'] ) ? ' data-mx="' . esc_attr( $dot['mx'] ) . '" data-my="' . esc_attr( $dot['my'] ) . '"' : ''; ?> data-name="<?php echo esc_attr( $info['name'] ); ?>" data-thumb="<?php echo esc_url( $info['thumb'] ); ?>" data-link="<?php echo esc_url( $info['link'] ); ?>" aria-expanded="false" aria-label="<?php echo esc_attr( sprintf( /* translators: 1: the dot's number, 2: product name */ __( '%1$d. %2$s', 'rapm' ), $n, $info['name'] ) ); ?>"><?php echo (int) $n; ?></button>
+			<?php
+		}
+		$btn = RAPM_Looks::sanitize_photo_btn( get_post_meta( $asset_id, '_rapm_photo_btn', true ) );
+		if ( $btn && $url ) {
+			?>
+			<a class="rapm-pin-btn" href="<?php echo esc_url( $url ); ?>" data-x="<?php echo esc_attr( $btn['x'] ); ?>" data-y="<?php echo esc_attr( $btn['y'] ); ?>"<?php echo isset( $btn['mx'] ) ? ' data-mx="' . esc_attr( $btn['mx'] ) . '" data-my="' . esc_attr( $btn['my'] ) . '"' : ''; ?>><?php echo esc_html( RAPM_Looks::photo_btn_text( $cta_text ) ); ?></a>
+			<?php
+		}
 	}
 
 	private static function schema_for_asset( $asset_id, $image_url, $url ) {
