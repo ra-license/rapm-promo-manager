@@ -31,6 +31,7 @@ class RAPM_Spot_Usage {
 		'rapm_hero'                => 'hero',
 		'rapm_fold_banner'         => 'fold_banner',
 		'rapm_marquee'             => 'marquee',
+		'rapm_quick_links'         => 'quick_links',
 		'rapm_coupon_book'         => 'coupon',
 		'rapm_looks'               => 'look',
 		'rapm_promotions_calendar' => 'calendar',

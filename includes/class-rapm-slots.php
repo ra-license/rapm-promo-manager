@@ -90,6 +90,20 @@ class RAPM_Slots {
 				'max_kb'                 => 200,
 				'format'                 => 'webp',
 			),
+			// Quick links (1.37.0): a wide picture shown small, with its name
+			// under it, four or so to a row. 11:5 (2.2 to 1) is the shape of
+			// Indian River's category-page strip that this copies (328x150 on
+			// screen). 1100 wide covers a quarter of a 1920px screen at twice
+			// the resolution. Same picture on phones, where it's shown as a
+			// small round thumbnail or card (see RAPM_Quick_Links).
+			'quick_link_image'    => array(
+				'label'                  => __( 'Quick link — Picture', 'rapm' ),
+				'width'                  => 1100,
+				'height'                 => 500,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 150,
+				'format'                 => 'webp',
+			),
 			// Shop the Look (1.30.0): one room photo per look, any shape.
 			// 'flexible' means no required shape: the photo is shown
 			// cover-cropped to fill a wide hero on computers and a 4:3 box on
@@ -121,9 +135,10 @@ class RAPM_Slots {
 
 	/**
 	 * Labels are the plain type names clients see (1.29.0, approved by
-	 * Phil): Slider, Feature banner, Coupon row, Tile row. The keys stay
-	 * hero / fold_banner / coupon / marquee, the codes used in shortcodes
-	 * and saved promotions.
+	 * Phil): Slider, Feature banner, Coupon row, Tile row, plus Shop the
+	 * Look (1.30.0) and Quick links (1.37.0). The keys stay hero /
+	 * fold_banner / coupon / marquee / look / quick_links, the codes used in
+	 * shortcodes and saved promotions.
 	 *
 	 * Which two slots (desktop/mobile) apply for each asset "kind" — the
 	 * one other place, besides here, that would need updating to add a
@@ -167,6 +182,18 @@ class RAPM_Slots {
 				'desktop'               => 'marquee_tile',
 				'mobile'                => 'marquee_tile',
 				'shortcode'             => 'rapm_marquee',
+				'has_elementor_widget'  => false,
+			),
+			// Quick links (1.37.0, Phil, for Starfine's category pages): wide
+			// pictures with a name under each, like Indian River's "Design
+			// Services / Current Promotions / Financing / Visit Us" strip.
+			// One picture for every screen; phones get a short version.
+			'quick_links' => array(
+				'label'                 => __( 'Quick links', 'rapm' ),
+				'help'                  => __( 'Wide pictures with a short name under each, in one row. Made for the top of category pages; phones get a short version.', 'rapm' ),
+				'desktop'               => 'quick_link_image',
+				'mobile'                => 'quick_link_image',
+				'shortcode'             => 'rapm_quick_links',
 				'has_elementor_widget'  => false,
 			),
 			// Shop the Look (1.30.0, from the mockup Phil approved on

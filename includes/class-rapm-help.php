@@ -70,8 +70,16 @@ class RAPM_Help {
 
 			<h2><?php esc_html_e( 'Types of Promotions', 'rapm' ); ?></h2>
 			<details>
-				<summary><?php esc_html_e( 'What\'s the difference between a Slider, Shop the Look, Feature banner, Coupon row and Tile row?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'A Slider is big rotating pictures, usually at the top of a page. Shop the Look is a big room photo with a bar of tabs under it, one tab for each room or collection. A Feature banner is a wide strip lower on a page that features one thing. A Coupon row is small coupon cards in a row people can scroll. A Tile row is small square tiles, like "Design Services," "Current Promotions," "Financing," "Visit Us" — good for quick links.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'What\'s the difference between a Slider, Shop the Look, Feature banner, Quick links, Coupon row and Tile row?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'A Slider is big rotating pictures, usually at the top of a page. Shop the Look is a big room photo with a bar of tabs under it, one tab for each room or collection. A Feature banner is a wide strip lower on a page that features one thing. Quick links are wide pictures with a short name under each, in one row, like "Design Services," "Current Promotions," "Financing," "Visit Us" at the top of category pages. A Coupon row is small coupon cards in a row people can scroll. A Tile row is small square tiles that page through like a carousel.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'How do Quick links look on phones?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'Shorter, so they don\'t push the products down. Each link becomes a small rounded button with a round thumbnail of its picture, all on one line that people swipe sideways. R&A can switch a spot to small picture cards in one swipeable row instead, or to show nothing on phones. Computers and tablets always show the full row.', 'rapm' ); ?></p>
+			</details>
+			<details>
+				<summary><?php esc_html_e( 'What picture does a Quick link need?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'A wide picture, 1100 by 500 pixels. Pick one where the subject is near the middle, since phones show it as a small circle. Type the name that goes under it, like "Financing"; that name is required. The same picture is used on every screen, so there\'s no separate phone picture to make.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'Why does a Tile row only accept square pictures?', 'rapm' ); ?></summary>

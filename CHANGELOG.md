@@ -4,6 +4,45 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.37.0
+
+**New: Quick links, a row of wide pictures with a name under each, for the top of category pages.** Phil, for Starfine: "For the category pages can you replicate using the R&A Promo manager this layout at the top of the category page for Indian River? We need to be cognizant that on mobile this could push products down too far and need to have an alternate version for it." Add to cart moves to 1.38.0.
+
+- **What Indian River has (checked on indianriverfurniture.com/furniture/living-room/):**
+  - **On computers:** four cards built by hand in the category template: Design Services, Current Promotions, Financing, Visit Us. Each picture shows at 328×150 (about 2.2 to 1), cover-cropped, with a 22px name 10px under it. The whole row is about 235px tall.
+  - **On tablets and phones:** the row is hidden (`elementor-hidden-tablet elementor-hidden-mobile`), with nothing in its place. Products start right under the category name.
+- **The new type, "Quick links"** (`quick_links`, shortcode `[rapm_quick_links placement="category-top"]`):
+  - **One picture, 1100×500** (11:5, the same shape), WebP, under 150KB. It's used on every screen, so the form hides the phone picture box and says so.
+  - **The name under the picture is required** ("Name under the picture" in the form). It's what shoppers read and what screen readers announce for the link. The smaller line is optional and shows on computers only.
+  - The form hides Button Text, Text Alignment, Text Color and Text Style for this type, since the words sit under the picture in the site's own colors. Typeface still applies. The rows are hidden, not removed, because the Live Preview script reads them.
+  - **Promotions screen:** its own section ("Category quick links"), with "Drag to change the order they show in". "+ New spot" offers it with the example "Category quick links".
+- **On the website:**
+  - **Computers:** one row, all live links side by side. `items="4"` (1–6) sets how many fit across; extras start a new row. Pictures have 8px rounded corners and zoom slightly on hover (not with reduced motion).
+  - **Tablets (768–1024px):** the same row, tighter, with smaller names.
+  - **Phones (under 768px), set with `mobile`:**
+    - `compact` (default): one line of rounded buttons, each with a round thumbnail and the name, swiped sideways. Each is 54px tall (an easy tap), and the row adds about 78px above the category name.
+    - `swipe`: small picture cards in one swipeable row, with the next one peeking in. Adds about 120px.
+    - `hide`: nothing on phones, like Indian River.
+- **Nothing jumps when it appears.** The Tile row starts hidden and appears once its script runs, which at the top of a page would push the products down after the page shows. Quick links instead:
+  - **Visible from the page HTML:** links live when the page is built are printed visible, and the others are printed `hidden`. `rapm-schedule.js` `watch()` still has the final say in the visitor's browser, so a cached page never freezes a link on or off; it only moves anything when that page has gone stale.
+  - **Stylesheet printed with the row:** a category template renders after `<head>`, and WordPress would print a stylesheet asked for then in the footer, so the pictures would show full size first. The shortcode prints its own stylesheet right before the row instead (once, and WordPress then skips it in the footer).
+  - **Pictures load eagerly** (no `loading="lazy"`, since they can be the first picture on the page), with width, height and a `sizes` hint. The picture box keeps its 11:5 shape before the picture arrives.
+- **Accessibility:** a `<nav>` named "Quick links" (`label="…"` changes it) around a list. A picture with no alt text of its own is treated as decorative, since the name under it already says where the link goes. A keyboard focus ring is shown, and on phones focusing a link scrolls it into view.
+- **Docs:** Help (two new answers: how they look on phones, what picture they need), the Training Guide (type card and size table), the Settings shortcode table and the readme.
+- **How it was checked** (no PHP on this Mac, so real PHP 8.4.1 in the browser through php-wasm 0.2.0, as in 1.30.0):
+  - **PHP:** all 28 files parse and compile with 0 issues. The two planted broken files (a missing parenthesis, `isset()` on a function result) were both caught.
+  - **`[rapm_quick_links]`, the real code with WordPress stand-ins**, given four live links, one starting in 2027, one that ended in 2025 and one switched off:
+    - The four live links print visible, in order, with their links. The two dated ones print `hidden`, the switched-off one isn't printed, and a spot with no promotions prints nothing.
+    - The stylesheet tag prints right before the row. There are no PHP warnings and no script errors.
+  - **In the browser, on a mock category page:**
+    - **1440 and 1024 wide:** four across, names under the pictures.
+    - **375 wide:** `compact` makes four 54px buttons, scrolling sideways inside the row and not the page; the row with its gap is 78px. `swipe` adds 120px with the third card peeking in. `hide` shows nothing.
+  - **The add/edit form, real `render_page()`:**
+    - **New Quick link:** the type shows as "Quick links — 1100x500", and the spot as "Category quick links" with its spot code. The name field is labeled and its placeholder set, and the five rows above are hidden. No PHP warnings and no script errors.
+    - **Editing one:** loads its name and smaller line.
+  - **The Promotions screen:** renders its section with "Showing now", "Starts Nov 20" and "Hidden", and "+ New spot" lists the new type. No warnings.
+- **Not yet checked:** saving one through a real WordPress install, the cache clear on save, and the row on WoodMart's real category template. Those happen on staging.
+
 ## 1.36.0
 
 **New: drag the Shop the Look photo to set what each screen shows, like in Canva.** Phil, on Gates: "I need something a little more nuanced and delicate for shifting the image because it keeps getting cut off." Built from the approved mockup (Photo.dc.html on the mockup canvas). Add to cart moves to 1.37.0.

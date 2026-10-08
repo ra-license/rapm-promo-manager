@@ -1,0 +1,209 @@
+/* Quick links (1.37.0): wide pictures with a short name under each, in one
+   row. Built for the top of a category page, so phones get a short version
+   (see RAPM_Quick_Links). Colors and fonts come from the theme: the name
+   inherits the page's text color, and the site font unless a Typeface is
+   picked on the promotion. */
+.rapm-quick-links {
+	--rapm-ql-gap: 24px;
+	--rapm-ql-radius: 8px;
+	margin: 0 0 28px;
+}
+
+/* `hidden` has to win over the display rules below and over theme rules. */
+.rapm-quick-links[hidden],
+.rapm-ql-item[hidden] {
+	display: none !important;
+}
+
+.rapm-ql-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(var(--rapm-ql-items, 4), minmax(0, 1fr));
+	gap: 18px var(--rapm-ql-gap);
+}
+
+.rapm-ql-item {
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+	list-style: none;
+}
+
+.rapm-ql-item::before,
+.rapm-ql-item::marker {
+	content: none;
+}
+
+.rapm-ql-link {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+.rapm-ql-link:hover,
+.rapm-ql-link:focus {
+	color: inherit;
+	text-decoration: none;
+}
+
+.rapm-ql-link:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 4px;
+	border-radius: var(--rapm-ql-radius);
+}
+
+/* The picture box keeps the slot's 11:5 shape (1100 x 500) before the
+   picture loads, so nothing below it moves when it arrives. */
+.rapm-ql-image {
+	display: block;
+	aspect-ratio: 11 / 5;
+	border-radius: var(--rapm-ql-radius);
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.06);
+}
+
+/* Scoped under .rapm-quick-links so a theme's own img rules can't outrank
+   it (the same problem the hero hit in 1.23.2). */
+.rapm-quick-links .rapm-ql-image img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-width: none;
+	object-fit: cover;
+	transition: transform 0.45s ease;
+}
+
+.rapm-ql-link:hover .rapm-ql-image img {
+	transform: scale(1.04);
+}
+
+.rapm-ql-text {
+	display: block;
+	margin-top: 10px;
+}
+
+.rapm-ql-title {
+	display: block;
+	font-size: 22px;
+	line-height: 1.25;
+}
+
+.rapm-ql-sub {
+	display: block;
+	margin-top: 2px;
+	font-size: 14px;
+	line-height: 1.4;
+	opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rapm-quick-links .rapm-ql-image img {
+		transition: none;
+	}
+	.rapm-ql-link:hover .rapm-ql-image img {
+		transform: none;
+	}
+}
+
+/* Tablets: the same row, a little tighter. */
+@media (max-width: 1024px) {
+	.rapm-quick-links {
+		--rapm-ql-gap: 14px;
+		margin-bottom: 22px;
+	}
+	.rapm-ql-title {
+		font-size: 17px;
+	}
+	.rapm-ql-sub {
+		display: none;
+	}
+}
+
+/* Phones: the short versions. */
+@media (max-width: 767px) {
+	.rapm-quick-links.rapm-ql-m-hide {
+		display: none !important;
+	}
+
+	.rapm-ql-m-compact,
+	.rapm-ql-m-swipe {
+		margin-bottom: 16px;
+	}
+
+	/* One line, swiped sideways. Every link stays reachable by keyboard
+	   too: focusing one scrolls it into view. */
+	.rapm-ql-m-compact .rapm-ql-list,
+	.rapm-ql-m-swipe .rapm-ql-list {
+		display: flex;
+		gap: 8px;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scroll-snap-type: x proximity;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		padding: 2px 2px 6px;
+	}
+
+	.rapm-ql-m-compact .rapm-ql-list::-webkit-scrollbar,
+	.rapm-ql-m-swipe .rapm-ql-list::-webkit-scrollbar {
+		display: none;
+	}
+
+	.rapm-ql-m-compact .rapm-ql-item,
+	.rapm-ql-m-swipe .rapm-ql-item {
+		flex: 0 0 auto;
+		scroll-snap-align: start;
+	}
+
+	/* "compact": a rounded button with a round thumbnail, 44px tall so it's
+	   an easy tap. */
+	.rapm-ql-m-compact .rapm-ql-link {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 44px;
+		padding: 4px 16px 4px 4px;
+		border: 1px solid rgba(0, 0, 0, 0.16);
+		border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+		border-radius: 999px;
+	}
+
+	.rapm-ql-m-compact .rapm-ql-image {
+		flex: 0 0 36px;
+		width: 36px;
+		height: 36px;
+		aspect-ratio: 1 / 1;
+		border-radius: 50%;
+	}
+
+	.rapm-ql-m-compact .rapm-ql-text {
+		margin-top: 0;
+	}
+
+	.rapm-ql-m-compact .rapm-ql-title {
+		font-size: 14px;
+		line-height: 1.2;
+		white-space: nowrap;
+	}
+
+	.rapm-ql-m-compact .rapm-ql-link:focus-visible {
+		border-radius: 999px;
+	}
+
+	/* "swipe": small picture cards; the next one peeks in at the edge so
+	   it's clear there's more. */
+	.rapm-ql-m-swipe .rapm-ql-item {
+		width: 42vw;
+		max-width: 190px;
+	}
+
+	.rapm-ql-m-swipe .rapm-ql-text {
+		margin-top: 6px;
+	}
+
+	.rapm-ql-m-swipe .rapm-ql-title {
+		font-size: 15px;
+	}
+}

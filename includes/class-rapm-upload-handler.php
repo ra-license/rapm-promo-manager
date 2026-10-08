@@ -144,6 +144,12 @@ class RAPM_Upload_Handler {
 		// too: product dots and the photo button, placed on the desktop and
 		// the phone picture separately.
 		$has_pins     = in_array( $kind_key, array( 'hero', 'fold_banner' ), true );
+		// Quick links (1.37.0): the words go under the picture in the site's
+		// own colors, so only the name, the smaller line and the typeface
+		// apply. The other rows are hidden rather than removed, since the
+		// form's live preview script reads them.
+		$is_quick     = 'quick_links' === $kind_key;
+		$quick_hide   = $is_quick ? ' style="display:none;"' : '';
 		$tab_label    = $m( '_rapm_tab_label' );
 		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
 		// 1.36.0: phones have their own position; a look saved before has none and uses the computer one.
@@ -401,7 +407,11 @@ class RAPM_Upload_Handler {
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Images', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'Upload whatever picture you have — any common format (JPG, PNG, whatever your phone or camera saves) is fine. This tool will automatically resize/convert it for you if needed, and will tell you clearly if it can\'t be used.', 'rapm' ); ?></p>
+				<?php if ( $is_quick ) : ?>
+				<p class="description"><?php esc_html_e( 'Quick links use one picture on every screen. Phones show it small, as a round thumbnail or a little card, so pick a picture whose subject is near the middle.', 'rapm' ); ?></p>
+				<?php else : ?>
 				<p class="description"><?php esc_html_e( 'Upload both below on every promotion — visitors on a computer automatically see the Desktop one, visitors on a phone automatically see the Mobile one. You never need to create a separate promotion for each device.', 'rapm' ); ?></p>
+				<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( $has_images ) : ?>
 				<table class="form-table">
@@ -466,7 +476,7 @@ class RAPM_Upload_Handler {
 						</td>
 					</tr>
 					<?php if ( ! $is_look ) : ?>
-					<tr>
+					<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; Quick links use one picture everywhere. ?>>
 						<th><label><?php esc_html_e( 'Mobile Promotion', 'rapm' ); ?></label></th>
 						<td>
 							<?php if ( $img_mobile ) : ?>
@@ -599,19 +609,19 @@ class RAPM_Upload_Handler {
 				<div id="rapm-text-fields" <?php echo 'image' === $text_mode ? 'style="display:none;"' : ''; ?>>
 					<table class="form-table">
 						<tr>
-							<th><label for="rapm_headline"><?php esc_html_e( 'Headline', 'rapm' ); ?></label></th>
-							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Stanton 338 Living Room', 'rapm' ) : esc_attr__( 'e.g. Labor Day Sale', 'rapm' ); ?>" /></td>
+							<th><label for="rapm_headline"><?php echo $is_quick ? esc_html__( 'Name under the picture', 'rapm' ) : esc_html__( 'Headline', 'rapm' ); ?></label></th>
+							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Stanton 338 Living Room', 'rapm' ) : ( $is_quick ? esc_attr__( 'e.g. Design Services', 'rapm' ) : esc_attr__( 'e.g. Labor Day Sale', 'rapm' ) ); ?>" /></td>
 						</tr>
 						<tr>
 							<th><label for="rapm_subhead"><?php esc_html_e( 'Smaller line under the headline', 'rapm' ); ?></label></th>
-							<td><input type="text" id="rapm_subhead" name="rapm_subhead" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_subhead' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. A deep gray sectional with its matching ottoman.', 'rapm' ) : esc_attr__( 'e.g. Up to 30% off sofas and sectionals', 'rapm' ); ?>" /></td>
+							<td><input type="text" id="rapm_subhead" name="rapm_subhead" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_subhead' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. A deep gray sectional with its matching ottoman.', 'rapm' ) : ( $is_quick ? esc_attr__( 'Optional, e.g. Free in-store or in-home consultations', 'rapm' ) : esc_attr__( 'e.g. Up to 30% off sofas and sectionals', 'rapm' ) ); ?>" /></td>
 						</tr>
-						<tr>
+						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_cta_text"><?php esc_html_e( 'Button Text', 'rapm' ); ?></label></th>
 							<td><input type="text" id="rapm_cta_text" name="rapm_cta_text" value="<?php echo esc_attr( $m( '_rapm_cta_text' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Shop all Living Room', 'rapm' ) : esc_attr__( 'e.g. Shop Now', 'rapm' ); ?>" /></td>
 						</tr>
 						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
-						<tr>
+						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_align" name="rapm_text_align">
@@ -621,14 +631,14 @@ class RAPM_Upload_Handler {
 								</select>
 							</td>
 						</tr>
-						<tr>
+						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_color"><?php esc_html_e( 'Text Color', 'rapm' ); ?></label></th>
 							<td>
 								<input type="color" id="rapm_text_color" name="rapm_text_color" value="<?php echo esc_attr( $m( '_rapm_text_color', '#ffffff' ) ); ?>" style="height:32px;width:60px;padding:2px;vertical-align:middle;" />
 								<p class="description"><?php esc_html_e( 'Only changes the headline and smaller line — the button always stays white for readability.', 'rapm' ); ?></p>
 							</td>
 						</tr>
-						<tr>
+						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_style"><?php esc_html_e( 'Text Style', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_style" name="rapm_text_style">
@@ -1474,6 +1484,15 @@ class RAPM_Upload_Handler {
 		$tab_label = isset( $_POST['rapm_tab_label'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['rapm_tab_label'] ) ), 0, 24 ) : '';
 		if ( $is_look && '' === trim( $tab_label ) ) {
 			self::fail( $back, __( 'Please type a tab name for this look, like "Living Room" or "Stanton 338".', 'rapm' ) );
+		}
+
+		// Quick links (1.37.0): the name under the picture is what shoppers
+		// read and what screen readers announce for the link.
+		if ( 'quick_links' === $kind_key ) {
+			$quick_name = isset( $_POST['rapm_headline'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['rapm_headline'] ) ) ) : '';
+			if ( '' === $quick_name ) {
+				self::fail( $back, __( 'Please type the name that goes under the picture, like "Design Services" or "Financing".', 'rapm' ) );
+			}
 		}
 
 		// Validate + convert images BEFORE touching the post itself, so a

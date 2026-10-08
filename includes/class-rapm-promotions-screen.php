@@ -22,13 +22,14 @@ class RAPM_Promotions_Screen {
 	const NONCE  = 'rapm_promotions';
 
 	/** Spot kinds in the order their sections appear, with the plain word for each and the narrowest card width. */
-	const KIND_ORDER = array( 'hero', 'look', 'fold_banner', 'coupon', 'marquee' );
+	const KIND_ORDER = array( 'hero', 'look', 'fold_banner', 'quick_links', 'coupon', 'marquee' );
 	const CARD_MIN   = array(
 		'hero'        => 260,
 		'look'        => 260,
 		'fold_banner' => 420,
 		'coupon'      => 170,
 		'marquee'     => 170,
+		'quick_links' => 240,
 	);
 
 	/**
@@ -469,6 +470,7 @@ class RAPM_Promotions_Screen {
 			'fold_banner' => __( 'For example: Seasonal feature banner', 'rapm' ),
 			'coupon'      => __( 'For example: Clearance coupons', 'rapm' ),
 			'marquee'     => __( 'For example: Shop by room tiles', 'rapm' ),
+			'quick_links' => __( 'For example: Category quick links', 'rapm' ),
 			'look'        => __( 'For example: Home page looks', 'rapm' ),
 		);
 		?>
@@ -608,7 +610,7 @@ class RAPM_Promotions_Screen {
 							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Put its spot code (below) on a page to show it.', 'rapm' ); ?></span>
 						<?php endif; ?>
 						<?php if ( count( $spot['posts'] ) > 1 ) : ?>
-							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ); ?></span>
+							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : ( 'quick_links' === $kind ? esc_html__( 'Drag to change the order they show in', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ) ); ?></span>
 						<?php endif; ?>
 					</p>
 					<div class="rapm-spot-ra">

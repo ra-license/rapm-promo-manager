@@ -226,7 +226,7 @@ class RAPM_Training_Guide {
 
 						<ul class="rapm-tg-plain">
 							<li><span><strong><?php esc_html_e( 'Promotion', 'rapm' ); ?></strong> — <?php esc_html_e( 'one sale banner, coupon, or offer. Each one is its own entry in the tool.', 'rapm' ); ?></span></li>
-							<li><span><strong><?php esc_html_e( 'Type', 'rapm' ); ?></strong> — <?php esc_html_e( 'which kind of promotion it is: Slider, Feature banner, Coupon row or Tile row. Each type is a different shape and goes in a different spot on the page.', 'rapm' ); ?></span></li>
+							<li><span><strong><?php esc_html_e( 'Type', 'rapm' ); ?></strong> — <?php esc_html_e( 'which kind of promotion it is: Slider, Shop the Look, Feature banner, Quick links, Coupon row or Tile row. Each type is a different shape and goes in a different spot on the page.', 'rapm' ); ?></span></li>
 							<li><span><strong><?php esc_html_e( 'Where it shows', 'rapm' ); ?></strong> — <?php esc_html_e( 'the spot on your website it goes in, like "Home page slider." Promotions in the same spot take turns. Pick it from the list.', 'rapm' ); ?></span></li>
 							<li><span><strong><?php esc_html_e( 'Desktop / Mobile picture', 'rapm' ); ?></strong> — <?php esc_html_e( 'every promotion needs two pictures, because a computer screen and a phone screen are different shapes. The tool shows the right one to each visitor automatically.', 'rapm' ); ?></span></li>
 						</ul>
@@ -260,6 +260,12 @@ class RAPM_Training_Guide {
 								<h3><?php esc_html_e( 'Feature banner', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">1920 &times; 300 &middot; <?php esc_html_e( 'thin strip', 'rapm' ); ?></p>
 								<p><?php esc_html_e( 'A wide strip that features one thing, usually lower on a page.', 'rapm' ); ?></p>
+							</div>
+							<div class="rapm-tg-type-card">
+								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:88px;height:40px;"></div></div>
+								<h3><?php esc_html_e( 'Quick links', 'rapm' ); ?></h3>
+								<p class="rapm-tg-dims">1100 &times; 500 &middot; <?php esc_html_e( 'wide picture', 'rapm' ); ?></p>
+								<p><?php esc_html_e( 'Wide pictures with a short name under each, in one row at the top of category pages (Design Services, Financing, Visit Us, and so on). Phones get a short, swipeable version.', 'rapm' ); ?></p>
 							</div>
 							<div class="rapm-tg-type-card">
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:54px;height:68px;"></div></div>
@@ -484,6 +490,7 @@ class RAPM_Training_Guide {
 									<tr><td><?php esc_html_e( 'Slider', 'rapm' ); ?></td><td>1920 &times; 600 px</td><td>1080 &times; 1920 px</td><td>300 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Shop the Look', 'rapm' ); ?></td><td><?php esc_html_e( 'Any shape, at least 800 px wide (2000+ is best)', 'rapm' ); ?></td><td><?php esc_html_e( 'Same photo', 'rapm' ); ?></td><td>450 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Feature banner', 'rapm' ); ?></td><td>1920 &times; 300 px</td><td>1080 &times; 400 px</td><td>200 KB</td></tr>
+									<tr><td><?php esc_html_e( 'Quick links', 'rapm' ); ?></td><td>1100 &times; 500 px</td><td><?php esc_html_e( 'Same picture', 'rapm' ); ?></td><td>150 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Coupon row', 'rapm' ); ?></td><td>600 &times; 750 px</td><td>600 &times; 750 px</td><td>150 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Tile row', 'rapm' ); ?></td><td>1080 &times; 1080 px</td><td>1080 &times; 1080 px</td><td>200 KB</td></tr>
 								</tbody>

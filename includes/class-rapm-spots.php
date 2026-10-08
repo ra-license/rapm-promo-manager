@@ -84,6 +84,7 @@ class RAPM_Spots {
 			'fold_banner' => __( 'banner', 'rapm' ),
 			'coupon'      => __( 'coupons', 'rapm' ),
 			'marquee'     => __( 'tiles', 'rapm' ),
+			'quick_links' => __( 'quick links', 'rapm' ),
 			'look'        => __( 'looks', 'rapm' ),
 		);
 		if ( 'home' === $placement ) {
