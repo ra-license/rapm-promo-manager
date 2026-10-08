@@ -4,8 +4,9 @@
  * - Step 1: the room photo's size note and "Use a link" check.
  * - Place the Pieces: click the photo to add a numbered dot, drag it (or
  *   use the arrow keys) to move it, and pick its product by name or SKU.
- *   "Which part to keep" sets the crop, and the Computer and Phone previews
- *   warn when a dot is cut off.
+ *   "What each screen shows" (1.32.0): drag the photo in the "On computers"
+ *   and "On phones" boxes to set each screen's crop on its own; each box
+ *   names any dot it cuts off.
  * - Review & Schedule: the look as shoppers see it, with live prices.
  *
  * Settings and words come from window.RAPM_LookEditorConfig (printed by
@@ -21,8 +22,9 @@
 	if ( ! C ) { return; }
 	var T = C.text || {};
 
-	var WIDE = 2.6, PHONE = 4 / 3, MARGIN = 0.02;
-	var ANCHOR = { left: 0, top: 0, center: 0.5, right: 1, bottom: 1 };
+	// Box shapes: the live photo is 38% of the screen width tall on computers
+	// (rapm-looks.css), so about 2.63 : 1, and 4 : 3 on phones.
+	var WIDE = 1 / 0.38, PHONE = 4 / 3, MARGIN = 0.02;
 
 	function $( id ) { return document.getElementById( id ); }
 	function fmt( text ) {
@@ -60,21 +62,23 @@
 		src: C.src || '',
 		w: C.width || 0,
 		h: C.height || 0,
-		focus: C.focus || 'center center',
+		// Where the photo sits in each screen's box, as fractions ( 0 = left /
+		// top edge, 1 = right / bottom edge ). Computers and phones each have
+		// their own (1.32.0); a look saved before uses one for both.
+		fc: ( C.focus || [ 0.5, 0.5 ] ).slice(),
+		fp: ( C.focusPhone || C.focus || [ 0.5, 0.5 ] ).slice(),
 		dots: ( C.dots || [] ).map( function ( d ) { return { p: d.p, x: d.x, y: d.y }; } ),
 		selected: -1
 	};
 	var products = {};
 	Object.keys( C.products || {} ).forEach( function ( id ) { products[ id ] = C.products[ id ]; } );
 
-	function focusXY() {
-		var parts = state.focus.split( ' ' );
-		return [ ANCHOR[ parts[0] ] !== undefined ? ANCHOR[ parts[0] ] : 0.5, ANCHOR[ parts[1] ] !== undefined ? ANCHOR[ parts[1] ] : 0.5 ];
-	}
+	function round1( n ) { return Math.round( n * 10 ) / 10; }
+	function posText( f ) { return round1( f[0] * 100 ) + '% ' + round1( f[1] * 100 ) + '%'; }
 
-	// The part of the photo (0-1 on each axis) a frame of this shape shows.
-	function cropBox( aspect ) {
-		var f = focusXY(), ia = state.w / state.h;
+	// The part of the photo (0-1 on each axis) a frame of this shape shows at position f.
+	function cropBox( aspect, f ) {
+		var ia = state.w / state.h;
 		if ( aspect >= ia ) {
 			var vh = ia / aspect, y0 = ( 1 - vh ) * f[1];
 			return { x0: 0, x1: 1, y0: y0, y1: y0 + vh };
@@ -86,7 +90,7 @@
 	function cutOff() {
 		var out = {};
 		if ( ! state.src || ! state.w || ! state.h ) { return out; }
-		var bw = cropBox( WIDE ), bp = cropBox( PHONE );
+		var bw = cropBox( WIDE, state.fc ), bp = cropBox( PHONE, state.fp );
 		state.dots.forEach( function ( d, k ) {
 			var x = d.x / 100, y = d.y / 100;
 			var wide  = x < bw.x0 + MARGIN || x > bw.x1 - MARGIN || y < bw.y0 + MARGIN || y > bw.y1 - MARGIN;
@@ -101,8 +105,8 @@
 		if ( field ) {
 			field.value = JSON.stringify( state.dots.map( function ( d ) { return { p: d.p || 0, x: d.x, y: d.y }; } ) );
 		}
-		var focusField = $( 'rapm_focus' );
-		if ( focusField ) { focusField.value = state.focus; }
+		if ( $( 'rapm_focus' ) ) { $( 'rapm_focus' ).value = posText( state.fc ); }
+		if ( $( 'rapm_focus_phone' ) ) { $( 'rapm_focus_phone' ).value = posText( state.fp ); }
 	}
 
 	/* ---- Store API: search and live prices ---------------------------------- */
@@ -559,52 +563,146 @@
 		} );
 	}
 
-	/* ---- Which part to keep + how it fits ------------------------------------ */
+	/* ---- What each screen shows (1.32.0): drag the photo in each box --------- */
 
-	var focusGrid = $( 'rapm-look-focus' );
-	if ( focusGrid ) {
-		focusGrid.addEventListener( 'click', function ( e ) {
-			var b = e.target.closest( 'button[data-anchor]' );
-			if ( ! b ) { return; }
-			state.focus = b.getAttribute( 'data-anchor' );
-			Array.prototype.forEach.call( focusGrid.querySelectorAll( 'button' ), function ( x ) {
-				var on = x === b;
-				x.classList.toggle( 'is-selected', on );
-				x.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
-			} );
-			renderAll();
-		} );
+	// Like moving a photo inside a Canva frame. The photo is drawn bigger
+	// than its box, covering it the way the website's object-fit: cover
+	// does, and slides along the one direction it overflows: up and down
+	// for a strip wider than the photo (computers, usually), left and right
+	// for a box narrower than it (phones, usually). Sizes are percentages of
+	// the box, so it lays out right even while this step is hidden.
+
+	var fitBoxes = Array.prototype.slice.call( document.querySelectorAll( '.rapm-fit-box' ) );
+	var fitDrag  = null;
+
+	function fitInfo( box ) {
+		var phone = 'phone' === box.getAttribute( 'data-device' );
+		return { box: box, aspect: phone ? PHONE : WIDE, f: phone ? state.fp : state.fc, frame: box.querySelector( '.rapm-fit-frame' ) };
 	}
 
-	function renderFrame( frame, aspect ) {
-		if ( ! frame ) { return; }
-		var img = frame.querySelector( 'img' );
-		Array.prototype.forEach.call( frame.querySelectorAll( '.rapm-look-pin' ), function ( p ) { p.remove(); } );
-		img.style.visibility = state.src ? 'visible' : 'hidden';
-		if ( ! state.src ) { return; }
-		if ( img.getAttribute( 'src' ) !== state.src ) { img.setAttribute( 'src', state.src ); }
-		img.style.objectPosition = state.focus;
-		if ( ! state.w || ! state.h ) { return; }
-		var b = cropBox( aspect );
-		state.dots.forEach( function ( d, k ) {
-			var x = ( d.x / 100 - b.x0 ) / ( b.x1 - b.x0 ) * 100, y = ( d.y / 100 - b.y0 ) / ( b.y1 - b.y0 ) * 100;
-			if ( x < 0 || x > 100 || y < 0 || y > 100 ) { return; }
-			var pin = el( 'span', 'rapm-look-pin', String( k + 1 ) );
-			pin.style.left = x + '%';
-			pin.style.top  = y + '%';
-			frame.appendChild( pin );
-		} );
+	function fitGeometry( info ) {
+		if ( ! state.w || ! state.h ) { return null; }
+		var ia = state.w / state.h, g = {};
+		if ( ia < info.aspect ) {
+			g.axis = 'y'; g.ratio = info.aspect / ia;
+			g.w = 100; g.h = g.ratio * 100; g.left = 0; g.top = -( g.ratio - 1 ) * info.f[1] * 100;
+		} else {
+			g.axis = 'x'; g.ratio = ia / info.aspect;
+			g.h = 100; g.w = g.ratio * 100; g.top = 0; g.left = -( g.ratio - 1 ) * info.f[0] * 100;
+		}
+		if ( g.ratio - 1 < 0.005 ) { g.axis = ''; }
+		return g;
+	}
+
+	function fitNow( info, g ) { return 'x' === g.axis ? info.f[0] : info.f[1]; }
+
+	function fitSet( info, value ) {
+		var g = fitGeometry( info );
+		if ( ! g || ! g.axis ) { return; }
+		info.f[ 'x' === g.axis ? 0 : 1 ] = Math.round( Math.max( 0, Math.min( 1, value ) ) * 1000 ) / 1000;
+		renderFit();
+		renderPreview();
+		sync();
+	}
+
+	function dotName( d, k ) {
+		var name = d.p && products[ d.p ] ? products[ d.p ].name : fmt( T.dotN, k + 1 );
+		name = name.length > 40 ? name.slice( 0, 39 ) + '…' : name;
+		return ( k + 1 ) + ' (' + name + ')';
 	}
 
 	function renderFit() {
-		renderFrame( document.querySelector( '.rapm-look-frame-wide' ), WIDE );
-		renderFrame( document.querySelector( '.rapm-look-frame-phone' ), PHONE );
+		var whole = document.querySelector( '.rapm-fit-whole' );
+		if ( whole ) { whole.hidden = ! state.src; }
+
+		fitBoxes.forEach( function ( box ) {
+			var info  = fitInfo( box ), frame = info.frame, note = box.querySelector( '.rapm-fit-note' );
+			var imgs  = [ frame.querySelector( '.rapm-fit-img' ), box.querySelector( '.rapm-fit-ghost' ) ];
+			var steps = box.querySelectorAll( '[data-step]' );
+			Array.prototype.forEach.call( frame.querySelectorAll( '.rapm-look-pin' ), function ( p ) { p.remove(); } );
+			imgs.forEach( function ( im ) {
+				im.style.visibility = state.src ? 'visible' : 'hidden';
+				if ( state.src && im.getAttribute( 'src' ) !== state.src ) { im.setAttribute( 'src', state.src ); }
+			} );
+			var g = state.src ? fitGeometry( info ) : null;
+			Array.prototype.forEach.call( box.querySelectorAll( '.rapm-fit-controls button' ), function ( b ) { b.disabled = ! g || ! g.axis; } );
+			if ( ! g ) { note.textContent = ''; return; }
+
+			imgs.forEach( function ( im ) {
+				im.style.width  = g.w + '%';
+				im.style.height = g.h + '%';
+				im.style.left   = g.left + '%';
+				im.style.top    = g.top + '%';
+			} );
+			var across = 'x' === g.axis;
+			steps[0].textContent = across ? T.left : T.up;
+			steps[0].setAttribute( 'aria-label', across ? T.leftLabel : T.upLabel );
+			steps[1].textContent = across ? T.right : T.down;
+			steps[1].setAttribute( 'aria-label', across ? T.rightLabel : T.downLabel );
+			frame.classList.toggle( 'is-fixed', ! g.axis );
+			frame.setAttribute( 'aria-orientation', across ? 'horizontal' : 'vertical' );
+			var now = Math.round( fitNow( info, g ) * 100 );
+			frame.setAttribute( 'aria-valuenow', g.axis ? now : 50 );
+			frame.setAttribute( 'aria-valuetext', g.axis ? fmt( across ? T.fromLeft : T.fromTop, now ) : T.fitsExactly );
+
+			// Dots: shown where this screen shows them, named when cut off.
+			var b = cropBox( info.aspect, info.f ), cut = [];
+			state.dots.forEach( function ( d, k ) {
+				var x = d.x / 100, y = d.y / 100;
+				if ( x < b.x0 + MARGIN || x > b.x1 - MARGIN || y < b.y0 + MARGIN || y > b.y1 - MARGIN ) {
+					cut.push( dotName( d, k ) );
+					return;
+				}
+				var pin = el( 'span', 'rapm-look-pin', String( k + 1 ) );
+				pin.style.left = ( g.left + x * g.w ) + '%';
+				pin.style.top  = ( g.top + y * g.h ) + '%';
+				frame.appendChild( pin );
+			} );
+			note.className = 'rapm-fit-note';
+			if ( ! g.axis ) {
+				note.textContent = T.fitsExactly;
+			} else if ( cut.length ) {
+				note.classList.add( 'is-warn' );
+				note.textContent = fmt( 1 === cut.length ? T.cutHere : T.cutHereMany, cut.join( ', ' ) );
+			} else if ( state.dots.length ) {
+				note.classList.add( 'is-ok' );
+				note.textContent = T.allShow;
+			} else {
+				note.textContent = '';
+			}
+		} );
+
+		// The whole photo, with what each screen shows outlined.
+		var ov = $( 'rapm-fit-overview' );
+		if ( ov && state.src ) {
+			var oimg = ov.querySelector( 'img' );
+			if ( oimg.getAttribute( 'src' ) !== state.src ) { oimg.setAttribute( 'src', state.src ); }
+			if ( state.w && state.h ) {
+				ov.style.aspectRatio = state.w + ' / ' + state.h;
+				[ [ '.rapm-fit-out-computer', cropBox( WIDE, state.fc ) ], [ '.rapm-fit-out-phone', cropBox( PHONE, state.fp ) ] ].forEach( function ( pair ) {
+					var out = ov.querySelector( pair[0] ), bx = pair[1];
+					out.style.left   = bx.x0 * 100 + '%';
+					out.style.top    = bx.y0 * 100 + '%';
+					out.style.width  = ( bx.x1 - bx.x0 ) * 100 + '%';
+					out.style.height = ( bx.y1 - bx.y0 ) * 100 + '%';
+				} );
+			}
+			Array.prototype.forEach.call( ov.querySelectorAll( '.rapm-look-pin' ), function ( p ) { p.remove(); } );
+			state.dots.forEach( function ( d, k ) {
+				var pin = el( 'span', 'rapm-look-pin', String( k + 1 ) );
+				pin.style.left = d.x + '%';
+				pin.style.top  = d.y + '%';
+				ov.appendChild( pin );
+			} );
+		}
+
+		// The summary line and the "Cut off on …" note on each dot's row.
 		var msg = $( 'rapm-pieces-fit-msg' );
 		if ( ! msg ) { return; }
 		msg.className = 'rapm-pieces-fit-msg';
 		if ( ! state.src || ! state.dots.length ) { msg.textContent = ''; return; }
-		var cut = cutOff();
-		if ( Object.keys( cut ).length ) {
+		var cutAll = cutOff();
+		if ( Object.keys( cutAll ).length ) {
 			msg.classList.add( 'is-warn' );
 			msg.textContent = T.fitWarn;
 		} else {
@@ -612,17 +710,79 @@
 			msg.textContent = T.fitOk;
 		}
 		Array.prototype.forEach.call( document.querySelectorAll( '.rapm-pieces-row' ), function ( row ) {
-			var k = parseInt( row.getAttribute( 'data-k' ), 10 ), note = row.querySelector( '.rapm-pieces-cut' );
-			if ( cut[ k ] && ! note ) {
-				note = el( 'p', 'rapm-pieces-cut', cut[ k ] );
-				row.querySelector( '.rapm-pieces-actions' ).before( note );
-			} else if ( cut[ k ] ) {
-				note.textContent = cut[ k ];
-			} else if ( note ) {
-				note.remove();
+			var k = parseInt( row.getAttribute( 'data-k' ), 10 ), rowNote = row.querySelector( '.rapm-pieces-cut' );
+			if ( cutAll[ k ] && ! rowNote ) {
+				rowNote = el( 'p', 'rapm-pieces-cut', cutAll[ k ] );
+				row.querySelector( '.rapm-pieces-actions' ).before( rowNote );
+			} else if ( cutAll[ k ] ) {
+				rowNote.textContent = cutAll[ k ];
+			} else if ( rowNote ) {
+				rowNote.remove();
 			}
 		} );
 	}
+
+	fitBoxes.forEach( function ( box ) {
+		var frame = box.querySelector( '.rapm-fit-frame' ), area = box.querySelector( '.rapm-fit-area' );
+		function showGhost( on ) { area.classList.toggle( 'is-active', on || ( !! fitDrag && fitDrag.box === box ) ); }
+
+		frame.addEventListener( 'pointerdown', function ( e ) {
+			var info = fitInfo( box ), g = fitGeometry( info );
+			if ( ! g || ! g.axis || ( e.button !== undefined && 0 !== e.button ) ) { return; }
+			e.preventDefault();
+			// Keeps the drag going when the pointer slips outside the box. Some
+			// browsers refuse it for a pointer that has already let go; the
+			// drag still works inside the box without it.
+			try { frame.setPointerCapture( e.pointerId ); } catch ( err ) {}
+			var across = 'x' === g.axis;
+			fitDrag = {
+				box: box,
+				across: across,
+				start: across ? e.clientX : e.clientY,
+				from: fitNow( info, g ),
+				// How far the photo can slide, in pixels, measured now that the box is on screen.
+				over: ( g.ratio - 1 ) * ( across ? frame.clientWidth : frame.clientHeight )
+			};
+			frame.classList.add( 'is-dragging' );
+			showGhost( true );
+			frame.focus( { preventScroll: true } );
+		} );
+		frame.addEventListener( 'pointermove', function ( e ) {
+			if ( ! fitDrag || fitDrag.box !== box || fitDrag.over < 1 ) { return; }
+			var moved = ( fitDrag.across ? e.clientX : e.clientY ) - fitDrag.start;
+			fitSet( fitInfo( box ), fitDrag.from - moved / fitDrag.over );
+		} );
+		function endDrag() {
+			if ( ! fitDrag || fitDrag.box !== box ) { return; }
+			fitDrag = null;
+			frame.classList.remove( 'is-dragging' );
+			showGhost( frame.matches( ':hover' ) );
+		}
+		frame.addEventListener( 'pointerup', endDrag );
+		frame.addEventListener( 'pointercancel', endDrag );
+		frame.addEventListener( 'pointerenter', function () { showGhost( true ); } );
+		frame.addEventListener( 'pointerleave', function () { showGhost( false ); } );
+		frame.addEventListener( 'focus', function () { showGhost( frame.matches( ':focus-visible' ) ); } );
+		frame.addEventListener( 'blur', function () { showGhost( false ); } );
+		frame.addEventListener( 'keydown', function ( e ) {
+			var info = fitInfo( box ), g = fitGeometry( info );
+			if ( ! g || ! g.axis ) { return; }
+			var now = fitNow( info, g ), step = e.shiftKey ? 0.1 : 0.01;
+			if ( 'ArrowUp' === e.key || 'ArrowLeft' === e.key ) { fitSet( info, now - step ); }
+			else if ( 'ArrowDown' === e.key || 'ArrowRight' === e.key ) { fitSet( info, now + step ); }
+			else if ( 'Home' === e.key ) { fitSet( info, 0 ); }
+			else if ( 'End' === e.key ) { fitSet( info, 1 ); }
+			else { return; }
+			e.preventDefault();
+		} );
+		box.querySelector( '.rapm-fit-controls' ).addEventListener( 'click', function ( e ) {
+			var b = e.target.closest( 'button' );
+			if ( ! b ) { return; }
+			var info = fitInfo( box ), g = fitGeometry( info );
+			if ( ! g || ! g.axis ) { return; }
+			fitSet( info, b.hasAttribute( 'data-center' ) ? 0.5 : fitNow( info, g ) + parseFloat( b.getAttribute( 'data-step' ) ) );
+		} );
+	} );
 
 	/* ---- Review & Schedule: the live preview ------------------------------- */
 
@@ -645,7 +805,8 @@
 		var img = $( 'rapm-look-pv-img' ), pvStage = $( 'rapm-look-pv-stage' );
 		img.style.visibility = state.src ? 'visible' : 'hidden';
 		if ( state.src && img.getAttribute( 'src' ) !== state.src ) { img.setAttribute( 'src', state.src ); }
-		img.style.objectPosition = state.focus;
+		var pvF = pv.classList.contains( 'is-mobile' ) ? state.fp : state.fc;
+		img.style.objectPosition = posText( pvF );
 		$( 'rapm-look-pv-empty' ).style.display = state.src ? 'none' : '';
 
 		// Dots, placed and numbered the way the website does it: a product
@@ -654,7 +815,7 @@
 		Array.prototype.forEach.call( pvStage.querySelectorAll( '.rapm-look-dot' ), function ( d ) { d.remove(); } );
 		var cw = pvStage.clientWidth, ch = pvStage.clientHeight;
 		if ( state.src && state.w && state.h && cw && ch ) {
-			var f = focusXY(), scale = Math.max( cw / state.w, ch / state.h ), dw = state.w * scale, dh = state.h * scale;
+			var f = pvF, scale = Math.max( cw / state.w, ch / state.h ), dw = state.w * scale, dh = state.h * scale;
 			var ox = ( cw - dw ) * f[0], oy = ( ch - dh ) * f[1];
 			shown.forEach( function ( d, k ) {
 				var x = ox + d.x / 100 * dw, y = oy + d.y / 100 * dh;

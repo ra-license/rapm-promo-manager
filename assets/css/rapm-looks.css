@@ -13,7 +13,7 @@
 .rapm-looks-stage { position: relative; overflow: hidden; height: clamp(340px, 38vw, 720px); background: #e9e9e9; touch-action: pan-y; }
 .rapm-look-photo { position: absolute; inset: 0; opacity: 0; transition: opacity 0.6s ease; }
 .rapm-look-photo.is-active { opacity: 1; z-index: 1; }
-.rapm-looks .rapm-look-photo img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+.rapm-looks .rapm-look-photo img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: var(--rapm-pos, 50% 50%); }
 
 .rapm-looks-arrows { position: absolute; right: 14px; bottom: 14px; z-index: 3; display: flex; gap: 6px; }
 .rapm-looks .rapm-looks-arrows button {
@@ -149,6 +149,8 @@
 
 @media (max-width: 767px) {
 	.rapm-looks-stage { height: auto; aspect-ratio: 4 / 3; }
+	/* Phones have their own "What each screen shows" position (1.32.0). */
+	.rapm-looks .rapm-look-photo img { object-position: var(--rapm-pos-phone, var(--rapm-pos, 50% 50%)); }
 	.rapm-looks .rapm-look-dot { width: 32px; height: 32px; margin: -16px 0 0 -16px; line-height: 32px; font-size: 13px; }
 	.rapm-look-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 6px 0 6px 6px; }
 	.rapm-look-card { flex: 0 0 82%; scroll-snap-align: start; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px; }

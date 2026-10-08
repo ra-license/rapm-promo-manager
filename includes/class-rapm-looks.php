@@ -34,14 +34,34 @@ class RAPM_Looks {
 	/** Milliseconds each look shows during the tour. */
 	const DEFAULT_SPEED = 8000;
 
-	/** The nine "Which part to keep" positions, as CSS object-position values. */
+	/** The nine old "Which part to keep" grid positions (before 1.32.0), as CSS object-position values. Still read for looks saved then. */
 	const FOCUS_POINTS = array( 'left top', 'center top', 'right top', 'left center', 'center center', 'right center', 'left bottom', 'center bottom', 'right bottom' );
 
 	/** Most dots one look can have (1.31.0): enough for a whole room, few enough to stay readable. */
 	const MAX_DOTS = 12;
 
+	/**
+	 * A photo position: one of the nine old grid positions (looks saved
+	 * before 1.32.0), or any position as "X% Y%" from dragging the photo
+	 * in the editor (1.32.0), each 0-100 with one decimal.
+	 */
 	public static function sanitize_focus( $value ) {
-		return in_array( $value, self::FOCUS_POINTS, true ) ? $value : 'center center';
+		$value = trim( (string) $value );
+		if ( in_array( $value, self::FOCUS_POINTS, true ) ) {
+			return $value;
+		}
+		if ( preg_match( '/^(\d{1,3}(?:\.\d+)?)% (\d{1,3}(?:\.\d+)?)%$/', $value, $m ) ) {
+			$x = round( min( 100, max( 0, (float) $m[1] ) ), 1 );
+			$y = round( min( 100, max( 0, (float) $m[2] ) ), 1 );
+			return $x . '% ' . $y . '%';
+		}
+		return 'center center';
+	}
+
+	/** The phone position, or the computer one for a look that has no phone position of its own (saved before 1.32.0). */
+	public static function phone_focus( $post_id, $computer_focus ) {
+		$phone = trim( (string) get_post_meta( $post_id, '_rapm_focus_phone', true ) );
+		return '' === $phone ? $computer_focus : self::sanitize_focus( $phone );
 	}
 
 	/**
@@ -92,11 +112,15 @@ class RAPM_Looks {
 		);
 	}
 
-	/** "center bottom" as fractions for the dot math: array( 0.5, 1 ). */
+	/** A position as fractions for the dot math: "center bottom" is array( 0.5, 1 ), "50% 37.5%" is array( 0.5, 0.375 ). */
 	public static function focus_fraction( $focus ) {
+		$focus = self::sanitize_focus( $focus );
 		$map   = array( 'left' => 0, 'top' => 0, 'center' => 0.5, 'right' => 1, 'bottom' => 1 );
-		$parts = explode( ' ', self::sanitize_focus( $focus ) );
-		return array( $map[ $parts[0] ], $map[ $parts[1] ] );
+		$parts = explode( ' ', $focus );
+		if ( isset( $map[ $parts[0] ] ) ) {
+			return array( $map[ $parts[0] ], $map[ $parts[1] ] );
+		}
+		return array( round( (float) $parts[0] / 100, 4 ), round( (float) $parts[1] / 100, 4 ) );
 	}
 
 	public static function shortcode( $atts ) {
@@ -158,7 +182,7 @@ class RAPM_Looks {
 		<section class="rapm-looks <?php echo esc_attr( $instance_id ); ?>" id="<?php echo esc_attr( $instance_id ); ?>" style="display:none;--rapm-looks-accent:<?php echo esc_attr( $accent ); ?>;--rapm-looks-speed:<?php echo (int) $speed; ?>ms;" data-rapm-looks<?php echo $store ? ' data-rapm-store="' . esc_url( $store ) . '"' : ''; ?> aria-roledescription="carousel" aria-label="<?php esc_attr_e( 'Shop the look', 'rapm' ); ?>">
 			<div class="rapm-looks-stage">
 				<?php foreach ( $looks as $i => $look ) : ?>
-					<div class="rapm-look-photo" id="<?php echo esc_attr( $instance_id . '-photo-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" data-rapm-start="<?php echo esc_attr( $look['start'] ); ?>" data-rapm-end="<?php echo esc_attr( $look['end'] ); ?>" data-tab="<?php echo esc_attr( $look['tab'] ); ?>" data-w="<?php echo (int) $look['width']; ?>" data-h="<?php echo (int) $look['height']; ?>" data-fx="<?php echo esc_attr( $look['fx'] ); ?>" data-fy="<?php echo esc_attr( $look['fy'] ); ?>" role="tabpanel" aria-roledescription="<?php esc_attr_e( 'slide', 'rapm' ); ?>" aria-label="<?php echo esc_attr( $look['tab'] ); ?>">
+					<div class="rapm-look-photo" id="<?php echo esc_attr( $instance_id . '-photo-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" data-rapm-start="<?php echo esc_attr( $look['start'] ); ?>" data-rapm-end="<?php echo esc_attr( $look['end'] ); ?>" data-tab="<?php echo esc_attr( $look['tab'] ); ?>" data-w="<?php echo (int) $look['width']; ?>" data-h="<?php echo (int) $look['height']; ?>" data-fx="<?php echo esc_attr( $look['fx'] ); ?>" data-fy="<?php echo esc_attr( $look['fy'] ); ?>" data-pfx="<?php echo esc_attr( $look['pfx'] ); ?>" data-pfy="<?php echo esc_attr( $look['pfy'] ); ?>" role="tabpanel" aria-roledescription="<?php esc_attr_e( 'slide', 'rapm' ); ?>" aria-label="<?php echo esc_attr( $look['tab'] ); ?>">
 						<?php
 						echo wp_get_attachment_image( // phpcs:ignore WordPress.Security.EscapeOutput -- core-escaped image tag.
 							$look['image_id'],
@@ -170,7 +194,9 @@ class RAPM_Looks {
 								'sizes'    => '100vw',
 								'loading'  => 0 === $i ? 'eager' : 'lazy',
 								'decoding' => 'async',
-								'style'    => 'object-position:' . $look['focus'] . ';',
+								// Computers and phones each have their own position (1.32.0);
+								// rapm-looks.css picks one by screen width.
+								'style'    => '--rapm-pos:' . $look['focus'] . ';--rapm-pos-phone:' . $look['pfocus'] . ';',
 							)
 						);
 						?>
@@ -268,6 +294,8 @@ class RAPM_Looks {
 		$meta   = wp_get_attachment_metadata( $image_id );
 		$focus  = self::sanitize_focus( get_post_meta( $id, '_rapm_focus', true ) );
 		$fxy    = self::focus_fraction( $focus );
+		$pfocus = self::phone_focus( $id, $focus );
+		$pxy    = self::focus_fraction( $pfocus );
 		$pieces = array();
 		foreach ( self::sanitize_dots( get_post_meta( $id, '_rapm_dots', true ) ) as $dot ) {
 			$info = self::product_info( $dot['p'] );
@@ -282,6 +310,9 @@ class RAPM_Looks {
 			'height'   => is_array( $meta ) && ! empty( $meta['height'] ) ? (int) $meta['height'] : 0,
 			'fx'       => $fxy[0],
 			'fy'       => $fxy[1],
+			'pfx'      => $pxy[0],
+			'pfy'      => $pxy[1],
+			'pfocus'   => $pfocus,
 			'pieces'   => $pieces,
 			'tab'      => '' !== $tab ? $tab : get_the_title( $post ),
 			'focus'    => $focus,

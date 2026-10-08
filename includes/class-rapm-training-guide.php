@@ -539,7 +539,7 @@ class RAPM_Training_Guide {
 						</div>
 						<div class="rapm-tg-problem">
 							<div class="rapm-tg-q"><span class="rapm-tg-chip">?</span><?php esc_html_e( 'A dot on my Shop the Look photo doesn\'t show on phones.', 'rapm' ); ?></div>
-							<p class="rapm-tg-a"><?php esc_html_e( 'Phones show a squarer part of the photo, so a dot near the edge can fall outside it. Open the look and go to "Place the Pieces." Its row says "Cut off on phones." Move the dot, or change "Which part to keep." The small Phone box shows the dots that fit.', 'rapm' ); ?></p>
+							<p class="rapm-tg-a"><?php esc_html_e( 'Phones show a squarer part of the photo, so a dot near the edge can fall outside it. Open the look and go to "Place the Pieces." Its row says "Cut off on phones." Move the dot, or drag the photo in the "On phones" box under "What each screen shows." The box names any dot it cuts off.', 'rapm' ); ?></p>
 						</div>
 					</section>
 

@@ -266,7 +266,7 @@ class RAPM_Help {
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'A dot says "Cut off on phones." What does that mean?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Phones and computers show different parts of the photo. A dot near the edge may be outside the part a phone shows, so phone shoppers won\'t see that dot. Its card under the photo still shows. To fix it, move the dot, or change "Which part to keep" on the same step. The small Computer and Phone boxes show which dots fit.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Phones and computers show different parts of the photo. A dot near the edge may be outside the part a phone shows, so phone shoppers won\'t see that dot. Its card under the photo still shows. To fix it, move the dot, or drag the photo in the "On phones" box under "What each screen shows" on the same step. Each box names any dot it cuts off.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'What happens if a product is taken off the website?', 'rapm' ); ?></summary>
@@ -282,7 +282,7 @@ class RAPM_Help {
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'Why is there only one picture, not a desktop and a phone picture?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Computers and phones use the same room photo. Computers show a wide strip of it, and phones show a squarer part. On the "Place the Pieces" step, use "Which part to keep" to choose the part of the room that stays in view. The small Computer and Phone boxes next to it show what each one will show.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Computers and phones use the same room photo. Computers show a wide strip of it, and phones show a squarer part. On the "Place the Pieces" step, under "What each screen shows," drag the photo inside the "On computers" box and the "On phones" box, the way you would in Canva. Each one is set on its own, and "The whole photo" shows both at once.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'What size should the room photo be?', 'rapm' ); ?></summary>

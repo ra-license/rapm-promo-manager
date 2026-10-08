@@ -61,18 +61,48 @@ span.rapm-pieces-thumb { display: block; }
 .rapm-pieces-result .rapm-pieces-thumb { width: 40px; height: 40px; }
 .rapm-pieces-note { padding: 7px 10px; font-size: 12px; color: #646970; }
 
-/* Which part to keep + how it fits */
-.rapm-pieces-fit { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px 24px; align-items: start; max-width: 1200px; margin: 18px 0 32px; padding-top: 16px; border-top: 1px solid #f0f0f1; }
-.rapm-pieces-fit h3 { margin: 0 0 4px; font-size: 14px; }
-.rapm-pieces-fit .description { margin-top: 0; max-width: 32ch; }
-.rapm-look-frames { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
-.rapm-look-frame-wrap { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #50575e; }
-.rapm-look-frame { position: relative; overflow: hidden; background: #dcdcde; border: 1px solid #c3c4c7; }
-.rapm-look-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.rapm-look-frame-wide { width: 260px; aspect-ratio: 2.6 / 1; }
-.rapm-look-frame-phone { width: 104px; aspect-ratio: 4 / 3; }
+/* What each screen shows (1.32.0): drag the photo in a computer-shaped and a
+   phone-shaped box, like a Canva frame. While the mouse is over a box, or it
+   is being dragged, the rest of the photo shows faded around it. */
+.rapm-fit { max-width: 1200px; margin: 18px 0 32px; padding-top: 16px; border-top: 1px solid #f0f0f1; }
+.rapm-fit h3 { margin: 0 0 4px; font-size: 14px; }
+.rapm-fit > .description { margin: 0 0 18px; max-width: 70ch; }
+.rapm-fit-boxes { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 28px 40px; }
+.rapm-fit-box { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.rapm-fit-computer { flex: 0 1 520px; }
+.rapm-fit-phone { flex: 0 1 260px; }
+.rapm-fit-label { font-size: 14px; font-weight: 600; }
+.rapm-fit-area { position: relative; width: 100%; }
+.rapm-fit-computer .rapm-fit-area { aspect-ratio: 100 / 38; }
+.rapm-fit-phone .rapm-fit-area { aspect-ratio: 4 / 3; }
+.rapm-fit-ghost { position: absolute; display: block; max-width: none; opacity: 0; pointer-events: none; user-select: none; transition: opacity 0.15s; z-index: 5; }
+.rapm-fit-area.is-active .rapm-fit-ghost { opacity: 0.3; }
+.rapm-fit-frame { position: absolute; inset: 0; z-index: 6; overflow: hidden; background: #dcdcde; border: 2px solid #c3c4c7; border-radius: 4px; cursor: grab; touch-action: none; user-select: none; }
+.rapm-fit-frame:hover, .rapm-fit-frame.is-dragging { border-color: #2271b1; }
+.rapm-fit-frame.is-dragging { cursor: grabbing; }
+.rapm-fit-frame.is-fixed { cursor: default; }
+.rapm-fit-frame:focus-visible { outline: 2px solid #2271b1; outline-offset: 3px; }
+.rapm-fit-img { position: absolute; display: block; max-width: none; pointer-events: none; }
+.rapm-fit-frame .rapm-look-pin, .rapm-fit-overview .rapm-look-pin { width: 22px; height: 22px; margin: -11px 0 0 -11px; font-size: 12px; line-height: 22px; pointer-events: none; }
+.rapm-fit-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rapm-fit-controls .button-link { padding: 4px 6px; }
+.rapm-fit-note { margin: 0; font-size: 13px; color: #50575e; }
+.rapm-fit-note.is-ok { color: #00561b; }
+.rapm-fit-note.is-warn { color: #8a4b00; font-weight: 600; }
+.rapm-fit-whole { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px; margin-top: 28px; }
+.rapm-fit-whole h4 { flex: 0 0 100%; margin: 0; font-size: 14px; }
+.rapm-fit-overview { position: relative; flex: 0 1 420px; overflow: hidden; border-radius: 4px; background: #dcdcde; }
+.rapm-fit-overview img { display: block; width: 100%; height: 100%; }
+.rapm-fit-out { position: absolute; box-sizing: border-box; pointer-events: none; }
+.rapm-fit-out-computer { border: 3px solid #2271b1; }
+.rapm-fit-out-phone { border: 3px dashed #d63638; }
+.rapm-fit-legend { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 0; font-size: 13px; }
+.rapm-fit-legend li { display: flex; align-items: center; gap: 8px; margin: 0; }
+.rapm-fit-swatch { display: inline-block; width: 28px; height: 0; }
+.rapm-fit-swatch-computer { border-top: 3px solid #2271b1; }
+.rapm-fit-swatch-phone { border-top: 3px dashed #d63638; }
 .rapm-look-pin { position: absolute; width: 15px; height: 15px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff; color: #1d2327; font-size: 9px; font-weight: 700; line-height: 15px; text-align: center; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
-.rapm-pieces-fit-msg { grid-column: 1 / -1; margin: 0; font-size: 13px; }
+.rapm-pieces-fit-msg { margin: 18px 0 0; font-size: 13px; }
 .rapm-pieces-fit-msg.is-ok { color: #00561b; }
 .rapm-pieces-fit-msg.is-warn { color: #8a4b00; font-weight: 600; }
 
@@ -80,7 +110,7 @@ span.rapm-pieces-thumb { display: block; }
 .rapm-preview-toggle-btn[aria-pressed="true"] { background: #2271b1; border-color: #2271b1; color: #fff; }
 .rapm-look-pv { max-width: 860px; margin-bottom: 24px; border: 1px solid #c3c4c7; background: #fff; transition: max-width 0.2s; }
 .rapm-look-pv.is-mobile { max-width: 340px; }
-.rapm-look-pv .rapm-looks-stage { height: auto; aspect-ratio: 2.6 / 1; }
+.rapm-look-pv .rapm-looks-stage { height: auto; aspect-ratio: 100 / 38; }
 .rapm-look-pv.is-mobile .rapm-looks-stage { aspect-ratio: 4 / 3; }
 .rapm-look-pv .rapm-looks-tab { cursor: default; flex: 0 0 auto; display: flex; align-items: center; }
 .rapm-look-pv .rapm-looks-shelf { padding: 18px 16px 16px; }
@@ -96,5 +126,6 @@ span.rapm-pieces-thumb { display: block; }
 	.rapm-pieces { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 782px) {
-	.rapm-pieces-fit { grid-template-columns: minmax(0, 1fr); }
+	.rapm-fit-computer, .rapm-fit-phone { flex-basis: 100%; }
 }
+.rapm-fit-whole[hidden] { display: none; }

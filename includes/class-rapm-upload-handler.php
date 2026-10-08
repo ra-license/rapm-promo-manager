@@ -136,10 +136,12 @@ class RAPM_Upload_Handler {
 		$kind         = RAPM_Slots::kind( $kind_key );
 		$has_images   = (bool) $kind['desktop']; // false for text-only kinds (Marquee)
 		// Shop the Look (1.30.0): one room photo of any shape, a tab name,
-		// and "Which part to keep"; words show under the photo, not on it.
+		// and what each screen shows; words show under the photo, not on it.
 		$is_look      = 'look' === $kind_key;
 		$tab_label    = $m( '_rapm_tab_label' );
 		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
+		// 1.32.0: phones have their own position; a look saved before has none and uses the computer one.
+		$focus_phone  = $is_edit ? RAPM_Looks::phone_focus( $asset_id, $focus ) : $focus;
 		// 1.31.0: the numbered dots (product + position on the photo).
 		$dots         = $is_look ? RAPM_Looks::sanitize_dots( $m( '_rapm_dots', array() ) ) : array();
 		// Step numbers. Shop the Look adds "Place the Pieces" as step 2
@@ -549,7 +551,7 @@ class RAPM_Upload_Handler {
 				<?php if ( $is_look ) : ?>
 				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['pieces']; ?>" data-step="<?php echo (int) $step['pieces']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
 				<h2 class="rapm-step-heading"><?php echo (int) $step['pieces']; ?>. <?php esc_html_e( 'Place the Pieces', 'rapm' ); ?></h2>
-				<?php self::render_look_pieces( $img_desktop, $dots, $focus ); ?>
+				<?php self::render_look_pieces( $img_desktop, $dots, $focus, $focus_phone ); ?>
 				<p class="rapm-wizard-next-warning" id="rapm-step-<?php echo (int) $step['pieces']; ?>-warning"></p>
 				<p class="rapm-wizard-nav">
 					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['basics']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
@@ -1677,6 +1679,7 @@ class RAPM_Upload_Handler {
 			update_post_meta( $asset_id, '_rapm_dots', RAPM_Looks::sanitize_dots( is_array( $posted_dots ) ? $posted_dots : array(), true ) );
 			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
 			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
+			update_post_meta( $asset_id, '_rapm_focus_phone', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus_phone'] ) ) : '' ) );
 		}
 		if ( empty( get_post_meta( $asset_id, '_rapm_placement', true ) ) ) {
 			update_post_meta( $asset_id, '_rapm_placement', 'default' );
@@ -1851,23 +1854,15 @@ class RAPM_Upload_Handler {
 	/**
 	 * Shop the Look, step "Place the Pieces" (1.31.0, from the editor mockup
 	 * Phil approved on 2026-10-06): click the photo to add a numbered dot,
-	 * drag to move it, pick its product; plus "Which part to keep" (moved
-	 * here from step 1) with Computer/Phone previews that warn when a dot is
-	 * cut off. assets/js/rapm-look-editor.js runs all of it, and the look's
-	 * photo checks and preview, from the settings printed here.
+	 * drag to move it, pick its product; plus "What each screen shows"
+	 * (1.32.0, from the drag mockup Phil approved on 2026-10-08): drag the
+	 * photo inside a computer-shaped and a phone-shaped box, like moving a
+	 * photo in a Canva frame, with a whole-photo view of both. It replaced
+	 * the nine-spot "Which part to keep" grid, which kept cutting rooms off.
+	 * assets/js/rapm-look-editor.js runs all of it, and the look's photo
+	 * checks and preview, from the settings printed here.
 	 */
-	private static function render_look_pieces( $image_id, $dots, $focus ) {
-		$focus_labels = array(
-			'left top'      => __( 'Top left', 'rapm' ),
-			'center top'    => __( 'Top center', 'rapm' ),
-			'right top'     => __( 'Top right', 'rapm' ),
-			'left center'   => __( 'Middle left', 'rapm' ),
-			'center center' => __( 'Center', 'rapm' ),
-			'right center'  => __( 'Middle right', 'rapm' ),
-			'left bottom'   => __( 'Bottom left', 'rapm' ),
-			'center bottom' => __( 'Bottom center', 'rapm' ),
-			'right bottom'  => __( 'Bottom right', 'rapm' ),
-		);
+	private static function render_look_pieces( $image_id, $dots, $focus, $focus_phone ) {
 		?>
 		<h2><?php esc_html_e( 'Put a numbered dot on each piece you sell', 'rapm' ); ?></h2>
 		<ol class="rapm-pieces-howto">
@@ -1889,35 +1884,59 @@ class RAPM_Upload_Handler {
 				<ol class="rapm-pieces-list" id="rapm-pieces-list"></ol>
 			</div>
 		</div>
-		<div class="rapm-pieces-fit">
-			<div>
-				<h3><?php esc_html_e( 'Which part to keep', 'rapm' ); ?></h3>
-				<p class="description"><?php esc_html_e( 'Computers show a wide strip of the photo and phones show a squarer part. Pick the part of the room to keep in view.', 'rapm' ); ?></p>
-				<div class="rapm-crop-anchors" id="rapm-look-focus" role="group" aria-label="<?php esc_attr_e( 'Which part of the photo to keep', 'rapm' ); ?>">
-					<?php foreach ( $focus_labels as $anchor => $anchor_label ) : ?>
-						<button type="button" data-anchor="<?php echo esc_attr( $anchor ); ?>" class="<?php echo $anchor === $focus ? 'is-selected' : ''; ?>" aria-pressed="<?php echo $anchor === $focus ? 'true' : 'false'; ?>" aria-label="<?php echo esc_attr( $anchor_label ); ?>"></button>
-					<?php endforeach; ?>
-				</div>
+		<div class="rapm-fit" id="rapm-fit">
+			<h3><?php esc_html_e( 'What each screen shows', 'rapm' ); ?></h3>
+			<p class="description"><?php esc_html_e( 'Computers show a wide strip of the photo, and phones show a squarer part. Drag the photo inside each box, the way you would in Canva. The faded part is what gets cut off.', 'rapm' ); ?></p>
+			<div class="rapm-fit-boxes">
+				<?php
+				$fit_boxes = array(
+					'computer' => __( 'On computers', 'rapm' ),
+					'phone'    => __( 'On phones', 'rapm' ),
+				);
+				foreach ( $fit_boxes as $device => $fit_label ) :
+					?>
+					<div class="rapm-fit-box rapm-fit-<?php echo esc_attr( $device ); ?>" data-device="<?php echo esc_attr( $device ); ?>">
+						<span class="rapm-fit-label" id="rapm-fit-label-<?php echo esc_attr( $device ); ?>"><?php echo esc_html( $fit_label ); ?></span>
+						<div class="rapm-fit-area">
+							<img class="rapm-fit-ghost" alt="" draggable="false" />
+							<div class="rapm-fit-frame" tabindex="0" role="slider" aria-labelledby="rapm-fit-label-<?php echo esc_attr( $device ); ?>" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+								<img class="rapm-fit-img" alt="" draggable="false" />
+							</div>
+						</div>
+						<div class="rapm-fit-controls">
+							<button type="button" class="button button-small" data-step="-0.05"></button>
+							<button type="button" class="button button-small" data-step="0.05"></button>
+							<button type="button" class="button-link" data-center="1"><?php esc_html_e( 'Center', 'rapm' ); ?></button>
+						</div>
+						<p class="rapm-fit-note" aria-live="polite"></p>
+					</div>
+				<?php endforeach; ?>
 			</div>
-			<div>
-				<h3><?php esc_html_e( 'How it fits on screens', 'rapm' ); ?></h3>
-				<div class="rapm-look-frames">
-					<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-wide"><img alt="" /></div><span><?php esc_html_e( 'Computer', 'rapm' ); ?></span></div>
-					<div class="rapm-look-frame-wrap"><div class="rapm-look-frame rapm-look-frame-phone"><img alt="" /></div><span><?php esc_html_e( 'Phone', 'rapm' ); ?></span></div>
+			<div class="rapm-fit-whole">
+				<h4><?php esc_html_e( 'The whole photo', 'rapm' ); ?></h4>
+				<div class="rapm-fit-overview" id="rapm-fit-overview">
+					<img alt="" draggable="false" />
+					<span class="rapm-fit-out rapm-fit-out-computer"></span>
+					<span class="rapm-fit-out rapm-fit-out-phone"></span>
 				</div>
+				<ul class="rapm-fit-legend">
+					<li><span class="rapm-fit-swatch rapm-fit-swatch-computer"></span><?php esc_html_e( 'Computers show inside the blue box', 'rapm' ); ?></li>
+					<li><span class="rapm-fit-swatch rapm-fit-swatch-phone"></span><?php esc_html_e( 'Phones show inside the red dashed box', 'rapm' ); ?></li>
+				</ul>
 			</div>
 			<p class="rapm-pieces-fit-msg" id="rapm-pieces-fit-msg" aria-live="polite"></p>
 		</div>
 		<input type="hidden" id="rapm_focus" name="rapm_focus" value="<?php echo esc_attr( $focus ); ?>" />
+		<input type="hidden" id="rapm_focus_phone" name="rapm_focus_phone" value="<?php echo esc_attr( $focus_phone ); ?>" />
 		<input type="hidden" id="rapm_dots" name="rapm_dots" value="<?php echo esc_attr( wp_json_encode( $dots ) ); ?>" />
 		<script>
-			window.RAPM_LookEditorConfig = <?php echo wp_json_encode( self::look_editor_config( $image_id, $dots, $focus ) ); ?>;
+			window.RAPM_LookEditorConfig = <?php echo wp_json_encode( self::look_editor_config( $image_id, $dots, $focus, $focus_phone ) ); ?>;
 		</script>
 		<?php
 	}
 
 	/** Everything rapm-look-editor.js needs, including the words it shows (translatable here). */
-	private static function look_editor_config( $image_id, $dots, $focus ) {
+	private static function look_editor_config( $image_id, $dots, $focus, $focus_phone ) {
 		$meta     = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
 		$slot     = RAPM_Slots::get( 'look_photo' );
 		$products = array();
@@ -1931,7 +1950,8 @@ class RAPM_Upload_Handler {
 			'src'       => $image_id ? (string) wp_get_attachment_image_url( $image_id, 'full' ) : '',
 			'width'     => is_array( $meta ) && ! empty( $meta['width'] ) ? (int) $meta['width'] : 0,
 			'height'    => is_array( $meta ) && ! empty( $meta['height'] ) ? (int) $meta['height'] : 0,
-			'focus'     => $focus,
+			'focus'     => RAPM_Looks::focus_fraction( $focus ),
+			'focusPhone' => RAPM_Looks::focus_fraction( $focus_phone ),
 			'minWidth'  => isset( $slot['min_width'] ) ? (int) $slot['min_width'] : 0,
 			'maxWidth'  => (int) $slot['width'],
 			'maxDots'   => RAPM_Looks::MAX_DOTS,
@@ -1972,7 +1992,22 @@ class RAPM_Upload_Handler {
 				'cutPhones'     => __( 'Cut off on phones', 'rapm' ),
 				'cutBoth'       => __( 'Cut off on computers and phones', 'rapm' ),
 				'fitOk'         => __( 'Every dot shows on computers and phones.', 'rapm' ),
-				'fitWarn'       => __( 'Some dots are cut off (see the list). Pick a different part to keep, or move those dots.', 'rapm' ),
+				'fitWarn'       => __( 'Some dots are cut off (see the list). Drag the photo in that screen\'s box, or move those dots.', 'rapm' ),
+				'up'            => __( '▲ Up', 'rapm' ),
+				'down'          => __( '▼ Down', 'rapm' ),
+				'left'          => __( '◀ Left', 'rapm' ),
+				'right'         => __( 'Right ▶', 'rapm' ),
+				'upLabel'       => __( 'Show a little more of the top', 'rapm' ),
+				'downLabel'     => __( 'Show a little more of the bottom', 'rapm' ),
+				'leftLabel'     => __( 'Show a little more of the left', 'rapm' ),
+				'rightLabel'    => __( 'Show a little more of the right', 'rapm' ),
+				'fromTop'       => __( '%d percent of the way toward the bottom', 'rapm' ),
+				'fromLeft'      => __( '%d percent of the way toward the right', 'rapm' ),
+				'fitsExactly'   => __( 'This photo is exactly this shape, so all of it shows. Nothing to move.', 'rapm' ),
+				'allShow'       => __( 'All dots show here.', 'rapm' ),
+				'cutHere'       => __( 'Cut off here: %s. Shoppers on this screen won\'t see that dot.', 'rapm' ),
+				'cutHereMany'   => __( 'Cut off here: %s. Shoppers on this screen won\'t see those dots.', 'rapm' ),
+				'dotN'          => __( 'dot %d', 'rapm' ),
 				'needProduct'   => __( 'Pick a product for every dot, or remove the dots without one. Missing: dot %s.', 'rapm' ),
 				'tooMany'       => __( 'A look can have up to %d dots.', 'rapm' ),
 				'added'         => __( 'Dot %d added. Now pick its product.', 'rapm' ),

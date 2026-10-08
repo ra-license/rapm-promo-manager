@@ -13,7 +13,7 @@
  * class, and the next look starts when the animation ends.
  *
  * The pieces (1.31.0): each look's numbered dots are placed on the photo as
- * it's actually cropped (cover-fit at the look's "Which part to keep"), so
+ * it's actually cropped (cover-fit at the look's computer or phone position), so
  * they stay on the furniture at any screen size; a dot cut off by the crop
  * is hidden. A dot opens a small card (photo, name, price, stock, View
  * product), and hovering a dot or a card lights up its partner. Price and
@@ -88,7 +88,11 @@
 				var w   = parseFloat( photo.getAttribute( 'data-w' ) ) || ( img && img.naturalWidth ) || 0;
 				var h   = parseFloat( photo.getAttribute( 'data-h' ) ) || ( img && img.naturalHeight ) || 0;
 				if ( ! w || ! h ) { return; }
-				var fx = parseFloat( photo.getAttribute( 'data-fx' ) ), fy = parseFloat( photo.getAttribute( 'data-fy' ) );
+				// Phones use the look's phone position (1.32.0), the same
+				// breakpoint rapm-looks.css switches at.
+				var phone = window.matchMedia && window.matchMedia( '(max-width: 767px)' ).matches;
+				var fx = parseFloat( photo.getAttribute( phone && photo.hasAttribute( 'data-pfx' ) ? 'data-pfx' : 'data-fx' ) );
+				var fy = parseFloat( photo.getAttribute( phone && photo.hasAttribute( 'data-pfy' ) ? 'data-pfy' : 'data-fy' ) );
 				fx = isNaN( fx ) ? 0.5 : fx;
 				fy = isNaN( fy ) ? 0.5 : fy;
 				var scale = Math.max( cw / w, ch / h ), dw = w * scale, dh = h * scale;

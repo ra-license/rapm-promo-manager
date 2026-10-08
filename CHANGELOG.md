@@ -4,6 +4,49 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.32.0
+
+**New: drag the Shop the Look photo to set what each screen shows, like in Canva.** Phil, on Gates: "I need something a little more nuanced and delicate for shifting the image because it keeps getting cut off." Built from the approved mockup (Photo.dc.html on the mockup canvas). Add to cart moves to 1.33.0.
+
+- **Problem:** in the look editor, "Which part to keep" was a 3×3 grid. Pieces kept getting cut off on Gates, on computers or phones or both.
+- **Root cause:** two limits in the grid.
+  - **Only 9 positions:** each direction could be 0%, 50% or 100%, nothing in between. A sofa just below the middle could only be kept by jumping all the way to "bottom", which cut off the top.
+  - **One position for two shapes:** computers show a wide strip (about 2.63 to 1) and phones a 4:3 part. On a typical room photo, the wide strip crops top and bottom while the 4:3 part crops the sides. So one choice moved the computer crop up or down and the phone crop left or right together, and fixing one could cut off the other.
+- **Fix:** the grid is replaced by "What each screen shows" on the Place the Pieces step.
+  - **Two boxes**, "On computers" and "On phones", at those screens' real shapes. Drag the photo inside each one. The part outside the box shows faded while the pointer is over the box or while dragging, so you can see what gets cut off.
+  - **Fine control:** ▲ Up / ▼ Down (or ◀ Left / Right ▶, whichever way that box can move) step 5%, and "Center" resets it. With the box selected, arrow keys move 1% (Shift for 10%), Home and End go to either end. Screen readers hear it as a slider ("38 percent of the way toward the bottom").
+  - **Cut-off dots are named** under each box: "Cut off here: 2 (XL Square Cocktail Ottoman 33867)." The dot rows still say "Cut off on computers/phones".
+  - **"The whole photo"** shows the full photo with the computer area in a blue box and the phone area in a red dashed box.
+  - The Review step's Desktop / Mobile preview uses each screen's own position.
+- **How it's stored:**
+  - **Computer position:** `_rapm_focus`, as before, now "X% Y%" (for example "50% 38.4%").
+  - **Phone position:** new `_rapm_focus_phone`.
+  - `RAPM_Looks::sanitize_focus()` accepts the 9 old grid words or "X% Y%" (each 0–100, one decimal). Anything else falls back to center.
+- **Looks saved before 1.32.0 keep working unchanged.** Their grid words are still read, and with no phone position, phones use the computer one, as before. Opening one in the editor shows the same crop. Saving it stores the same position as percentages, for example "center bottom" becomes "50% 100%".
+- **On the website:**
+  - The photo's `<img>` carries both positions as CSS variables (`--rapm-pos`, `--rapm-pos-phone`). `rapm-looks.css` switches to the phone one below 768px, the same breakpoint as the 4:3 phone shape.
+  - The photo's `data-pfx`/`data-pfy` give `rapm-looks.js` the phone position for placing dots.
+  - Pages cached before the update still have the old inline `object-position`, which still works until the cache is cleared.
+- **Docs:** Help, the Training Guide and the readme describe the drag boxes instead of the grid.
+- **How it was checked:**
+  - **PHP:** the in-browser PHP 8.4 check found 0 issues in all 27 files.
+  - **Position tests:** `sanitize_focus()` and `focus_fraction()` were run on sample values. The old grid words are kept, "33.333% 66.666%" becomes "33.3% 66.7%", 120% becomes 100%, and negative values or junk fall back to center.
+  - **Editor:** the real `render_page()` output for a 3-dot living-room look was rendered with the real editor CSS and JS. No PHP warnings and no script errors.
+    - **Computer box:** a real mouse drag moved it from "50% 100%" to "50% 38.4%". The note then named dot 2 as cut off, matching the photo, and the blue box moved up.
+    - **Keys and buttons:** Down added 1%, Shift+Down 10%, End went to 100%, Home to 0%. ▼ Down added 5% and Center went to 50%. Arrow keys don't scroll the page.
+    - **Phone box:** a real drag moved the phone position left/right only, without changing the computer one. The red box followed.
+    - **Saved phone position:** a look with "20% 50%" opened at 20% and saved back.
+    - **Preview:** Desktop used the computer position (2.63:1 stage) and Mobile the phone one (4:3).
+  - **Website:** `[rapm_looks]` was rendered with "50% 30%" for computers and "20% 50%" for phones.
+    - **At 1280px:** the photo used 50% 30%. The dots landed exactly where the cover-fit math puts them, and dot 2 was hidden as cut off.
+    - **At 375px:** the photo used 20% 50%, and both dots landed exactly where the math puts them.
+    - **Older looks:** looks with an old grid word and no phone position output the same word for both.
+  - **Found and fixed while testing:** if the browser refused to hold the pointer for a drag (`setPointerCapture`), the drag stopped working. That call is now guarded, so dragging still works inside the box.
+- **Still to confirm on staging:**
+  - Dragging in a real look, saving, and reopening.
+  - The live page on a computer and a phone after clearing the cache.
+  - The editor at tablet and phone widths in the real admin.
+
 ## 1.31.4
 
 **Fix: the menu marks the screen you're on.**
