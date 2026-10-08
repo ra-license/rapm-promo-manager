@@ -53,11 +53,16 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - **At 375px:** the photo used 20% 50%, and both dots and the button landed exactly where the math puts them.
     - **Older looks:** looks with an old grid word and no phone position output the same word for both.
   - **Found and fixed while testing:** if the browser refused to hold the pointer for a drag (`setPointerCapture`), the drag stopped working. That call is now guarded, so dragging still works inside the box.
+- **Confirmed on staging (real WordPress, 2026-10-08),** after updating only RA Promo Manager from the Plugins page, 1.32.2 to 1.36.0 ("Updated!", still active):
+  - **Editor ("Hancock living room", saved with the old "center bottom"):** loads `rapm-look-editor.js?ver=1.36.0` with both boxes and no grid. Both boxes open at "50% 100%", the old crop, and "Every dot shows on computers and phones."
+  - **Real mouse drag:** moved the computer position to "50% 73.6%" and left the phone one alone. The faded spill-over showed and the blue box moved. It was put back to "50% 100%" and **not saved**, so the staging look is unchanged.
+  - **Home page, freshly rendered:** all Promo Manager files are `?ver=1.36.0`. The Shop the Look section has `is-full is-fit is-overlay` (1.32.0 hero mode). Each photo carries `--rapm-pos`/`--rapm-pos-phone` and `data-pfx`/`data-pfy`, and older looks give both screens the same old word.
+    - **At 1920px:** a 1905×724 stage, the photo at 50% 100%, all 3 dots placed.
+    - **At 375px:** a 375×281 (4:3) stage, the photo at the phone position, all 3 brand-colored dots placed.
 - **Still to confirm on staging:**
-  - Dragging in a real look, saving, and reopening.
-  - The live page on a computer and a phone after clearing the cache.
+  - Saving a dragged position and reopening it (waiting on Phil's OK to change a staging look).
   - The editor at tablet and phone widths in the real admin.
-  - A Slider with dots, to confirm 1.35.0 still works.
+  - A Slider with dots, to confirm 1.35.0 still works. Its files are byte-for-byte the 1.35.0 zip's.
 
 ## 1.35.0
 
