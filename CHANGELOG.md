@@ -59,8 +59,9 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Home page, freshly rendered:** all Promo Manager files are `?ver=1.36.0`. The Shop the Look section has `is-full is-fit is-overlay` (1.32.0 hero mode). Each photo carries `--rapm-pos`/`--rapm-pos-phone` and `data-pfx`/`data-pfy`, and older looks give both screens the same old word.
     - **At 1920px:** a 1905×724 stage, the photo at 50% 100%, all 3 dots placed.
     - **At 375px:** a 375×281 (4:3) stage, the photo at the phone position, all 3 brand-colored dots placed.
+- **Pushed to the production repo (2026-10-08)** with Phil's OK: main and the `v1.36.0` tag. Phil then updated, tried it, and reported: "It's updated and works great."
 - **Still to confirm on staging:**
-  - Saving a dragged position and reopening it (waiting on Phil's OK to change a staging look).
+  - Saving a dragged position and reopening it, unless Phil's check above covered a save.
   - The editor at tablet and phone widths in the real admin.
   - A Slider with dots, to confirm 1.35.0 still works. Its files are byte-for-byte the 1.35.0 zip's.
 
