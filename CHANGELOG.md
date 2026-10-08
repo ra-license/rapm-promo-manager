@@ -28,6 +28,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Coupon row at 1280px:** 2 dots, since six cards don't fit.
   - No PHP warnings and no script errors.
   - **Test quirk:** the preview pane ran in the background, where browsers hold back scroll events, so one check fired the scroll event by hand.
+- **Confirmed on staging (real WordPress with WoodMart, 2026-10-08):** updated from the staging repo, 1.37.0 to 1.37.1 ("Plugin updated successfully"). On the "Quick links test (1.37.0)" page at 390px, rapm-schedule.js is `?ver=1.37.1` and the compact buttons have 2 dots under them. Each dot is 24×24 with a transparent background, so WoodMart's button styles don't leak in.
+- **Pushed to the production repo (2026-10-08)** with Phil's OK ("Yes, please proceed"): main and the `v1.37.1` tag.
 
 ## 1.37.0
 
