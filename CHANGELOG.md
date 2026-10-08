@@ -4,6 +4,192 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.35.0
+
+**New: product dots and the "Shop now" button on Slider and Feature banner promotions.** Phil: "this movable button feature or product tagging should be available in the standard banner as well, not just the shop the look."
+
+- **In the form:** Slider (`hero`) and Feature banner (`fold_banner`) promotions get the **Place the Pieces** step (step 2), the same one Shop the Look has.
+  - Click the picture to add a numbered dot and pick its product, and drag dots or use the arrow keys to move them.
+  - Tick "Show a 'Shop now' button on the photo" and drag it into place.
+  - **Desktop and phone pictures:** a **Desktop picture / Phone picture** switch places them on each picture separately, since the same spot rarely suits both.
+    - A dot or the button starts on the phone picture at its desktop spot. Moving it there only changes its phone spot.
+    - A dot added on the phone picture starts at the same spot on the desktop one.
+    - With no phone picture yet, the phone view shows the desktop picture and says that phones will use the desktop spots.
+    - The phone picture is shown phone-sized (340px wide) so all of it fits on screen.
+  - "Which part to keep" and the screen-fit previews stay Shop the Look only, since a banner's pictures are made for their screens.
+  - The Review step's Live Preview shows the dots and the button on whichever picture its Desktop/Mobile toggle shows.
+- **Saved data:** the same `_rapm_dots` and `_rapm_photo_btn` as Shop the Look, plus `mx`/`my` (percent of the phone picture). `sanitize_dots()` and `sanitize_photo_btn()` keep them.
+- **On the website** (new `rapm-pins.js` and `rapm-pins.css`, loaded with every Slider and Feature banner):
+  - `RAPM_Hero_Carousel::render_pins()` prints each slide's dots and button. A product that's gone or unpublished loses its dot. The button only shows when the promotion has a Link, and it uses its Button Text or "Shop now".
+  - They're placed with the picture's real fit, read from its computed `object-fit` and `object-position`, so the phone fallback's "contain" works too.
+    - Phone spots are used on screens up to 768px when the slide has a phone picture.
+    - Placement runs again on resize and when Swiper adds slide copies.
+    - A cut-off dot is hidden, and the button is nudged inward.
+  - **Dot card:** tapping a dot opens a small card with the picture, name, live price (crossed-out regular price on sale) and stock, plus "View product".
+    - Prices come from one WooCommerce Store API request per carousel.
+    - Escape, the × or a click elsewhere closes it.
+    - Dots and the card don't trigger the slide's own link.
+  - They use the brand color (1.34.0) and sit above the slide's link (z-index 6) so they're clickable.
+  - `rapm-pins` is added to WP Rocket's Delay JavaScript exclusions.
+- **Shop the Look fix, from Gates:** with `text="overlay"`, a look that has its own photo button also had its words and button on the photo, so the ad showed two buttons. Now such a look keeps its words and button below the photo, next to its product cards, as without overlay. Looks without a photo button are unchanged.
+- **Add to cart** stays planned for 1.36.0.
+- **How it was checked:**
+  - **Website, on a real WordPress install** (local, with Elementor 4.3.4 and WooCommerce 11.2):
+    - **Setup:** a Slider promotion using Gates' Homecoming rotator pictures (1920×600 desktop, 1080×1920 phone). It had a dot on the Stanton Sofa (desktop 72%/72%, phone 55%/76%), a button (desktop 20%/85%, phone 50%/50%) and a hand-picked list Link. There was also a Feature banner with the outlet pictures, one dot and a button.
+    - **1440 wide:** both dots and buttons are at their desktop spots, fully inside, on top, and in the brand navy.
+    - **375 wide:** the Slider shows the phone picture with the dot at 55%/76% and the button at 50%/50%. The Feature banner's dot and button are on top when scrolled into view.
+    - **Tapping the dot** opened the card ("Stanton Sofa 376, $2,200.00 crossed out, $1,999.98, View product") without leaving the page. Escape closed it.
+    - **The Slider button** opened its hand-picked list results.
+    - **Heights:** the banners' heights are the same with and without the new files.
+  - **Shop the Look fix, same install:** the look with a photo button shows one button on the photo, with its words and button below. The look without one keeps its button on the photo.
+  - **The form, with real clicks:** the real banner Place the Pieces step was rendered by PHP with WordPress stand-ins and run in Chromium.
+    - Dragging the button on the desktop picture saved 20%/85%.
+    - On the phone picture, the dot and button started at their desktop spots. Dragging them saved `mx 55, my 76` and `mx 50, my 50`, and left the desktop spots unchanged.
+    - The Live Preview showed desktop spots on Desktop and phone spots on Mobile.
+    - The Shop the Look form's click test from 1.33.0 still passes unchanged.
+    - No script errors.
+  - **Not checked:** saving the banner form through WordPress in a browser (the local sign-in wouldn't keep cookies), and a banner with several slides and autoplay on a theme like WoodMart.
+
+## 1.34.0
+
+**New: pick the brand color from Elementor by name, and the dots use it.** Phil: "The button should pull from Elementor's brand/global colors... Same with the dots."
+
+- **What was happening on Gates:**
+  - Promo Manager did use Elementor's global colors, but only tried Primary, Accent, then Secondary, taking the first one white text reads well on.
+  - Gates' Primary is a light blue (#5583D2) and its Accent is Elementor's default green (#61CE70). Both fail that check, so it landed on Secondary: Elementor's default gray (#54595F).
+  - Gates' real brand navy (#192D6B) is a custom global color, which the automatic pick never looked at.
+  - The dots were always white with a dark number.
+- **Settings > Brand Color > Elementor color:**
+  - A list of every global color in the site's Elementor kit, built-in and custom, by name and value. The color appears in a swatch beside the list.
+  - The top choice is "Automatic", which names the color it's using right now.
+  - Saved as the color's Elementor id (`accent_global`) and printed as a live `var(--e-global-color-<id>, <value>)`, so it follows Elementor if the color is changed there.
+  - "Or an exact color" (the old color box) still overrides everything.
+  - The section's note now says what the color is used for: Shop the Look's buttons, dots and tour line, and the Promotions Calendar. It used to say "Promotions Calendar only".
+- **Dots:** dots and the card numbers are now in the brand color, with a white number and a white edge, so they match the buttons and still stand out on a dark or light room. Hovering or opening a dot brightens it.
+- **Fallback:** the automatic choice's `var()` now falls back to the color's own value instead of a plain blue, so it's right even on pages where Elementor doesn't load its colors.
+- **Add to cart** moves to 1.36.0. 1.35.0 is the button and dots on Slider and Feature banner promotions (Phil, next).
+- **How it was checked, on a real WordPress install** (local, with Elementor 4.3.4 and WooCommerce 11.2). The Elementor kit had Gates' colors: Primary #5583D2, Secondary #54595F, Text #7A7A7A, Accent #61CE70, plus custom "Gates Navy" #192D6B and "Green" #23A455.
+  - **Automatic:** resolves to Secondary, the same as Gates.
+  - **The Settings page** (`render_page()`) lists "Automatic (now 'Secondary', #54595F)", the four built-in colors, "Gates Navy (#192D6B)" and "Green (#23A455)". `sanitize()` keeps the picked id.
+  - **With Gates Navy picked, the page as a visitor in Chromium:** the photo button and the dots are rgb(25, 45, 107), which is #192D6B, with a white number and a white edge.
+  - **Not checked:** saving through the Settings form in a browser (the local site's sign-in wouldn't keep cookies), and the Promotions Calendar with a picked color (it uses the same `resolve_accent_color_css()`).
+
+## 1.33.1
+
+**Fix: "hand-picked list" links always work, without setting up a page by hand.** Seen on Gates: the new Harvest Sale look links to a hand-picked list (Stanton Sofa 376, Kalispell Harvest Coffee Table, Barolo Vintage Brown Swivel Club Chair). On the website, neither the 1.33.0 photo button nor the look's own button showed. Phil: "The link should match what I've set in this section."
+
+- **Root cause:** a hand-picked list opens on the site's one results page, set under Settings > Curated Results Page. Gates had never set one, and until it was set, `RAPM_Destination::curated_url()` returned an empty link. A look's buttons only print when it has a link, so both were left out. The form gave no sign of this, and its preview still showed the photo button.
+- **Fix:** `RAPM_Curated_Results::ensure_page()` makes sure the page exists and is set:
+  - It uses a published page that already has `[rapm_curated_results]`, or it makes one: "Shop the Selection" (`/shop-the-selection/`). The new page is marked noindex for Yoast and SEOPress, since its products change with every link.
+  - It saves the page's address as the Curated Results Page setting. Only that one setting is written. The Settings form's `sanitize()` is bypassed for this, because it reads checkboxes as form fields and would turn a saved "off" back on.
+  - **When it runs:** whenever a promotion is saved with a hand-picked list. Also on any admin screen (`admin_init`, `maybe_ensure_page()`) when such a promotion already exists and no page is set. So Gates gets the page the first time anyone opens the admin after updating, with nothing to save again.
+  - A site that already has the setting is left alone.
+- **How it was checked, on a real WordPress install** (WordPress 6.x on SQLite, WooCommerce 11.2, Promo Manager 1.33.1, run locally):
+  - **Setup, matching Gates:** three products, and a "Harvest Sale" look on a page with `[rapm_looks placement="home" width="full" height="screen" text="overlay"]`. The look had a hand-picked list of the three SKUs, Button Text "Shop Harvest Sale" and the photo button at 73.6%/69%. Saved settings had autoplay off and no Curated Results Page.
+  - **Before:** the link came out empty, and the page printed neither button. Same as Gates.
+  - **After `maybe_ensure_page()` ran as the admin user** (it's hooked on `admin_init`):
+    - "Shop the Selection" was published with `[rapm_curated_results]` and the noindex flags, and the setting was saved as its address.
+    - Autoplay stayed off.
+    - Running it again made no second page.
+  - **The page, as a visitor in Chromium:** both buttons print, linked to `/shop-the-selection/?rapm_skus=STN376,KAL114,BAR912…`. The photo button is fully on the photo and on top. A real click opened the results page showing the three products in the order picked.
+  - **Not checked:** the save-time call through the form (it calls the same `ensure_page()`), and a site where WordPress won't allow a new page.
+
+## 1.33.0
+
+**New: a "Shop now" button you place on a look's photo.** Phil asked for it: an ad-style photo for Gates' Shop the Look needs a button wherever the design has room, going to the same search results or list as the look's own button. "Yes it could be in two places but would allow the client options."
+
+- **In the form (Place the Pieces):**
+  - A new box, "Show a 'Shop now' button on the photo", turns it on.
+  - The button appears on the photo (default spot: centered, 78% down). Drag it where it should go, or select it and use the arrow keys (Shift for bigger steps), just like a dot.
+  - It shows the look's **Button Text**, or "Shop now" if that's empty, and updates as you type.
+  - It goes to the look's **Link** (step 4), so a hand-picked list, a search, a category or a product all work, and both buttons always go to the same place.
+  - The Review step's Live Preview shows it, on Desktop and Mobile.
+- **Saved data:** `_rapm_photo_btn` holds `{on, x, y}`, the button's center as a percent of the photo. `RAPM_Looks::sanitize_photo_btn()` clamps it, and when the button is off the meta is deleted.
+- **On the website:**
+  - `<a class="rapm-look-photo-btn">` is printed inside the look's photo, only when the look has a Link.
+  - `placeDots()` places it with the same cover-fit math as the dots, centered on its spot. If a screen's crop would cut it off, it's nudged inward instead of hidden, so it's always fully on the photo.
+  - It sits above the words and the dots, so it's always clickable, and swiping the photo ignores it.
+  - It uses the site's brand color. On phones it's smaller: 34px tall, 12px type.
+- **Words and button:** the look's own words and button (under the photo, or on it with `text="overlay"`) are unchanged, so a look can have both.
+- **Add to cart** moves to 1.34.0.
+- **How it was checked:**
+  - **Syntax:** `php -l` on `class-rapm-looks.php` and `class-rapm-upload-handler.php`, and `node --check` on both scripts.
+  - **The form, with real clicks:** the real Place the Pieces and Live Preview markup was rendered by PHP (`render_look_pieces()` and `render_look_preview()` with WordPress stand-ins) and run in Chromium with the real script and CSS.
+    - **Turning it on:** ticking the box adds the button at 50%/78%, labelled with the Button Text.
+    - **Moving it:** a real drag moved it to 73.6%/69% (saved field `{"on":true,"x":73.6,"y":69}`) without adding a dot, and focus stayed on the button. → and Shift+↑ moved it to 74.6%/64%.
+    - **Typing:** "Shop Now" in Button Text renamed it on the photo and in the preview.
+    - **Turning it off:** unticking saved `{}` and removed it from the photo and the preview.
+    - **Editing a saved look:** it opens with the box ticked and the button where it was saved.
+    - No script errors.
+  - **The website, nothing saved:** Gates' real `/home-2/` (1.32.2) in Chromium, with the 1.33.0 CSS and JS swapped in and the button added to the first look as the 1.33.0 PHP prints it.
+    - **Every size (1440, 1920, 768, 375):** the button is fully inside the photo and is the top element at its center.
+    - **Click:** a real click at 1440 opened the look's Link (`/furniture/living-room/`).
+  - **Not checked:** saving through a real WordPress install of 1.33.0.
+
+## 1.32.2
+
+**Fix: a feature banner's words fit on phones.** Seen on Gates' new outlet banner (`/home-2/`, 1.32.1). At 375px wide its 1080×400 phone picture is 139px tall. The headline, smaller line and button needed about 164px, so the headline was pushed against the top edge. Phil: the fix belongs in the plugin, not in each page's CSS.
+
+- **Root cause:** feature banners (`fold_banner`) used the same phone text sizes as the full-height slider: 24px padding, a 22px headline, a 15px line and a full-size button. A slider's phone picture is tall enough for that; a feature banner's isn't.
+- **Fix:**
+  - Each carousel now carries a class for its kind: `rapm-kind-hero` or `rapm-kind-fold-banner`.
+  - On screens up to 768px, feature banners get 14px/16px padding, a 20px headline, a 13px line and a smaller button. Together they take about 114px.
+  - A feature banner with no phone picture shows its 1920×300 desktop picture on phones, which is only about 59px tall. There, just the headline shows, at 16px, and the whole banner is still the link.
+  - Sliders and computers are unchanged.
+- **How it was checked:**
+  - **Syntax:** `php -l` on `class-rapm-hero-carousel.php`.
+  - **Real page, nothing saved:** Gates' real `/home-2/` (1.32.1) in Chromium, with the 1.32.2 CSS and the new class swapped in, and the page's own temporary outlet-banner CSS removed for the test.
+    - **With the phone picture, 375 and 414 wide:** the words take 114px of a 139px and 153px banner, with nothing cut off.
+    - **With the phone picture, 768 wide:** the same 114px, in a 284px banner.
+    - **With the phone picture, 1440 wide:** unchanged (28px headline).
+    - **Without the phone picture, 375 wide:** a 59px banner with the headline only, and the button hidden.
+  - **Not checked:** a real WordPress install of 1.32.2 (the class was added to the page in the browser), and a feature banner on another site.
+- **After updating Gates:** remove the "Outlet banner: fit the words on phones" block from `/home-2/`'s Custom CSS. 1.32.2 does the same thing for every feature banner.
+
+## 1.32.1
+
+**Fix: Shop the Look as a hero no longer crops the photo to a sliver, and its words are easier to read.** Seen on Gates' new home page (`/home-2/`, 1.32.0, all three options on). Phil: "the images are odd and hard to see."
+
+- **Problem 1, the crop:**
+  - **What happened:** the header is about 370px tall, including a 141px top row with nothing showing in it. At 1900×917 that left the photo 499px tall, a 3.8:1 strip cut from 1.6:1 photos, so only about 40% of each photo showed. Stormy Ridge keeps "bottom left", so it showed mostly rug.
+  - **Root cause:** `height="screen"` had a 340px floor, but nothing stopped the strip from getting much wider than the default layout's 2.6:1.
+  - **Fix:** the photo is never shorter than 38vw, the default layout's 2.6:1 strip. With a tall header, the tab bar now falls just below the screen instead of the photo becoming a sliver. With a shorter header it fits on screen as before (1440×900 with Gates' empty top row hidden: 623px photo, 2.3:1).
+- **Problem 2, readability:** the 1.32.0 shade was too light over busy, light rooms. It's darker and reaches further up and across: a bottom-up shade plus a soft one from the bottom-left corner, with no hard edge. The text shadow is a little stronger.
+- **Also seen, not plugin changes:**
+  - **Photo size:** Gates' look photos are 1420px wide, stretched to 1900px on a wide screen, which makes them soft. The readme already asks for 2000px or wider. Upload 2400px versions.
+  - **Dot on the headline:** dot 1 (the bench) on Stormy Ridge sits on the headline. Move it in Place the Pieces, or shorten the headline.
+- **How it was checked:**
+  - **Real page, nothing saved:** Gates' real `/home-2/` (1.32.0, real header and looks) was loaded in Chromium with the 1.32.1 CSS swapped in.
+    - **1900×917:** the photo is 722px tall (2.63:1). The whole Stormy Ridge table, bench and server show, and the words read clearly.
+    - **1440×900:** the same with the empty top row hidden (623px, 2.31:1). No sideways scroll at either size.
+  - **Not checked:** a real WordPress install of 1.32.1. Only the CSS changed, so the PHP and JS are the same as 1.32.0.
+
+## 1.32.0
+
+**New: Shop the Look can be a page's full-screen hero.** Phil asked for the look on one page to fill more of the screen, with the photo filling the hero, the information at the bottom visible without scrolling, and text over the photo. Three new `[rapm_looks]` options, all off by default, so existing looks don't change:
+
+- **`width="full"`:** the photo and tab bar run edge to edge, out of the theme's page width (WoodMart's 1400px container). The words and cards stay at the content width.
+  - `rapm-looks.js` sets `--rapm-looks-vw` to the page's width without the scrollbar. Plain `100vw` includes the scrollbar and would cause a sideways scroll.
+  - Assumes the section's column is centered on the page, as a page-wide Elementor container is.
+- **`height="screen"`:** the photo is sized so that the photo plus the tab bar end at the bottom of the screen, under whatever header the page has.
+  - `rapm-looks.js` measures where the section starts (header, admin bar, anything above it) as `--rapm-looks-top`, and the tab bar's height as `--rapm-looks-bar`. Both are measured again on resize and after the page finishes loading.
+  - Never shorter than 340px, and never taller than 5:8 of the width, so an upright tablet doesn't get a tall, narrow crop. Uses `svh` with a `vh` fallback.
+  - Phones keep the 4:3 photo.
+- **`text="overlay"`:** the look's eyebrow, headline, smaller line and button sit on the photo, bottom left, over a soft dark shade so white text reads on a light room.
+  - The piece cards stay below and take the full width. Below is hidden for a look with no pieces (class `is-bare`).
+  - Phones show the words under the photo as before, because on a 375px-wide 4:3 photo they covered the pieces and ran into the dots. The words are printed twice (`.rapm-look-intro.is-phone`), and the CSS shows one copy per screen size.
+  - Dots stay above the words (z-index), so a dot placed low and to the left can sit on the text. Place dots with that in mind on overlay looks.
+- **Use on a hero page:** `[rapm_looks placement="home" width="full" height="screen" text="overlay"]`.
+- **Add to cart** moves to 1.33.0.
+- **How it was checked:**
+  - **Syntax:** `php -l` (PHP 8.4) on `class-rapm-looks.php` and `node --check` on `rapm-looks.js`.
+  - **Real page, nothing saved:** the R&A test site's real home page (1.31.4, real theme and data) was loaded in Chromium. The 1.32.0 CSS and JS were swapped in on the way to the browser, and the shortcode's 1.32.0 markup was recreated in the page.
+    - **All three options, 1440×900 and 1920×1080:** the photo is the full page width. The tab bar ends exactly at the bottom of the screen (900 and 1080). The words are on the photo, all 3 dots show, and there's no sideways scroll.
+    - **768×1024:** full width, the photo stops at 480px (5:8), words on the photo, no sideways scroll.
+    - **375×812:** full width, 4:3 photo, the words and button under the tab bar, then the cards. No sideways scroll.
+    - **No new options:** the photo's position and size match 1.31.4 exactly at all four sizes.
+  - **Not checked:** a real WordPress install of 1.32.0 (the PHP output was recreated in the browser, not run), the Add/Edit form's preview (unchanged, and it uses none of the new classes), and Safari.
+
 ## 1.31.4
 
 **Fix: the menu marks the screen you're on.**
@@ -13,11 +199,6 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Checked:**
   - **PHP:** the PHP 8.4 check passes.
   - **Highlighting:** `submenu_file()` was run for each screen on the 1.31.3 menu. The Promotions screen marks "All promotions", Add New Asset, Sliders, Training Guide, Help and Settings each mark themselves, editing marks "All promotions", the old list marks its item, and another plugin's page gets nothing.
-- **Confirmed on staging (real WordPress, 2026-10-06),** after updating only RA Promo Manager from Dashboard > Updates, first 1.31.2 to 1.31.3, then 1.31.3 to 1.31.4 (each "updated successfully"):
-  - **Menu:** All promotions, Add New Asset, All Assets (list), Sliders, Training Guide, Help, Settings.
-  - **Marked item:** Help marks "Help", Settings marks "Settings", and the Promotions screen marks "All promotions".
-  - **The old list:** "All Assets (list)" opens the old list (15 rows, not forwarded to the Promotions screen) and marks itself.
-  - **Promotions screen (1.31.3):** "+ New spot" shows at the top. Every section shows its spot code and a "Spot name" box. The bottom panel reads "Setup". There's no "Show R&A setup details" link.
 
 ## 1.31.3
 

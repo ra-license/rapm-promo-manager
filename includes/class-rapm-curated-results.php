@@ -14,6 +14,92 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class RAPM_Curated_Results {
 
+	/**
+	 * 1.33.1: makes sure the site has a results page for hand-picked lists
+	 * and that Settings > Curated Results Page points at it, so a "hand-
+	 * picked list" link always works. Before this, the page had to be made
+	 * and set by hand, and until then every such link came out blank (seen
+	 * on Gates: the Harvest Sale look's buttons didn't show).
+	 *
+	 * Uses an existing published page that already has the shortcode, or
+	 * makes one ("Shop the Selection", noindex for SEO plugins that read
+	 * it, since its products change with every link). Returns the URL, or
+	 * '' when the page can't be made.
+	 */
+	public static function ensure_page() {
+		$url = RAPM_Admin_Settings::get( 'curated_results_page_url' );
+		if ( $url ) {
+			return $url;
+		}
+		$found = get_posts(
+			array(
+				'post_type'      => 'page',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				's'              => '[rapm_curated_results',
+			)
+		);
+		$page_id = $found ? (int) $found[0] : 0;
+		if ( ! $page_id ) {
+			$page_id = wp_insert_post(
+				array(
+					'post_type'    => 'page',
+					'post_status'  => 'publish',
+					'post_title'   => __( 'Shop the Selection', 'rapm' ),
+					'post_name'    => 'shop-the-selection',
+					'post_content' => '[rapm_curated_results]',
+				)
+			);
+			if ( ! $page_id || is_wp_error( $page_id ) ) {
+				return '';
+			}
+			update_post_meta( $page_id, '_yoast_wpseo_meta-robots-noindex', '1' );
+			update_post_meta( $page_id, '_seopress_robots_index', 'yes' );
+		}
+		$url  = (string) get_permalink( $page_id );
+		$opts = get_option( RAPM_Admin_Settings::OPTION, array() );
+		$opts = is_array( $opts ) ? $opts : array();
+		$opts['curated_results_page_url'] = esc_url_raw( $url );
+		// Saved as it is, past the Settings form's sanitize(), which reads
+		// checkboxes as form fields (present = on) and would turn a saved
+		// 0 back on. Only this one key changes.
+		$cb = array( 'RAPM_Admin_Settings', 'sanitize' );
+		$had = has_filter( 'sanitize_option_' . RAPM_Admin_Settings::OPTION, $cb );
+		if ( false !== $had ) {
+			remove_filter( 'sanitize_option_' . RAPM_Admin_Settings::OPTION, $cb, $had );
+		}
+		update_option( RAPM_Admin_Settings::OPTION, $opts );
+		if ( false !== $had ) {
+			add_filter( 'sanitize_option_' . RAPM_Admin_Settings::OPTION, $cb, $had );
+		}
+		return $url;
+	}
+
+	/**
+	 * 1.33.1, on admin screens: a site that already has hand-picked-list
+	 * links but no results page (Gates, after updating) gets one the first
+	 * time someone opens the admin, without anyone saving anything again.
+	 */
+	public static function maybe_ensure_page() {
+		if ( RAPM_Admin_Settings::get( 'curated_results_page_url' ) || ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		$curated = get_posts(
+			array(
+				'post_type'      => 'rapm_asset',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_key'       => '_rapm_destination_type', // phpcs:ignore WordPress.DB.SlowDBQuery
+				'meta_value'     => 'curated', // phpcs:ignore WordPress.DB.SlowDBQuery
+			)
+		);
+		if ( $curated ) {
+			self::ensure_page();
+		}
+	}
+
 	public static function shortcode( $atts ) {
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return '';

@@ -177,3 +177,23 @@
 @media (max-width: 768px) {
 	.rapm-slide-copy h1.rapm-headline { font-size: 22px; }
 }
+
+/* 1.32.2: a feature banner (fold_banner) is short on phones. Its 1080x400
+   phone picture is 139px tall on a 375px screen, and the default phone
+   copy (24px padding, 22px headline, 15px line, button) needed about
+   164px, so the headline was pushed against the top edge (seen on Gates'
+   outlet banner). Tighter spacing and type bring it to about 120px. A
+   banner with no phone picture shows its 1920x300 desktop one, only about
+   59px tall on a phone: there, just the headline shows (the whole banner
+   is still the link). .rapm-slide-copy is in each selector so these
+   outrank the h1 rule above. */
+@media (max-width: 768px) {
+	.rapm-kind-fold-banner .rapm-slide-copy { padding: 14px 16px; }
+	.rapm-kind-fold-banner .rapm-slide-copy .rapm-headline { font-size: 20px; line-height: 1.25; margin: 0 0 2px; }
+	.rapm-kind-fold-banner .rapm-slide-copy .rapm-subhead { font-size: 13px; line-height: 1.35; margin: 0 0 8px; }
+	.rapm-kind-fold-banner .rapm-slide-copy .rapm-cta-btn { padding: 7px 16px; font-size: 12px; }
+	.rapm-kind-fold-banner .rapm-slide:not(.has-mobile-img) .rapm-slide-copy { padding: 8px 12px; }
+	.rapm-kind-fold-banner .rapm-slide:not(.has-mobile-img) .rapm-slide-copy .rapm-headline { font-size: 16px; margin: 0; }
+	.rapm-kind-fold-banner .rapm-slide:not(.has-mobile-img) .rapm-subhead,
+	.rapm-kind-fold-banner .rapm-slide:not(.has-mobile-img) .rapm-cta-btn { display: none; }
+}

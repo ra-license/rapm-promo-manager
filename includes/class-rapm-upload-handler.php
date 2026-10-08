@@ -39,6 +39,8 @@ class RAPM_Upload_Handler {
 			return;
 		}
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
+		// 1.35.0: dots and the button in a banner's Live Preview.
+		wp_enqueue_style( 'rapm-pins-css', RAPM_URL . 'assets/css/rapm-pins.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		// Shop the Look's preview (1.30.0) uses the live site's own styles too.
 		wp_enqueue_style( 'rapm-looks-css', RAPM_URL . 'assets/css/rapm-looks.css', array(), RAPM_VERSION );
 		// Shop the Look's form (1.31.0): Place the Pieces, the photo checks and
@@ -138,14 +140,20 @@ class RAPM_Upload_Handler {
 		// Shop the Look (1.30.0): one room photo of any shape, a tab name,
 		// and "Which part to keep"; words show under the photo, not on it.
 		$is_look      = 'look' === $kind_key;
+		// 1.35.0: Slider and Feature banner promotions get Place the Pieces
+		// too: product dots and the photo button, placed on the desktop and
+		// the phone picture separately.
+		$has_pins     = in_array( $kind_key, array( 'hero', 'fold_banner' ), true );
 		$tab_label    = $m( '_rapm_tab_label' );
 		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
 		// 1.31.0: the numbered dots (product + position on the photo).
-		$dots         = $is_look ? RAPM_Looks::sanitize_dots( $m( '_rapm_dots', array() ) ) : array();
+		$dots         = ( $is_look || $has_pins ) ? RAPM_Looks::sanitize_dots( $m( '_rapm_dots', array() ) ) : array();
+		// 1.33.0: the optional button on the photo.
+		$photo_btn    = ( $is_look || $has_pins ) ? RAPM_Looks::sanitize_photo_btn( $m( '_rapm_photo_btn', array() ) ) : array();
 		// Step numbers. Shop the Look adds "Place the Pieces" as step 2
 		// (1.31.0, from the editor mockup Phil approved on 2026-10-06); every
 		// other type keeps its four steps.
-		$step         = $is_look
+		$step         = ( $is_look || $has_pins )
 			? array( 'basics' => 1, 'pieces' => 2, 'message' => 3, 'link' => 4, 'review' => 5 )
 			: array( 'basics' => 1, 'message' => 2, 'link' => 3, 'review' => 4 );
 		$desktop_slot = $has_images ? $slots[ $kind['desktop'] ] : null;
@@ -546,10 +554,10 @@ class RAPM_Upload_Handler {
 				</p>
 				</div><!-- .rapm-step[data-step="1"] -->
 
-				<?php if ( $is_look ) : ?>
+				<?php if ( $is_look || $has_pins ) : ?>
 				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['pieces']; ?>" data-step="<?php echo (int) $step['pieces']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
 				<h2 class="rapm-step-heading"><?php echo (int) $step['pieces']; ?>. <?php esc_html_e( 'Place the Pieces', 'rapm' ); ?></h2>
-				<?php self::render_look_pieces( $img_desktop, $dots, $focus ); ?>
+				<?php self::render_look_pieces( $img_desktop, $dots, $focus, $photo_btn, $has_pins ? $img_mobile : 0, $has_pins ); ?>
 				<p class="rapm-wizard-next-warning" id="rapm-step-<?php echo (int) $step['pieces']; ?>-warning"></p>
 				<p class="rapm-wizard-nav">
 					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['basics']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
@@ -1457,6 +1465,7 @@ class RAPM_Upload_Handler {
 		$kind       = RAPM_Slots::kind( $kind_key );
 		$has_images = (bool) $kind['desktop'];
 		$is_look    = 'look' === $kind_key;
+		$has_pins   = in_array( $kind_key, array( 'hero', 'fold_banner' ), true );
 
 		// Shop the Look (1.30.0): the tab name is what shoppers click, so a
 		// look can't be saved without one.
@@ -1671,10 +1680,25 @@ class RAPM_Upload_Handler {
 				$dest_value = '';
 		}
 		update_post_meta( $asset_id, '_rapm_destination_value', $dest_value );
-		if ( $is_look ) {
+		// 1.33.1: a hand-picked list needs the results page; make sure it exists.
+		if ( 'curated' === $dest_type ) {
+			RAPM_Curated_Results::ensure_page();
+		}
+		if ( $is_look || $has_pins ) {
 			// 1.31.0: the numbered dots, as array( p => product ID, x, y => 0-100 % of the photo ).
+			// 1.35.0: on a Slider or Feature banner also mx, my for the phone picture.
 			$posted_dots = isset( $_POST['rapm_dots'] ) ? json_decode( wp_unslash( $_POST['rapm_dots'] ), true ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by sanitize_dots().
 			update_post_meta( $asset_id, '_rapm_dots', RAPM_Looks::sanitize_dots( is_array( $posted_dots ) ? $posted_dots : array(), true ) );
+			// 1.33.0: the photo button, as array( on, x, y ), or nothing when it's off.
+			$posted_btn = isset( $_POST['rapm_photo_btn'] ) ? json_decode( wp_unslash( $_POST['rapm_photo_btn'] ), true ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by sanitize_photo_btn().
+			$photo_btn  = RAPM_Looks::sanitize_photo_btn( $posted_btn );
+			if ( $photo_btn ) {
+				update_post_meta( $asset_id, '_rapm_photo_btn', $photo_btn );
+			} else {
+				delete_post_meta( $asset_id, '_rapm_photo_btn' );
+			}
+		}
+		if ( $is_look ) {
 			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
 			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
 		}
@@ -1856,7 +1880,7 @@ class RAPM_Upload_Handler {
 	 * cut off. assets/js/rapm-look-editor.js runs all of it, and the look's
 	 * photo checks and preview, from the settings printed here.
 	 */
-	private static function render_look_pieces( $image_id, $dots, $focus ) {
+	private static function render_look_pieces( $image_id, $dots, $focus, $photo_btn = array(), $mobile_id = 0, $banner = false ) {
 		$focus_labels = array(
 			'left top'      => __( 'Top left', 'rapm' ),
 			'center top'    => __( 'Top center', 'rapm' ),
@@ -1869,7 +1893,17 @@ class RAPM_Upload_Handler {
 			'right bottom'  => __( 'Bottom right', 'rapm' ),
 		);
 		?>
+		<?php if ( $banner ) : ?>
+			<h2><?php esc_html_e( 'Add product dots and a "Shop now" button (optional)', 'rapm' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Shoppers tap a dot to see the product, its live price and stock. Place them on the desktop picture and on the phone picture: the phone spots start where you put them on the desktop one, so check both.', 'rapm' ); ?></p>
+			<p class="rapm-pieces-views" role="group" aria-label="<?php esc_attr_e( 'Which picture to place them on', 'rapm' ); ?>">
+				<button type="button" class="button rapm-pieces-view is-selected" data-view="desktop" aria-pressed="true"><?php esc_html_e( 'Desktop picture', 'rapm' ); ?></button>
+				<button type="button" class="button rapm-pieces-view" data-view="mobile" aria-pressed="false"><?php esc_html_e( 'Phone picture', 'rapm' ); ?></button>
+				<span class="rapm-pieces-view-note" id="rapm-pieces-view-note"></span>
+			</p>
+		<?php else : ?>
 		<h2><?php esc_html_e( 'Put a numbered dot on each piece you sell', 'rapm' ); ?></h2>
+		<?php endif; ?>
 		<ol class="rapm-pieces-howto">
 			<li><?php esc_html_e( 'Click the photo on a piece to add a dot.', 'rapm' ); ?></li>
 			<li><?php esc_html_e( 'Drag a dot to move it.', 'rapm' ); ?></li>
@@ -1881,14 +1915,19 @@ class RAPM_Upload_Handler {
 		<div class="rapm-pieces" id="rapm-pieces">
 			<div class="rapm-pieces-photo">
 				<div class="rapm-pieces-stage" id="rapm-pieces-stage" hidden><img alt="" draggable="false" /></div>
-				<div class="rapm-pieces-empty" id="rapm-pieces-empty"><?php esc_html_e( 'Add a room photo in step 1, then come back here to place the dots.', 'rapm' ); ?></div>
+				<div class="rapm-pieces-empty" id="rapm-pieces-empty"><?php echo $banner ? esc_html__( 'Add the picture in step 1, then come back here to place the dots.', 'rapm' ) : esc_html__( 'Add a room photo in step 1, then come back here to place the dots.', 'rapm' ); ?></div>
 				<p class="description"><?php esc_html_e( 'Each dot\'s number matches its row in "Dots and products." Shoppers see the same numbers on the product cards.', 'rapm' ); ?> <button type="button" class="button-link" id="rapm-pieces-add"><?php esc_html_e( 'Add a dot in the middle', 'rapm' ); ?></button> <?php esc_html_e( 'and move it with the arrow keys.', 'rapm' ); ?></p>
 			</div>
 			<div class="rapm-pieces-side">
+				<div class="rapm-pieces-btn-box">
+					<label><input type="checkbox" id="rapm-photo-btn-on" <?php checked( ! empty( $photo_btn ) ); ?> /> <?php esc_html_e( 'Show a "Shop now" button on the photo', 'rapm' ); ?></label>
+					<p class="description"><?php esc_html_e( 'Drag the button on the photo to where the design has room for it. It uses this look\'s Button Text (or "Shop now") and goes to the same place as its Link, step 4. Shoppers can use either button.', 'rapm' ); ?></p>
+				</div>
 				<div class="rapm-pieces-head"><h3><?php esc_html_e( 'Dots and products', 'rapm' ); ?></h3><span class="rapm-pieces-count" id="rapm-pieces-count"></span></div>
 				<ol class="rapm-pieces-list" id="rapm-pieces-list"></ol>
 			</div>
 		</div>
+		<?php if ( ! $banner ) : ?>
 		<div class="rapm-pieces-fit">
 			<div>
 				<h3><?php esc_html_e( 'Which part to keep', 'rapm' ); ?></h3>
@@ -1908,16 +1947,28 @@ class RAPM_Upload_Handler {
 			</div>
 			<p class="rapm-pieces-fit-msg" id="rapm-pieces-fit-msg" aria-live="polite"></p>
 		</div>
+		<?php endif; ?>
 		<input type="hidden" id="rapm_focus" name="rapm_focus" value="<?php echo esc_attr( $focus ); ?>" />
 		<input type="hidden" id="rapm_dots" name="rapm_dots" value="<?php echo esc_attr( wp_json_encode( $dots ) ); ?>" />
+		<input type="hidden" id="rapm_photo_btn" name="rapm_photo_btn" value="<?php echo esc_attr( wp_json_encode( $photo_btn ) ); ?>" />
 		<script>
-			window.RAPM_LookEditorConfig = <?php echo wp_json_encode( self::look_editor_config( $image_id, $dots, $focus ) ); ?>;
+			window.RAPM_LookEditorConfig = <?php echo wp_json_encode( self::look_editor_config( $image_id, $dots, $focus, $photo_btn, $mobile_id, $banner ) ); ?>;
 		</script>
 		<?php
 	}
 
+	/** A saved picture's address and size for the editor (1.35.0), or empty values. */
+	private static function photo_info( $image_id ) {
+		$meta = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
+		return array(
+			'src'    => $image_id ? (string) wp_get_attachment_image_url( $image_id, 'full' ) : '',
+			'width'  => is_array( $meta ) && ! empty( $meta['width'] ) ? (int) $meta['width'] : 0,
+			'height' => is_array( $meta ) && ! empty( $meta['height'] ) ? (int) $meta['height'] : 0,
+		);
+	}
+
 	/** Everything rapm-look-editor.js needs, including the words it shows (translatable here). */
-	private static function look_editor_config( $image_id, $dots, $focus ) {
+	private static function look_editor_config( $image_id, $dots, $focus, $photo_btn = array(), $mobile_id = 0, $banner = false ) {
 		$meta     = $image_id ? wp_get_attachment_metadata( $image_id ) : array();
 		$slot     = RAPM_Slots::get( 'look_photo' );
 		$products = array();
@@ -1940,6 +1991,11 @@ class RAPM_Upload_Handler {
 			'store'     => class_exists( 'WooCommerce' ) ? esc_url_raw( rest_url( 'wc/store/v1/products' ) ) : '',
 			'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
 			'linkNonce' => wp_create_nonce( 'rapm_preview_link' ),
+			'photoBtn'  => $photo_btn,
+			// 1.35.0: a Slider or Feature banner places dots on both pictures.
+			'mode'      => $banner ? 'banner' : 'look',
+			'accent'    => RAPM_Elementor::resolve_accent_color_css( '#2271b1' ),
+			'mobile'    => $banner ? self::photo_info( $mobile_id ) : null,
 			'text'      => array(
 				'sizeBad'       => __( 'This photo is %1$d pixels wide. It needs to be at least %2$d, so it would be turned down when you save.', 'rapm' ),
 				'sizeBlurry'    => __( 'This photo is %d pixels wide. It works, but it will look blurry across a big screen. 2000 or more looks best.', 'rapm' ),
@@ -1974,7 +2030,10 @@ class RAPM_Upload_Handler {
 				'fitOk'         => __( 'Every dot shows on computers and phones.', 'rapm' ),
 				'fitWarn'       => __( 'Some dots are cut off (see the list). Pick a different part to keep, or move those dots.', 'rapm' ),
 				'needProduct'   => __( 'Pick a product for every dot, or remove the dots without one. Missing: dot %s.', 'rapm' ),
-				'tooMany'       => __( 'A look can have up to %d dots.', 'rapm' ),
+				'tooMany'       => __( 'Up to %d dots can be added.', 'rapm' ),
+				'noMobile'      => __( 'No phone picture yet, so phones show the desktop picture with the desktop spots.', 'rapm' ),
+				'btnDefault'    => __( 'Shop now', 'rapm' ),
+				'btnLabel'      => __( 'The button on the photo. Drag it, or use the arrow keys to move it.', 'rapm' ),
 				'added'         => __( 'Dot %d added. Now pick its product.', 'rapm' ),
 				'removed'       => __( 'Dot removed. The others were renumbered.', 'rapm' ),
 				'picked'        => __( 'Dot %1$d is now %2$s.', 'rapm' ),

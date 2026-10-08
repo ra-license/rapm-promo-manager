@@ -20,7 +20,23 @@ if ( ! defined( 'ABSPATH' ) ) {
  * printed here; price and stock are read from WooCommerce's Store API in
  * the visitor's browser (rapm-looks.js), so they're never stale behind a
  * full-page cache and a price change never needs the look saved again.
- * Add to cart comes in 1.32.0.
+ * Add to cart comes in 1.36.0.
+ *
+ * 1.32.0 adds three shortcode choices, for a look used as a page's hero:
+ * width="full" runs the photo and tab bar edge to edge even inside the
+ * theme's page width (the words and cards stay at the content width),
+ * height="screen" sizes the photo so the photo and the tab bar fill the
+ * screen below the header (rapm-looks.js measures where the section
+ * starts), and text="overlay" puts the look's words and button on the
+ * photo instead of under it, leaving only the piece cards below. Phones
+ * keep the words under their small 4:3 photo, where they'd cover the
+ * pieces, so overlay prints them twice and the CSS shows one copy.
+ *
+ * 1.33.0 adds an optional button on the photo (_rapm_photo_btn: on, x, y
+ * as % of the photo), placed by hand in Place the Pieces like a dot. It
+ * uses the look's Button Text (or "Shop now") and goes to the look's Link,
+ * so it can sit on an ad-style photo wherever the design has room, as well
+ * as, or instead of, the button with the words.
  *
  * Like every display here, all looks are printed with their dates and
  * rapm-schedule.js's watch() decides in the visitor's browser which are
@@ -39,6 +55,33 @@ class RAPM_Looks {
 
 	/** Most dots one look can have (1.31.0): enough for a whole room, few enough to stay readable. */
 	const MAX_DOTS = 12;
+
+	/**
+	 * The photo button (1.33.0) as array( 'on' => true, 'x', 'y' => 0-100,
+	 * one decimal ), or an empty array when it's off.
+	 */
+	public static function sanitize_photo_btn( $btn ) {
+		if ( ! is_array( $btn ) || empty( $btn['on'] ) ) {
+			return array();
+		}
+		$clean = array(
+			'on' => true,
+			'x'  => round( min( 100, max( 0, (float) ( isset( $btn['x'] ) ? $btn['x'] : 50 ) ) ), 1 ),
+			'y'  => round( min( 100, max( 0, (float) ( isset( $btn['y'] ) ? $btn['y'] : 75 ) ) ), 1 ),
+		);
+		// 1.35.0: its own spot on a banner's phone picture.
+		if ( isset( $btn['mx'], $btn['my'] ) ) {
+			$clean['mx'] = round( min( 100, max( 0, (float) $btn['mx'] ) ), 1 );
+			$clean['my'] = round( min( 100, max( 0, (float) $btn['my'] ) ), 1 );
+		}
+		return $clean;
+	}
+
+	/** The photo button's words: the look's Button Text, or "Shop now". */
+	public static function photo_btn_text( $cta ) {
+		$cta = trim( (string) $cta );
+		return '' !== $cta ? $cta : __( 'Shop now', 'rapm' );
+	}
 
 	public static function sanitize_focus( $value ) {
 		return in_array( $value, self::FOCUS_POINTS, true ) ? $value : 'center center';
@@ -62,11 +105,18 @@ class RAPM_Looks {
 			if ( ! $pid || ( $check_products && 'product' !== get_post_type( $pid ) ) ) {
 				continue;
 			}
-			$clean[] = array(
+			$one = array(
 				'p' => $pid,
 				'x' => round( min( 100, max( 0, (float) ( isset( $dot['x'] ) ? $dot['x'] : 50 ) ) ), 1 ),
 				'y' => round( min( 100, max( 0, (float) ( isset( $dot['y'] ) ? $dot['y'] : 50 ) ) ), 1 ),
 			);
+			// 1.35.0: Slider and Feature banner promotions have a separate
+			// phone picture, so a dot can have its own spot there (mx, my).
+			if ( isset( $dot['mx'], $dot['my'] ) ) {
+				$one['mx'] = round( min( 100, max( 0, (float) $dot['mx'] ) ), 1 );
+				$one['my'] = round( min( 100, max( 0, (float) $dot['my'] ) ), 1 );
+			}
+			$clean[] = $one;
 			if ( count( $clean ) >= self::MAX_DOTS ) {
 				break;
 			}
@@ -105,6 +155,9 @@ class RAPM_Looks {
 				'placement' => 'default',
 				'autoplay'  => 'yes',
 				'speed'     => self::DEFAULT_SPEED,
+				'width'     => 'auto',
+				'height'    => 'auto',
+				'text'      => 'below',
 			),
 			$atts,
 			'rapm_looks'
@@ -144,6 +197,9 @@ class RAPM_Looks {
 			return '';
 		}
 
+		$fit         = 'screen' === $atts['height'];
+		$overlay     = 'overlay' === $atts['text'];
+		$classes     = 'rapm-looks' . ( 'full' === $atts['width'] ? ' is-full' : '' ) . ( $fit ? ' is-fit' : '' ) . ( $overlay ? ' is-overlay' : '' );
 		$instance_id = 'rapm-looks-' . $placement . '-' . wp_unique_id();
 		$speed       = max( 3000, (int) $atts['speed'] );
 		$accent      = RAPM_Elementor::resolve_accent_color_css( '#2271b1' );
@@ -155,7 +211,7 @@ class RAPM_Looks {
 		// widget). Prints them inline only if the footer already went out.
 		echo RAPM_Assets::need( 'looks' ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-generated link and script tags.
 		?>
-		<section class="rapm-looks <?php echo esc_attr( $instance_id ); ?>" id="<?php echo esc_attr( $instance_id ); ?>" style="display:none;--rapm-looks-accent:<?php echo esc_attr( $accent ); ?>;--rapm-looks-speed:<?php echo (int) $speed; ?>ms;" data-rapm-looks<?php echo $store ? ' data-rapm-store="' . esc_url( $store ) . '"' : ''; ?> aria-roledescription="carousel" aria-label="<?php esc_attr_e( 'Shop the look', 'rapm' ); ?>">
+		<section class="<?php echo esc_attr( $classes . ' ' . $instance_id ); ?>" id="<?php echo esc_attr( $instance_id ); ?>" style="display:none;--rapm-looks-accent:<?php echo esc_attr( $accent ); ?>;--rapm-looks-speed:<?php echo (int) $speed; ?>ms;" data-rapm-looks<?php echo $store ? ' data-rapm-store="' . esc_url( $store ) . '"' : ''; ?> aria-roledescription="carousel" aria-label="<?php esc_attr_e( 'Shop the look', 'rapm' ); ?>">
 			<div class="rapm-looks-stage">
 				<?php foreach ( $looks as $i => $look ) : ?>
 					<div class="rapm-look-photo" id="<?php echo esc_attr( $instance_id . '-photo-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" data-rapm-start="<?php echo esc_attr( $look['start'] ); ?>" data-rapm-end="<?php echo esc_attr( $look['end'] ); ?>" data-tab="<?php echo esc_attr( $look['tab'] ); ?>" data-w="<?php echo (int) $look['width']; ?>" data-h="<?php echo (int) $look['height']; ?>" data-fx="<?php echo esc_attr( $look['fx'] ); ?>" data-fy="<?php echo esc_attr( $look['fy'] ); ?>" role="tabpanel" aria-roledescription="<?php esc_attr_e( 'slide', 'rapm' ); ?>" aria-label="<?php echo esc_attr( $look['tab'] ); ?>">
@@ -174,6 +230,20 @@ class RAPM_Looks {
 							)
 						);
 						?>
+						<?php
+						// 1.35.0: a look with its own button on the photo keeps its
+						// words and button below, next to its products, even with
+						// text="overlay", so the photo doesn't get two buttons.
+						$look_overlay = $overlay && ! $look['photo_btn'];
+						?>
+						<?php if ( $look_overlay ) : ?>
+							<div class="rapm-look-overlay">
+								<?php self::intro( $look ); ?>
+							</div>
+						<?php endif; ?>
+						<?php if ( $look['photo_btn'] && $look['url'] ) : ?>
+							<a class="rapm-look-photo-btn" href="<?php echo esc_url( $look['url'] ); ?>" data-x="<?php echo esc_attr( $look['photo_btn']['x'] ); ?>" data-y="<?php echo esc_attr( $look['photo_btn']['y'] ); ?>"><?php echo esc_html( self::photo_btn_text( $look['cta'] ) ); ?></a>
+						<?php endif; ?>
 						<?php foreach ( $look['pieces'] as $k => $piece ) : ?>
 							<button type="button" class="rapm-look-dot" data-k="<?php echo (int) $k; ?>" data-pid="<?php echo (int) $piece['p']; ?>" data-x="<?php echo esc_attr( $piece['x'] ); ?>" data-y="<?php echo esc_attr( $piece['y'] ); ?>" aria-expanded="false" aria-label="<?php echo esc_attr( sprintf( /* translators: 1: the dot's number, 2: product name */ __( '%1$d. %2$s', 'rapm' ), $k + 1, $piece['name'] ) ); ?>"><?php echo (int) ( $k + 1 ); ?></button>
 						<?php endforeach; ?>
@@ -194,19 +264,9 @@ class RAPM_Looks {
 			</div>
 			<div class="rapm-looks-shelf" aria-live="off">
 				<?php foreach ( $looks as $look ) : ?>
-					<div class="rapm-look-text<?php echo $look['pieces'] ? ' has-cards' : ''; ?>" id="<?php echo esc_attr( $instance_id . '-text-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" hidden>
-						<div class="rapm-look-intro">
-							<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <?php echo esc_html( $look['tab'] ); ?></span></p>
-							<?php if ( $look['headline'] ) : ?>
-								<h2 class="rapm-look-title"><?php echo esc_html( $look['headline'] ); ?></h2>
-							<?php endif; ?>
-							<?php if ( $look['subhead'] ) : ?>
-								<p class="rapm-look-blurb"><?php echo esc_html( $look['subhead'] ); ?></p>
-							<?php endif; ?>
-							<?php if ( $look['cta'] && $look['url'] ) : ?>
-								<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
-							<?php endif; ?>
-						</div>
+					<?php $look_overlay = $overlay && ! $look['photo_btn']; ?>
+					<div class="rapm-look-text<?php echo $look['pieces'] && ! $look_overlay ? ' has-cards' : ''; ?>" id="<?php echo esc_attr( $instance_id . '-text-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" hidden>
+						<?php self::intro( $look, $look_overlay ? 'is-phone' : '' ); // With overlay, the phones' copy. ?>
 						<?php if ( $look['pieces'] ) : ?>
 							<ol class="rapm-look-cards">
 								<?php foreach ( $look['pieces'] as $k => $piece ) : ?>
@@ -257,6 +317,24 @@ class RAPM_Looks {
 		return ob_get_clean();
 	}
 
+	/** The look's eyebrow, headline, smaller line and button: under the photo, or on it with text="overlay" (1.32.0). */
+	private static function intro( $look, $extra_class = '' ) {
+		?>
+		<div class="rapm-look-intro<?php echo $extra_class ? ' ' . esc_attr( $extra_class ) : ''; ?>">
+			<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <?php echo esc_html( $look['tab'] ); ?></span></p>
+			<?php if ( $look['headline'] ) : ?>
+				<h2 class="rapm-look-title"><?php echo esc_html( $look['headline'] ); ?></h2>
+			<?php endif; ?>
+			<?php if ( $look['subhead'] ) : ?>
+				<p class="rapm-look-blurb"><?php echo esc_html( $look['subhead'] ); ?></p>
+			<?php endif; ?>
+			<?php if ( $look['cta'] && $look['url'] ) : ?>
+				<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
 	/** One look's fields, or null if it has no photo (nothing to show). */
 	private static function look_data( $post ) {
 		$id       = $post->ID;
@@ -289,6 +367,7 @@ class RAPM_Looks {
 			'headline' => (string) get_post_meta( $id, '_rapm_headline', true ),
 			'subhead'  => (string) get_post_meta( $id, '_rapm_subhead', true ),
 			'cta'      => (string) get_post_meta( $id, '_rapm_cta_text', true ),
+			'photo_btn' => self::sanitize_photo_btn( get_post_meta( $id, '_rapm_photo_btn', true ) ),
 			'url'      => RAPM_Destination::resolve_url(
 				get_post_meta( $id, '_rapm_destination_type', true ),
 				get_post_meta( $id, '_rapm_destination_value', true )

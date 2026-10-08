@@ -13,6 +13,11 @@
  * priced through WooCommerce's Store API, the same source the website uses.
  * The dots are saved as JSON in the hidden #rapm_dots field:
  * [{ p: product ID, x: 0-100, y: 0-100 }], positions as % of the photo.
+ *
+ * 1.33.0: the optional button on the photo ("Show a Shop now button on the
+ * photo"), dragged or moved with the arrow keys like a dot, saved in the
+ * hidden #rapm_photo_btn field as { on: true, x, y } (its center, % of the
+ * photo), or {} when it's off. Its words are the look's Button Text.
  */
 ( function () {
 	'use strict';
@@ -56,12 +61,30 @@
 
 	/* ---- State ------------------------------------------------------------ */
 
+	// 1.35.0: Slider and Feature banner promotions (C.mode 'banner') use the
+	// same Place the Pieces on two pictures, desktop and phone. A dot or the
+	// button keeps x, y for the desktop picture and mx, my for the phone
+	// one; until it's moved on the phone picture it sits at its desktop spot.
+	var BANNER = 'banner' === C.mode;
+	var photos = {
+		desktop: { src: C.src || '', w: C.width || 0, h: C.height || 0 },
+		mobile: C.mobile ? { src: C.mobile.src || '', w: C.mobile.width || 0, h: C.mobile.height || 0 } : { src: '', w: 0, h: 0 }
+	};
+	var view = 'desktop';
+	function onPhone() { return BANNER && 'mobile' === view && !! photos.mobile.src; }
+	function gx( o ) { return onPhone() && null != o.mx ? o.mx : o.x; }
+	function gy( o ) { return onPhone() && null != o.my ? o.my : o.y; }
+	function sxy( o, x, y ) {
+		if ( onPhone() ) { o.mx = x; o.my = y; } else { o.x = x; o.y = y; }
+	}
+
 	var state = {
 		src: C.src || '',
 		w: C.width || 0,
 		h: C.height || 0,
 		focus: C.focus || 'center center',
-		dots: ( C.dots || [] ).map( function ( d ) { return { p: d.p, x: d.x, y: d.y }; } ),
+		dots: ( C.dots || [] ).map( function ( d ) { var o = { p: d.p, x: d.x, y: d.y }; if ( null != d.mx ) { o.mx = d.mx; o.my = d.my; } return o; } ),
+		btn: C.photoBtn && C.photoBtn.on ? { on: true, x: C.photoBtn.x, y: C.photoBtn.y, mx: C.photoBtn.mx, my: C.photoBtn.my } : { on: false, x: 50, y: 78 },
 		selected: -1
 	};
 	var products = {};
@@ -85,6 +108,7 @@
 
 	function cutOff() {
 		var out = {};
+		if ( BANNER ) { return out; } // A banner's pictures are shown whole, made for their screens.
 		if ( ! state.src || ! state.w || ! state.h ) { return out; }
 		var bw = cropBox( WIDE ), bp = cropBox( PHONE );
 		state.dots.forEach( function ( d, k ) {
@@ -99,10 +123,25 @@
 	function sync() {
 		var field = $( 'rapm_dots' );
 		if ( field ) {
-			field.value = JSON.stringify( state.dots.map( function ( d ) { return { p: d.p || 0, x: d.x, y: d.y }; } ) );
+			field.value = JSON.stringify( state.dots.map( function ( d ) {
+				var o = { p: d.p || 0, x: d.x, y: d.y };
+				if ( null != d.mx ) { o.mx = d.mx; o.my = d.my; }
+				return o;
+			} ) );
 		}
 		var focusField = $( 'rapm_focus' );
 		if ( focusField ) { focusField.value = state.focus; }
+		var btnField = $( 'rapm_photo_btn' );
+		if ( btnField ) {
+			var bo = state.btn.on ? { on: true, x: state.btn.x, y: state.btn.y } : {};
+			if ( state.btn.on && null != state.btn.mx ) { bo.mx = state.btn.mx; bo.my = state.btn.my; }
+			btnField.value = JSON.stringify( bo );
+		}
+	}
+
+	function btnText() {
+		var field = $( 'rapm_cta_text' ), v = field ? field.value.trim() : '';
+		return v || T.btnDefault || 'Shop now';
 	}
 
 	/* ---- Store API: search and live prices ---------------------------------- */
@@ -208,23 +247,53 @@
 		}
 	}
 
-	function setPhoto( src, w, h ) {
-		state.src = src;
-		state.w   = w;
-		state.h   = h;
+	function setPhoto( src, w, h, which ) {
+		which = which || 'desktop';
+		photos[ which ] = { src: src, w: w, h: h };
+		if ( ! BANNER || which === view || ( 'mobile' === view && ! photos.mobile.src ) ) {
+			showView( view );
+		}
 		sizeText();
 		renderAll();
 	}
 
-	var file = $( 'rapm_image_desktop' );
-	if ( file ) {
+	// Which picture Place the Pieces shows: a look's one photo, or a banner's
+	// desktop or phone picture (the phone one falls back to the desktop one).
+	function showView( v ) {
+		view = v;
+		var p = onPhone() ? photos.mobile : photos.desktop;
+		state.src = p.src;
+		state.w   = p.w;
+		state.h   = p.h;
+		var stageEl = $( 'rapm-pieces-stage' );
+		if ( stageEl ) { stageEl.classList.toggle( 'is-phone', onPhone() ); } // A tall phone picture stays phone-sized.
+		var note = $( 'rapm-pieces-view-note' );
+		if ( note ) { note.textContent = BANNER && 'mobile' === v && ! photos.mobile.src ? ( T.noMobile || '' ) : ''; }
+	}
+	showView( 'desktop' );
+
+	[ 'desktop', 'mobile' ].forEach( function ( which ) {
+		var file = $( 'rapm_image_' + which );
+		if ( ! file || ( 'mobile' === which && ! BANNER ) ) { return; }
 		file.addEventListener( 'change', function () {
 			if ( ! this.files || ! this.files[0] ) { return; }
 			var url = URL.createObjectURL( this.files[0] ), probe = new Image();
-			probe.onload = function () { setPhoto( url, probe.naturalWidth, probe.naturalHeight ); };
+			probe.onload = function () { setPhoto( url, probe.naturalWidth, probe.naturalHeight, which ); };
 			probe.src = url;
 		} );
-	}
+	} );
+
+	Array.prototype.forEach.call( document.querySelectorAll( '.rapm-pieces-view' ), function ( b ) {
+		b.addEventListener( 'click', function () {
+			Array.prototype.forEach.call( document.querySelectorAll( '.rapm-pieces-view' ), function ( x ) {
+				var on = x === b;
+				x.classList.toggle( 'is-selected', on );
+				x.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+			} );
+			showView( b.getAttribute( 'data-view' ) );
+			renderAll();
+		} );
+	} );
 
 	// "Use a link": ask the server which picture the link really is.
 	var urlInput = $( 'rapm_image_desktop_url' ), linkStatus = $( 'rapm-desktop-link-status' ), linkTimer = null, linkSeq = 0;
@@ -234,6 +303,7 @@
 		linkStatus.style.color = isError ? '#b32d2e' : '';
 	}
 	function checkLink() {
+		if ( BANNER ) { return; } // A banner's link check is step 1's own; its picture shows here once saved.
 		var url = urlInput.value.trim(), mine = ++linkSeq;
 		if ( ! /^https?:\/\/\S+$/i.test( url ) ) { showLink( '', false ); return; }
 		showLink( T.checking, false );
@@ -276,12 +346,20 @@
 		$( 'rapm-pieces-empty' ).hidden = has;
 		if ( ! has ) { return; }
 		if ( stageImg.getAttribute( 'src' ) !== state.src ) { stageImg.setAttribute( 'src', state.src ); }
-		Array.prototype.forEach.call( stage.querySelectorAll( '.rapm-pieces-dot' ), function ( d ) { d.remove(); } );
+		Array.prototype.forEach.call( stage.querySelectorAll( '.rapm-pieces-dot, .rapm-pieces-btn' ), function ( d ) { d.remove(); } );
+		if ( state.btn.on ) {
+			var pb = el( 'button', 'rapm-pieces-btn', btnText() );
+			pb.type = 'button';
+			pb.style.left = gx( state.btn ) + '%';
+			pb.style.top  = gy( state.btn ) + '%';
+			pb.setAttribute( 'aria-label', T.btnLabel || '' );
+			stage.appendChild( pb );
+		}
 		state.dots.forEach( function ( d, k ) {
 			var b = el( 'button', 'rapm-pieces-dot' + ( k === state.selected ? ' is-selected' : '' ) + ( d.p ? ( products[ d.p ] ? '' : ' is-gone' ) : ' is-empty' ), String( k + 1 ) );
 			b.type = 'button';
-			b.style.left = d.x + '%';
-			b.style.top  = d.y + '%';
+			b.style.left = gx( d ) + '%';
+			b.style.top  = gy( d ) + '%';
 			b.setAttribute( 'data-k', k );
 			b.setAttribute( 'aria-label', d.p && products[ d.p ] ? fmt( T.dotLabel, k + 1, products[ d.p ].name ) : fmt( T.dotEmpty, k + 1 ) );
 			stage.appendChild( b );
@@ -294,7 +372,9 @@
 			warn( fmt( T.tooMany, C.maxDots ) );
 			return false;
 		}
-		state.dots.push( { p: 0, x: x, y: y } );
+		var nd = { p: 0, x: x, y: y };
+		if ( onPhone() ) { nd.mx = x; nd.my = y; } // Added on the phone picture: same spot to start on the desktop one.
+		state.dots.push( nd );
 		state.selected = state.dots.length - 1;
 		live( fmt( T.added, state.dots.length ) );
 		renderAll();
@@ -306,6 +386,14 @@
 	if ( stage ) {
 		var drag = null;
 		stage.addEventListener( 'pointerdown', function ( e ) {
+			var pbtn = e.target.closest( '.rapm-pieces-btn' );
+			if ( pbtn ) {
+				drag = { btn: true, el: pbtn };
+				try { pbtn.setPointerCapture( e.pointerId ); } catch ( err ) {} // Keeps working without capture.
+				pbtn.classList.add( 'is-dragging' );
+				e.preventDefault();
+				return;
+			}
 			if ( ! C.store ) { return; }
 			var dot = e.target.closest( '.rapm-pieces-dot' );
 			var box = stage.getBoundingClientRect();
@@ -321,22 +409,30 @@
 		// Clicking the photo itself would move focus to nowhere right after
 		// addDot() put it in the new dot's search box, so keep it where it is.
 		stage.addEventListener( 'mousedown', function ( e ) {
-			if ( ! e.target.closest( '.rapm-pieces-dot' ) ) { e.preventDefault(); }
+			if ( ! e.target.closest( '.rapm-pieces-dot, .rapm-pieces-btn' ) ) { e.preventDefault(); }
 		} );
 		stage.addEventListener( 'pointermove', function ( e ) {
 			if ( ! drag ) { return; }
-			var box = stage.getBoundingClientRect(), d = state.dots[ drag.k ];
-			if ( Math.abs( e.clientX - drag.sx ) + Math.abs( e.clientY - drag.sy ) > 3 ) { drag.moved = true; }
-			d.x = Math.round( Math.min( Math.max( ( e.clientX - box.left ) / box.width, 0 ), 1 ) * 1000 ) / 10;
-			d.y = Math.round( Math.min( Math.max( ( e.clientY - box.top ) / box.height, 0 ), 1 ) * 1000 ) / 10;
-			drag.el.style.left = d.x + '%';
-			drag.el.style.top  = d.y + '%';
+			var box = stage.getBoundingClientRect(), d = drag.btn ? state.btn : state.dots[ drag.k ];
+			if ( ! drag.btn && Math.abs( e.clientX - drag.sx ) + Math.abs( e.clientY - drag.sy ) > 3 ) { drag.moved = true; }
+			sxy( d, Math.round( Math.min( Math.max( ( e.clientX - box.left ) / box.width, 0 ), 1 ) * 1000 ) / 10,
+				Math.round( Math.min( Math.max( ( e.clientY - box.top ) / box.height, 0 ), 1 ) * 1000 ) / 10 );
+			drag.el.style.left = gx( d ) + '%';
+			drag.el.style.top  = gy( d ) + '%';
 			renderFit();
 			renderPreview();
 			sync();
 		} );
 		var endDrag = function () {
 			if ( ! drag ) { return; }
+			if ( drag.btn ) {
+				drag.el.classList.remove( 'is-dragging' );
+				drag = null;
+				renderAll();
+				var pbAgain = stage.querySelector( '.rapm-pieces-btn' );
+				if ( pbAgain ) { pbAgain.focus( { preventScroll: true } ); }
+				return;
+			}
 			var k = drag.k;
 			drag.el.classList.remove( 'is-dragging' );
 			drag = null;
@@ -349,15 +445,40 @@
 		stage.addEventListener( 'keydown', function ( e ) {
 			var dot = e.target.closest( '.rapm-pieces-dot' );
 			var moves = { ArrowLeft: [ -1, 0 ], ArrowRight: [ 1, 0 ], ArrowUp: [ 0, -1 ], ArrowDown: [ 0, 1 ] };
+			if ( e.target.closest( '.rapm-pieces-btn' ) && moves[ e.key ] ) {
+				e.preventDefault();
+				var bstep = e.shiftKey ? 5 : 1;
+				sxy( state.btn, Math.min( Math.max( gx( state.btn ) + moves[ e.key ][0] * bstep, 0 ), 100 ),
+					Math.min( Math.max( gy( state.btn ) + moves[ e.key ][1] * bstep, 0 ), 100 ) );
+				renderAll();
+				var bAgain = stage.querySelector( '.rapm-pieces-btn' );
+				if ( bAgain ) { bAgain.focus(); }
+				return;
+			}
 			if ( ! dot || ! moves[ e.key ] ) { return; }
 			e.preventDefault();
 			var k = parseInt( dot.getAttribute( 'data-k' ), 10 ), d = state.dots[ k ], step = e.shiftKey ? 5 : 1;
-			d.x = Math.min( Math.max( d.x + moves[ e.key ][0] * step, 0 ), 100 );
-			d.y = Math.min( Math.max( d.y + moves[ e.key ][1] * step, 0 ), 100 );
+			sxy( d, Math.min( Math.max( gx( d ) + moves[ e.key ][0] * step, 0 ), 100 ),
+				Math.min( Math.max( gy( d ) + moves[ e.key ][1] * step, 0 ), 100 ) );
 			state.selected = k;
 			renderAll();
 			var again = stage.querySelector( '.rapm-pieces-dot[data-k="' + k + '"]' );
 			if ( again ) { again.focus(); }
+		} );
+	}
+
+	var btnToggle = $( 'rapm-photo-btn-on' );
+	if ( btnToggle ) {
+		btnToggle.addEventListener( 'change', function () {
+			state.btn.on = btnToggle.checked;
+			renderAll();
+		} );
+	}
+	if ( $( 'rapm_cta_text' ) ) {
+		$( 'rapm_cta_text' ).addEventListener( 'input', function () {
+			var pb = stage ? stage.querySelector( '.rapm-pieces-btn' ) : null;
+			if ( pb ) { pb.textContent = btnText(); }
+			renderPreview();
 		} );
 	}
 
@@ -651,11 +772,19 @@
 		// Dots, placed and numbered the way the website does it: a product
 		// that's off the website loses its dot and card, and the rest close up.
 		var shown = state.dots.filter( function ( d ) { return d.p && products[ d.p ]; } );
-		Array.prototype.forEach.call( pvStage.querySelectorAll( '.rapm-look-dot' ), function ( d ) { d.remove(); } );
+		Array.prototype.forEach.call( pvStage.querySelectorAll( '.rapm-look-dot, .rapm-look-photo-btn' ), function ( d ) { d.remove(); } );
 		var cw = pvStage.clientWidth, ch = pvStage.clientHeight;
 		if ( state.src && state.w && state.h && cw && ch ) {
 			var f = focusXY(), scale = Math.max( cw / state.w, ch / state.h ), dw = state.w * scale, dh = state.h * scale;
 			var ox = ( cw - dw ) * f[0], oy = ( ch - dh ) * f[1];
+			// The photo button, kept wholly inside the photo the way the website does.
+			if ( state.btn.on ) {
+				var pbtn = el( 'span', 'rapm-look-photo-btn', btnText() );
+				pvStage.querySelector( '.rapm-look-photo' ).appendChild( pbtn );
+				var bw = pbtn.offsetWidth, bh = pbtn.offsetHeight;
+				pbtn.style.left = Math.min( Math.max( ox + state.btn.x / 100 * dw - bw / 2, 8 ), cw - bw - 8 ) + 'px';
+				pbtn.style.top  = Math.min( Math.max( oy + state.btn.y / 100 * dh - bh / 2, 8 ), ch - bh - 8 ) + 'px';
+			}
 			shown.forEach( function ( d, k ) {
 				var x = ox + d.x / 100 * dw, y = oy + d.y / 100 * dh;
 				if ( x < 4 || x > cw - 4 || y < 4 || y > ch - 4 ) { return; }
@@ -745,11 +874,53 @@
 		} );
 	}
 
+	/* ---- 1.35.0: a banner's Live Preview (Review & Schedule) --------------- */
+
+	// Dots and the photo button on the banner preview (#rapm-preview), on
+	// whichever picture its Desktop/Mobile toggle shows, the way the website
+	// places them (RAPM_Pins: cover-fit, button kept inside).
+	function renderBannerPreview() {
+		var box = BANNER ? $( 'rapm-preview' ) : null, img = $( 'rapm-preview-img' );
+		if ( ! box || ! img ) { return; }
+		Array.prototype.forEach.call( box.querySelectorAll( '.rapm-pin-dot, .rapm-pin-btn' ), function ( n ) { n.remove(); } );
+		var mobile = $( 'rapm-preview-toggle-mobile' ) && 'true' === $( 'rapm-preview-toggle-mobile' ).getAttribute( 'aria-pressed' ) && !! photos.mobile.src;
+		var cw = box.clientWidth, ch = box.clientHeight, iw = img.naturalWidth, ih = img.naturalHeight;
+		if ( ! cw || ! ch || ! iw || ! ih || 'none' === img.style.display ) { return; }
+		var scale = Math.max( cw / iw, ch / ih ), dw = iw * scale, dh = ih * scale, ox = ( cw - dw ) / 2, oy = ( ch - dh ) / 2;
+		function px( o ) { return mobile && null != o.mx ? o.mx : o.x; }
+		function py( o ) { return mobile && null != o.my ? o.my : o.y; }
+		box.style.setProperty( '--rapm-pins-accent', C.accent || '#2271b1' );
+		state.dots.filter( function ( d ) { return d.p && products[ d.p ]; } ).forEach( function ( d, k ) {
+			var x = ox + px( d ) / 100 * dw, y = oy + py( d ) / 100 * dh;
+			if ( x < 4 || x > cw - 4 || y < 4 || y > ch - 4 ) { return; }
+			var dot = el( 'span', 'rapm-pin-dot', String( k + 1 ) );
+			dot.style.left = x + 'px';
+			dot.style.top  = y + 'px';
+			box.appendChild( dot );
+		} );
+		if ( state.btn.on ) {
+			var b = el( 'span', 'rapm-pin-btn', btnText() );
+			box.appendChild( b );
+			var bw = b.offsetWidth, bh = b.offsetHeight;
+			b.style.left = Math.min( Math.max( ox + px( state.btn ) / 100 * dw - bw / 2, 8 ), cw - bw - 8 ) + 'px';
+			b.style.top  = Math.min( Math.max( oy + py( state.btn ) / 100 * dh - bh / 2, 8 ), ch - bh - 8 ) + 'px';
+		}
+	}
+	if ( BANNER && $( 'rapm-preview' ) ) {
+		[ 'rapm-preview-toggle-desktop', 'rapm-preview-toggle-mobile' ].forEach( function ( id ) {
+			if ( $( id ) ) { $( id ).addEventListener( 'click', function () { setTimeout( renderBannerPreview, 60 ); } ); }
+		} );
+		$( 'rapm-preview-img' ).addEventListener( 'load', renderBannerPreview );
+		if ( window.ResizeObserver ) { new window.ResizeObserver( renderBannerPreview ).observe( $( 'rapm-preview' ) ); }
+		if ( $( 'rapm_cta_text' ) ) { $( 'rapm_cta_text' ).addEventListener( 'input', renderBannerPreview ); }
+	}
+
 	function renderAll() {
 		renderStage();
 		renderList();
 		renderFit();
 		renderPreview();
+		renderBannerPreview();
 		sync();
 	}
 

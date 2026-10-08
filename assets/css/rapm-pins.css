@@ -1,0 +1,64 @@
+/* Product dots and the "Shop now" button on Slider and Feature banner
+   slides (RAPM_Hero_Carousel, 1.35.0), placed by rapm-pins.js, and the
+   same look in the Add/Edit form's Live Preview. Colors come from
+   --rapm-pins-accent (Settings > Brand Color, usually an Elementor global
+   color), like Shop the Look's dots and buttons in rapm-looks.css. Above
+   the slide's own link (.rapm-slide-link, z-index 5) so they're clickable. */
+
+.rapm-pin-dot {
+	position: absolute; left: 0; top: 0; z-index: 6;
+	width: 34px; height: 34px; min-width: 0; min-height: 0; margin: -17px 0 0 -17px; padding: 0; box-sizing: border-box;
+	border: 2px solid #fff; border-radius: 50%; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+	background: var(--rapm-pins-accent, #2271b1); color: #fff; cursor: pointer;
+	font: inherit; font-size: 14px; font-weight: 700; line-height: 30px; letter-spacing: normal; text-transform: none; text-align: center;
+	transition: filter 0.2s, transform 0.2s;
+}
+.rapm-pin-dot[hidden] { display: none; }
+.rapm-pin-dot::after {
+	content: ""; position: absolute; inset: -7px; border-radius: 50%; pointer-events: none;
+	border: 2px solid rgba(255, 255, 255, 0.85); animation: rapm-pins-ring 2.4s ease-out infinite;
+}
+@keyframes rapm-pins-ring { 0% { transform: scale(0.7); opacity: 1; } 80%, 100% { transform: scale(1.35); opacity: 0; } }
+.rapm-pin-dot:hover, .rapm-pin-dot[aria-expanded="true"] { filter: brightness(1.18); transform: scale(1.1); }
+
+.rapm-pin-btn {
+	position: absolute; left: 0; top: 0; z-index: 6;
+	display: inline-flex; align-items: center; min-height: 44px; padding: 0 24px;
+	background: var(--rapm-pins-accent, #2271b1); color: #fff; text-decoration: none; white-space: nowrap;
+	font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+a.rapm-pin-btn:hover, a.rapm-pin-btn:focus { color: #fff; filter: brightness(0.92); }
+.rapm-pin-dot:focus-visible, .rapm-pin-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* The small card a dot opens. */
+.rapm-pin-pop {
+	position: absolute; z-index: 7; width: 270px; max-width: calc(100% - 16px);
+	display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px;
+	padding: 10px 32px 10px 10px; background: #fff; color: #333; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+	font-size: 14px; line-height: 1.35; text-align: left;
+}
+.rapm-pin-pop[hidden] { display: none; }
+.rapm-pin-pop img { display: block; width: 64px; height: 64px; object-fit: cover; }
+.rapm-pin-pop-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rapm-pin-pop-name { margin: 0; font-weight: 600; color: #242424; }
+.rapm-pin-pop-price { font-weight: 700; }
+.rapm-pin-pop-price del { margin-right: 6px; font-weight: 400; opacity: 0.7; }
+.rapm-pin-pop-price ins { text-decoration: none; }
+.rapm-pin-pop-stock { font-size: 12px; }
+.rapm-pin-pop-stock.in-stock { color: #3c8a4a; }
+.rapm-pin-pop-stock.out-of-stock { color: #b5502b; }
+.rapm-pin-pop-view { margin-top: 4px; color: var(--rapm-pins-accent, #2271b1); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; }
+.rapm-pin-pop-view:hover { text-decoration: underline; }
+.rapm-pin-pop-x {
+	position: absolute; top: 3px; right: 3px; width: 28px; height: 28px; min-width: 0; min-height: 0; margin: 0; padding: 0;
+	border: 0; border-radius: 0; box-shadow: none; background: transparent; color: #777; cursor: pointer; font-size: 20px; line-height: 1; text-transform: none;
+}
+
+@media (max-width: 768px) {
+	.rapm-pin-dot { width: 30px; height: 30px; margin: -15px 0 0 -15px; line-height: 26px; font-size: 13px; }
+	.rapm-pin-btn { min-height: 34px; padding: 0 14px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.rapm-pin-dot::after { animation: none; opacity: 0; }
+}

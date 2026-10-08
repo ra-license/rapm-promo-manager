@@ -65,14 +65,18 @@
 
 .rapm-looks button:focus-visible, .rapm-look-btn:focus-visible { outline: 2px solid var(--rapm-looks-accent); outline-offset: 2px; }
 
-/* The pieces (1.31.0): numbered dots on the photo, placed by rapm-looks.js. */
+/* The pieces (1.31.0): numbered dots on the photo, placed by rapm-looks.js.
+   1.34.0: in the brand color (Settings > Brand Color, usually an Elementor
+   global color) with a white number and white edge, so they match the
+   buttons and still stand out on a dark or light room. They were white
+   with a dark number. */
 .rapm-looks .rapm-look-dot {
 	position: absolute; left: 0; top: 0; z-index: 2;
 	width: 36px; height: 36px; min-width: 0; min-height: 0; margin: -18px 0 0 -18px; padding: 0;
-	border: 0; border-radius: 50%; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-	background: #fff; color: #242424; cursor: pointer;
-	font: inherit; font-size: 14px; font-weight: 700; line-height: 36px; letter-spacing: normal; text-transform: none; text-align: center;
-	transition: background 0.2s, color 0.2s, transform 0.2s;
+	border: 2px solid #fff; border-radius: 50%; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+	background: var(--rapm-looks-accent); color: #fff; cursor: pointer; box-sizing: border-box;
+	font: inherit; font-size: 14px; font-weight: 700; line-height: 32px; letter-spacing: normal; text-transform: none; text-align: center;
+	transition: filter 0.2s, transform 0.2s;
 }
 .rapm-looks .rapm-look-dot::after {
 	content: ""; position: absolute; inset: -7px; border-radius: 50%; pointer-events: none;
@@ -80,8 +84,21 @@
 }
 @keyframes rapm-looks-ring { 0% { transform: scale(0.7); opacity: 1; } 80%, 100% { transform: scale(1.35); opacity: 0; } }
 .rapm-looks .rapm-look-dot:hover, .rapm-looks .rapm-look-dot.is-hot, .rapm-looks .rapm-look-dot[aria-expanded="true"] {
-	background: var(--rapm-looks-accent); color: #fff; transform: scale(1.08);
+	filter: brightness(1.18); transform: scale(1.1);
 }
+
+/* 1.33.0: the look's optional button on the photo, placed by rapm-looks.js
+   (left/top) and kept wholly inside the photo. Above the overlay words and
+   the dots so it's always clickable. */
+.rapm-looks .rapm-look-photo-btn {
+	position: absolute; left: 0; top: 0; z-index: 3;
+	display: inline-flex; align-items: center; min-height: 46px; padding: 0 26px;
+	background: var(--rapm-looks-accent); color: #fff; text-decoration: none; white-space: nowrap;
+	font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+.rapm-looks .rapm-look-photo-btn:hover { color: #fff; filter: brightness(0.92); }
+.rapm-looks .rapm-look-photo-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* The small card a dot opens. */
 .rapm-look-pop {
@@ -113,9 +130,9 @@
 .rapm-look-card-img img { display: block; width: 84px; height: 84px; object-fit: cover; }
 .rapm-look-num {
 	position: absolute; left: -6px; top: -6px; width: 24px; height: 24px; border-radius: 50%;
-	background: #242424; color: #fff; font-size: 12px; font-weight: 700; line-height: 24px; text-align: center;
+	background: var(--rapm-looks-accent); color: #fff; font-size: 12px; font-weight: 700; line-height: 24px; text-align: center;
 }
-.rapm-look-card.is-hot .rapm-look-num { background: var(--rapm-looks-accent); }
+.rapm-look-card.is-hot .rapm-look-num { filter: brightness(1.18); }
 .rapm-look-card-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .rapm-look-card-name {
 	color: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; text-decoration: none; overflow-wrap: anywhere;
@@ -143,13 +160,59 @@
 }
 .rapm-looks .rapm-look-btn:hover { color: #fff; filter: brightness(0.92); }
 
+/* 1.32.0, width="full": the photo and tab bar run edge to edge, out of the
+   theme's page width. --rapm-looks-vw is the page's width without the
+   scrollbar (rapm-looks.js). Assumes the section's column is centered on
+   the page, as a page-wide Elementor container is. The words and cards
+   (the shelf, and the overlay's padding) stay at the 1400px content width. */
+.rapm-looks.is-full { width: var(--rapm-looks-vw, 100vw); max-width: none; margin-left: calc(50% - var(--rapm-looks-vw, 100vw) / 2); }
+
+/* 1.32.0, height="screen": the photo plus the tab bar end at the bottom of
+   the screen. --rapm-looks-top (where the section starts, so the header and
+   admin bar) and --rapm-looks-bar come from rapm-looks.js. Never taller
+   than 5:8 of the width, so a tall, narrow screen (a tablet held upright)
+   doesn't get a tall, narrow crop. 1.32.1: never shorter than 38vw (the
+   2.6:1 strip of the default layout) or 340px either. On Gates a 370px
+   header left a 3.8:1 strip that showed 40% of each photo; with a tall
+   header the tabs now fall just below the screen rather than the photo
+   becoming a sliver. svh is the screen with the browser's bars showing;
+   vh is the fallback. */
+.rapm-looks.is-fit .rapm-looks-stage {
+	height: max(340px, 38vw, min(62.5vw, calc(100vh - var(--rapm-looks-top, 0px) - var(--rapm-looks-bar, 47px))));
+	height: max(340px, 38vw, min(62.5vw, calc(100svh - var(--rapm-looks-top, 0px) - var(--rapm-looks-bar, 47px))));
+}
+
+/* 1.32.0, text="overlay": the look's words and button on the photo, bottom
+   left, over a shade so white text reads on a light or busy room (1.32.1:
+   darker, and reaching further up and across, after Gates' rooms showed
+   the 1.32.0 shade was too light). The arrows keep the bottom right; dots
+   stay above the words. Phones show the copy
+   under the photo instead (.rapm-look-intro.is-phone). */
+.rapm-look-overlay {
+	position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; pointer-events: none;
+	padding: 120px max(24px, calc((100% - 1400px) / 2 + 16px)) 32px;
+	background:
+		radial-gradient(90% 100% at 0% 100%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.2) 50%, transparent 85%),
+		linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.4) 50%, transparent);
+	color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.rapm-look-overlay .rapm-look-intro { max-width: min(560px, calc(100% - 120px)); pointer-events: auto; }
+.rapm-look-overlay .rapm-look-eyebrow { color: #fff; }
+.rapm-looks .rapm-look-overlay .rapm-look-title { color: #fff; font-size: clamp(26px, 3vw, 44px); }
+.rapm-look-overlay .rapm-look-blurb { color: #fff; font-size: 17px; }
+.rapm-looks .rapm-look-overlay .rapm-look-btn { text-shadow: none; }
+.rapm-looks.is-overlay .rapm-looks-shelf { padding-top: 18px; }
+@media (min-width: 768px) {
+	.rapm-looks .rapm-look-intro.is-phone, .rapm-looks.is-bare .rapm-looks-shelf { display: none; }
+}
+
 @media (max-width: 1023px) {
 	.rapm-look-text.has-cards { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 767px) {
 	.rapm-looks-stage { height: auto; aspect-ratio: 4 / 3; }
-	.rapm-looks .rapm-look-dot { width: 32px; height: 32px; margin: -16px 0 0 -16px; line-height: 32px; font-size: 13px; }
+	.rapm-looks .rapm-look-dot { width: 32px; height: 32px; margin: -16px 0 0 -16px; line-height: 28px; font-size: 13px; }
 	.rapm-look-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 6px 0 6px 6px; }
 	.rapm-look-card { flex: 0 0 82%; scroll-snap-align: start; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px; }
 	.rapm-look-card-img img { width: 64px; height: 64px; }
@@ -160,6 +223,11 @@
 	.rapm-looks .rapm-looks-tab { padding: 0 12px; font-size: 13px; }
 	.rapm-looks .rapm-looks-tour { width: 40px; }
 	.rapm-looks .rapm-looks-arrows button { width: 40px; height: 40px; }
+	.rapm-looks .rapm-look-photo-btn { min-height: 34px; padding: 0 14px; font-size: 12px; }
+	/* 1.32.0: phones keep the 4:3 photo with height="screen" too. */
+	.rapm-looks.is-fit .rapm-looks-stage { height: auto; }
+	.rapm-look-overlay { display: none; }
+	.rapm-looks.is-overlay .rapm-look-intro.is-phone { margin-bottom: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -189,8 +189,13 @@ class RAPM_Elementor {
 	}
 
 	/**
-	 * The one value every front-end accent color in this plugin (right
-	 * now: the Promotions Calendar) should resolve to, in priority order:
+	 * The one value every front-end accent color in this plugin (the
+	 * Promotions Calendar, and Shop the Look's buttons, tour line and dots)
+	 * should resolve to, in priority order. 1.34.0 adds 1b: an Elementor
+	 * global color picked by name under Settings > Brand Color (any of
+	 * them, custom ones too, e.g. Gates' navy), used as a live var() so it
+	 * follows Elementor. Before it, only Primary/Accent/Secondary were
+	 * tried, and on Gates that meant Elementor's default gray Secondary.
 	 * 1) an explicit hex typed under Promo Manager > Settings — a
 	 *    deliberate human choice always wins, since Elementor's "Accent"
 	 *    or "Primary" slot isn't guaranteed to be the color a site
@@ -210,9 +215,19 @@ class RAPM_Elementor {
 		if ( $manual ) {
 			return $manual;
 		}
+		$picked = (string) RAPM_Admin_Settings::get( 'accent_global' );
+		if ( '' !== $picked ) {
+			$values = self::color_value_map();
+			if ( isset( $values[ $picked ] ) ) {
+				return 'var(--e-global-color-' . sanitize_html_class( $picked ) . ', ' . $values[ $picked ] . ')';
+			}
+		}
 		$auto_id = self::auto_accent_id();
 		if ( $auto_id ) {
-			return 'var(--e-global-color-' . sanitize_html_class( $auto_id ) . ', ' . $fallback . ')';
+			// 1.34.0: the color's own value as the var()'s fallback, so it's
+			// right even on a page where Elementor doesn't load its colors.
+			$values = self::color_value_map();
+			return 'var(--e-global-color-' . sanitize_html_class( $auto_id ) . ', ' . ( isset( $values[ $auto_id ] ) ? $values[ $auto_id ] : $fallback ) . ')';
 		}
 		return $fallback;
 	}

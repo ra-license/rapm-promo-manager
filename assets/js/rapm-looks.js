@@ -19,6 +19,20 @@
  * product), and hovering a dot or a card lights up its partner. Price and
  * stock come from WooCommerce's Store API, read once per page in the
  * visitor's browser, so a full-page cache can't serve stale prices.
+ *
+ * 1.33.0: a look's optional button on the photo (.rapm-look-photo-btn) is
+ * placed by placeDots() with the same cover-fit math, centered on its
+ * spot, and nudged inward so the whole button stays on screen at every
+ * crop instead of being hidden like a cut-off dot.
+ *
+ * 1.32.0: with width="full" (class is-full), fullWidth() gives the CSS the
+ * page's width without the scrollbar, which 100vw would include and so
+ * cause a sideways scroll. With height="screen" (class is-fit), fitHeight() tells the CSS
+ * where the section starts on the page and how tall the tab bar is, so the
+ * photo plus the bar end at the bottom of the screen. With text="overlay"
+ * the words are on each photo for computers and tablets, and the space
+ * below holds only the piece cards (class is-bare hides it on those
+ * screens for a look without any). Phones show a copy of the words below.
  */
 ( function ( window ) {
 	'use strict';
@@ -40,6 +54,10 @@
 		var shelf   = root.querySelector( '.rapm-looks-shelf' );
 		var photos  = Array.prototype.slice.call( root.querySelectorAll( '.rapm-look-photo' ) );
 		var texts   = Array.prototype.slice.call( root.querySelectorAll( '.rapm-look-text' ) );
+		var bar     = root.querySelector( '.rapm-looks-bar' );
+		var full    = root.classList.contains( 'is-full' );
+		var fit     = root.classList.contains( 'is-fit' );
+		var overlay = root.classList.contains( 'is-overlay' );
 
 		var reduceMotion = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
 		var stopped      = ! options.autoplay || reduceMotion;
@@ -66,6 +84,20 @@
 		function updateMore() {
 			tabsEl.classList.toggle( 'is-more', tabsEl.scrollLeft + tabsEl.clientWidth < tabsEl.scrollWidth - 2 );
 			tabsEl.classList.toggle( 'is-less', tabsEl.scrollLeft > 2 );
+		}
+
+		// height="screen" (1.32.0): the header, admin bar and anything else
+		// above the section, measured from the top of the page, so it's the
+		// same wherever the visitor has scrolled to.
+		function fitHeight() {
+			if ( ! fit || 'none' === root.style.display ) { return; }
+			var top = root.getBoundingClientRect().top + ( window.pageYOffset || document.documentElement.scrollTop || 0 );
+			root.style.setProperty( '--rapm-looks-top', Math.max( 0, Math.round( top ) ) + 'px' );
+			root.style.setProperty( '--rapm-looks-bar', bar.offsetHeight + 'px' );
+		}
+
+		function fullWidth() {
+			if ( full ) { root.style.setProperty( '--rapm-looks-vw', document.documentElement.clientWidth + 'px' ); }
 		}
 
 		function setPaused() {
@@ -100,6 +132,14 @@
 					dot.style.left = Math.min( Math.max( x, r ), cw - r ) + 'px';
 					dot.style.top  = Math.min( Math.max( y, r ), ch - r ) + 'px';
 				} );
+				var pbtn = photo.querySelector( '.rapm-look-photo-btn' );
+				if ( pbtn ) {
+					var bx = ox + parseFloat( pbtn.getAttribute( 'data-x' ) ) / 100 * dw;
+					var by = oy + parseFloat( pbtn.getAttribute( 'data-y' ) ) / 100 * dh;
+					var bw = pbtn.offsetWidth, bh = pbtn.offsetHeight, m = 8;
+					pbtn.style.left = Math.min( Math.max( bx - bw / 2, m ), Math.max( m, cw - bw - m ) ) + 'px';
+					pbtn.style.top  = Math.min( Math.max( by - bh / 2, m ), Math.max( m, ch - bh - m ) ) + 'px';
+				}
 			} );
 			placePop();
 		}
@@ -273,6 +313,9 @@
 				if ( on ) { p.removeAttribute( 'inert' ); } else { p.setAttribute( 'inert', '' ); }
 			} );
 			texts.forEach( function ( t ) { t.hidden = t !== text; } );
+			// Nothing to show below on computers: no cards and no words below
+			// (1.35.0: a look with a photo button keeps its words below).
+			root.classList.toggle( 'is-bare', overlay && ! ( text && ( text.querySelector( '.rapm-look-card' ) || text.querySelector( '.rapm-look-intro:not(.is-phone)' ) ) ) );
 			tabs.forEach( function ( tab, i ) {
 				var on = i === index;
 				tab.setAttribute( 'aria-selected', on ? 'true' : 'false' );
@@ -329,7 +372,9 @@
 			var keep = 0;
 			live.forEach( function ( p, i ) { if ( keyOf( p ) === currentKey ) { keep = i; } } );
 			show( keep );
+			fullWidth();
 			updateMore();
+			fitHeight();
 			placeDots();
 		}
 
@@ -357,6 +402,11 @@
 		} );
 		if ( window.ResizeObserver ) { new window.ResizeObserver( placeDots ).observe( stage ); }
 		window.addEventListener( 'resize', placeDots );
+		if ( full ) { window.addEventListener( 'resize', fullWidth ); }
+		if ( fit ) {
+			window.addEventListener( 'resize', fitHeight );
+			window.addEventListener( 'load', fitHeight ); // the header's logo and fonts can change its height
+		}
 
 		tabsEl.addEventListener( 'scroll', updateMore, { passive: true } );
 		window.addEventListener( 'resize', updateMore );
@@ -402,7 +452,7 @@
 		// Swipe between looks on touch screens.
 		var startX = null, startY = null;
 		stage.addEventListener( 'pointerdown', function ( e ) {
-			if ( 'mouse' === e.pointerType || ( e.target.closest && e.target.closest( '.rapm-looks-arrows, .rapm-look-dot, .rapm-look-pop' ) ) ) { startX = null; return; }
+			if ( 'mouse' === e.pointerType || ( e.target.closest && e.target.closest( '.rapm-looks-arrows, .rapm-look-dot, .rapm-look-pop, .rapm-look-photo-btn' ) ) ) { startX = null; return; }
 			startX = e.clientX;
 			startY = e.clientY;
 		} );

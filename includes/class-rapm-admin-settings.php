@@ -39,6 +39,9 @@ class RAPM_Admin_Settings {
 			// site actually wants used (or the site doesn't run
 			// Elementor at all).
 			'accent_color'            => '',
+			// 1.34.0: an Elementor global color picked by name (its _id),
+			// used live. Empty = automatic (Primary, Accent, Secondary).
+			'accent_global'           => '',
 		);
 	}
 
@@ -93,6 +96,7 @@ class RAPM_Admin_Settings {
 
 		$accent = isset( $input['accent_color'] ) ? trim( $input['accent_color'] ) : '';
 		$out['accent_color'] = ( $accent && preg_match( '/^#[0-9a-fA-F]{6}$/', $accent ) ) ? $accent : '';
+		$out['accent_global'] = isset( $input['accent_global'] ) ? sanitize_html_class( $input['accent_global'] ) : '';
 
 		$overrides = array();
 		if ( isset( $input['slot_overrides'] ) && is_array( $input['slot_overrides'] ) ) {
@@ -188,28 +192,49 @@ class RAPM_Admin_Settings {
 				$elementor_titles = RAPM_Elementor::global_colors();
 				$auto_id          = RAPM_Elementor::auto_accent_id();
 				?>
-				<p class="description">
-					<?php if ( $auto_id ) : ?>
-						<?php
-						printf(
-							/* translators: 1: Elementor global color title (e.g. "Accent"), 2: its hex value */
-							esc_html__( 'Right now, the Promotions Calendar automatically uses this site\'s Elementor "%1$s" color (%2$s) — nothing to do here unless you want a different color used instead.', 'rapm' ),
-							esc_html( $elementor_titles[ $auto_id ] ),
-							esc_html( $elementor_colors[ $auto_id ] ?? '' )
-						);
-						?>
-					<?php else : ?>
-						<?php esc_html_e( 'No Elementor site color was found to match automatically, so a neutral default color is used. Set one below if you\'d like it to match your brand instead.', 'rapm' ); ?>
-					<?php endif; ?>
-				</p>
+				<p class="description"><?php esc_html_e( 'Used for Shop the Look\'s buttons, dots and tour line, and the Promotions Calendar.', 'rapm' ); ?></p>
 				<table class="form-table">
 					<tr>
-						<th><label for="rapm_accent_color"><?php esc_html_e( 'Use this color instead', 'rapm' ); ?></label></th>
+						<th><label for="rapm_accent_global"><?php esc_html_e( 'Elementor color', 'rapm' ); ?></label></th>
+						<td>
+							<?php if ( $elementor_titles ) : ?>
+								<select id="rapm_accent_global" name="<?php echo esc_attr( self::OPTION ); ?>[accent_global]">
+									<option value=""><?php
+										if ( $auto_id ) {
+											/* translators: 1: Elementor color title, 2: its hex value */
+											printf( esc_html__( 'Automatic (now "%1$s", %2$s)', 'rapm' ), esc_html( $elementor_titles[ $auto_id ] ), esc_html( $elementor_colors[ $auto_id ] ?? '' ) );
+										} else {
+											esc_html_e( 'Automatic (no match, a neutral color is used)', 'rapm' );
+										}
+									?></option>
+									<?php foreach ( $elementor_titles as $cid => $ctitle ) : ?>
+										<option value="<?php echo esc_attr( $cid ); ?>" <?php selected( $opts['accent_global'], $cid ); ?>><?php echo esc_html( $ctitle . ' (' . ( $elementor_colors[ $cid ] ?? '' ) . ')' ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<span id="rapm_accent_global_swatch" style="display:inline-block;width:26px;height:26px;vertical-align:middle;margin-left:6px;border:1px solid #c3c4c7;border-radius:3px;"></span>
+								<p class="description" id="rapm_accent_global_note"><?php esc_html_e( 'Pick your brand color from your Elementor Site Settings > Global Colors, including custom ones. It stays linked: change it in Elementor and Promo Manager follows. Automatic tries Primary, then Accent, then Secondary, and uses the first that white text reads well on.', 'rapm' ); ?></p>
+								<script>
+									( function () {
+										var hex = <?php echo wp_json_encode( $elementor_colors ); ?>, autoId = <?php echo wp_json_encode( $auto_id ); ?>;
+										var sel = document.getElementById( 'rapm_accent_global' ), sw = document.getElementById( 'rapm_accent_global_swatch' );
+										function show() { sw.style.background = hex[ sel.value || autoId ] || '#2271b1'; }
+										sel.addEventListener( 'change', show ); show();
+									} )();
+								</script>
+							<?php else : ?>
+								<p class="description"><?php esc_html_e( 'No Elementor global colors were found on this site. Use the color below to set your brand color.', 'rapm' ); ?></p>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</table>
+				<table class="form-table">
+					<tr>
+						<th><label for="rapm_accent_color"><?php esc_html_e( 'Or an exact color', 'rapm' ); ?></label></th>
 						<td>
 							<input type="color" id="rapm_accent_color" name="<?php echo esc_attr( self::OPTION ); ?>[accent_color]" value="<?php echo esc_attr( $opts['accent_color'] ?: '#b5651d' ); ?>" style="height:32px;width:60px;padding:2px;vertical-align:middle;" />
 							<button type="button" class="button" id="rapm_accent_color_clear"><?php esc_html_e( 'Clear (use automatic)', 'rapm' ); ?></button>
 							<input type="hidden" id="rapm_accent_color_enabled" value="<?php echo esc_attr( $opts['accent_color'] ? '1' : '0' ); ?>" />
-							<p class="description"><?php esc_html_e( 'Only used on the Promotions Calendar for now. Leave cleared to keep it matching your Elementor color automatically.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Overrides the Elementor color above. Leave cleared to use the Elementor color.', 'rapm' ); ?></p>
 						</td>
 					</tr>
 				</table>
