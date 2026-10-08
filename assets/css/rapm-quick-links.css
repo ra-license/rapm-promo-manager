@@ -11,8 +11,61 @@
 
 /* `hidden` has to win over the display rules below and over theme rules. */
 .rapm-quick-links[hidden],
-.rapm-ql-item[hidden] {
+.rapm-ql-item[hidden],
+.rapm-scroll-dots[hidden] {
 	display: none !important;
+}
+
+/* 1.37.1: dots under the row whenever it scrolls sideways (phones), one per
+   screenful. Each is a 24px tap target around an 8px dot. Theme button
+   rules (WoodMart styles every button) are undone with !important. */
+.rapm-quick-links .rapm-scroll-dots {
+	display: flex;
+	justify-content: center;
+	gap: 2px;
+	margin-top: 2px;
+}
+
+.rapm-quick-links .rapm-scroll-dot {
+	-webkit-appearance: none;
+	appearance: none;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	width: 24px !important;
+	height: 24px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: inherit !important;
+	line-height: 0 !important;
+	cursor: pointer;
+}
+
+.rapm-quick-links .rapm-scroll-dot::before {
+	content: "";
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.25;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rapm-quick-links .rapm-scroll-dot.is-active::before {
+	opacity: 0.85;
+	transform: scale(1.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rapm-quick-links .rapm-scroll-dot::before {
+		transition: none;
+	}
 }
 
 .rapm-ql-list {

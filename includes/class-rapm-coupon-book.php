@@ -53,8 +53,12 @@ class RAPM_Coupon_Book {
 		ob_start();
 		echo RAPM_Assets::need( 'coupon_book' ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-generated link and script tags.
 		?>
-		<div class="rapm-coupon-book <?php echo esc_attr( $instance_id ); ?>" data-rapm-coupon-book style="display:none;">
-			<?php foreach ( $query->posts as $post ) : self::render_card( $post->ID ); endforeach; ?>
+		<div class="rapm-coupon-book-wrap <?php echo esc_attr( $instance_id ); ?>-wrap">
+			<div class="rapm-coupon-book <?php echo esc_attr( $instance_id ); ?>" data-rapm-coupon-book style="display:none;">
+				<?php foreach ( $query->posts as $post ) : self::render_card( $post->ID ); endforeach; ?>
+			</div>
+			<?php // 1.37.1, Phil's standing rule: a row that scrolls sideways shows dots for where you are. ?>
+			<div class="rapm-scroll-dots" aria-hidden="true" hidden></div>
 		</div>
 		<script>
 			( function () {
@@ -67,12 +71,15 @@ class RAPM_Coupon_Book {
 						return;
 					}
 					var root = document.querySelector( '.<?php echo esc_js( $instance_id ); ?>' );
+					var wrap = document.querySelector( '.<?php echo esc_js( $instance_id ); ?>-wrap' );
+					var buildDots = RAPM_Schedule.scrollDots && wrap ? RAPM_Schedule.scrollDots( root, wrap.querySelector( '.rapm-scroll-dots' ) ) : function () {};
 
 					RAPM_Schedule.watch( root, '.rapm-coupon-card', function ( active ) {
 						var all = root.querySelectorAll( '.rapm-coupon-card' );
 						Array.prototype.forEach.call( all, function ( el ) { el.style.display = 'none'; } );
 						active.forEach( function ( el ) { el.style.display = ''; } );
 						root.style.display = active.length ? '' : 'none';
+						buildDots();
 					} );
 				}
 				if ( document.readyState === 'loading' ) {

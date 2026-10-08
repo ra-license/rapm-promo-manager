@@ -43,3 +43,60 @@
 @media (max-width: 480px) {
 	.rapm-coupon-card { width: 170px; }
 }
+
+/* 1.37.1: dots under the row whenever it scrolls sideways (Phil's standing
+   rule: anything that scrolls shows where you are). One per screenful, each
+   a 24px tap target around an 8px dot. Same as rapm-quick-links.css; theme
+   button rules (WoodMart styles every button) are undone with !important. */
+.rapm-scroll-dots[hidden] {
+	display: none !important;
+}
+
+.rapm-coupon-book-wrap .rapm-scroll-dots {
+	display: flex;
+	justify-content: center;
+	gap: 2px;
+	margin-top: -8px;
+}
+
+.rapm-coupon-book-wrap .rapm-scroll-dot {
+	-webkit-appearance: none;
+	appearance: none;
+	display: inline-flex !important;
+	align-items: center;
+	justify-content: center;
+	width: 24px !important;
+	height: 24px !important;
+	min-width: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	color: inherit !important;
+	line-height: 0 !important;
+	cursor: pointer;
+}
+
+.rapm-coupon-book-wrap .rapm-scroll-dot::before {
+	content: "";
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.25;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.rapm-coupon-book-wrap .rapm-scroll-dot.is-active::before {
+	opacity: 0.85;
+	transform: scale(1.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rapm-coupon-book-wrap .rapm-scroll-dot::before {
+		transition: none;
+	}
+}

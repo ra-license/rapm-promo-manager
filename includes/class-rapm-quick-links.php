@@ -108,6 +108,8 @@ class RAPM_Quick_Links {
 			<ul class="rapm-ql-list">
 				<?php echo $items; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in render_item(). ?>
 			</ul>
+			<?php // 1.37.1: dots whenever the row scrolls sideways (phones). Built by the script below. ?>
+			<div class="rapm-scroll-dots" aria-hidden="true" hidden></div>
 		</nav>
 		<script>
 			( function () {
@@ -122,9 +124,14 @@ class RAPM_Quick_Links {
 					var root = document.querySelector( '.<?php echo esc_js( $instance_id ); ?>' );
 					if ( ! root ) { return; }
 					var items = Array.prototype.slice.call( root.querySelectorAll( '.rapm-ql-item' ) );
+					var list  = root.querySelector( '.rapm-ql-list' );
+					// 1.37.1: dots whenever the row scrolls sideways (phones).
+					var buildDots = RAPM_Schedule.scrollDots ? RAPM_Schedule.scrollDots( list, root.querySelector( '.rapm-scroll-dots' ) ) : function () {};
+
 					RAPM_Schedule.watch( root, '.rapm-ql-item', function ( active ) {
 						items.forEach( function ( el ) { el.hidden = active.indexOf( el ) === -1; } );
 						root.hidden = ! active.length;
+						buildDots();
 					} );
 				}
 				if ( document.readyState === 'loading' ) {

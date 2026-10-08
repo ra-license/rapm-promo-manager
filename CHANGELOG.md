@@ -4,6 +4,31 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.37.1
+
+**Fix: rows that scroll sideways now show dots for where you are.** Phil, after seeing Quick links on phones: "Anything that scrolls as a carousel we need a standing rule to have the nav arrows or dots to indicate options." Two rows broke that rule:
+- **Quick links on phones (1.37.0):** the `compact` and `swipe` versions are one line that people swipe sideways, and only the next item peeking in at the edge showed that there was more.
+- **The Coupon row (`[rapm_coupon_book]`):** a sideways scrolling row on every screen size, with no arrows or dots at all.
+
+- **What's new:**
+  - **Dots under both rows**, one per screenful, whenever the row is wider than its space. When everything fits, as with Quick links on computers and tablets, no dots show.
+  - **The active dot follows the scroll.** Tapping a dot scrolls there (smoothly, or straight there with reduced motion).
+  - **Each dot is a 24px tap target** around an 8px dot (WCAG 2.2 target size). They use the text color, so they suit light and dark sections, and their theme button styles are undone so WoodMart can't restyle them.
+  - **They stay out of the keyboard path** (`tabindex="-1"`, inside `aria-hidden`), since the links and cards are already reachable with Tab, and focusing one scrolls it into view.
+- **How it works:** `RAPM_Schedule.scrollDots( list, dotsBox )` in rapm-schedule.js builds the dots and keeps them current. It returns a rebuild function that each row calls whenever its live items change (a link or coupon starting or ending), and the dots are also rebuilt on resize and page load.
+- **Markup:**
+  - **Quick links:** a `<div class="rapm-scroll-dots">` after the list.
+  - **Coupon row:** the row is now wrapped in `<div class="rapm-coupon-book-wrap">`, with the dots after it. The row itself keeps its class and behavior.
+- **Not changed:** Slider and Feature banner already have arrows and dots (`nav="both|arrows|dots"`). They still accept `nav="none"`, which this rule says not to use, so R&A should avoid it on new sites. The Tile row already shows Prev/Next arrows whenever it has more than one page, and Shop the Look has its tab bar.
+- **How it was checked** (php-wasm 0.2.0, PHP 8.4.1, as in 1.37.0):
+  - **PHP:** all 28 files pass, and both planted broken files are still caught.
+  - **Quick links at 375px (`compact`):** 2 dots, each 24×24. The first is active at the start and the second after scrolling to the end, and tapping the second scrolled the row there. The whole row is 88px including the dots.
+  - **Quick links at 1280px:** no dots.
+  - **Coupon row with six coupons at 375px:** 4 dots, and the last one is active at the end.
+  - **Coupon row at 1280px:** 2 dots, since six cards don't fit.
+  - No PHP warnings and no script errors.
+  - **Test quirk:** the preview pane ran in the background, where browsers hold back scroll events, so one check fired the scroll event by hand.
+
 ## 1.37.0
 
 **New: Quick links, a row of wide pictures with a name under each, for the top of category pages.** Phil, for Starfine: "For the category pages can you replicate using the R&A Promo manager this layout at the top of the category page for Indian River? We need to be cognizant that on mobile this could push products down too far and need to have an alternate version for it." Add to cart moves to 1.38.0.

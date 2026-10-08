@@ -226,5 +226,58 @@
 		window.document.addEventListener( 'DOMContentLoaded', bindJqueryPopupRefresh );
 	}
 
-	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch };
+	/**
+	 * 1.37.1, Phil's standing rule: anything that scrolls sideways shows
+	 * dots for where you are. Fills `dotsBox` with one dot per screenful of
+	 * `list` (none, and hidden, when everything fits), keeps the active dot
+	 * in step with the scroll, and scrolls there when a dot is tapped.
+	 * Returns the rebuild function, to call again whenever the row's items
+	 * change (a link or coupon starting or ending).
+	 *
+	 * @param {Element} list    The element that scrolls sideways.
+	 * @param {Element} dotsBox An empty element for the dots.
+	 * @return {function} Rebuild the dots.
+	 */
+	function scrollDots( list, dotsBox ) {
+		var pages = 0;
+		var reduceMotion = window.matchMedia && window.matchMedia( '(prefers-reduced-motion: reduce)' ).matches;
+
+		function overflow() { return list.scrollWidth - list.clientWidth; }
+
+		function mark() {
+			if ( pages < 2 ) { return; }
+			var over = overflow();
+			var on   = over > 0 ? Math.round( list.scrollLeft / over * ( pages - 1 ) ) : 0;
+			Array.prototype.forEach.call( dotsBox.children, function ( d, i ) { d.classList.toggle( 'is-active', i === on ); } );
+		}
+
+		function build() {
+			var over = overflow();
+			pages = over > 2 && list.clientWidth > 0 ? Math.max( 2, Math.ceil( list.scrollWidth / list.clientWidth ) ) : 0;
+			dotsBox.innerHTML = '';
+			dotsBox.hidden = pages < 2;
+			for ( var i = 0; i < pages; i++ ) {
+				var b = document.createElement( 'button' );
+				b.type = 'button';
+				b.className = 'rapm-scroll-dot';
+				b.tabIndex = -1; // The links themselves are the keyboard path.
+				b.setAttribute( 'data-page', i );
+				dotsBox.appendChild( b );
+			}
+			mark();
+		}
+
+		dotsBox.addEventListener( 'click', function ( e ) {
+			var b = e.target.closest ? e.target.closest( '.rapm-scroll-dot' ) : null;
+			if ( ! b || pages < 2 ) { return; }
+			var left = overflow() * parseInt( b.getAttribute( 'data-page' ), 10 ) / ( pages - 1 );
+			if ( list.scrollTo ) { list.scrollTo( { left: left, behavior: reduceMotion ? 'auto' : 'smooth' } ); } else { list.scrollLeft = left; }
+		} );
+		list.addEventListener( 'scroll', mark, { passive: true } );
+		window.addEventListener( 'resize', build );
+		window.addEventListener( 'load', build );
+		return build;
+	}
+
+	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots };
 } )( window );
