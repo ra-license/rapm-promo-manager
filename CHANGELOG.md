@@ -4,6 +4,35 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.39.0
+
+**New: a per-look switch for the words on the photo, for an ad-style picture that already has them.** Phil, on Gates (2026-10-12), about Harvest Sale's banner, which already shows "The Harvest Living Room" and its description: "Is there a way to toggle that on/off as well? Maybe that's the best course in case an ad image has that kind of text?"
+- **What's new:** in Place the Pieces, a box above the photo-button box, "Show the headline and smaller line on the photo". It's ticked by default, with a note to untick it when the picture already has its own words on it, like an ad. It's on looks only (Slider and Feature banners already have "Does your picture already show the price…").
+- **Unticked, with `text="overlay"`, on computers and tablets:**
+  - **A look with pieces:** nothing on the photo (no eyebrow, headline, smaller line or shade). The button + cards row under the photo stays.
+  - **A look with no pieces:** only its button on the photo, bottom left, with no shade (`.rapm-look-overlay.is-btn-only`).
+  - **With the photo button on as well:** just the photo button.
+- **Not changed:**
+  - **Phones** still show the words, button and cards under the photo, where a printed ad's words are often too small to read.
+  - **`text="below"`** is unaffected, since its words aren't on the photo.
+- **Saving:** `_rapm_photo_words` = `off` only when unticked. Ticked deletes it, so every existing look stays on.
+  - The form sends a hidden `off` before the checkbox, and a ticked box's `on` comes after it and wins.
+  - The value is only read when the field is in the post.
+  - "Duplicate" copies it with the other `_rapm_` settings.
+- **Includes 1.38.0,** which was pushed to the staging repo but never installed anywhere. **Add to cart moves to 1.40.0.**
+- **How it was checked** (php-wasm 0.2.0, PHP 8.4.1):
+  - **PHP:** all 27 include files parse.
+  - **`text="overlay"`:** the six 1.38.0 test looks are unchanged. The three new ones with the box unticked show:
+    - **Pieces:** nothing on the photo, and below, the button + 2 cards.
+    - **No pieces:** only the button on the photo, background `none`, and nothing below.
+    - **No pieces + photo button:** just the photo button.
+  - **At 375px,** the three unticked looks show their headline, one button and their cards under the photo, with no sideways scroll.
+  - **Edit form (real render, no PHP warnings or script errors):**
+    - A new look's box is ticked and sends `off,on`, so PHP reads `on`.
+    - A look saved as `off` shows unticked and sends `off`.
+
+---
+
 ## 1.38.0
 
 **Change: Shop the Look with `text="overlay"` keeps the headline and smaller line on the photo and puts the button under it, beside the products.** Phil, on Gates' /home-2/ (2026-10-12): "I want the Header text and sub text to be on the image. I wanted the button to be optional on the image. I wanted this section to be on every slide by default if it has products." He picked "button + products" under the photo (no repeated words) and "button onto the photo" for a look with no products.

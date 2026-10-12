@@ -48,6 +48,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * photo button; they now stay on the photo.) Phones are unchanged: the
  * whole copy and the cards under their small photo.
  *
+ * 1.39.0 adds "Show the headline and smaller line on the photo" to Place
+ * the Pieces (_rapm_photo_words, saved as 'off' only when unticked), for a
+ * picture that already has its words on it, like an ad. Off, the photo
+ * gets no eyebrow, headline, smaller line or shade; a look with no pieces
+ * still gets its button there, on its own. Phones and text="below" ignore
+ * it: their words are under the photo, not on it.
+ *
  * Like every display here, all looks are printed with their dates and
  * rapm-schedule.js's watch() decides in the visitor's browser which are
  * live, so it stays right behind a full-page cache. The photos and the
@@ -273,8 +280,8 @@ class RAPM_Looks {
 						$layout = $overlay ? self::overlay_layout( $look ) : null;
 						?>
 						<?php if ( $layout && $layout['words'] ) : ?>
-							<div class="rapm-look-overlay">
-								<?php self::intro( $look, '', $layout['btn_on_photo'] ); ?>
+							<div class="rapm-look-overlay<?php echo $layout['with_words'] ? '' : ' is-btn-only'; ?>">
+								<?php self::intro( $look, '', $layout['btn_on_photo'], $layout['with_words'] ); ?>
 							</div>
 						<?php endif; ?>
 						<?php if ( $look['photo_btn'] && $look['url'] ) : ?>
@@ -374,23 +381,32 @@ class RAPM_Looks {
 		$has_btn      = $look['cta'] && $look['url'];
 		$has_pieces   = ! empty( $look['pieces'] );
 		$btn_on_photo = $has_btn && ! $has_pieces && ! $look['photo_btn'];
+		// 1.39.0: "Show the headline and smaller line on the photo" off (a
+		// picture with its own words, like an ad) keeps them off the photo.
+		$words        = $look['photo_words'] && ( $look['headline'] || $look['subhead'] );
 		return array(
-			'words'        => (bool) ( $look['headline'] || $look['subhead'] || $btn_on_photo ),
+			'words'        => $words || $btn_on_photo,
+			'with_words'   => $words,
 			'btn_on_photo' => $btn_on_photo,
 			'btn_below'    => $has_btn && $has_pieces,
 		);
 	}
 
-	/** The look's eyebrow, headline, smaller line and button: under the photo, or on it with text="overlay" (1.32.0). 1.38.0: $with_btn false leaves the button out. */
-	private static function intro( $look, $extra_class = '', $with_btn = true ) {
+	/**
+	 * The look's eyebrow, headline, smaller line and button: under the photo, or on it with text="overlay" (1.32.0).
+	 * 1.38.0: $with_btn false leaves the button out. 1.39.0: $with_words false leaves out the eyebrow, headline and smaller line.
+	 */
+	private static function intro( $look, $extra_class = '', $with_btn = true, $with_words = true ) {
 		?>
 		<div class="rapm-look-intro<?php echo $extra_class ? ' ' . esc_attr( $extra_class ) : ''; ?>">
+			<?php if ( $with_words ) : ?>
 			<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <?php echo esc_html( $look['tab'] ); ?></span></p>
 			<?php if ( $look['headline'] ) : ?>
 				<h2 class="rapm-look-title"><?php echo esc_html( $look['headline'] ); ?></h2>
 			<?php endif; ?>
 			<?php if ( $look['subhead'] ) : ?>
 				<p class="rapm-look-blurb"><?php echo esc_html( $look['subhead'] ); ?></p>
+			<?php endif; ?>
 			<?php endif; ?>
 			<?php if ( $with_btn && $look['cta'] && $look['url'] ) : ?>
 				<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
@@ -437,6 +453,8 @@ class RAPM_Looks {
 			'subhead'  => (string) get_post_meta( $id, '_rapm_subhead', true ),
 			'cta'      => (string) get_post_meta( $id, '_rapm_cta_text', true ),
 			'photo_btn' => self::sanitize_photo_btn( get_post_meta( $id, '_rapm_photo_btn', true ) ),
+			// 1.39.0: off for a picture that already has its words on it.
+			'photo_words' => 'off' !== (string) get_post_meta( $id, '_rapm_photo_words', true ),
 			'url'      => RAPM_Destination::resolve_url(
 				get_post_meta( $id, '_rapm_destination_type', true ),
 				get_post_meta( $id, '_rapm_destination_value', true )

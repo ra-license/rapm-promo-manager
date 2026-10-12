@@ -202,6 +202,9 @@
 .rapm-look-overlay .rapm-look-blurb { color: #fff; font-size: 17px; }
 .rapm-looks .rapm-look-overlay .rapm-look-btn { text-shadow: none; }
 .rapm-looks.is-overlay .rapm-looks-shelf { padding-top: 18px; }
+/* 1.39.0: a look whose picture has its own words, and no pieces, gets just
+   its button on the photo, without the shade. */
+.rapm-look-overlay.is-btn-only { padding-top: 0; background: none; }
 /* 1.38.0: with text="overlay", the look's button sits under the photo
    beside the piece cards (.is-desk); phones show the whole copy instead. */
 @media (max-width: 767px) {

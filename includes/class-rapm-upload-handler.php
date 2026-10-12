@@ -158,6 +158,8 @@ class RAPM_Upload_Handler {
 		$dots         = ( $is_look || $has_pins ) ? RAPM_Looks::sanitize_dots( $m( '_rapm_dots', array() ) ) : array();
 		// 1.33.0: the optional button on the photo.
 		$photo_btn    = ( $is_look || $has_pins ) ? RAPM_Looks::sanitize_photo_btn( $m( '_rapm_photo_btn', array() ) ) : array();
+		// 1.39.0: the headline and smaller line on the photo (text="overlay"), on unless turned off.
+		$photo_words  = 'off' !== $m( '_rapm_photo_words' );
 		// Step numbers. Shop the Look adds "Place the Pieces" as step 2
 		// (1.31.0, from the editor mockup Phil approved on 2026-10-06); every
 		// other type keeps its four steps.
@@ -569,7 +571,7 @@ class RAPM_Upload_Handler {
 				<?php if ( $is_look || $has_pins ) : ?>
 				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['pieces']; ?>" data-step="<?php echo (int) $step['pieces']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
 				<h2 class="rapm-step-heading"><?php echo (int) $step['pieces']; ?>. <?php esc_html_e( 'Place the Pieces', 'rapm' ); ?></h2>
-				<?php self::render_look_pieces( $img_desktop, $dots, $focus, $photo_btn, $has_pins ? $img_mobile : 0, $has_pins, $focus_phone ); ?>
+				<?php self::render_look_pieces( $img_desktop, $dots, $focus, $photo_btn, $has_pins ? $img_mobile : 0, $has_pins, $focus_phone, $photo_words ); ?>
 				<p class="rapm-wizard-next-warning" id="rapm-step-<?php echo (int) $step['pieces']; ?>-warning"></p>
 				<p class="rapm-wizard-nav">
 					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['basics']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
@@ -1720,6 +1722,14 @@ class RAPM_Upload_Handler {
 			}
 		}
 		if ( $is_look ) {
+			// 1.39.0: the headline and smaller line on the photo; saved only when turned off.
+			if ( isset( $_POST['rapm_photo_words'] ) ) {
+				if ( 'off' === $_POST['rapm_photo_words'] ) {
+					update_post_meta( $asset_id, '_rapm_photo_words', 'off' );
+				} else {
+					delete_post_meta( $asset_id, '_rapm_photo_words' );
+				}
+			}
 			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
 			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
 			update_post_meta( $asset_id, '_rapm_focus_phone', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus_phone'] ) ) : '' ) );
@@ -1905,7 +1915,7 @@ class RAPM_Upload_Handler {
 	 * assets/js/rapm-look-editor.js runs all of it, and the look's photo
 	 * checks and preview, from the settings printed here.
 	 */
-	private static function render_look_pieces( $image_id, $dots, $focus, $photo_btn = array(), $mobile_id = 0, $banner = false, $focus_phone = '' ) {
+	private static function render_look_pieces( $image_id, $dots, $focus, $photo_btn = array(), $mobile_id = 0, $banner = false, $focus_phone = '', $photo_words = true ) {
 		$focus_phone = '' !== $focus_phone ? $focus_phone : $focus;
 		?>
 		<?php if ( $banner ) : ?>
@@ -1934,6 +1944,14 @@ class RAPM_Upload_Handler {
 				<p class="description"><?php esc_html_e( 'Each dot\'s number matches its row in "Dots and products." Shoppers see the same numbers on the product cards.', 'rapm' ); ?> <button type="button" class="button-link" id="rapm-pieces-add"><?php esc_html_e( 'Add a dot in the middle', 'rapm' ); ?></button> <?php esc_html_e( 'and move it with the arrow keys.', 'rapm' ); ?></p>
 			</div>
 			<div class="rapm-pieces-side">
+				<?php if ( ! $banner ) : ?>
+				<div class="rapm-pieces-btn-box">
+					<?php // 1.39.0. The hidden "off" is sent when the box is unticked; a ticked box's "on" comes after it and wins. ?>
+					<input type="hidden" name="rapm_photo_words" value="off" />
+					<label><input type="checkbox" id="rapm-photo-words-on" name="rapm_photo_words" value="on" <?php checked( $photo_words ); ?> /> <?php esc_html_e( 'Show the headline and smaller line on the photo', 'rapm' ); ?></label>
+					<p class="description"><?php esc_html_e( 'Turn this off when the picture already has its own words on it, like an ad. It only matters where the page puts the words on the photo. Phones still show them under the photo.', 'rapm' ); ?></p>
+				</div>
+				<?php endif; ?>
 				<div class="rapm-pieces-btn-box">
 					<label><input type="checkbox" id="rapm-photo-btn-on" <?php checked( ! empty( $photo_btn ) ); ?> /> <?php esc_html_e( 'Show a "Shop now" button on the photo', 'rapm' ); ?></label>
 					<p class="description"><?php esc_html_e( 'Drag the button on the photo to where the design has room for it. It uses this look\'s Button Text (or "Shop now") and goes to the same place as its Link, step 4. Shoppers can use either button.', 'rapm' ); ?></p>
