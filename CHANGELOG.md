@@ -30,6 +30,18 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Edit form (real render, no PHP warnings or script errors):**
     - A new look's box is ticked and sends `off,on`, so PHP reads `on`.
     - A look saved as `off` shows unticked and sends `off`.
+- **Confirmed on staging (real WordPress with WoodMart, 2026-10-12):**
+  - Updated from the staging repo, 1.37.1 to 1.39.0 ("Updated!").
+  - The new draft page "Shop the Look test (1.39.0)" has `[rapm_looks placement="home-page-looks" width="full" height="screen" text="overlay" autoplay="no"]`, and its CSS and JS are `?ver=1.39.0`.
+  - **At 1440px** (in a 1440px frame, since the Chrome window stops at 718px):
+    - Hancock, Americana Modern and Breckenridge each have the headline and smaller line on the photo.
+    - Below, each has its button + cards (3, 3 and 5).
+  - **At 718px:** the phone layout, with the words, one button and the cards under the photo.
+  - **The switch on Breckenridge:**
+    - Unticked and saved: still unticked after the reload, with its 5 dots and headline kept.
+    - The page then showed that look's photo with no words or shade, and below, "Shop all Bedroom" + 5 cards. The other two were unchanged.
+    - It was ticked and saved again, so the staging look is back as it was.
+  - **Left on staging:** the draft test page.
 
 ---
 
