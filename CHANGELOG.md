@@ -37,6 +37,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - The photo has only the headline and smaller line.
     - Under it, the words sit above "SHOP ALL LIVING ROOM", beside the 3 cards.
   - **Then I cleared the words and saved,** so the staging look is back as it was.
+- **Production (2026-10-12):** pushed to origin with tag v1.40.0 after Phil's go-ahead. Gates updated from its Plugins page, 1.39.0 to 1.40.0 ("Updated!").
+  - **/home-2/ logged out at 1440px,** with `?ver=1.40.0`, all five looks are as they were under 1.39.0. None has words above the button yet.
 
 ---
 
