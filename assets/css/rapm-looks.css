@@ -153,6 +153,9 @@
 .rapm-look-eyebrow span { opacity: 0.75; color: currentColor; }
 .rapm-looks .rapm-look-title { margin: 0 0 8px; font-size: clamp(24px, 2.4vw, 32px); line-height: 1.15; }
 .rapm-look-blurb { margin: 0 0 14px; max-width: 60ch; }
+/* 1.40.0: optional words above the button, under the photo. pre-line keeps
+   the line breaks typed in the form. */
+.rapm-look-note { margin: 0 0 14px; max-width: 60ch; font-size: 15px; line-height: 1.5; white-space: pre-line; }
 .rapm-looks .rapm-look-btn {
 	display: inline-flex; align-items: center; min-height: 44px; padding: 0 22px;
 	background: var(--rapm-looks-accent); color: #fff; text-decoration: none;

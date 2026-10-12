@@ -4,6 +4,35 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.40.0
+
+**New: optional "Words above the button" for Shop the Look, under the photo beside the products.** Phil, on Gates (2026-10-12): "I want the option to add different complimentary text above this bottom next to the shop", meaning the button under the photo, beside the piece cards.
+- **The field:**
+  - It's in Your Message, after Button Text, on looks only: a 2-row box, up to 300 characters, saved as `_rapm_shelf_text`.
+  - It's plain text, and the line breaks you type are kept (`white-space: pre-line`).
+  - The note under it suggests uses (an offer, delivery, financing) and says it's never on the photo.
+- **Where it shows:**
+  - **`text="overlay"`, computers and tablets:** in the left column under the photo, above the button and beside the cards, on looks with pieces. With no Button Text, the words show on their own.
+  - **Phones and `text="below"`:** after the smaller line, above the button.
+  - **Never on the photo,** including a look with no pieces, whose button sits there.
+- **Live Preview** in the form shows the words above the button and updates as you type.
+- **Add to cart moves to 1.41.0.**
+- **How it was checked** (php-wasm 0.2.0, PHP 8.4.1):
+  - **PHP:** all files parse.
+  - **`text="overlay"` at 1440px, real render with no warnings:**
+    - **A look with pieces and two lines of words:** both lines show above "Shop all Living Room", beside 2 cards. The photo has only the headline and smaller line.
+    - **A look with no pieces:** the words aren't on the photo, which shows the headline, smaller line and button.
+    - **A look with pieces, words and no button:** just the words beside the cards.
+    - **Every other look:** unchanged.
+  - **At 375px:** the order under the photo is headline, smaller line, the new words, then the button, and there's no sideways scroll.
+  - **`text="below"`:** the same order. Looks without the new words are unchanged.
+  - **Form:**
+    - The saved words show in the box and in the preview, and typing updates the preview.
+    - Emptying the box hides the preview line.
+    - A two-line value is sent with its line break.
+
+---
+
 ## 1.39.0
 
 **New: a per-look switch for the words on the photo, for an ad-style picture that already has them.** Phil, on Gates (2026-10-12), about Harvest Sale's banner, which already shows "The Harvest Living Room" and its description: "Is there a way to toggle that on/off as well? Maybe that's the best course in case an ad image has that kind of text?"

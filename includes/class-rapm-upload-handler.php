@@ -622,6 +622,15 @@ class RAPM_Upload_Handler {
 							<th><label for="rapm_cta_text"><?php esc_html_e( 'Button Text', 'rapm' ); ?></label></th>
 							<td><input type="text" id="rapm_cta_text" name="rapm_cta_text" value="<?php echo esc_attr( $m( '_rapm_cta_text' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Shop all Living Room', 'rapm' ) : esc_attr__( 'e.g. Shop Now', 'rapm' ); ?>" /></td>
 						</tr>
+						<?php if ( $is_look ) : // 1.40.0. ?>
+						<tr>
+							<th><label for="rapm_shelf_text"><?php esc_html_e( 'Words above the button (optional)', 'rapm' ); ?></label></th>
+							<td>
+								<textarea id="rapm_shelf_text" name="rapm_shelf_text" class="large-text" rows="2" maxlength="300" placeholder="<?php esc_attr_e( 'e.g. Every piece is in our Grants Pass showroom. Ask about free delivery.', 'rapm' ); ?>"><?php echo esc_textarea( $m( '_rapm_shelf_text' ) ); ?></textarea>
+								<p class="description"><?php esc_html_e( 'Shows under the photo, right above the button and beside the products, so it can add something the headline doesn\'t, like an offer, delivery or financing. Never on the photo. Leave it blank for just the button.', 'rapm' ); ?></p>
+							</td>
+						</tr>
+						<?php endif; ?>
 						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
 						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
@@ -1655,6 +1664,7 @@ class RAPM_Upload_Handler {
 			'rapm_headline'     => 'sanitize_text_field',
 			'rapm_subhead'      => 'sanitize_text_field',
 			'rapm_cta_text'     => 'sanitize_text_field',
+			'rapm_shelf_text'   => 'sanitize_textarea_field', // 1.40.0, looks only (the only form that sends it).
 			'rapm_text_align'   => array( __CLASS__, 'sanitize_text_align' ),
 			'rapm_text_color'   => array( __CLASS__, 'sanitize_text_color' ),
 			'rapm_text_style'   => array( __CLASS__, 'sanitize_text_style' ),
@@ -2143,6 +2153,7 @@ class RAPM_Upload_Handler {
 							<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <span id="rapm-look-pv-tab2"></span></span></p>
 							<h2 class="rapm-look-title" id="rapm-look-pv-title"></h2>
 							<p class="rapm-look-blurb" id="rapm-look-pv-blurb"></p>
+							<p class="rapm-look-note" id="rapm-look-pv-note"></p>
 							<span class="rapm-look-btn" id="rapm-look-pv-btn"></span>
 						</div>
 						<ol class="rapm-look-cards" id="rapm-look-pv-cards"></ol>

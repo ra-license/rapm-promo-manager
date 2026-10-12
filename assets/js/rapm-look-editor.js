@@ -914,7 +914,7 @@
 		var tab = $( 'rapm_tab_label' ) ? $( 'rapm_tab_label' ).value.trim() : '';
 		$( 'rapm-look-pv-tab' ).textContent  = tab || T.tabEmpty;
 		$( 'rapm-look-pv-tab2' ).textContent = tab;
-		[ [ 'title', 'rapm_headline' ], [ 'blurb', 'rapm_subhead' ], [ 'btn', 'rapm_cta_text' ] ].forEach( function ( pair ) {
+		[ [ 'title', 'rapm_headline' ], [ 'blurb', 'rapm_subhead' ], [ 'note', 'rapm_shelf_text' ], [ 'btn', 'rapm_cta_text' ] ].forEach( function ( pair ) {
 			var out = $( 'rapm-look-pv-' + pair[0] ), field = $( pair[1] ), v = field ? field.value : '';
 			out.textContent = v;
 			out.style.display = v ? '' : 'none';
@@ -991,7 +991,7 @@
 			$( 'rapm-look-pv-desktop' ).setAttribute( 'aria-pressed', 'false' );
 			renderPreview();
 		} );
-		[ 'rapm_tab_label', 'rapm_headline', 'rapm_subhead', 'rapm_cta_text' ].forEach( function ( id ) {
+		[ 'rapm_tab_label', 'rapm_headline', 'rapm_subhead', 'rapm_shelf_text', 'rapm_cta_text' ].forEach( function ( id ) {
 			if ( $( id ) ) { $( id ).addEventListener( 'input', words ); }
 		} );
 		if ( window.ResizeObserver ) { new window.ResizeObserver( function () { renderPreview(); } ).observe( $( 'rapm-look-pv-stage' ) ); }

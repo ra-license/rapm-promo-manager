@@ -55,6 +55,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * still gets its button there, on its own. Phones and text="below" ignore
  * it: their words are under the photo, not on it.
  *
+ * 1.40.0 adds optional "Words above the button" (_rapm_shelf_text), per
+ * Phil on Gates: different, complementary text right above the button
+ * under the photo, beside the piece cards (an offer, delivery, financing).
+ * It's never on the photo: with text="overlay" it goes in the .is-desk
+ * block with the button (looks with pieces), and phones and text="below"
+ * show it after the smaller line, above the button.
+ *
  * Like every display here, all looks are printed with their dates and
  * rapm-schedule.js's watch() decides in the visitor's browser which are
  * live, so it stays right behind a full-page cache. The photos and the
@@ -281,7 +288,7 @@ class RAPM_Looks {
 						?>
 						<?php if ( $layout && $layout['words'] ) : ?>
 							<div class="rapm-look-overlay<?php echo $layout['with_words'] ? '' : ' is-btn-only'; ?>">
-								<?php self::intro( $look, '', $layout['btn_on_photo'], $layout['with_words'] ); ?>
+								<?php self::intro( $look, '', $layout['btn_on_photo'], $layout['with_words'], false ); ?>
 							</div>
 						<?php endif; ?>
 						<?php if ( $look['photo_btn'] && $look['url'] ) : ?>
@@ -308,12 +315,17 @@ class RAPM_Looks {
 			<div class="rapm-looks-shelf" aria-live="off">
 				<?php foreach ( $looks as $look ) : ?>
 					<?php $layout = $overlay ? self::overlay_layout( $look ) : null; ?>
-					<div class="rapm-look-text<?php echo $look['pieces'] && ( ! $layout || $layout['btn_below'] ) ? ' has-cards' : ''; ?>" id="<?php echo esc_attr( $instance_id . '-text-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" hidden>
+					<div class="rapm-look-text<?php echo $look['pieces'] && ( ! $layout || $layout['btn_below'] || $layout['note_below'] ) ? ' has-cards' : ''; ?>" id="<?php echo esc_attr( $instance_id . '-text-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" hidden>
 						<?php if ( $layout ) : ?>
 							<?php self::intro( $look, 'is-phone' ); // Phones: the whole copy, under their small photo. ?>
-							<?php if ( $layout['btn_below'] ) : ?>
+							<?php if ( $layout['btn_below'] || $layout['note_below'] ) : ?>
 								<div class="rapm-look-intro is-desk">
-									<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
+									<?php if ( $layout['note_below'] ) : ?>
+										<p class="rapm-look-note"><?php echo esc_html( $look['note'] ); ?></p>
+									<?php endif; ?>
+									<?php if ( $layout['btn_below'] ) : ?>
+										<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
+									<?php endif; ?>
 								</div>
 							<?php endif; ?>
 						<?php else : ?>
@@ -389,14 +401,17 @@ class RAPM_Looks {
 			'with_words'   => $words,
 			'btn_on_photo' => $btn_on_photo,
 			'btn_below'    => $has_btn && $has_pieces,
+			// 1.40.0: the words above the button go with it, under the photo.
+			'note_below'   => '' !== $look['note'] && $has_pieces,
 		);
 	}
 
 	/**
 	 * The look's eyebrow, headline, smaller line and button: under the photo, or on it with text="overlay" (1.32.0).
 	 * 1.38.0: $with_btn false leaves the button out. 1.39.0: $with_words false leaves out the eyebrow, headline and smaller line.
+	 * 1.40.0: the look's words above the button (_rapm_shelf_text), unless $with_note is false (on the photo).
 	 */
-	private static function intro( $look, $extra_class = '', $with_btn = true, $with_words = true ) {
+	private static function intro( $look, $extra_class = '', $with_btn = true, $with_words = true, $with_note = true ) {
 		?>
 		<div class="rapm-look-intro<?php echo $extra_class ? ' ' . esc_attr( $extra_class ) : ''; ?>">
 			<?php if ( $with_words ) : ?>
@@ -407,6 +422,9 @@ class RAPM_Looks {
 			<?php if ( $look['subhead'] ) : ?>
 				<p class="rapm-look-blurb"><?php echo esc_html( $look['subhead'] ); ?></p>
 			<?php endif; ?>
+			<?php endif; ?>
+			<?php if ( $with_note && '' !== $look['note'] ) : ?>
+				<p class="rapm-look-note"><?php echo esc_html( $look['note'] ); ?></p>
 			<?php endif; ?>
 			<?php if ( $with_btn && $look['cta'] && $look['url'] ) : ?>
 				<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
@@ -455,6 +473,8 @@ class RAPM_Looks {
 			'photo_btn' => self::sanitize_photo_btn( get_post_meta( $id, '_rapm_photo_btn', true ) ),
 			// 1.39.0: off for a picture that already has its words on it.
 			'photo_words' => 'off' !== (string) get_post_meta( $id, '_rapm_photo_words', true ),
+			// 1.40.0: optional words above the button under the photo, never on it.
+			'note'     => trim( (string) get_post_meta( $id, '_rapm_shelf_text', true ) ),
 			'url'      => RAPM_Destination::resolve_url(
 				get_post_meta( $id, '_rapm_destination_type', true ),
 				get_post_meta( $id, '_rapm_destination_value', true )
