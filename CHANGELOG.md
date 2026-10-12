@@ -42,6 +42,14 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - The page then showed that look's photo with no words or shade, and below, "Shop all Bedroom" + 5 cards. The other two were unchanged.
     - It was ticked and saved again, so the staging look is back as it was.
   - **Left on staging:** the draft test page.
+- **Production (2026-10-12):** pushed to origin after Phil's go-ahead, with tags v1.38.0 and v1.39.0. Phil updated Gates to 1.39.0 himself; the permission check blocked doing it from here.
+  - **/home-2/:** the shortcode is `text="overlay"` again.
+  - **Harvest Sale:** its banner has its own words, so "Show the headline and smaller line on the photo" is unticked.
+  - **After clearing Used CSS and the CDN,** logged-out at 1440px:
+    - **Harvest Sale:** a clean photo with its photo button, and below, the button + 3 cards.
+    - **Contemporary:** words and its photo button on the photo, and below, the button + 3 cards.
+    - **Delightful Dining, Craftsman and Farmhouse:** words on the photo, and below, the button + 1, 5 and 1 cards.
+  - **At 375px:** each look has its words, one button and its cards under the photo, with no sideways scroll.
 
 ---
 
