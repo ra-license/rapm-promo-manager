@@ -30,6 +30,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - The saved words show in the box and in the preview, and typing updates the preview.
     - Emptying the box hides the preview line.
     - A two-line value is sent with its line break.
+- **Confirmed on staging (real WordPress with WoodMart, 2026-10-12):**
+  - Updated from the staging repo, 1.39.0 to 1.40.0 ("Updated!").
+  - **On Hancock living room:** I typed "Every piece is in our showroom. Ask about free local delivery." and the form's Live Preview updated as I typed. After saving, the words were kept and so were the 3 dots.
+  - **"Shop the Look test (1.39.0)" at 1920px, with `?ver=1.40.0`:**
+    - The photo has only the headline and smaller line.
+    - Under it, the words sit above "SHOP ALL LIVING ROOM", beside the 3 cards.
+  - **Then I cleared the words and saved,** so the staging look is back as it was.
 
 ---
 
