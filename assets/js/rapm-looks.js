@@ -31,8 +31,9 @@
  * where the section starts on the page and how tall the tab bar is, so the
  * photo plus the bar end at the bottom of the screen. With text="overlay"
  * the words are on each photo for computers and tablets, and the space
- * below holds only the piece cards (class is-bare hides it on those
- * screens for a look without any). Phones show a copy of the words below.
+ * below holds the piece cards with the look's button beside them (1.38.0;
+ * class is-bare hides it on those screens for a look without cards).
+ * Phones show a copy of the words below.
  */
 ( function ( window ) {
 	'use strict';

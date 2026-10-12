@@ -38,6 +38,16 @@ if ( ! defined( 'ABSPATH' ) ) {
  * so it can sit on an ad-style photo wherever the design has room, as well
  * as, or instead of, the button with the words.
  *
+ * 1.38.0 changes text="overlay", per Phil on Gates (2026-10-12): the
+ * headline and smaller line are on the photo, and the button goes under
+ * the photo beside the piece cards, so every look with pieces has the same
+ * "button + cards" row below. A look with no pieces has nothing below, so
+ * its button goes on the photo with the words. The hand-placed photo
+ * button stays an optional extra; with it on, no second button is added
+ * to the photo. (1.35.0 had moved a look's words below when it had a
+ * photo button; they now stay on the photo.) Phones are unchanged: the
+ * whole copy and the cards under their small photo.
+ *
  * Like every display here, all looks are printed with their dates and
  * rapm-schedule.js's watch() decides in the visitor's browser which are
  * live, so it stays right behind a full-page cache. The photos and the
@@ -257,14 +267,14 @@ class RAPM_Looks {
 						);
 						?>
 						<?php
-						// 1.35.0: a look with its own button on the photo keeps its
-						// words and button below, next to its products, even with
-						// text="overlay", so the photo doesn't get two buttons.
-						$look_overlay = $overlay && ! $look['photo_btn'];
+						// 1.38.0: with text="overlay" the headline and smaller line are
+						// always on the photo. The button goes below with the piece
+						// cards, or on the photo when there are no cards (overlay_layout()).
+						$layout = $overlay ? self::overlay_layout( $look ) : null;
 						?>
-						<?php if ( $look_overlay ) : ?>
+						<?php if ( $layout && $layout['words'] ) : ?>
 							<div class="rapm-look-overlay">
-								<?php self::intro( $look ); ?>
+								<?php self::intro( $look, '', $layout['btn_on_photo'] ); ?>
 							</div>
 						<?php endif; ?>
 						<?php if ( $look['photo_btn'] && $look['url'] ) : ?>
@@ -290,9 +300,18 @@ class RAPM_Looks {
 			</div>
 			<div class="rapm-looks-shelf" aria-live="off">
 				<?php foreach ( $looks as $look ) : ?>
-					<?php $look_overlay = $overlay && ! $look['photo_btn']; ?>
-					<div class="rapm-look-text<?php echo $look['pieces'] && ! $look_overlay ? ' has-cards' : ''; ?>" id="<?php echo esc_attr( $instance_id . '-text-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" hidden>
-						<?php self::intro( $look, $look_overlay ? 'is-phone' : '' ); // With overlay, the phones' copy. ?>
+					<?php $layout = $overlay ? self::overlay_layout( $look ) : null; ?>
+					<div class="rapm-look-text<?php echo $look['pieces'] && ( ! $layout || $layout['btn_below'] ) ? ' has-cards' : ''; ?>" id="<?php echo esc_attr( $instance_id . '-text-' . $look['id'] ); ?>" data-rapm-key="<?php echo esc_attr( $look['id'] ); ?>" hidden>
+						<?php if ( $layout ) : ?>
+							<?php self::intro( $look, 'is-phone' ); // Phones: the whole copy, under their small photo. ?>
+							<?php if ( $layout['btn_below'] ) : ?>
+								<div class="rapm-look-intro is-desk">
+									<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
+								</div>
+							<?php endif; ?>
+						<?php else : ?>
+							<?php self::intro( $look ); ?>
+						<?php endif; ?>
 						<?php if ( $look['pieces'] ) : ?>
 							<ol class="rapm-look-cards">
 								<?php foreach ( $look['pieces'] as $k => $piece ) : ?>
@@ -343,8 +362,27 @@ class RAPM_Looks {
 		return ob_get_clean();
 	}
 
-	/** The look's eyebrow, headline, smaller line and button: under the photo, or on it with text="overlay" (1.32.0). */
-	private static function intro( $look, $extra_class = '' ) {
+	/**
+	 * 1.38.0: with text="overlay", what goes where for one look. The
+	 * headline and smaller line are always on the photo. The button goes
+	 * under the photo, beside the piece cards, when the look has pieces. A
+	 * look with no pieces has nothing under the photo, so its button goes
+	 * on the photo with the words, unless the look's own hand-placed photo
+	 * button (1.33.0) is on, so the photo never gets two buttons.
+	 */
+	private static function overlay_layout( $look ) {
+		$has_btn      = $look['cta'] && $look['url'];
+		$has_pieces   = ! empty( $look['pieces'] );
+		$btn_on_photo = $has_btn && ! $has_pieces && ! $look['photo_btn'];
+		return array(
+			'words'        => (bool) ( $look['headline'] || $look['subhead'] || $btn_on_photo ),
+			'btn_on_photo' => $btn_on_photo,
+			'btn_below'    => $has_btn && $has_pieces,
+		);
+	}
+
+	/** The look's eyebrow, headline, smaller line and button: under the photo, or on it with text="overlay" (1.32.0). 1.38.0: $with_btn false leaves the button out. */
+	private static function intro( $look, $extra_class = '', $with_btn = true ) {
 		?>
 		<div class="rapm-look-intro<?php echo $extra_class ? ' ' . esc_attr( $extra_class ) : ''; ?>">
 			<p class="rapm-look-eyebrow"><?php esc_html_e( 'Shop the look', 'rapm' ); ?> <span>&middot; <?php echo esc_html( $look['tab'] ); ?></span></p>
@@ -354,7 +392,7 @@ class RAPM_Looks {
 			<?php if ( $look['subhead'] ) : ?>
 				<p class="rapm-look-blurb"><?php echo esc_html( $look['subhead'] ); ?></p>
 			<?php endif; ?>
-			<?php if ( $look['cta'] && $look['url'] ) : ?>
+			<?php if ( $with_btn && $look['cta'] && $look['url'] ) : ?>
 				<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"><?php echo esc_html( $look['cta'] ); ?></a>
 			<?php endif; ?>
 		</div>

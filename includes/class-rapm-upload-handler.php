@@ -582,7 +582,7 @@ class RAPM_Upload_Handler {
 				<h2 class="rapm-step-heading"><?php echo (int) $step['message']; ?>. <?php esc_html_e( 'Your Message', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Words Under the Tabs', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'These show under the bar of tabs, below the photo, in your website\'s own fonts and colors. Nothing is printed on the photo.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'These show in your website\'s own fonts and colors, under the bar of tabs. If the page\'s Shop the Look spot puts the words on the photo, the headline and smaller line go on the photo and the button goes under it, beside the products. Nothing is printed into the picture file.', 'rapm' ); ?></p>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Sale Text', 'rapm' ); ?></h2>
 				<table class="form-table">

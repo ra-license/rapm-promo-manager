@@ -4,6 +4,38 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.38.0
+
+**Change: Shop the Look with `text="overlay"` keeps the headline and smaller line on the photo and puts the button under it, beside the products.** Phil, on Gates' /home-2/ (2026-10-12): "I want the Header text and sub text to be on the image. I wanted the button to be optional on the image. I wanted this section to be on every slide by default if it has products." He picked "button + products" under the photo (no repeated words) and "button onto the photo" for a look with no products.
+- **Before:**
+  - **Overlay put everything on the photo.** The headline, smaller line and button all sat on the photo, with only the piece cards under it.
+  - **A photo button flipped that (1.35.0).** A look with its own "Button on the photo" got all of its words and button below instead. So on Gates, Harvest Sale (photo button on) had its text under the photo while the other looks had theirs on it.
+- **Now, with `text="overlay"`, on computers and tablets:**
+  - **The headline and smaller line are always on the photo,** photo button or not.
+  - **A look with pieces:** the button goes under the photo, in the left column beside the piece cards (`.rapm-look-intro.is-desk`). Every look with products now has the same row below.
+  - **A look with no pieces:** nothing is under the photo (`is-bare`), so the button goes on the photo with the words.
+  - **The photo button is still optional.** It's hand-placed and turned on per look, as before. When it's on, no second button is added to the photo.
+  - **A look with no headline and no smaller line** (and no button that belongs on the photo) gets no shade on the photo.
+- **Not changed:**
+  - **Phones:** the words, button and cards are still under the 4:3 photo, with one button.
+  - **`text="below"` (the default):** unchanged.
+- **Form:** the "Words Under the Tabs" note now explains where the words go when a spot puts them on the photo.
+- **Code:** `RAPM_Looks::overlay_layout()` decides what goes where, and `intro()` takes `$with_btn`. rapm-looks.css hides `.is-desk` on phones. rapm-looks.js is unchanged: its `is-bare` check already counts the new below-photo button.
+- **Add to cart moves to 1.39.0.**
+- **How it was checked** (php-wasm 0.2.0, PHP 8.4.1, as in 1.37.1):
+  - **PHP:** all 27 include files parse.
+  - **`[rapm_looks … text="overlay"]`,** real render with six test looks and no PHP warnings:
+    - **Pieces + photo button:** words on the photo with no button there, the photo button showing, and below, the button + 2 cards.
+    - **Pieces:** the same, without the photo button.
+    - **No pieces:** the words and button on the photo, with nothing below.
+    - **Headline only, no pieces:** the headline and button on the photo.
+    - **No pieces + photo button:** the words and the photo button only.
+    - **Pieces, no words:** no shade on the photo, and below, the button + cards.
+  - **At 375px:** no words on the photo, and under it the full copy with one button (plus cards when there are pieces). No sideways scroll.
+  - **`text="below"`:** the same as 1.37.1 for all six looks.
+
+---
+
 ## 1.37.1
 
 **Fix: rows that scroll sideways now show dots for where you are.** Phil, after seeing Quick links on phones: "Anything that scrolls as a carousel we need a standing rule to have the nav arrows or dots to indicate options." Two rows broke that rule:

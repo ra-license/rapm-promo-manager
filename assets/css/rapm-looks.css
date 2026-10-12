@@ -202,6 +202,11 @@
 .rapm-look-overlay .rapm-look-blurb { color: #fff; font-size: 17px; }
 .rapm-looks .rapm-look-overlay .rapm-look-btn { text-shadow: none; }
 .rapm-looks.is-overlay .rapm-looks-shelf { padding-top: 18px; }
+/* 1.38.0: with text="overlay", the look's button sits under the photo
+   beside the piece cards (.is-desk); phones show the whole copy instead. */
+@media (max-width: 767px) {
+	.rapm-looks .rapm-look-intro.is-desk { display: none; }
+}
 @media (min-width: 768px) {
 	.rapm-looks .rapm-look-intro.is-phone, .rapm-looks.is-bare .rapm-looks-shelf { display: none; }
 }
