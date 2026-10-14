@@ -4,6 +4,55 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.42.0
+
+**New: "Update now" from the Plugin Monitor, one website at a time.** Phil: "I just want a way to click update now for specific websites to push an update from the plugin monitor."
+- **Why it was needed:** each site already updates itself. But the update checker looks at GitHub only every 12 hours (plugin-update-checker's default), and WordPress installs automatic updates only about twice a day. So a release reached Kemper hours after it was pushed, and needed a click on the site. The Plugin Monitor (help.ramarketing.com) only received reports and couldn't ask a site to do anything.
+- **How it works (Phil's pick "A", polling):**
+  - **Polling:** every 15 minutes the site sends a short signed "poll" to the monitor (`/wp-json/ra-monitor/v1/poll`, next to the check-in address). It uses the same HMAC as the check-in.
+  - **The answer:** when someone has clicked "Update now" for this site's Promo Manager, the answer says so.
+  - **The update:** the site checks GitHub on its own channel with its own token, the same as "Check for updates". It then installs with WordPress's own `WP_Automatic_Updater::update()`, which puts the old version back if the new one causes a fatal error (WordPress 6.6+).
+  - **Reporting:** the result goes back at a poll a minute later.
+- **Why polling rather than the monitor calling sites:**
+  - Sites already reach help.ramarketing.com, so this works behind Cloudflare and other firewalls.
+  - It adds no new way into client sites.
+- **Limits:**
+  - **Only "update":** the monitor's only instruction is "update this plugin." It never sends files or links, so the most it can do is install a release that's already in R&A's GitHub repo for that site's channel.
+  - **Only known plugins:** a site acts only for R&A plugins registered with it, only on instructions it hasn't handled, and at most 10 per answer.
+  - **No overlap with WordPress:** updates take WordPress's own `auto_updater` lock, so they never overlap WordPress's own updates.
+  - **Updates off:** a site with automatic updates turned off (`DISALLOW_FILE_MODS`, `AUTOMATIC_UPDATER_DISABLED`) says so, and the button is greyed out.
+  - **Off switch:** turn it off on a site with `define( 'RA_MONITOR_REMOTE_UPDATES', false );`. `RA_MONITOR_DISABLE` turns off everything.
+- **Built as its own small class:** `lib/ra-monitor-client/ra-monitor-updates.php`, `RA_Monitor_Updates` 1.0.0, registered in `RAPM_Updater::init()`. It's separate from `RA_Monitor_Client`, because the first copy of that class to load wins. On a site where another R&A plugin with the older check-in client loads first, "Update now" still works. Room Planner, Woo Native Dimensions and Space Viewer can bundle the same file later.
+- **Needs RA Plugin Monitor 1.3.0 at help.ramarketing.com** (in `ra-plugin-monitor/`, outside this repo), which adds:
+  - The poll address.
+  - A requests table.
+  - On each row: "Update now", "Cancel request" (before the site picks it up) and "Updating…".
+  - Status lines like "Updated from 1.41.1 to 1.42.0, 2 minutes ago", or the failure reason.
+  - A "Recent update requests" history with who asked.
+  - A staging testing button, "Check this site for update requests now".
+  - Requests nobody picks up expire after 7 days.
+  - Until the monitor is updated, polls get a harmless 404.
+- **How it was checked:**
+  - **PHP:** the in-browser PHP 8.4 check found no issues in the new client, the updater or the monitor.
+  - **Real WordPress test (WordPress Playground, WordPress 7.1.3, PHP 8.3, SQLite):**
+    - **Setup:** RA Plugin Monitor 1.3.0 and a test plugin with the new client, registered with a stand-in update checker that offers a local zip as "GitHub".
+    - **The routing stub:** the only stand-in was a test mu-plugin that hands the site's calls to the monitor's REST server, since Playground can't call itself. Headers and body are unchanged, so signatures were really checked.
+    - **First poll:** answered 200. It created the row with "Update now" available, and the 15-minute schedule (`ra_monitor_quarter_hour`) was set.
+    - **Dashboard:** the row showed "Update now" and "Last checked for requests 32 seconds ago". The confirm text named the plugin, site and channel.
+    - **Clicking Update now (the real form and nonce):** saved a pending request by the admin, and showed "Update requested 1 second ago…" with "Cancel request".
+    - **The scheduled poll:** picked it up. WordPress's updater installed 1.0.1, the plugin stayed active and the lock was released. The next poll reported "done", the monitor acknowledged it, and the site cleared it.
+    - **After the update:** the row showed Version 1.0.1 and "Updated from 1.0.0 to 1.0.1, 1 second ago." The history listed it.
+    - **Nothing newer:** "Already the newest version on GitHub (1.0.1)."
+    - **GitHub unreachable:** failed with "Couldn't reach GitHub: GitHub said: 401 Bad credentials."
+    - **Cancelled before pickup:** never sent to the site.
+    - **A broken release file:** failed with WordPress's own reason ("Download failed. A valid URL was not provided."). The plugin stayed on its version and active, with no maintenance file left behind. This test first showed that WordPress returns `null`, not an error, when a download fails; it was reported as "skipped" until fixed.
+    - **Updates turned off on the site:** the button was disabled, with the reason.
+    - **The testing button (an admin request):** handed the update to the scheduler instead of running it in the page.
+    - **Forged requests:** a bad signature got 401 `bad_signature`, and a correctly signed request 2 hours old got 401 `stale`. Another site reporting a result for this site's request was ignored.
+    - **Final run:** a good 1.0.2 "release" installed and reported "done".
+  - **Not tested in Playground:** WordPress's own restore of the old version after a fatal error. It relies on WordPress calling itself over HTTP, which Playground can't do.
+- **Not yet checked:** a real site polling help.ramarketing.com and updating from GitHub. That needs Plugin Monitor 1.3.0 installed there first.
+
 ## 1.41.1
 
 **Fix: phone pictures with words in them are no longer cut off.** Found on Kemper's live homepage, from Phil's iPhone screenshot. The Candleberry sale graphic lost the top of "Candleberry" and the bottom of the candle jars on a real iPhone, but looked whole in Chrome's iPhone 16 view.

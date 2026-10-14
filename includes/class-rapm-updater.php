@@ -96,6 +96,22 @@ class RAPM_Updater {
 				'channel'   => self::channel(),
 			)
 		);
+
+		// 1.42.0: "Update now" from the Plugin Monitor. This site asks the
+		// monitor every 15 minutes whether there's anything for it and, when
+		// asked, installs the newest release on its own channel with
+		// WordPress's own automatic updater. The monitor never sends files,
+		// only "update". Turn off per site with
+		// define( 'RA_MONITOR_REMOTE_UPDATES', false );
+		require_once RAPM_DIR . 'lib/ra-monitor-client/ra-monitor-updates.php';
+		RA_Monitor_Updates::register(
+			array(
+				'file'    => $plugin_file,
+				'slug'    => 'rapm-promo-manager',
+				'checker' => $checker,
+				'channel' => self::channel(),
+			)
+		);
 	}
 
 	public static function sanitize_channel( $value ) {
