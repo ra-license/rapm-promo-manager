@@ -36,7 +36,19 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - **1440×900:** all slides at 1440×450, cover, no blur layer.
     - **Feature banner:** the rule is `padding-top: 37.037%`, the full 1080×400, so it doesn't change.
     - **Errors:** no PHP warnings or script errors.
-- **Not yet checked:** a real iPhone on staging, then Kemper.
+- **Confirmed on staging (real WordPress, 2026-10-14):**
+  - **Update:** after updating only RA Promo Manager, 1.41.0 to 1.41.1 ("Updated!", still active). The first "Check for updates" said up to date. With the branch set to `main`, the updater uses the newest **tag**, and the staging repo's newest was still v1.41.0. Pushing the `v1.41.1` tag to staging fixed it. A staging release needs its tag too.
+  - **On /home-2/:** both carousels run 1.41.1 and start (hero 591px, Feature banner 295px). The rule prints with `padding-top: 177.7778%` and the floor `142.2222%`.
+  - **No visible change, as expected:** staging's four slides all have a headline and button, so none is picture-only. No PHP errors.
+- **Pushed to the production repo (2026-10-14)** with Phil's OK: main and the `v1.41.1` tag. Phil updated Kemper himself.
+- **Confirmed on Kemper (2026-10-14):**
+  - **Live page:** kemperhomefurnishings.com serves 1.41.1, with Cloudflare `MISS` and no stale page. The three sale slides (719539, 719536, 719542) carry `is-picture-only`.
+  - **At 393×697 (iPhone 16 in Safari):**
+    - The banner is 363×523, as before.
+    - The sale graphic shows whole at 294×523 (81%), fitted, with `--rapm-blur` set to the loaded picture.
+    - Before the fix, the same box cut 19% (61px top and bottom).
+  - **The lazy slides:** they stayed unloaded in a hidden browser pane, because browsers defer lazy pictures there. Forcing one to load showed it whole at 294×523, with the blur set to the same file.
+- **Not yet checked:** Phil's own iPhone.
 
 ## 1.41.0
 
