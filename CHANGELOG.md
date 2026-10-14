@@ -4,6 +4,53 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.41.0
+
+**New: a shop bar under every Slider and Feature banner that has product dots.** Phil, on Kemper's /home-2/ with a screenshot of Gates' Shop the Look bar: "I want that shop bar below both types of hero sections if there are dots." Until now, dots on a banner only opened a pop-up card, and nothing listed the products underneath. The design is the Gates screenshot: the button on the left, numbered product cards on the right.
+
+- **What shows:**
+  - Under the carousel: the button of the slide on screen (its Button Text, or "Shop now", going to its Link), and a card for each product it has a dot on.
+  - Each card has the product picture with the dot's number, the name (3 lines at most), the live price (crossed-out regular price when on sale) and stock. It's the same layout as Shop the Look's cards.
+  - The numbers match the dots. A product that's unpublished or deleted loses both its dot and its card, and the rest close up.
+- **When it shows:**
+  - Automatically whenever at least one slide in the carousel has dots. There's no setting.
+  - The bar follows the slider: arrows, dots, swipes and autoplay all switch it to the slide on screen.
+  - A slide without dots shows just its button.
+  - The bar hides while the carousel itself is hidden (no live slides), and when no slide currently in the carousel has products.
+  - It works the same for Sliders (`[rapm_hero]`) and Feature banners (`[rapm_fold_banner]`), with no change to the page.
+- **Nothing jumps:**
+  - Every slide's panel sits in one grid cell. Only the one on screen is visible, but the bar keeps the height of the tallest, so the page below doesn't move when slides change.
+  - A slide that isn't in the carousel right now (not live, or over "show at most") gives its panel no room.
+- **Hover:** a card and its dot light up together, as in Shop the Look, from either side.
+- **Phones:**
+  - The button sits above the cards, and the cards scroll sideways, with the next one peeking in.
+  - Dots under them show where you are (the 1.37.1 rule, using `RAPM_Schedule.scrollDots()`), each a 24px tap target, reset against WoodMart's button styles.
+- **How it's built:**
+  - **PHP:** `RAPM_Hero_Carousel::render_shelf()` prints the bar right after the carousel, with one `.rapm-pins-panel` per slide (`data-rapm-key` = the promotion id, now also on each slide). `pins_for()` gives the slide dots and the bar the same numbered list, looked up once per request.
+  - **JS:** `rapm-pins.js` shows the panel of the active slide (Swiper's `swiper-slide-active`, watched with the existing observer). It fills in the price and stock from the same Store API request as the dot cards.
+  - **CSS:** the bar's styles are in `rapm-pins.css` (`.rapm-pins-shelf`), so Shop the Look's stylesheet isn't needed. Names and the button are weighted above Elementor's kit link colors. The bar uses the brand color (`--rapm-pins-accent`).
+- **Form:** the banners' Place the Pieces step now says the products also show as cards in a bar under the slider. The readme describes the bar.
+- **How it was checked:**
+  - **PHP:** the in-browser PHP 8.4 check found 0 issues in all 28 files. It first caught a broken edit: the new form wording's apostrophe ("this promotion's button") ended the PHP string, which would have broken the Add/Edit form. It's escaped now.
+  - **Test page, real slider code:** the real `RAPM_Hero_Carousel` code was rendered in php-wasm with WordPress stand-ins, Swiper 11 and Kemper's real slide picture and product thumbnails. A WoodMart-style button rule was added after the plugin's CSS, as on Kemper. Store prices were test values.
+    - **Setup:** a Slider with three live slides:
+      - Kemper's Joinery bedroom, with dots on the bed, dresser and night stand, plus one on an unpublished product.
+      - A living room slide with no dots.
+      - A slide starting in 2030 with five dots.
+    - **Rendered:** no PHP warnings or script errors.
+    - **At 1440px:**
+      - The bar showed "Shop now" and three cards numbered 1–3, matching the dots. The unpublished product was skipped, with numbering intact.
+      - Prices showed ("$1,899.00 crossed out, $1,499.98"), with stock ("Available to order", "2 in stock", "7 in stock").
+      - The 2030 slide's panel took no room. The bar was 142px.
+    - **Next slide:** the bar showed "Shop Living Room" with no cards, still 142px, and the content below stayed at the same spot (592px). Going back showed the Joinery panel again.
+    - **Hover:** card 2 lit dot 2, and dot 3 lit card 3.
+    - **At 375px:**
+      - The button sat above one card, with the next peeking in. The cards were 305px each, with 64px pictures.
+      - There were 3 scroll dots of 24×24, and the page didn't scroll sideways.
+    - **Feature banner (`[rapm_fold_banner]`) with the same promotions:** the bar showed with 3 cards and its button, and its first picture stays lazy (only Sliders load the first picture early).
+  - **Matched against the Gates screenshot:** button on the left; cards with the number over the picture, name, crossed-out and current price, and stock.
+- **Not yet checked:** a real WordPress page. Staging's sliders have no dots, so the first real look will be Kemper's /home-2/ after it updates.
+
 ## 1.40.2
 
 **Fix: the first slide that's live loads first.** Found on staging right after 1.40.1.

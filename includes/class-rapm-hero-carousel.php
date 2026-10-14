@@ -135,6 +135,7 @@ class RAPM_Hero_Carousel {
 				<div class="swiper-pagination"></div>
 			<?php endif; ?>
 		</div>
+		<?php self::render_shelf( $query->posts ); ?>
 		<script>
 			( function () {
 				var waited = false;
@@ -202,7 +203,7 @@ class RAPM_Hero_Carousel {
 		}
 		$heading_tag = 'h1' === $heading_tag ? 'h1' : 'h2';
 		?>
-		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
+		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 768px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />
@@ -257,13 +258,10 @@ class RAPM_Hero_Carousel {
 	 * positions them; a product that's gone or unpublished loses its dot.
 	 */
 	private static function render_pins( $asset_id, $url, $cta_text ) {
-		$n = 0;
-		foreach ( RAPM_Looks::sanitize_dots( get_post_meta( $asset_id, '_rapm_dots', true ) ) as $dot ) {
-			$info = RAPM_Looks::product_info( $dot['p'] );
-			if ( ! $info ) {
-				continue;
-			}
-			$n++;
+		foreach ( self::pins_for( $asset_id ) as $pin ) {
+			$dot  = $pin['dot'];
+			$info = $pin['info'];
+			$n    = $pin['n'];
 			?>
 			<button type="button" class="rapm-pin-dot" data-pid="<?php echo (int) $dot['p']; ?>" data-x="<?php echo esc_attr( $dot['x'] ); ?>" data-y="<?php echo esc_attr( $dot['y'] ); ?>"<?php echo isset( $dot['mx'] ) ? ' data-mx="' . esc_attr( $dot['mx'] ) . '" data-my="' . esc_attr( $dot['my'] ) . '"' : ''; ?> data-name="<?php echo esc_attr( $info['name'] ); ?>" data-thumb="<?php echo esc_url( $info['thumb'] ); ?>" data-link="<?php echo esc_url( $info['link'] ); ?>" aria-expanded="false" aria-label="<?php echo esc_attr( sprintf( /* translators: 1: the dot's number, 2: product name */ __( '%1$d. %2$s', 'rapm' ), $n, $info['name'] ) ); ?>"><?php echo (int) $n; ?></button>
 			<?php
@@ -274,6 +272,99 @@ class RAPM_Hero_Carousel {
 			<a class="rapm-pin-btn" href="<?php echo esc_url( $url ); ?>" data-x="<?php echo esc_attr( $btn['x'] ); ?>" data-y="<?php echo esc_attr( $btn['y'] ); ?>"<?php echo isset( $btn['mx'] ) ? ' data-mx="' . esc_attr( $btn['mx'] ) . '" data-my="' . esc_attr( $btn['my'] ) . '"' : ''; ?>><?php echo esc_html( RAPM_Looks::photo_btn_text( $cta_text ) ); ?></a>
 			<?php
 		}
+	}
+
+	/**
+	 * A slide's dots whose products are on the website, numbered in order,
+	 * each as array( 'n', 'dot', 'info' ). Shared by the dots on the slide
+	 * and the shop bar under the carousel, so their numbers always match.
+	 * Remembered for the request, so the products are looked up once.
+	 */
+	private static function pins_for( $asset_id ) {
+		static $cache = array();
+		$asset_id = (int) $asset_id;
+		if ( ! isset( $cache[ $asset_id ] ) ) {
+			$pins = array();
+			foreach ( RAPM_Looks::sanitize_dots( get_post_meta( $asset_id, '_rapm_dots', true ) ) as $dot ) {
+				$info = RAPM_Looks::product_info( $dot['p'] );
+				if ( $info ) {
+					$pins[] = array( 'n' => count( $pins ) + 1, 'dot' => $dot, 'info' => $info );
+				}
+			}
+			$cache[ $asset_id ] = $pins;
+		}
+		return $cache[ $asset_id ];
+	}
+
+	/**
+	 * 1.41.0: the shop bar under a Slider or Feature banner, like the one
+	 * under Shop the Look's photo: the slide's button, and a numbered card
+	 * for each product it has a dot on (picture, name, then live price and
+	 * stock from rapm-pins.js). Phil, on Kemper and Gates: "I want that shop
+	 * bar below both types of hero sections if there are dots."
+	 *
+	 * Printed only when at least one slide has dots. Every slide gets a
+	 * panel (a slide without dots shows just its button), all stacked in
+	 * one grid cell: the bar keeps the height of its tallest panel, so
+	 * nothing below it moves when the slider changes slides.
+	 * rapm-pins.js shows the panel of the slide on screen and hides the
+	 * bar while the carousel itself is hidden (no live slides).
+	 */
+	private static function render_shelf( $posts ) {
+		$panels   = array();
+		$any_pins = false;
+		foreach ( $posts as $post ) {
+			$id   = (int) $post->ID;
+			$pins = self::pins_for( $id );
+			$url  = RAPM_Destination::resolve_url( get_post_meta( $id, '_rapm_destination_type', true ), get_post_meta( $id, '_rapm_destination_value', true ) );
+			$any_pins = $any_pins || ! empty( $pins );
+			$panels[] = array(
+				'id'   => $id,
+				'pins' => $pins,
+				'url'  => $url,
+				'text' => RAPM_Looks::photo_btn_text( get_post_meta( $id, '_rapm_cta_text', true ) ),
+			);
+		}
+		if ( ! $any_pins ) {
+			return;
+		}
+		?>
+		<div class="rapm-pins-shelf" data-rapm-shelf hidden style="--rapm-pins-accent:<?php echo esc_attr( RAPM_Elementor::resolve_accent_color_css( '#2271b1' ) ); ?>;">
+			<div class="rapm-pins-shelf-in">
+				<?php foreach ( $panels as $panel ) : ?>
+					<div class="rapm-pins-panel<?php echo $panel['pins'] ? '' : ' no-cards'; ?>" data-rapm-key="<?php echo (int) $panel['id']; ?>">
+						<div class="rapm-pins-shelf-side">
+							<?php if ( $panel['url'] ) : ?>
+								<a class="rapm-pins-shelf-btn" href="<?php echo esc_url( $panel['url'] ); ?>"><?php echo esc_html( $panel['text'] ); ?></a>
+							<?php endif; ?>
+						</div>
+						<?php if ( $panel['pins'] ) : ?>
+							<div class="rapm-pins-cards-wrap">
+								<ul class="rapm-pins-cards" aria-label="<?php esc_attr_e( 'Products in this picture', 'rapm' ); ?>">
+									<?php foreach ( $panel['pins'] as $pin ) : ?>
+										<li class="rapm-pins-card" data-pid="<?php echo (int) $pin['dot']['p']; ?>">
+											<a class="rapm-pins-card-img" href="<?php echo esc_url( $pin['info']['link'] ); ?>" tabindex="-1" aria-hidden="true">
+												<?php if ( $pin['info']['thumb'] ) : ?>
+													<img src="<?php echo esc_url( $pin['info']['thumb'] ); ?>" alt="" loading="lazy" width="84" height="84" />
+												<?php endif; ?>
+												<span class="rapm-pins-num"><?php echo (int) $pin['n']; ?></span>
+											</a>
+											<div class="rapm-pins-card-meta">
+												<a class="rapm-pins-card-name" href="<?php echo esc_url( $pin['info']['link'] ); ?>"><?php echo esc_html( $pin['info']['name'] ); ?></a>
+												<span class="rapm-pins-card-price"></span>
+												<span class="rapm-pins-card-stock"></span>
+											</div>
+										</li>
+									<?php endforeach; ?>
+								</ul>
+								<div class="rapm-scroll-dots" aria-hidden="true" hidden></div>
+							</div>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+		<?php
 	}
 
 	private static function schema_for_asset( $asset_id, $image_url, $url ) {

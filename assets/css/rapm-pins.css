@@ -81,6 +81,82 @@ a.rapm-pin-btn:hover, a.rapm-pin-btn:focus { color: #fff; filter: brightness(0.9
 	border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; color: #777 !important;
 	font-size: 20px !important; line-height: 1 !important; text-transform: none !important; letter-spacing: normal !important;
 }
+/* 1.41.0: a card in the shop bar and its dot light up together. */
+.rapm-hero .rapm-pin-dot.is-hot { filter: brightness(1.18); transform: scale(1.1); }
+
+/* 1.41.0: the shop bar under a Slider or Feature banner with dots
+   (RAPM_Hero_Carousel::render_shelf()), matching the one under Shop the
+   Look's photo in rapm-looks.css: the slide's button on the left, a
+   numbered card per product on the right. Every slide's panel sits in the
+   same grid cell, so the bar keeps one height and the page below doesn't
+   move as slides change; rapm-pins.js shows the one on screen. Names and
+   the button are colored at higher weight than Elementor's kit link
+   colors. */
+.rapm-pins-shelf { max-width: 1400px; margin: 0 auto; padding: 24px 16px 8px; box-sizing: border-box; }
+.rapm-pins-shelf[hidden], .rapm-pins-panel[hidden] { display: none !important; }
+.rapm-pins-shelf-in { display: grid; }
+.rapm-pins-panel {
+	grid-area: 1 / 1; visibility: hidden;
+	display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 20px 36px; align-items: start;
+}
+.rapm-pins-panel.is-on { visibility: visible; }
+.rapm-pins-panel.no-cards { grid-template-columns: minmax(0, 1fr); }
+.rapm-pins-shelf .rapm-pins-shelf-btn {
+	display: inline-flex; align-items: center; min-height: 44px; padding: 0 22px;
+	background: var(--rapm-pins-accent, #2271b1); color: #fff; text-decoration: none;
+	font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.rapm-pins-shelf .rapm-pins-shelf-btn:hover, .rapm-pins-shelf .rapm-pins-shelf-btn:focus { color: #fff; filter: brightness(0.92); }
+.rapm-pins-shelf .rapm-pins-shelf-btn:focus-visible { outline: 2px solid var(--rapm-pins-accent, #2271b1); outline-offset: 2px; }
+.rapm-pins-cards-wrap { min-width: 0; }
+.rapm-pins-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.rapm-pins-card {
+	display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: start; margin: 0;
+	padding: 12px; border: 1px solid #e2e2e2; background: #fff; color: #333; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.rapm-pins-card.is-hot { border-color: var(--rapm-pins-accent, #2271b1); box-shadow: 0 0 0 1px var(--rapm-pins-accent, #2271b1); }
+.rapm-pins-card-img { position: relative; display: block; }
+.rapm-pins-card-img img { display: block; width: 84px; height: 84px; max-width: none; object-fit: cover; }
+.rapm-pins-num {
+	position: absolute; left: -6px; top: -6px; width: 24px; height: 24px; border-radius: 50%;
+	background: var(--rapm-pins-accent, #2271b1); color: #fff; font-size: 12px; font-weight: 700; line-height: 24px; text-align: center;
+}
+.rapm-pins-card.is-hot .rapm-pins-num { filter: brightness(1.18); }
+.rapm-pins-card-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rapm-pins-shelf .rapm-pins-card-name {
+	color: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; text-decoration: none; overflow-wrap: anywhere;
+	display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rapm-pins-shelf .rapm-pins-card-name:hover { color: var(--rapm-pins-accent, #2271b1); }
+.rapm-pins-card-price { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rapm-pins-card-price:empty, .rapm-pins-card-stock:empty { display: none; }
+.rapm-pins-card-price del { margin-right: 6px; font-weight: 400; opacity: 0.7; }
+.rapm-pins-card-price ins { text-decoration: none; }
+.rapm-pins-card-stock { font-size: 12px; line-height: 1.3; }
+.rapm-pins-card-stock.in-stock { color: #3c8a4a; }
+.rapm-pins-card-stock.out-of-stock { color: #b5502b; }
+/* Phones: the cards scroll sideways with dots under them (1.37.1 rule:
+   anything that scrolls sideways shows where you are). */
+.rapm-pins-shelf .rapm-scroll-dots[hidden] { display: none !important; }
+.rapm-pins-shelf .rapm-scroll-dots { display: flex; justify-content: center; gap: 2px; margin-top: 2px; }
+.rapm-pins-shelf .rapm-scroll-dot {
+	-webkit-appearance: none; appearance: none; display: inline-flex !important; align-items: center; justify-content: center;
+	width: 24px !important; height: 24px !important; min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+	border: 0 !important; border-radius: 50% !important; background: transparent !important; box-shadow: none !important; color: #333 !important; line-height: 0 !important; cursor: pointer;
+}
+.rapm-pins-shelf .rapm-scroll-dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.25; transition: opacity 0.2s ease, transform 0.2s ease; }
+.rapm-pins-shelf .rapm-scroll-dot.is-active::before { opacity: 0.85; transform: scale(1.2); }
+@media (max-width: 1023px) {
+	.rapm-pins-panel { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
+@media (max-width: 767px) {
+	.rapm-pins-shelf { padding: 16px 12px 4px; }
+	.rapm-pins-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 6px 0 6px 6px; }
+	.rapm-pins-card { flex: 0 0 82%; scroll-snap-align: start; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px; }
+	.rapm-pins-card-img img { width: 64px; height: 64px; }
+	.rapm-pins-shelf .rapm-pins-card-name { font-size: 14px; }
+}
+
 /* Until the slide's real picture is measured (a lazy-loader's placeholder
    doesn't count), the dots and button wait out of sight rather than sit in
    the wrong place. rapm-pins.js sets and clears this. */
@@ -93,4 +169,5 @@ a.rapm-pin-btn:hover, a.rapm-pin-btn:focus { color: #fff; filter: brightness(0.9
 }
 @media (prefers-reduced-motion: reduce) {
 	.rapm-pin-dot::after { animation: none; opacity: 0; }
+	.rapm-pins-card, .rapm-pins-shelf .rapm-scroll-dot::before { transition: none; }
 }

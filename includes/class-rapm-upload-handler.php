@@ -1930,7 +1930,7 @@ class RAPM_Upload_Handler {
 		?>
 		<?php if ( $banner ) : ?>
 			<h2><?php esc_html_e( 'Add product dots and a "Shop now" button (optional)', 'rapm' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'Shoppers tap a dot to see the product, its live price and stock. Place them on the desktop picture and on the phone picture: the phone spots start where you put them on the desktop one, so check both.', 'rapm' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Shoppers tap a dot to see the product, its live price and stock. The same products also show as numbered cards in a bar under the slider, with this promotion\'s button. Place the dots on the desktop picture and on the phone picture: the phone spots start where you put them on the desktop one, so check both.', 'rapm' ); ?></p>
 			<p class="rapm-pieces-views" role="group" aria-label="<?php esc_attr_e( 'Which picture to place them on', 'rapm' ); ?>">
 				<button type="button" class="button rapm-pieces-view is-selected" data-view="desktop" aria-pressed="true"><?php esc_html_e( 'Desktop picture', 'rapm' ); ?></button>
 				<button type="button" class="button rapm-pieces-view" data-view="mobile" aria-pressed="false"><?php esc_html_e( 'Phone picture', 'rapm' ); ?></button>

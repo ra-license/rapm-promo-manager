@@ -89,7 +89,74 @@
 		var products = {}, open = null, pop = null;
 		var T = { view: root.getAttribute( 'data-rapm-pins-view' ) || 'View product', close: root.getAttribute( 'data-rapm-pins-close' ) || 'Close' };
 
-		function placeAll() { Array.prototype.forEach.call( root.querySelectorAll( '.rapm-slide' ), placeSlide ); if ( open ) { placePop(); } }
+		// 1.41.0: the shop bar printed right after the carousel
+		// (RAPM_Hero_Carousel::render_shelf()), with one panel per slide.
+		var shelf  = root.nextElementSibling && root.nextElementSibling.hasAttribute( 'data-rapm-shelf' ) ? root.nextElementSibling : null;
+		var panels = shelf ? Array.prototype.slice.call( shelf.querySelectorAll( '.rapm-pins-panel' ) ) : [];
+		var dotsFor = {}; // panel key → rebuild function for its phone scroll dots
+
+		function slideOnScreen() {
+			return root.querySelector( '.swiper-slide-active' ) || root.querySelector( '.swiper-wrapper > .rapm-slide' );
+		}
+
+		// Shows the panel of the slide on screen. The bar shows only while
+		// the carousel does and at least one slide in it has products; a
+		// slide that isn't in the carousel right now (not live, or over
+		// "show at most") gives its panel no room, so it can't make the bar
+		// taller than what's showing.
+		function syncShelf() {
+			if ( ! shelf ) { return; }
+			var inCarousel = {};
+			Array.prototype.forEach.call( root.querySelectorAll( '.swiper-wrapper > .rapm-slide' ), function ( s ) { inCarousel[ s.getAttribute( 'data-rapm-key' ) ] = true; } );
+			var current = slideOnScreen(), key = current ? current.getAttribute( 'data-rapm-key' ) : null, anyCards = false;
+			panels.forEach( function ( p ) {
+				var k = p.getAttribute( 'data-rapm-key' ), here = !! inCarousel[ k ];
+				p.hidden = ! here;
+				if ( here && p.querySelector( '.rapm-pins-card' ) ) { anyCards = true; }
+				var on = here && k === key;
+				if ( on !== p.classList.contains( 'is-on' ) ) {
+					p.classList.toggle( 'is-on', on );
+					if ( on && dotsFor[ k ] ) { dotsFor[ k ](); }
+				}
+			} );
+			shelf.hidden = 'none' === window.getComputedStyle( root ).display || ! anyCards;
+		}
+
+		// A card and its dot light up together, as in Shop the Look.
+		function hot( pid ) {
+			var current = slideOnScreen(), panel = shelf ? shelf.querySelector( '.rapm-pins-panel.is-on' ) : null;
+			if ( current ) { Array.prototype.forEach.call( current.querySelectorAll( '.rapm-pin-dot' ), function ( d ) { d.classList.toggle( 'is-hot', !! pid && d.getAttribute( 'data-pid' ) === pid ); } ); }
+			if ( panel ) { Array.prototype.forEach.call( panel.querySelectorAll( '.rapm-pins-card' ), function ( c ) { c.classList.toggle( 'is-hot', !! pid && c.getAttribute( 'data-pid' ) === pid ); } ); }
+		}
+
+		// Live price and stock on the cards, from the same Store API answer as the dot cards.
+		function fillShelf() {
+			if ( ! shelf ) { return; }
+			Array.prototype.forEach.call( shelf.querySelectorAll( '.rapm-pins-card' ), function ( card ) {
+				var item = products[ card.getAttribute( 'data-pid' ) ];
+				if ( ! item ) { return; }
+				var avail = item.stock_availability || {}, stock = card.querySelector( '.rapm-pins-card-stock' );
+				card.querySelector( '.rapm-pins-card-price' ).innerHTML = priceHtml( item );
+				stock.className = 'rapm-pins-card-stock ' + ( avail['class'] ? String( avail['class'] ).split( ' ' )[0] : '' );
+				stock.textContent = plain( avail.text );
+			} );
+		}
+
+		if ( shelf ) {
+			panels.forEach( function ( p ) {
+				var list = p.querySelector( '.rapm-pins-cards' ), box = p.querySelector( '.rapm-scroll-dots' );
+				// Phones: the cards scroll sideways, so they get dots (rapm-schedule.js, 1.37.1).
+				if ( list && box && window.RAPM_Schedule && window.RAPM_Schedule.scrollDots ) { dotsFor[ p.getAttribute( 'data-rapm-key' ) ] = window.RAPM_Schedule.scrollDots( list, box ); }
+			} );
+			shelf.addEventListener( 'mouseover', function ( e ) { var c = e.target.closest( '.rapm-pins-card' ); hot( c ? c.getAttribute( 'data-pid' ) : null ); } );
+			shelf.addEventListener( 'mouseleave', function () { hot( null ); } );
+			shelf.addEventListener( 'focusin', function ( e ) { var c = e.target.closest( '.rapm-pins-card' ); hot( c ? c.getAttribute( 'data-pid' ) : null ); } );
+			shelf.addEventListener( 'focusout', function () { hot( null ); } );
+			root.addEventListener( 'mouseover', function ( e ) { var d = e.target.closest( '.rapm-pin-dot' ); hot( d ? d.getAttribute( 'data-pid' ) : null ); } );
+			root.addEventListener( 'mouseleave', function () { hot( null ); } );
+		}
+
+		function placeAll() { Array.prototype.forEach.call( root.querySelectorAll( '.rapm-slide' ), placeSlide ); if ( open ) { placePop(); } syncShelf(); }
 
 		function closePop( focusDot ) {
 			if ( ! open ) { return; }
@@ -150,7 +217,7 @@
 		if ( store && list.length && window.fetch ) {
 			window.fetch( store + ( store.indexOf( '?' ) === -1 ? '?' : '&' ) + 'include=' + list.join( ',' ) + '&per_page=100', { credentials: 'same-origin' } )
 				.then( function ( r ) { return r.ok ? r.json() : []; } )
-				.then( function ( items ) { ( items || [] ).forEach( function ( it ) { products[ String( it.id ) ] = it; } ); if ( open ) { var d = open; open = null; openPop( d ); } } )
+				.then( function ( items ) { ( items || [] ).forEach( function ( it ) { products[ String( it.id ) ] = it; } ); fillShelf(); if ( open ) { var d = open; open = null; openPop( d ); } } )
 				.catch( function () {} );
 		}
 
@@ -176,7 +243,9 @@
 		if ( window.MutationObserver ) {
 			var t = null;
 			var later = function () { clearTimeout( t ); t = setTimeout( placeAll, 30 ); };
-			new window.MutationObserver( later ).observe( root, { childList: true, subtree: true, attributes: true, attributeFilter: [ 'src', 'srcset' ] } );
+			// 'class' too (1.41.0): Swiper marks the slide on screen with
+			// swiper-slide-active, which the shop bar follows.
+			new window.MutationObserver( later ).observe( root, { childList: true, subtree: true, attributes: true, attributeFilter: [ 'src', 'srcset', 'class' ] } );
 			new window.MutationObserver( later ).observe( root, { attributes: true, attributeFilter: [ 'style' ] } );
 		}
 	}
