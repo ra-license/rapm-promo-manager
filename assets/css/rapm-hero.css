@@ -46,6 +46,29 @@
 		object-fit: contain;
 		background: #111;
 	}
+
+	/* 1.41.1: a phone picture with no words laid over it shows whole,
+	   never trimmed, since its words are usually part of the picture.
+	   Where the slide is shorter than the picture (most real phones, once
+	   the browser's bars are counted), the strips at the sides show a
+	   blurred, dimmed copy of the same picture instead of black bars.
+	   rapm-schedule.js sets --rapm-blur to the picture the browser
+	   actually loaded, once it has, so the copy costs no extra download.
+	   The slide's height is in RAPM_Hero_Carousel::render(). */
+	.rapm-hero .rapm-slide.has-mobile-img.is-picture-only {
+		overflow: hidden;
+	}
+	.rapm-hero .rapm-slide.has-mobile-img.is-picture-only::before {
+		content: "";
+		position: absolute;
+		inset: -24px;
+		background: var(--rapm-blur, none) center / cover no-repeat;
+		filter: blur(16px) brightness(0.85);
+		pointer-events: none;
+	}
+	.rapm-hero .rapm-slide.has-mobile-img.is-picture-only .rapm-slide-img {
+		object-fit: contain;
+	}
 }
 
 /* Promotional copy is always real HTML text layered over the image, never

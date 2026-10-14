@@ -4,6 +4,40 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.41.1
+
+**Fix: phone pictures with words in them are no longer cut off.** Found on Kemper's live homepage, from Phil's iPhone screenshot. The Candleberry sale graphic lost the top of "Candleberry" and the bottom of the candle jars on a real iPhone, but looked whole in Chrome's iPhone 16 view.
+- **Root cause:**
+  - Since 1.23.2, a slide with a phone picture is capped at 75% of the visible screen height (`max-height: 75svh`). The picture is cover-cropped to fit, evenly top and bottom.
+  - The 1.23.2 comment assumed phone pictures have "no baked-in text to lose." That cap was added only to keep words laid *over* the picture on screen.
+  - Kemper's three sale slides are the opposite: no words on top, and all their words inside the picture.
+- **Why Chrome looked fine:**
+  - Chrome's device view has no browser bars, so `svh` is the full 852px. The cap is 639px against the picture's 645px, a 1% crop.
+  - On a real iPhone 16, Safari's bars leave about 697px. The cap is 523px, so 19% of the picture is cut: 61px off the top and 61px off the bottom.
+  - Measured on kemperhomefurnishings.com at both heights. The 523px box matches Phil's screenshot.
+- **Fix:** a phone picture with no headline, smaller line or button on it (`.is-picture-only`) now shows whole. This is Phil's pick, "B" of the options mocked up with the Candleberry graphic: blurred sides, so the full picture is on screen.
+  - **Fit:** the picture is fitted inside the slide (`object-fit: contain`).
+  - **Sides:** the strips at the sides show a blurred, dimmed copy of the same picture (`::before` with `--rapm-blur`) instead of black bars.
+  - **Height:** the slide keeps the 75% cap, but never drops below 80% of the picture's full height. So the picture never shrinks below 80% of the banner's width, and a short phone gets a taller banner instead.
+  - **How the height is set:** as `padding-top: min(full%, max(75svh, 80% of full%))`. A percentage there is a share of the carousel's width, so this needs no container queries. Container queries would have needed `container-type`, which can collapse a carousel inside an Elementor flex row. A plain `padding-top: full%` comes first, for browsers without `min()`/`max()`.
+  - **The blurred copy:** `rapm-schedule.js` points it at the picture the browser actually loaded (`currentSrc`), once it has. That includes after WP Rocket's stand-in. So the copy costs no extra download, and a slide nobody reaches costs nothing.
+  - **Dots:** product dots on such a slide use the fitted picture, since `rapm-pins.js` already reads the computed `object-fit`.
+- **Unchanged:** slides with words on top (still trimmed to the cap), slides with no phone picture, computers, and Feature banners. Their phone shape, 1080×400, always fits whole already.
+- **How it was checked:**
+  - **PHP:** the in-browser PHP 8.4 check found 0 issues in all 28 files.
+  - **Test page, real slider code:** the real `RAPM_Hero_Carousel` code was rendered in php-wasm with Swiper 11 and Kenna's real 1080×1920 Candleberry phone graphic, as a picture-only slide with one dot. It ran next to a slide with a headline and the same phone picture, and the Joinery slide with no phone picture.
+    - **393×697 (iPhone 16 in Safari):**
+      - The picture-only slide was 393×559, with the picture whole at 314×559. That's the 80% floor, since 75svh is 523.
+      - The blurred copy was set to the loaded picture.
+      - The dot landed at (197, 503), exactly 50%/90% of the fitted picture.
+      - The headline slide stayed cover-cropped at 393×523.
+    - **393×852:** 393×639, picture 359×639 (91%). Switching slides resized the carousel to 639, then 123, then 639.
+    - **375×548 (a short phone):** 375×533, picture 300×533. That's the floor rather than 62%. No sideways scroll.
+    - **1440×900:** all slides at 1440×450, cover, no blur layer.
+    - **Feature banner:** the rule is `padding-top: 37.037%`, the full 1080×400, so it doesn't change.
+    - **Errors:** no PHP warnings or script errors.
+- **Not yet checked:** a real iPhone on staging, then Kemper.
+
 ## 1.41.0
 
 **New: a shop bar under every Slider and Feature banner that has product dots.** Phil, on Kemper's /home-2/ with a screenshot of Gates' Shop the Look bar: "I want that shop bar below both types of hero sections if there are dots." Until now, dots on a banner only opened a pop-up card, and nothing listed the products underneath. The design is the Gates screenshot: the button on the left, numbered product cards on the right.

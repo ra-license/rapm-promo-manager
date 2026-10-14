@@ -76,6 +76,24 @@
 		var instance   = null;
 		var max        = Math.max( 0, parseInt( options.max, 10 ) || 0 );
 
+		// 1.41.1: a picture-only slide shows its whole phone picture with a
+		// blurred copy of it filling the sides (rapm-hero.css). The copy is
+		// whatever picture the browser actually loaded, once it has (after a
+		// lazy-loader's stand-in too), so it's already downloaded and a slide
+		// nobody reaches costs nothing.
+		allSlides.forEach( function ( slide ) {
+			var img = slide.classList.contains( 'is-picture-only' ) ? slide.querySelector( '.rapm-slide-img' ) : null;
+			if ( ! img ) { return; }
+			function blur() {
+				var src = img.currentSrc || '';
+				if ( src && ! /^data:/i.test( src ) ) {
+					slide.style.setProperty( '--rapm-blur', 'url("' + src.replace( /["\\\n]/g, encodeURIComponent ) + '")' );
+				}
+			}
+			img.addEventListener( 'load', blur );
+			if ( img.complete ) { blur(); }
+		} );
+
 		// The slides to show right now: everything live today, in the order
 		// set on the Sliders screen, then cut to "show at most" if set. The
 		// cap is applied after the schedule check, so a promotion that hasn't

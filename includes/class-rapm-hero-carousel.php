@@ -75,6 +75,10 @@ class RAPM_Hero_Carousel {
 		$instance_id  = 'rapm-' . $placement . '-' . wp_unique_id();
 		$desktop_slot = $slots[ $kind['desktop'] ];
 		$mobile_slot  = $slots[ $kind['mobile'] ];
+		// 1.41.1: a picture-only phone slide's full height, and the least
+		// it may shrink to (80%), as a share of the carousel's width.
+		$full_pct     = round( $mobile_slot['height'] / max( 1, $mobile_slot['width'] ) * 100, 4 );
+		$floor_pct    = round( $full_pct * 0.8, 4 );
 		// The page's main heading (heading="h1", 1.29.1): the first
 		// promotion with words gets an h1, the rest keep h2.
 		// rapm-schedule.js moves the h1 to the first one actually
@@ -109,6 +113,22 @@ class RAPM_Hero_Carousel {
 			@media (max-width: 768px) {
 				.<?php echo esc_attr( $instance_id ); ?> .rapm-slide.has-mobile-img { aspect-ratio: <?php echo esc_html( $mobile_slot['width'] . ' / ' . $mobile_slot['height'] ); ?>; max-height: 75vh; max-height: 75svh; }
 				.<?php echo esc_attr( $instance_id ); ?> .rapm-slide.has-mobile-img picture { position: absolute; inset: 0; }
+				/* 1.41.1: a phone picture with nothing laid over it (no
+				   headline, subheading or button) usually has its words
+				   baked in, like Kemper's sale graphics. Trimming it to the
+				   cap cut those words off on real iPhones: Safari's bars
+				   leave about 697 of an iPhone 16's 852px, so 75svh was
+				   523px against the picture's 645. Chrome's device view has
+				   no bars, which is why it looked fine there. So these show
+				   the whole picture, fitted inside with a blurred copy of
+				   itself filling the sides (rapm-hero.css, rapm-schedule.js).
+				   The box keeps the capped height, but never less than 80%
+				   of the picture's full height, so a short phone gets a
+				   taller banner instead of a tiny picture. The height is set
+				   as padding, because a percentage there is a share of the
+				   carousel's width; a plain percentage first for browsers
+				   without min()/max(). */
+				.<?php echo esc_attr( $instance_id ); ?> .rapm-slide.has-mobile-img.is-picture-only { aspect-ratio: auto; max-height: none; height: 0; padding-top: <?php echo esc_html( $full_pct ); ?>%; padding-top: min( <?php echo esc_html( $full_pct ); ?>%, max( 75vh, <?php echo esc_html( $floor_pct ); ?>% ) ); padding-top: min( <?php echo esc_html( $full_pct ); ?>%, max( 75svh, <?php echo esc_html( $floor_pct ); ?>% ) ); }
 			}
 		</style>
 		<?php // rapm-kind-* (1.32.2) lets the CSS fit a feature banner's words on phones. ?>
@@ -202,8 +222,11 @@ class RAPM_Hero_Carousel {
 			return false; // No usable image — nothing to show for this asset.
 		}
 		$heading_tag = 'h1' === $heading_tag ? 'h1' : 'h2';
+		// 1.41.1: nothing laid over the phone picture, so phones show all
+		// of it (see the .is-picture-only rule in render()).
+		$picture_only = $mobile_src && ! $headline && ! $subhead && ! $cta_text;
 		?>
-		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
+		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?><?php echo $picture_only ? ' is-picture-only' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 768px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />
