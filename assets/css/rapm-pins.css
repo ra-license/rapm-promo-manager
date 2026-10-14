@@ -55,9 +55,41 @@ a.rapm-pin-btn:hover, a.rapm-pin-btn:focus { color: #fff; filter: brightness(0.9
 	border: 0; border-radius: 0; box-shadow: none; background: transparent; color: #777; cursor: pointer; font-size: 20px; line-height: 1; text-transform: none;
 }
 
+/* 1.40.1: on the website, the theme's button rules lose. Seen on Kemper
+   (WoodMart 8.4.1): WoodMart's base.min.css gives every <button> position:
+   relative, inline-flex, its own corners and line height, and Elementor's
+   kit gives every button the kit's colors. Both load after this file at the
+   same or higher weight, so the dots fell out of the picture and were cut
+   off, and the card's close button turned into a colored square. The dots
+   and buttons always sit in .rapm-hero there, and the parts that break the
+   layout are !important, as for the scroll dots (1.37.1). left and top stay
+   normal: rapm-pins.js sets them inline. The form's Live Preview isn't in
+   .rapm-hero and keeps the rules above. */
+.rapm-hero .rapm-pin-dot {
+	position: absolute !important; display: flex !important; align-items: center !important; justify-content: center !important;
+	width: 34px !important; height: 34px !important; min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important;
+	margin: -17px 0 0 -17px !important; padding: 0 !important; box-sizing: border-box !important;
+	border: 2px solid #fff !important; border-radius: 50% !important; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+	background: var(--rapm-pins-accent, #2271b1) !important; color: #fff !important; text-shadow: none !important;
+	font-size: 14px !important; font-weight: 700 !important; line-height: 1 !important; letter-spacing: normal !important; text-transform: none !important;
+}
+.rapm-hero .rapm-pin-dot[hidden] { display: none !important; }
+.rapm-hero .rapm-pin-btn { position: absolute !important; color: #fff !important; background: var(--rapm-pins-accent, #2271b1) !important; text-decoration: none !important; }
+.rapm-hero .rapm-pin-pop-x {
+	position: absolute !important; display: block !important; width: 28px !important; height: 28px !important;
+	min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+	border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; color: #777 !important;
+	font-size: 20px !important; line-height: 1 !important; text-transform: none !important; letter-spacing: normal !important;
+}
+/* Until the slide's real picture is measured (a lazy-loader's placeholder
+   doesn't count), the dots and button wait out of sight rather than sit in
+   the wrong place. rapm-pins.js sets and clears this. */
+.rapm-slide.rapm-pins-wait .rapm-pin-dot, .rapm-slide.rapm-pins-wait .rapm-pin-btn { visibility: hidden; }
+
 @media (max-width: 768px) {
 	.rapm-pin-dot { width: 30px; height: 30px; margin: -15px 0 0 -15px; line-height: 26px; font-size: 13px; }
 	.rapm-pin-btn { min-height: 34px; padding: 0 14px; font-size: 12px; }
+	.rapm-hero .rapm-pin-dot { width: 30px !important; height: 30px !important; margin: -15px 0 0 -15px !important; font-size: 13px !important; }
 }
 @media (prefers-reduced-motion: reduce) {
 	.rapm-pin-dot::after { animation: none; opacity: 0; }

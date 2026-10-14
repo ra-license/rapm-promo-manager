@@ -116,9 +116,12 @@ class RAPM_Hero_Carousel {
 			<div class="swiper-wrapper">
 				<?php
 				$h1_used = false;
+				// 1.40.1: a Slider's first picture is usually the first thing
+				// on the page, so it loads right away (see render_slide()).
+				$eager = 'hero' === $kind_key;
 				foreach ( $query->posts as $post ) {
 					$heading = $main_heading && ! $h1_used ? 'h1' : 'h2';
-					if ( self::render_slide( $post->ID, $heading ) && 'h1' === $heading ) {
+					if ( self::render_slide( $post->ID, $heading, $eager ) && 'h1' === $heading ) {
 						$h1_used = true;
 					}
 				}
@@ -168,7 +171,11 @@ class RAPM_Hero_Carousel {
 	 * @param string $heading_tag 'h1' or 'h2' for the big words.
 	 * @return bool True if a headline was printed (so an h1 was used up).
 	 */
-	private static function render_slide( $asset_id, $heading_tag = 'h2' ) {
+	/**
+	 * One slide. $eager (passed by reference) is true for the first slide
+	 * of a Slider and is cleared once a slide is printed.
+	 */
+	private static function render_slide( $asset_id, $heading_tag = 'h2', &$eager = false ) {
 		$headline     = get_post_meta( $asset_id, '_rapm_headline', true );
 		$subhead      = get_post_meta( $asset_id, '_rapm_subhead', true );
 		$cta_text     = get_post_meta( $asset_id, '_rapm_cta_text', true );
@@ -209,8 +216,15 @@ class RAPM_Hero_Carousel {
 				// purpose, so it keeps filling the frame edge-to-edge as
 				// normal.
 				$img_class = $mobile_src ? '' : ' rapm-fallback-desktop-on-mobile';
+				// 1.40.1: the first Slider picture loads right away with high
+				// priority, and data-no-lazy="1" keeps WP Rocket's LazyLoad
+				// (and other lazy-loaders that honor it) from swapping in a
+				// placeholder. On Kemper that placeholder delayed the hero
+				// and threw off the product dots. The other slides stay lazy.
+				$load_attrs = $eager ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
+				$eager      = false;
 				?>
-				<img src="<?php echo esc_url( $desktop_src ); ?>" alt="<?php echo esc_attr( $alt ); ?>" loading="lazy" class="rapm-slide-img<?php echo esc_attr( $img_class ); ?>" />
+				<img src="<?php echo esc_url( $desktop_src ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> class="rapm-slide-img<?php echo esc_attr( $img_class ); ?>" />
 			</picture>
 			<?php if ( $headline || $subhead || $cta_text ) : ?>
 				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>" data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">

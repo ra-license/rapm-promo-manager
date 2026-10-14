@@ -39,10 +39,19 @@
 		return [ parseFloat( x ), parseFloat( y ) ];
 	}
 
+	// 1.40.1: a lazy-loader's stand-in (WP Rocket swaps in a blank
+	// data: picture until the real one loads) reports a made-up size, which
+	// put Kemper's dots in the wrong places and hid one as cut off.
+	function isPlaceholder( img ) {
+		return /^data:/i.test( img.currentSrc || img.getAttribute( 'src' ) || '' );
+	}
+
 	function placeSlide( slide ) {
 		var img = slide.querySelector( '.rapm-slide-img' );
 		if ( ! img || ! slide.querySelector( '.rapm-pin-dot, .rapm-pin-btn' ) ) { return; }
-		var f = fit( img, slide );
+		var f = isPlaceholder( img ) ? null : fit( img, slide );
+		// Out of sight until the real picture can be measured (rapm-pins.css).
+		slide.classList.toggle( 'rapm-pins-wait', ! f );
 		if ( ! f ) { return; }
 		Array.prototype.forEach.call( slide.querySelectorAll( '.rapm-pin-dot' ), function ( dot ) {
 			var s = spot( dot, slide ), x = f.ox + s[0] / 100 * f.dw, y = f.oy + s[1] / 100 * f.dh, r = 18;
@@ -146,16 +155,29 @@
 		}
 
 		placeAll();
-		Array.prototype.forEach.call( root.querySelectorAll( '.rapm-slide-img' ), function ( img ) { if ( ! img.complete ) { img.addEventListener( 'load', placeAll ); } } );
+		// 1.40.1: every time a slide picture loads, not only if it wasn't
+		// loaded yet. A lazy-loader's placeholder counts as loaded, so the
+		// real picture arriving later went unnoticed and the dots stayed
+		// where the placeholder put them. Load events don't bubble, so this
+		// listens on the root in the capture phase, which also covers the
+		// slide copies Swiper adds later.
+		root.addEventListener( 'load', function ( e ) {
+			if ( e.target && e.target.classList && e.target.classList.contains( 'rapm-slide-img' ) ) { placeAll(); }
+		}, true );
 		window.addEventListener( 'resize', placeAll );
 		window.addEventListener( 'load', placeAll );
 		if ( window.ResizeObserver ) { new window.ResizeObserver( placeAll ).observe( root ); }
-		// Swiper adds slide copies in loop mode and shows the carousel after the schedule check.
+		// Swiper adds slide copies in loop mode, lazy-loaders swap picture
+		// sources, and the carousel is shown after the schedule check.
+		// 1.40.1: two observers. A second observe() on the same element
+		// replaces the first one's options, so the slide-copy watch was
+		// never active before. Placing changes only the dots' style, which
+		// neither one watches.
 		if ( window.MutationObserver ) {
 			var t = null;
-			var mo = new window.MutationObserver( function () { clearTimeout( t ); t = setTimeout( placeAll, 30 ); } );
-			mo.observe( root, { childList: true, subtree: true } ); // slide copies (placing never adds nodes)
-			mo.observe( root, { attributes: true, attributeFilter: [ 'style' ] } ); // shown after the schedule check
+			var later = function () { clearTimeout( t ); t = setTimeout( placeAll, 30 ); };
+			new window.MutationObserver( later ).observe( root, { childList: true, subtree: true, attributes: true, attributeFilter: [ 'src', 'srcset' ] } );
+			new window.MutationObserver( later ).observe( root, { attributes: true, attributeFilter: [ 'style' ] } );
 		}
 	}
 

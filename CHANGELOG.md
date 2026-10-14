@@ -4,6 +4,36 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.40.1
+
+**Fix: product dots on Slider and Feature banner slides show on WoodMart sites with WP Rocket.** Phil, on Kemper's /home-2/ (2026-10-14): the Slider `[rapm_hero placement="promotions-slider"]` had three dots saved (Joinery Plank Bed, Joinery Dresser, Joinery Night Stand), but none showed. Phil can't change site settings, so the whole fix is in the plugin.
+
+- **Not the setup:** the dots were saved and printed in the page with the right products and spots. Two Promo Manager bugs hid them in the browser. Both were found on the live page (Kemper on 1.37.1 at first, then 1.40.0; the pins code is the same in both).
+- **Root cause 1, theme styles:**
+  - WoodMart 8.4.1's `base.min.css` gives every `<button>` `position: relative`, `inline-flex`, its own corners and line height. That's `:is(.btn, .button, button, …)`, the same weight as `.rapm-pin-dot`, and it loads later, so it won. The dots dropped out of their layer over the picture and were pushed outside the slide, which cuts them off.
+  - Elementor's kit (`.elementor-kit-N button`, heavier still) also recolored every button. That would have turned the dot card's × into a colored square, and on sites whose button color isn't the brand color, the dots too.
+  - 1.35.0 was checked on a local WordPress without WoodMart; its notes list "a theme like WoodMart" as not checked. 1.37.1 hit the same WoodMart rule with the scroll dots and fixed it there only.
+- **Root cause 2, lazy loading:**
+  - WP Rocket's LazyLoad swaps the slide picture for a blank `data:` placeholder (`data-lazy-src`) until it loads the real one. The placeholder reports a made-up 300×150 size, so the dots were measured against the wrong shape. The bed's dot was hidden as cut off, and the others sat 40–60px too low.
+  - When the real 1920×600 picture arrived, nothing re-measured. The script only listened for a picture's load if it wasn't already loaded, and the placeholder counted as loaded.
+  - Also found: the script's second `MutationObserver.observe()` on the same element replaced the first one's options, so it never noticed slide copies.
+- **Fixes:**
+  - **`rapm-pins.css`:** on the website (`.rapm-hero`), the dot, the "Shop now" button and the card's × are reset with `!important` on the parts that break the layout (position, display, size, margin, padding, border, corners, colors, line height), as the scroll dots were in 1.37.1. `left` and `top` stay normal, since the script sets them inline. The form's Live Preview keeps the plain rules.
+  - **`rapm-pins.js`:**
+    - A placeholder (`data:` picture) is never measured. The slide's dots and button wait out of sight (`.rapm-pins-wait`) until the real picture can be measured.
+    - Every picture load re-measures, through one capture-phase `load` listener on the carousel, which also covers slide copies.
+    - Two observers: one for slide copies and `src`/`srcset` swaps, one for the carousel being shown.
+  - **`class-rapm-hero-carousel.php`:** a Slider's first picture now has `loading="eager" fetchpriority="high" data-no-lazy="1"`. It's usually the first thing on the page, and `data-no-lazy` is in WP Rocket LazyLoad's built-in exclusions, so the hero loads right away. The other slides, and Feature banners, stay lazy. The dots no longer depend on this, since the script handles any lazy-loader.
+- **How it was checked:**
+  - **PHP:** the in-browser PHP 8.4 check found 0 issues in all 28 files.
+  - **On Kemper's live /home-2/, in my browser only (nothing on the site changed):**
+    - The new `rapm-pins.css` was put where the old one loads, so WoodMart's stylesheet still came after it, as it will in production.
+    - The new `rapm-pins.js` ran on a fresh copy of the slider, and WP Rocket's placeholder-then-real-picture swap was replayed.
+    - **While the placeholder showed:** the slide was waiting, with all three dots out of sight.
+    - **After the real 1920×600 picture loaded:** all three dots were placed where the cover-fit math puts them, as 34×34 circles with 50% corners, `position: absolute`, inside the picture and on top of everything at their spot. They followed the slider when its height changed.
+    - **Tapping the bed's dot:** opened its card ("Joinery Plank Bed – 192-559-955-922 · Available to order · View product"). The × is transparent, 28×28 and absolute.
+- **Not yet checked:** the real release on staging and on Kemper after updating, and phone width on Kemper.
+
 ## 1.40.0
 
 **New: optional "Words above the button" for Shop the Look, under the photo beside the products.** Phil, on Gates (2026-10-12): "I want the option to add different complimentary text above this bottom next to the shop", meaning the button under the photo, beside the piece cards.
