@@ -49,7 +49,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
       - There were 3 scroll dots of 24×24, and the page didn't scroll sideways.
     - **Feature banner (`[rapm_fold_banner]`) with the same promotions:** the bar showed with 3 cards and its button, and its first picture stays lazy (only Sliders load the first picture early).
   - **Matched against the Gates screenshot:** button on the left; cards with the number over the picture, name, crossed-out and current price, and stock.
-- **Not yet checked:** a real WordPress page. Staging's sliders have no dots, so the first real look will be Kemper's /home-2/ after it updates.
+- **Confirmed on staging (real WordPress, 2026-10-14),** after updating only RA Promo Manager, 1.40.2 to 1.41.0 ("Updated!", still active): on /home-2/ both sliders run with `rapm-pins.js?ver=1.41.0`, and their slides carry `data-rapm-key`. No bar is printed, since neither has dots. No script errors.
+- **Not yet checked:** the bar on a real WordPress page with dots. Staging's sliders have none, so the first real look will be Kemper's /home-2/ after it updates.
 
 ## 1.40.2
 
