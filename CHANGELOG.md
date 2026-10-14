@@ -13,6 +13,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **PHP:** the PHP 8.4 check found 0 issues in all 28 files.
   - **`is_live_now()`:** no dates is live; 2020 to 2030 is live; a 2030 start isn't; a 2020 end isn't; an unreadable date is live.
 - **Confirmed on staging (real WordPress, 2026-10-14),** after updating only RA Promo Manager, 1.40.1 to 1.40.2 ("Updated!", still active): on /home-2/ the slide that shows first ("Round wood dining table…") is the one with `loading="eager" fetchpriority="high" data-no-lazy="1"`, loaded at 1920×600. The boucle sofa slide, which isn't live today, no longer takes it. `rapm-pins.js?ver=1.40.2`, no script errors.
+- **Pushed to the production repo (2026-10-14)** with Phil's OK: main and the `v1.40.1` and `v1.40.2` tags. Kemper was still on 1.40.0 right after, and picks it up on its next update check. Still to confirm there: the three Joinery dots on /home-2/ on a computer and a phone.
 - **1.40.1 on staging (real WordPress, 2026-10-14):** updated from 1.40.0 ("Updated!", still active). Staging serves `rapm-pins.js?ver=1.40.1` and the sliders run with no script errors.
 
 ## 1.40.1
