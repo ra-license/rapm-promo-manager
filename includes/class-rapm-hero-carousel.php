@@ -172,8 +172,11 @@ class RAPM_Hero_Carousel {
 	 * @return bool True if a headline was printed (so an h1 was used up).
 	 */
 	/**
-	 * One slide. $eager (passed by reference) is true for the first slide
-	 * of a Slider and is cleared once a slide is printed.
+	 * One slide. $eager (passed by reference) is true for a Slider until a
+	 * slide that's live right now is printed: that one's picture loads
+	 * first. A slide outside its dates is still printed (rapm-schedule.js
+	 * decides in the browser), but the browser removes it, so it shouldn't
+	 * take the first load.
 	 */
 	private static function render_slide( $asset_id, $heading_tag = 'h2', &$eager = false ) {
 		$headline     = get_post_meta( $asset_id, '_rapm_headline', true );
@@ -216,13 +219,17 @@ class RAPM_Hero_Carousel {
 				// purpose, so it keeps filling the frame edge-to-edge as
 				// normal.
 				$img_class = $mobile_src ? '' : ' rapm-fallback-desktop-on-mobile';
-				// 1.40.1: the first Slider picture loads right away with high
-				// priority, and data-no-lazy="1" keeps WP Rocket's LazyLoad
-				// (and other lazy-loaders that honor it) from swapping in a
-				// placeholder. On Kemper that placeholder delayed the hero
-				// and threw off the product dots. The other slides stay lazy.
-				$load_attrs = $eager ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
-				$eager      = false;
+				// 1.40.1: the first live Slider picture loads right away with
+				// high priority, and data-no-lazy="1" keeps WP Rocket's
+				// LazyLoad (and other lazy-loaders that honor it) from
+				// swapping in a placeholder. On Kemper that placeholder
+				// delayed the hero and threw off the product dots. The other
+				// slides stay lazy.
+				$first      = $eager && RAPM_Quick_Links::is_live_now( $starts_at, $ends_at );
+				$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
+				if ( $first ) {
+					$eager = false;
+				}
 				?>
 				<img src="<?php echo esc_url( $desktop_src ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> class="rapm-slide-img<?php echo esc_attr( $img_class ); ?>" />
 			</picture>

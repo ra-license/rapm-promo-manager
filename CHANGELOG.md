@@ -4,6 +4,16 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.40.2
+
+**Fix: the first slide that's live loads first.** Found on staging right after 1.40.1.
+- **Problem:** 1.40.1 gave the first *printed* Slider picture `loading="eager" fetchpriority="high" data-no-lazy="1"`. On staging's /home-2/, that slide (the boucle sofa) isn't live today, so `rapm-schedule.js` removes it in the browser. The slide visitors actually see first was still lazy.
+- **Fix:** the first slide whose dates include right now, in the site's time zone, gets the early load. `RAPM_Quick_Links::is_live_now()`, the same check Quick links uses for its first paint, is now public and used here. The browser still has the final say on what shows, so a cached page can't freeze a slide on or off. An unreadable date counts as live.
+- **Checked:**
+  - **PHP:** the PHP 8.4 check found 0 issues in all 28 files.
+  - **`is_live_now()`:** no dates is live; 2020 to 2030 is live; a 2030 start isn't; a 2020 end isn't; an unreadable date is live.
+- **1.40.1 on staging (real WordPress, 2026-10-14):** updated from 1.40.0 ("Updated!", still active). Staging serves `rapm-pins.js?ver=1.40.1` and the sliders run with no script errors.
+
 ## 1.40.1
 
 **Fix: product dots on Slider and Feature banner slides show on WoodMart sites with WP Rocket.** Phil, on Kemper's /home-2/ (2026-10-14): the Slider `[rapm_hero placement="promotions-slider"]` had three dots saved (Joinery Plank Bed, Joinery Dresser, Joinery Night Stand), but none showed. Phil can't change site settings, so the whole fix is in the plugin.

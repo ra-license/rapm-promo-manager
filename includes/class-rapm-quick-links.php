@@ -206,8 +206,10 @@ class RAPM_Quick_Links {
 	 * Whether a link's dates include right now, in the site's time zone. Only
 	 * decides the first paint; rapm-schedule.js has the final say in the
 	 * visitor's browser, so a cached page never freezes a link on or off.
+	 * 1.40.1: public, so RAPM_Hero_Carousel can pick which slide's picture
+	 * to load first.
 	 */
-	private static function is_live_now( $starts_at, $ends_at ) {
+	public static function is_live_now( $starts_at, $ends_at ) {
 		try {
 			$tz  = wp_timezone();
 			$now = new DateTimeImmutable( 'now', $tz );
