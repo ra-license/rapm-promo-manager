@@ -37,6 +37,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - The box form asks for one 1200x1500 picture; the split slider's form asks for 1600x1200.
     - The page showed the room and the box side by side.
   - **PHP:** all 29 PHP files parse.
+- **Installed on staging (2026-10-16)** from the staging repo, through its Plugins screen. Staging serves `rapm-hero.css?ver=1.43.0` with no PHP errors; its two sliders are unchanged (full width, none set to split), and the Promotions screen shows the Layout setting. Not yet in production.
 - **Not in this release (next):** Google icons (Material Symbols) and drag-to-place for icons and words in the box (the "canvas"), then the Google Fonts picker. Between-sales slides (Kenna), planned as 1.43.0, move to a later release.
 
 ## 1.42.2
