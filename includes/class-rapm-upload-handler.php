@@ -698,7 +698,7 @@ class RAPM_Upload_Handler {
 						</tr>
 						<?php $site_fonts = RAPM_Elementor::global_fonts(); ?>
 						<?php if ( $site_fonts ) : ?>
-							<tr>
+							<tr<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; 1.47.0: the promotion box picks a font per piece on its canvas. ?>>
 								<th><label for="rapm_text_font"><?php esc_html_e( 'Typeface', 'rapm' ); ?></label></th>
 								<td>
 									<select id="rapm_text_font" name="rapm_text_font">
@@ -1719,7 +1719,12 @@ class RAPM_Upload_Handler {
 			update_post_meta( $asset_id, '_rapm_box_mode', $box_mode );
 			if ( 'design' === $box_mode ) {
 				$posted_canvas = isset( $_POST['rapm_canvas'] ) ? json_decode( wp_unslash( $_POST['rapm_canvas'] ), true ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by sanitize_canvas().
-				update_post_meta( $asset_id, '_rapm_canvas', RAPM_Split::sanitize_canvas( is_array( $posted_canvas ) ? $posted_canvas : array() ) );
+				$clean_canvas  = RAPM_Split::sanitize_canvas( is_array( $posted_canvas ) ? $posted_canvas : array() );
+				update_post_meta( $asset_id, '_rapm_canvas', $clean_canvas );
+				// 1.47.0: copy any Google font it uses onto this site, once.
+				foreach ( RAPM_Split::canvas_fonts( $clean_canvas ) as $family ) {
+					RAPM_Fonts::ensure( $family );
+				}
 			}
 		}
 		update_post_meta( $asset_id, '_rapm_text_mode', $text_mode );
@@ -1999,6 +2004,19 @@ class RAPM_Upload_Handler {
 	 * field up to date. The design area uses the live site's own styles
 	 * (rapm-hero.css), so it shows exactly what ships.
 	 */
+	/** 1.47.0: the site's Elementor brand fonts for the canvas picker, as ID => array( title, family ). */
+	private static function brand_fonts() {
+		$titles   = RAPM_Elementor::global_fonts();
+		$families = RAPM_Elementor::font_family_map();
+		$out      = array();
+		foreach ( $titles as $id => $title ) {
+			if ( ! empty( $families[ $id ] ) ) {
+				$out[ $id ] = array( $title, $families[ $id ] );
+			}
+		}
+		return $out;
+	}
+
 	private static function render_box_canvas( $box_mode, $image_id, $canvas ) {
 		$canvas  = RAPM_Split::canvas_for_editor( $canvas );
 		$picture = $image_id ? wp_get_attachment_image_url( $image_id, 'large' ) : '';
@@ -2025,10 +2043,18 @@ class RAPM_Upload_Handler {
 			'removePic'   => __( 'Remove this picture', 'rapm' ),
 			'pickPicture' => __( 'Pick a picture, like a logo or a badge', 'rapm' ),
 			'usePicture'  => __( 'Put it on the design', 'rapm' ),
+			'font'        => __( 'Font', 'rapm' ),
+			'fontDefault' => __( 'Site default', 'rapm' ),
+			'fontSearch'  => __( 'Search Google Fonts', 'rapm' ),
+			'fontBrand'   => __( 'This site\'s brand fonts', 'rapm' ),
+			'fontMore'    => __( 'Google Fonts', 'rapm' ),
+			'fontNone'    => __( 'No font matches. Try part of a name, like "play" or "sans".', 'rapm' ),
+			'fontNote'    => __( 'A Google font is copied to this website when you save, so visitors never load it from Google.', 'rapm' ),
+			'fontSample'  => __( 'Big Sale 30% Off', 'rapm' ),
 		);
 		$bgs = array( '#f3ead8', '#ffffff', '#1d3557', '#c8102e', '#2f2f2f', '#e6efe9' );
 		?>
-		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
 			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
 			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it. Click it to change its size or color. Arrow keys move the one you picked a little at a time (hold Shift to move it more). A pink line shows when it\'s centered.', 'rapm' ); ?></p>

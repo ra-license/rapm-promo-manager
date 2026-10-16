@@ -4,6 +4,28 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.47.0
+
+**New: a Google Fonts picker on the promotion box canvas.** From the mockup Phil approved on 2026-10-16: brand fonts first, then search; "Only the fonts used on live promotions load on the website, from the client's own server." First release of the approved Design Center roadmap (1.47 to 1.52).
+- **A font for each piece:** click the headline, smaller line or button on the canvas, then "Font".
+  - The picker lists "Site default" and **this site's brand fonts** first (its Elementor global fonts, by name and family, e.g. "Primary (Roboto)").
+  - Then come **Google Fonts**: the 40 most popular, or up to 60 matches when searching all 1,828 open-source families with Latin letters.
+  - Each choice is shown in its own lettering ("Big Sale 30% Off"). The editor loads only those letters from Google, in the admin.
+- **The website uses its own copy:**
+  - When a promotion that uses a Google family is saved, that family's Latin and Latin-extended woff2 files are copied once to `uploads/rapm-fonts/<family>/`, with a small local stylesheet (new `RAPM_Fonts`).
+  - The website links that local stylesheet, so visitors never contact Google: faster, and nothing about them is sent to Google.
+  - Only real woff2 files (they start with `wOF2`) under 2MB from Google's font host are kept. A family not in the bundled list is refused.
+  - If the copy fails, the words fall back to the site's own font, never to Google.
+  - Fallbacks match the family's style (serif, handwriting, monospace or sans-serif).
+- **Brand fonts stay linked to Elementor:** a brand font is saved by its global font ID, so changing that font in Elementor's Site Settings changes the promotion too, as the Typeface setting always did. The box's single Typeface row is hidden, since each piece now picks its own; other promotion types keep it.
+- **Saved safely:** `ff` must be a family from the bundled list (`assets/data/google-fonts.json`, from fonts.google.com/metadata/fonts, 78KB). `fg` is a sanitized key.
+- **How it was checked (WordPress Playground with Elementor 4.3.5, the real form clicked through):**
+  - Copying Playfair Display took 0.3 seconds: 2 woff2 files (one file covers all its weights per alphabet) and `playfair-display.css`. "Not A Real Font" was refused.
+  - In the form, selecting the headline showed "Font: Site default". The picker listed Elementor's four brand fonts, then Google's most popular, each in its own lettering. Searching "playfair" found Playfair Display, Playfair and Playfair Display SC.
+  - Picking it changed the headline on the canvas. Saving stored `ff: Playfair Display`.
+  - The page links `/wp-content/uploads/rapm-fonts/playfair-display/playfair-display.css`, sets the headline's font with a Georgia/serif fallback, and has no reference to Google's font servers. The headline shows in Playfair Display. No PHP errors.
+- **Next:** 1.48.0, the Design Center asset library (mockup first).
+
 ## 1.46.0
 
 **New: the Design Center, for split sliders.** Phil: "I am feeling like the split hero section should be in the designer's portal because it's getting a little involved for a standard client... Can you just add a 'Design Center' above training guide for these elements. It's accessible to everyone but I would only let those able to manage it have training on it."

@@ -163,6 +163,17 @@ class RAPM_Split {
 		return $canvas;
 	}
 
+	/** 1.47.0: the Google families a canvas uses. */
+	public static function canvas_fonts( $canvas ) {
+		$fonts = array();
+		foreach ( isset( $canvas['items'] ) ? $canvas['items'] : array() as $it ) {
+			if ( ! empty( $it['ff'] ) ) {
+				$fonts[ $it['ff'] ] = true;
+			}
+		}
+		return array_keys( $fonts );
+	}
+
 	/** 1.44.0: 'design' (made on the canvas) or 'graphic' (a finished picture, as before). */
 	public static function box_mode( $asset_id ) {
 		return 'design' === get_post_meta( $asset_id, '_rapm_box_mode', true ) ? 'design' : 'graphic';
@@ -231,6 +242,17 @@ class RAPM_Split {
 				continue;
 			} else {
 				$seen[ $k ] = true;
+				// 1.47.0: its own font, a Google family (ff, must be in the
+				// bundled list) or one of the site's Elementor brand fonts
+				// (fg, its global font ID). Neither means the promotion's
+				// Typeface, as before.
+				$ff = isset( $it['ff'] ) ? RAPM_Fonts::canonical( $it['ff'] ) : '';
+				$fg = isset( $it['fg'] ) ? sanitize_key( (string) $it['fg'] ) : '';
+				if ( $ff ) {
+					$item['ff'] = $ff;
+				} elseif ( $fg ) {
+					$item['fg'] = $fg;
+				}
 			}
 			$out['items'][] = $item;
 		}
@@ -285,6 +307,13 @@ class RAPM_Split {
 				$text = $texts[ $it['k'] ];
 				if ( '' === (string) $text ) {
 					continue;
+				}
+				// 1.47.0: the piece's own font, from this site's copy.
+				if ( ! empty( $it['ff'] ) && RAPM_Fonts::local_url( $it['ff'] ) ) {
+					echo RAPM_Fonts::link_tag( $it['ff'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- built with esc_url().
+					$pos .= 'font-family:' . RAPM_Fonts::css_family( $it['ff'] ) . ';';
+				} elseif ( ! empty( $it['fg'] ) ) {
+					$pos .= RAPM_Elementor::font_family_css( $it['fg'] );
 				}
 				if ( 'headline' === $it['k'] ) {
 					echo '<h2 class="rapm-pb-t is-headline" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '">' . esc_html( $text ) . '</h2>';

@@ -21,6 +21,10 @@
  * be img, a picture from the Media Library (a logo or badge): a is its
  * attachment ID and s its width; u is only its address for this editor,
  * which the server works out again.
+ *
+ * 1.47.0: a headline, smaller line or button can have its own font: ff, a
+ * Google Fonts family (copied to the website when the promotion is saved,
+ * RAPM_Fonts), or fg, one of the site's Elementor brand fonts by ID.
  */
 ( function () {
 	var root = document.getElementById( 'rapm-canvas' );
@@ -48,6 +52,12 @@
 	// point at the right icons (1.45.0; "sofa" found nothing without this).
 	var FA_WORDS = { sofa: 'couch', loveseat: 'couch', sectional: 'couch', mattress: 'bed', bedroom: 'bed', recliner: 'chair', delivery: 'truck shipping-fast', shipping: 'truck shipping-fast', sale: 'tag tags percent percentage', discount: 'percent percentage tag', deal: 'tag tags', financing: 'credit-card money-check-alt', payment: 'credit-card', price: 'tag dollar-sign', gift: 'gift', award: 'award medal trophy', quality: 'award certificate check-circle', location: 'map-marker-alt', store: 'store store-alt', showroom: 'store', calendar: 'calendar-alt calendar', event: 'calendar-alt', social: 'facebook instagram pinterest twitter youtube' };
 	var faBase = root.getAttribute( 'data-fa' ) || '';
+	// 1.47.0: fonts. brand is the site's Elementor fonts, ID => [ title, family ].
+	var brand = JSON.parse( root.getAttribute( 'data-brand' ) || '{}' );
+	var gList = null; // [ family, category, weights ] from the bundled list, loaded on first use
+	var fontOpen = false;
+	var fontQuery = '';
+	var fontLoaded = {};
 	var faList = null; // [ name, style, width, height, path ] from Elementor's Font Awesome, loaded on first use
 	var tab = 'ms';
 
@@ -93,6 +103,78 @@
 
 	function isWords( it ) {
 		return 'icon' !== it.k && 'img' !== it.k;
+	}
+
+	/* ---- Fonts (1.47.0) ------------------------------------------------- */
+
+	function fontName( it ) {
+		if ( it.ff ) { return it.ff; }
+		if ( it.fg && brand[ it.fg ] ) { return brand[ it.fg ][ 0 ] + ' (' + brand[ it.fg ][ 1 ] + ')'; }
+		return T.fontDefault;
+	}
+
+	function fontFamilyOf( it ) {
+		if ( it.ff ) { return it.ff; }
+		if ( it.fg && brand[ it.fg ] ) { return brand[ it.fg ][ 1 ]; }
+		return '';
+	}
+
+	// Loads families from Google for this editor only (the website uses its
+	// own copy). With text, only the letters of the sample are fetched.
+	function loadFonts( families, text ) {
+		families = families.filter( function ( f ) { return f && ! fontLoaded[ f + ( text ? '|s' : '' ) ]; } );
+		if ( ! families.length ) { return; }
+		families.forEach( function ( f ) { fontLoaded[ f + ( text ? '|s' : '' ) ] = true; } );
+		var link = document.createElement( 'link' );
+		link.rel = 'stylesheet';
+		link.href = 'https://fonts.googleapis.com/css2?' + families.map( function ( f ) {
+			return 'family=' + encodeURIComponent( f ).replace( /%20/g, '+' ) + ( text ? '' : ':wght@400;700;800' );
+		} ).join( '&' ) + '&display=swap' + ( text ? '&text=' + encodeURIComponent( text ) : '' );
+		document.head.appendChild( link );
+	}
+
+	function loadGoogleList() {
+		if ( gList ) { return Promise.resolve( gList ); }
+		return fetch( root.getAttribute( 'data-gfonts' ) ).then( function ( r ) { return r.json(); } ).then( function ( j ) {
+			gList = j.fonts;
+			return gList;
+		} );
+	}
+
+	function fontButton( attr, value, label, family, on ) {
+		return '<button type="button" class="rapm-cv-font" ' + attr + '="' + esc( value ) + '" aria-pressed="' + on + '">' +
+			'<span class="rapm-cv-font-sample" style="font-family:' + ( family ? esc( '"' + family + '", sans-serif' ) : 'inherit' ) + '">' + esc( T.fontSample ) + '</span>' +
+			'<span class="rapm-cv-font-name">' + esc( label ) + '</span></button>';
+	}
+
+	function renderFontList() {
+		var box = selBox.querySelector( '.rapm-cv-fontlist' );
+		var it = state.items[ selected ];
+		if ( ! box || ! it ) { return; }
+		var q = fontQuery.trim().toLowerCase();
+		var html = '<p class="rapm-cv-font-group">' + esc( T.fontBrand ) + '</p><div class="rapm-cv-fonts">';
+		if ( ! q || T.fontDefault.toLowerCase().indexOf( q ) !== -1 ) {
+			html += fontButton( 'data-fdef', '1', T.fontDefault, '', ! it.ff && ! it.fg );
+		}
+		var brandFamilies = [];
+		Object.keys( brand ).forEach( function ( id ) {
+			var b = brand[ id ];
+			if ( q && ( b[ 0 ] + ' ' + b[ 1 ] ).toLowerCase().indexOf( q ) === -1 ) { return; }
+			brandFamilies.push( b[ 1 ] );
+			html += fontButton( 'data-fg', id, b[ 0 ] + ' (' + b[ 1 ] + ')', b[ 1 ], it.fg === id );
+		} );
+		html += '</div><p class="rapm-cv-font-group">' + esc( T.fontMore ) + '</p><div class="rapm-cv-fonts">';
+		var shown = [];
+		if ( gList ) {
+			for ( var i = 0; i < gList.length && shown.length < ( q ? 60 : 40 ); i++ ) {
+				if ( ! q || gList[ i ][ 0 ].toLowerCase().indexOf( q ) !== -1 ) { shown.push( gList[ i ][ 0 ] ); }
+			}
+		}
+		html += shown.map( function ( f ) { return fontButton( 'data-ff', f, f, f, it.ff === f ); } ).join( '' );
+		html += '</div>';
+		if ( gList && ! shown.length ) { html += '<p class="description">' + esc( T.fontNone ) + '</p>'; }
+		box.innerHTML = html;
+		loadFonts( brandFamilies.concat( shown ), T.fontSample );
 	}
 
 	function esc( t ) {
@@ -144,6 +226,11 @@
 		} else if ( 'img' !== it.k ) {
 			n.style.color = it.c;
 		}
+		if ( isWords( it ) ) {
+			var fam = fontFamilyOf( it );
+			n.style.fontFamily = fam ? '"' + fam + '", sans-serif' : '';
+			if ( fam ) { loadFonts( [ fam ] ); }
+		}
 	}
 
 	function renderLayers() {
@@ -164,7 +251,11 @@
 		}
 		var lim = LIMITS[ it.k ];
 		var h = '<p><strong>' + esc( label( it ) ) + '</strong></p>';
-		if ( isWords( it ) ) { h += '<p class="description">' + esc( T.wordsAbove ) + '</p>'; }
+		if ( isWords( it ) ) {
+			h += '<p class="description">' + esc( T.wordsAbove ) + '</p>';
+			h += '<p><span>' + esc( T.font ) + '</span><br><button type="button" class="button rapm-cv-fontbtn" aria-expanded="' + fontOpen + '">' + esc( fontName( it ) ) + '</button></p>';
+			h += '<div class="rapm-cv-fontpick"' + ( fontOpen ? '' : ' hidden' ) + '><input type="search" class="rapm-cv-fontsearch regular-text" placeholder="' + esc( T.fontSearch ) + '" value="' + esc( fontQuery ) + '"><div class="rapm-cv-fontlist"></div><p class="description">' + esc( T.fontNote ) + '</p></div>';
+		}
 		h += '<p><label for="rapm-cv-size">' + esc( T.size ) + '</label><br><input type="range" id="rapm-cv-size" min="' + lim[ 0 ] + '" max="' + lim[ 1 ] + '" step="0.2" value="' + it.s + '"></p>';
 		if ( 'img' !== it.k ) {
 			h += '<p><span>' + esc( 'btn' === it.k ? T.btnColor : T.color ) + '</span><br><span class="rapm-cv-swatches">' + SWATCHES.map( function ( c ) {
@@ -173,6 +264,7 @@
 		}
 		if ( ! isWords( it ) ) { h += '<p><button type="button" class="button-link rapm-cv-remove">' + esc( 'img' === it.k ? T.removePic : T.remove ) + '</button></p>'; }
 		selBox.innerHTML = h;
+		if ( fontOpen && isWords( it ) ) { loadGoogleList().then( renderFontList ); }
 	}
 
 	function renderBg() {
@@ -402,6 +494,17 @@
 		if ( b.hasAttribute( 'data-fa' ) && faList ) { addFa( +b.getAttribute( 'data-fa' ) ); return; }
 		if ( b.hasAttribute( 'data-tab' ) ) { showTab( b.getAttribute( 'data-tab' ) ); return; }
 		if ( b.classList.contains( 'rapm-cv-pick' ) ) { pickPicture(); return; }
+		if ( b.classList.contains( 'rapm-cv-fontbtn' ) ) { fontOpen = ! fontOpen; renderSel(); return; }
+		if ( b.hasAttribute( 'data-ff' ) || b.hasAttribute( 'data-fg' ) || b.hasAttribute( 'data-fdef' ) ) {
+			var fi = state.items[ selected ];
+			delete fi.ff;
+			delete fi.fg;
+			if ( b.hasAttribute( 'data-ff' ) ) { fi.ff = b.getAttribute( 'data-ff' ); }
+			if ( b.hasAttribute( 'data-fg' ) ) { fi.fg = b.getAttribute( 'data-fg' ); }
+			render();
+			save();
+			return;
+		}
 		if ( b.classList.contains( 'rapm-cv-layer' ) ) { selected = +b.getAttribute( 'data-i' ); render(); return; }
 		if ( b.hasAttribute( 'data-color' ) ) { state.items[ selected ].c = b.getAttribute( 'data-color' ); render(); save(); return; }
 		if ( b.hasAttribute( 'data-bg' ) ) { state.bg = b.getAttribute( 'data-bg' ); state.pic = 0; render(); save(); return; }
@@ -409,8 +512,15 @@
 		if ( b.classList.contains( 'rapm-cv-remove' ) ) { state.items.splice( selected, 1 ); selected = -1; render(); save(); }
 	} );
 
+	var fontTimer = 0;
 	root.addEventListener( 'input', function ( e ) {
 		var it = state.items[ selected ];
+		if ( e.target.classList.contains( 'rapm-cv-fontsearch' ) ) {
+			fontQuery = e.target.value;
+			clearTimeout( fontTimer );
+			fontTimer = setTimeout( function () { loadGoogleList().then( renderFontList ); }, 150 );
+			return;
+		}
 		if ( 'rapm-cv-size' === e.target.id && it ) {
 			it.s = +e.target.value;
 			var n = board.querySelector( '.rapm-cv-item[data-i="' + selected + '"]' );

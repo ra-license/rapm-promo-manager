@@ -59,3 +59,14 @@
 .rapm-cv-item.is-img img { display: block; width: 100%; height: auto; pointer-events: none; }
 .rapm-cv-board .rapm-cv-item.is-img { width: max(24px, calc(var(--s, 30) * 1cqw)); }
 .rapm-cv-layer-ic img { width: 18px; height: 18px; object-fit: contain; display: block; }
+/* Font picker (1.47.0). */
+.rapm-cv-fontpick { display: grid; gap: 8px; border: 1px solid #dcdcde; border-radius: 4px; padding: 10px; background: #fcfcfc; }
+.rapm-cv-fontpick[hidden] { display: none; }
+.rapm-cv-fontsearch { width: 100%; max-width: none; }
+.rapm-cv-fontlist { max-height: 320px; overflow: auto; display: grid; gap: 6px; }
+.rapm-cv-font-group { margin: 4px 0 0; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #646970; }
+.rapm-cv-fonts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.rapm-cv-font { display: grid; gap: 2px; text-align: left; padding: 8px 10px; border: 1px solid #dcdcde; border-radius: 4px; background: #fff; cursor: pointer; color: #1d2327; }
+.rapm-cv-font[aria-pressed="true"] { border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; }
+.rapm-cv-font-sample { font-size: 19px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rapm-cv-font-name { font-size: 11px; color: #646970; }
