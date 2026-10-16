@@ -44,6 +44,16 @@ class RAPM_Library {
 		return $out;
 	}
 
+	/**
+	 * A promotion's name as plain text (1.48.1). get_the_title() returns
+	 * HTML: WordPress turns " - " into &#8211; and so on. The library's
+	 * script escapes text itself, so the encoded form showed up literally
+	 * ("Coupon &#8211; Free Delivery"), found on staging.
+	 */
+	private static function plain_title( $post ) {
+		return wp_strip_all_tags( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) );
+	}
+
 	/** One picture's facts, or null. */
 	private static function picture( $asset_id, $which ) {
 		$id = (int) get_post_meta( $asset_id, '_rapm_image_' . $which . '_id', true );
@@ -123,7 +133,7 @@ class RAPM_Library {
 		if ( ( $desk && $desk['link'] ) || ( $phone && $phone['link'] ) ) {
 			$check = wp_nonce_url( admin_url( 'admin-post.php?action=rapm_check_link_now&asset_id=' . $id ), 'rapm_check_link_now_' . $id );
 		}
-		$title = get_the_title( $post );
+		$title = self::plain_title( $post );
 
 		return array(
 			'id'       => $id,
@@ -432,12 +442,12 @@ class RAPM_Library {
 				$slot = RAPM_Slots::get( $info[ $which ] );
 				if ( ! $slot || ! RAPM_Slots::dimensions_match( $slot, $w, $h ) ) {
 					/* translators: 1: promotion name, 2: picture size, 3: needed size */
-					$why[] = sprintf( __( '%1$s: the new picture is %2$s, it needs %3$s.', 'rapm' ), get_the_title( $id ), $w . '×' . $h, $slot ? (int) $slot['width'] . '×' . (int) $slot['height'] : '?' );
+					$why[] = sprintf( __( '%1$s: the new picture is %2$s, it needs %3$s.', 'rapm' ), self::plain_title( $id ), $w . '×' . $h, $slot ? (int) $slot['width'] . '×' . (int) $slot['height'] : '?' );
 					continue;
 				}
 				if ( $kb > (int) $slot['max_kb'] ) {
 					/* translators: 1: promotion name, 2: file size, 3: limit */
-					$why[] = sprintf( __( '%1$s: the new picture is %2$d KB, the limit is %3$d KB.', 'rapm' ), get_the_title( $id ), (int) round( $kb ), (int) $slot['max_kb'] );
+					$why[] = sprintf( __( '%1$s: the new picture is %2$d KB, the limit is %3$d KB.', 'rapm' ), self::plain_title( $id ), (int) round( $kb ), (int) $slot['max_kb'] );
 					continue;
 				}
 				update_post_meta( $id, '_rapm_image_' . $which . '_id', $new );

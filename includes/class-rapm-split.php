@@ -157,7 +157,7 @@ class RAPM_Split {
 		foreach ( $canvas['items'] as $i => $it ) {
 			if ( 'img' === $it['k'] ) {
 				$canvas['items'][ $i ]['u'] = (string) wp_get_attachment_image_url( $it['a'], 'medium_large' );
-				$canvas['items'][ $i ]['t'] = get_the_title( $it['a'] );
+				$canvas['items'][ $i ]['t'] = wp_strip_all_tags( html_entity_decode( get_the_title( $it['a'] ), ENT_QUOTES, 'UTF-8' ) ); // Plain text: the editor escapes it (1.48.1).
 			}
 		}
 		return $canvas;

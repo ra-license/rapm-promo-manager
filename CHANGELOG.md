@@ -4,6 +4,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.48.1
+
+**Fix: names with a dash or quote showed codes in the Asset library.** Found on staging right after installing 1.48.0: "Coupon &#8211; Free Delivery".
+- **Root cause:** WordPress returns a post's title as HTML (`get_the_title()` turns " - " into `&#8211;`, quotes into `&#8217;`, and so on). The library's script escapes text itself, so the encoded form was shown literally. Picture names in the canvas editor's "On the design" list (1.45.0) had the same problem.
+- **Fix:** both now decode the title to plain text once (`RAPM_Library::plain_title()`), and the browser escapes it as usual.
+- **Also on staging, 1.48.0 working with real data:** 22 promotions in 10 spots, 19 showing, 3 ended, 6 needing a look (the split test room photos with no phone picture, quick links with no alt text), and 3.8 MB of pictures. The designed promotion box is drawn on its card. No errors.
+
 ## 1.48.0
 
 **New: the Design Center's Asset library.** From the mockup Phil approved on 2026-10-16 (https://claude.ai/artifact/7QB12FYVVSSB4sNJi67VV6). Second release of the Design Center roadmap. Phil: "All versions of assets should be available within the Design Center as well, but with more of these advanced asset management tools."
