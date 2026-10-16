@@ -4,6 +4,19 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.43.2
+
+**Split view fits the screen on computers.** Phil, on staging at 1903px wide: the room ran past the bottom of the screen.
+- **Root cause:** since 1.43.1 the room column is 60% of the whole page. At 1903px that's about 1130px wide, so a 4:3 room was about 850px tall. Under staging's 240px header, that ran past the bottom of a 930px-tall window.
+- **Fix:** on computers, the room is never taller than the screen below where the block starts, when it starts in the first screen (the top 60%). The room photos are trimmed evenly top and bottom to fit, and the promotion box matches the height (a finished graphic still shows whole). It is never less than half as tall as the room column is wide, so a short window doesn't make it squat. A block lower down the page is only held to the screen's height. Phones don't change. The height is `--rapm-split-maxh`, set by `RAPM_Split`'s script and kept current on resize.
+- **How it was checked (php-wasm render, with a header of set height above the block):**
+  - 1903x930, 240px header: the room is 1123x690 and ends exactly at the bottom of the screen (it was about 850 tall).
+  - 1440x781, 160px header: the room is 845x621 and ends at the bottom.
+  - 1280x900, no header: the room is 758x569, its full 4:3 (no trim needed).
+  - Block 1200px down the page: the full 4:3 (842 tall, within one screen).
+  - Product dots follow the trimmed photo.
+  - No PHP warnings.
+
 ## 1.43.1
 
 **Split view fills the page's width.** Phil, after trying 1.43.0 on staging: the room and the promotion should fill the width of the page.

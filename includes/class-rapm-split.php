@@ -214,11 +214,29 @@ class RAPM_Split {
 					if ( ! box ) { return; }
 					// Full page width: the page's width without the scrollbar,
 					// which 100vw would include (as in rapm-looks.js).
-					if ( wrap.classList.contains( 'is-full' ) ) {
-						var fullWidth = function () { wrap.style.setProperty( '--rapm-split-vw', document.documentElement.clientWidth + 'px' ); };
-						fullWidth();
-						window.addEventListener( 'resize', fullWidth );
-					}
+					var isFull = wrap.classList.contains( 'is-full' );
+					var main = wrap.querySelector( '.rapm-split-main' );
+					// 1.43.2 (Phil, on staging at 1903px wide): a 4:3 room
+					// in a wide column ran past the bottom of the screen. On
+					// computers the room is kept within the screen below
+					// where the block starts (the header), when it starts in
+					// the first screen, but never less than half as tall as
+					// its column is wide. rapm-hero.css trims the photos
+					// evenly top and bottom to that height.
+					var size = function () {
+						if ( isFull ) { wrap.style.setProperty( '--rapm-split-vw', document.documentElement.clientWidth + 'px' ); }
+						var top = wrap.getBoundingClientRect().top + ( window.pageYOffset || document.documentElement.scrollTop || 0 );
+						var screenH = window.innerHeight;
+						var room = screenH - ( top < screenH * 0.6 ? top : 0 );
+						wrap.style.setProperty( '--rapm-split-maxh', Math.round( Math.max( room, main.clientWidth / 2 ) ) + 'px' );
+					};
+					size();
+					var sizing = 0;
+					window.addEventListener( 'resize', function () {
+						if ( sizing ) { return; }
+						sizing = 1;
+						window.requestAnimationFrame( function () { size(); sizing = 0; } );
+					} );
 					RAPM_Schedule.watch( box, '.rapm-pb-item', function ( active ) {
 						Array.prototype.forEach.call( box.querySelectorAll( '.rapm-pb-item' ), function ( item ) {
 							item.hidden = item !== active[ 0 ];

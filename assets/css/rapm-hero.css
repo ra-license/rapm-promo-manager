@@ -245,6 +245,12 @@
 .rapm-split.rapm-split-empty { grid-template-columns: minmax(0, 1fr); }
 .rapm-split.rapm-split-empty .rapm-split-side,
 .rapm-pb-solo.rapm-split-empty { display: none; }
+/* 1.43.2: on computers the room fits the screen below the header
+   (--rapm-split-maxh, from RAPM_Split's script), its photos trimmed evenly
+   top and bottom; the promotion box matches the room's height. */
+@media (min-width: 769px) {
+	.rapm-split .rapm-hero .rapm-slide { max-height: var(--rapm-split-maxh, none); }
+}
 /* At full width a 4:3 room photo would be about as tall as the screen, so
    until a promotion is live again the room photos show 2:1, trimmed evenly
    top and bottom. Computers only: phones already stack. */
