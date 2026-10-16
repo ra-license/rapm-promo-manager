@@ -10,6 +10,11 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Why:** with the room held to the screen (1.43.2), the box is wider than it is tall on big monitors. On staging at 1920x902 it measured 756x630 (6:5), so a 4:5 graphic filled only about two-thirds of its width, with blurred bands at the sides. On a 1440 laptop it's about 9:10. Square sits between the two, so the bands stay thin on both.
 - **Phones:** the box keeps its picture's shape at full width, so it's now square (about 390px tall on a 390px phone, was about 490). The room photos come into view sooner.
 - **Pictures already uploaded:** a promotion box picture saved at 1200x1500 still shows whole (fitted, with the blurred fill). The new size only applies to pictures added from now on. Graphics should be designed square.
+- **Checked:**
+  - php-wasm, phone width: the box is square (375x375), no PHP warnings.
+  - **Installed on staging (2026-10-16):** the test promotion was swapped for a square sample through its edit form. At 1920x902 the box is 756x630 and the graphic shows 630 wide, so the blurred bands are 63px each side (the 4:5 graphic left about 126px each side).
+  - An attempt to edit it through the wrong form address was turned away by the size check ("needs to be 1920x600"), so nothing changed.
+  - Not yet in production.
 - **Not changed:** stretching or cropping the graphic to fill the box was ruled out, since it would cut off words that are part of the graphic.
 
 ## 1.43.2
