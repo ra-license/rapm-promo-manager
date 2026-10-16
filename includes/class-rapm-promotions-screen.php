@@ -196,6 +196,11 @@ class RAPM_Promotions_Screen {
 		return add_query_arg( array_merge( array( 'page' => self::PAGE ), $args ), admin_url( self::PARENT ) );
 	}
 
+	/** The Design Center's open tab (1.48.0): 'split' (Split sliders) or 'library' (Asset library). */
+	public static function design_tab() {
+		return isset( $_GET['tab'] ) && 'library' === sanitize_key( wp_unslash( $_GET['tab'] ) ) ? 'library' : 'split'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	}
+
 	/** The Design Center's address (1.46.0), optionally at one slider's section. */
 	public static function design_url( $placement = '' ) {
 		$url = add_query_arg( array( 'page' => self::DESIGN_PAGE ), admin_url( self::PARENT ) );
@@ -206,6 +211,9 @@ class RAPM_Promotions_Screen {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( self::PAGE !== $page && self::DESIGN_PAGE !== $page ) {
 			return;
+		}
+		if ( self::DESIGN_PAGE === $page && self::design_tab() === 'library' ) {
+			RAPM_Library::enqueue();
 		}
 		// 1.44.1: the live site's styles, for designed promotion box cards.
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
@@ -821,10 +829,24 @@ class RAPM_Promotions_Screen {
 			<div class="rapm-promos-head">
 				<div>
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Design Center', 'rapm' ); ?></h1>
-					<p class="rapm-promos-sub"><?php esc_html_e( 'Split sliders: room photos that take turns beside a promotion you design. Kept here so the Promotions page stays simple.', 'rapm' ); ?></p>
+					<p class="rapm-promos-sub"><?php esc_html_e( 'Advanced tools: split sliders and the asset library. Kept here so the Promotions page stays simple.', 'rapm' ); ?></p>
 				</div>
 			</div>
 			<hr class="wp-header-end" />
+
+			<?php // 1.48.0: two tabs, as plain links. ?>
+			<nav class="nav-tab-wrapper rapm-dc-tabs" aria-label="<?php esc_attr_e( 'Design Center', 'rapm' ); ?>">
+				<a href="<?php echo esc_url( self::design_url() ); ?>" class="nav-tab<?php echo 'split' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'split' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Split sliders', 'rapm' ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( 'tab', 'library', self::design_url() ) ); ?>" class="nav-tab<?php echo 'library' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'library' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Asset library', 'rapm' ); ?></a>
+			</nav>
+
+			<?php if ( 'library' === self::design_tab() ) : ?>
+				<?php RAPM_Library::render(); ?>
+			</div>
+			<?php
+			return;
+			endif;
+			?>
 
 			<details class="rapm-dc-how">
 				<summary><?php esc_html_e( 'How it works', 'rapm' ); ?></summary>

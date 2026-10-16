@@ -4,6 +4,48 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.48.0
+
+**New: the Design Center's Asset library.** From the mockup Phil approved on 2026-10-16 (https://claude.ai/artifact/7QB12FYVVSSB4sNJi67VV6). Second release of the Design Center roadmap. Phil: "All versions of assets should be available within the Design Center as well, but with more of these advanced asset management tools."
+- **Where:** Promotions › Design Center now has two tabs, **Split sliders** (as in 1.46.0) and **Asset library**. The Promotions page is unchanged for clients.
+- **What it shows:** every promotion of every type (new `RAPM_Library`, `assets/js/rapm-library.js`).
+  - **Summary:** promotions, spots, showing now, how many need a look, and the total weight of the pictures.
+  - **Status chips with counts:** Not ended (the default; ended ones stay hidden until asked), Showing now, Scheduled, Turned off, Ended, Needs a look, Everything.
+  - **Search** by name, headline, file name or alt text. **Filters** by type and spot. **Sort** by ending soonest, newest, name or heaviest files.
+  - **Cards or a table** (picture sizes, source and alt text in columns). The view, chip and sort are remembered in this browser.
+- **Details panel** (click a promotion):
+  - Computer and phone pictures, each with its file name, real size against the size its spot needs (1600×1200 for a split slider), and file weight.
+  - Where it comes from: upload, Google Drive or Dropbox, when it was last checked, and **Check now** (the existing link check).
+  - Alt text, the pages it shows on (a promotion box in split view lists its slider's pages), where it links, and when it was created and last saved, and by whom.
+  - **Edit, Duplicate, Turn on/off.**
+- **"Needs a look"** marks plain facts: a Drive/Dropbox link that failed, a picture that isn't the size its spot needs, no alt text, or a Slider/Feature banner with no phone picture. 1.49.0 turns these into full "Ready to go live" checks.
+- **Bulk actions** (tick promotions): Turn on, Turn off, Set dates, Duplicate, Move to spot, Move to trash.
+  - Each one first asks "Turn off 2 promotion(s)?" with Confirm and Cancel.
+  - The bar sits below the cards, pinned to the bottom of the screen. While testing, a bar above the cards pushed them down when the first box was ticked, so the next click landed on a button.
+  - The result shows briefly, including anything left alone, then the page refreshes.
+  - **Checked again on the server** (`rapm_library_bulk`):
+    - Each promotion must be one the user can edit.
+    - Dates must be real date-and-time values, with the end after the start. Blank means no start or no end.
+    - A promotion only moves to a spot of its own type (its pictures are sized for that type), and the rest are reported as left alone.
+    - Duplicates are turned off (the shared `RAPM_Admin_List::duplicate()`, also used by the old list's Duplicate).
+    - Trash is WordPress's normal trash.
+    - Changes clear the page cache like any edit.
+- **Replace everywhere** (`rapm_library_replace`):
+  - "Replace picture…" lists every promotion that uses the same Media Library file, all ticked, then opens WordPress's Media Library to pick or upload the new one.
+  - It's used only where the new picture is the size that promotion's spot needs and within its file-size limit, because this skips the form's resizing and WebP conversion. Anything else is listed with the reason ("the new picture is 1080×1080, it needs 1920×600"), pointing to the promotion's own form.
+  - A replaced picture's Drive/Dropbox link is dropped, since it was replaced by hand.
+- **How it was checked (WordPress Playground with Elementor 4.3.5):**
+  - **Server actions:**
+    - An end before the start was refused. A junk date was refused, with its own message (fixed after it first showed the wrong one).
+    - Dates saved. Moving a slider and a tile to the Home slider moved 1 and left 1.
+    - Turn off, Duplicate (copy turned off) and an unknown action (refused) all behaved.
+    - Replacing with a square picture was refused for both wide sliders, with the reason. Replacing with a right-size picture updated both promotions that shared the file.
+  - **The real screen, clicked through:**
+    - The library listed the 5 test promotions with correct statuses and flags ("No phone picture", "No alt text"), and the details panel matched the mockup.
+    - Ticking two cards and confirming "Turn on 2 promotion(s)?" turned them on and refreshed (Scheduled 2, Turned off 0).
+    - The table view kept the toolbar in place, after a fix: the wide table had stretched the whole library.
+    - The Split sliders tab still works. No PHP errors.
+
 ## 1.47.0
 
 **New: a Google Fonts picker on the promotion box canvas.** From the mockup Phil approved on 2026-10-16: brand fonts first, then search; "Only the fonts used on live promotions load on the website, from the client's own server." First release of the approved Design Center roadmap (1.47 to 1.52).

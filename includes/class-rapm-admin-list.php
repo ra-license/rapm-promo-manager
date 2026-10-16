@@ -175,26 +175,28 @@ class RAPM_Admin_List {
 		return admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $post_id );
 	}
 
-	public static function handle_duplicate() {
-		$asset_id = isset( $_GET['rapm_duplicate'] ) ? absint( $_GET['rapm_duplicate'] ) : 0;
-		if ( ! $asset_id || 'rapm_asset' !== get_post_type( $asset_id ) || ! current_user_can( 'edit_posts' ) ) {
-			wp_die( esc_html__( 'Nothing to duplicate.', 'rapm' ) );
-		}
-		check_admin_referer( 'rapm_duplicate_' . $asset_id );
-
+	/**
+	 * A copy of a promotion, turned off, with all its settings (1.48.0:
+	 * shared with the Design Center's Asset library). Returns the new ID,
+	 * or 0.
+	 */
+	public static function duplicate( $asset_id ) {
 		$original = get_post( $asset_id );
-		$new_id   = wp_insert_post(
+		if ( ! $original || 'rapm_asset' !== $original->post_type ) {
+			return 0;
+		}
+		$new_id = wp_insert_post(
 			array(
 				/* translators: %s: the original asset's name */
 				'post_title'  => sprintf( __( '%s (Copy)', 'rapm' ), $original->post_title ),
 				'post_type'   => 'rapm_asset',
 				'post_status' => 'draft',
+				'menu_order'  => $original->menu_order,
 			)
 		);
 		if ( is_wp_error( $new_id ) || ! $new_id ) {
-			wp_die( esc_html__( 'Could not duplicate this asset. Please try again.', 'rapm' ) );
+			return 0;
 		}
-
 		foreach ( get_post_meta( $asset_id ) as $key => $values ) {
 			if ( 0 !== strpos( $key, '_rapm_' ) ) {
 				continue;
@@ -202,6 +204,20 @@ class RAPM_Admin_List {
 			foreach ( $values as $value ) {
 				add_post_meta( $new_id, $key, maybe_unserialize( $value ) );
 			}
+		}
+		return (int) $new_id;
+	}
+
+	public static function handle_duplicate() {
+		$asset_id = isset( $_GET['rapm_duplicate'] ) ? absint( $_GET['rapm_duplicate'] ) : 0;
+		if ( ! $asset_id || 'rapm_asset' !== get_post_type( $asset_id ) || ! current_user_can( 'edit_posts' ) ) {
+			wp_die( esc_html__( 'Nothing to duplicate.', 'rapm' ) );
+		}
+		check_admin_referer( 'rapm_duplicate_' . $asset_id );
+
+		$new_id = self::duplicate( $asset_id );
+		if ( ! $new_id ) {
+			wp_die( esc_html__( 'Could not duplicate this asset. Please try again.', 'rapm' ) );
 		}
 
 		wp_safe_redirect( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $new_id ) );
