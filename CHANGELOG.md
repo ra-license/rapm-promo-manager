@@ -30,6 +30,10 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Re-opening restored both, with the badge's thumbnail. In the Font Awesome tab, "sofa" found the couch.
   - The page drew the couch with the Font Awesome credit and the badge with its alt text ("Made in USA badge"), as placed, with no PHP errors.
   - **Tampered input:** a drawing area with an injected attribute, an unknown icon source, a page posing as a picture, a fake picture address, an out-of-range size and a 7th picture were all dropped, clamped or replaced.
+- **Installed on staging (2026-10-16).**
+  - The promotion box form shows all three tabs. Staging's Elementor serves Font Awesome (1,002 solid icons read), and the Media Library scripts load.
+  - The test page serves `rapm-hero.css?ver=1.45.0` with the design and no errors.
+  - Not yet in production.
 - **Next:** 1.46.0, the Google Fonts picker.
 
 ## 1.44.1
