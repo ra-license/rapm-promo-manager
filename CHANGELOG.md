@@ -4,6 +4,26 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.46.0
+
+**New: the Design Center, for split sliders.** Phil: "I am feeling like the split hero section should be in the designer's portal because it's getting a little involved for a standard client... Can you just add a 'Design Center' above training guide for these elements. It's accessible to everyone but I would only let those able to manage it have training on it."
+- **New menu item: Promotions › Design Center**, right above Training Guide. Anyone who can edit promotions can open it.
+- **What it holds:**
+  - **"Make a slider split":** pick any slider that isn't split yet and turn split view on (60/40, promotion on the right, full page, promotion first on phones; all changeable in its Layout).
+  - **Every split slider's full section:** the Layout setting, the Room photos area and the Promotion box area with its cards and Add cards (as in 1.44.1).
+  - **"How it works":** a short how-to on the page itself, for the people who use it. The client Training Guide doesn't cover split view or the canvas.
+- **The Promotions page is simpler:**
+  - A split slider shows as one short card: its name, where it shows, what's showing in each part, and "Open in the Design Center".
+  - Regular sliders no longer show the Layout setting. In its place is a link: "make it a split slider in the Design Center".
+- **The form's back link** goes to the Design Center (instead of "All promotions") for a promotion box, or a room photo of a split slider.
+- **Checked in WordPress Playground:**
+  - The menu reads All promotions, Add New Asset, All Assets (list), Sliders, Design Center, Training Guide, Help, Settings.
+  - The Promotions page shows the split slider as a card with no cards or Layout, and the regular slider without Layout.
+  - The Design Center shows "Make a slider split" (offering the Living Room slider) and the split slider's two areas with its Layout.
+  - "Turn on split view" saved `split: 1` for the Living Room slider. After reloading, it's listed in the Design Center and gone from the choices.
+  - No PHP errors.
+- **Next:** 1.47.0, the Google Fonts picker.
+
 ## 1.45.0
 
 **New: Font Awesome icons and Media Library pictures on the promotion box canvas.** Phil's pick from the mockup: Elementor's icons (Font Awesome) plus the Media Library.
@@ -34,7 +54,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The promotion box form shows all three tabs. Staging's Elementor serves Font Awesome (1,002 solid icons read), and the Media Library scripts load.
   - The test page serves `rapm-hero.css?ver=1.45.0` with the design and no errors.
   - Not yet in production.
-- **Next:** 1.46.0, the Google Fonts picker.
+- **Next:** the Google Fonts picker (now 1.47.0; 1.46.0 became the Design Center).
 
 ## 1.44.1
 

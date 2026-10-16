@@ -147,3 +147,12 @@
 @media (max-width: 960px) { .rapm-split-areas { grid-template-columns: minmax(0, 1fr); } }
 .rapm-card-pic .rapm-card-design { position: relative; inset: auto; display: block; width: 100%; aspect-ratio: var(--rapm-ratio, 1 / 1); }
 .rapm-card-pic .rapm-card-design .rapm-pb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; aspect-ratio: auto; }
+
+/* Design Center (1.46.0). */
+.rapm-dc-how { background: #fff; border: 1px solid #dcdcde; border-radius: 6px; padding: 10px 16px; margin: 16px 0; max-width: 900px; }
+.rapm-dc-how summary { cursor: pointer; font-weight: 600; }
+.rapm-dc-how ol { margin: 10px 0 4px 20px; }
+.rapm-dc-how li { margin-bottom: 6px; }
+.rapm-make-split { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.rapm-dc-make .rapm-spot-name { margin: 0; }
+.rapm-split-pointer .rapm-spot-head { align-items: center; }

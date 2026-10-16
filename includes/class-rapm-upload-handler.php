@@ -191,7 +191,11 @@ class RAPM_Upload_Handler {
 		$error_message = isset( $_GET['rapm_error'] ) ? sanitize_text_field( wp_unslash( $_GET['rapm_error'] ) ) : '';
 		?>
 		<div class="wrap">
-			<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::url() ); ?>">&larr; <?php esc_html_e( 'All promotions', 'rapm' ); ?></a></p>
+			<?php if ( $is_box || ( 'hero' === $kind_key && RAPM_Split::is_split( $placement ) ) ) : // 1.46.0: split sliders are worked on in the Design Center. ?>
+				<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::design_url( $placement ) ); ?>">&larr; <?php esc_html_e( 'Design Center', 'rapm' ); ?></a></p>
+			<?php else : ?>
+				<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::url() ); ?>">&larr; <?php esc_html_e( 'All promotions', 'rapm' ); ?></a></p>
+			<?php endif; ?>
 			<h1>
 				<?php echo $is_edit ? esc_html__( 'Edit Promotional Asset', 'rapm' ) : esc_html__( 'Add New Promotional Asset', 'rapm' ); ?>
 				<?php if ( ! $is_edit ) : ?>

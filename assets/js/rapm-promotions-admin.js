@@ -282,6 +282,27 @@
 		} );
 	} );
 
+	/* ---- Design Center: "Turn on split view" (1.46.0) ----------------------- */
+
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-make-split' ) : null;
+		if ( ! form ) { return; }
+		e.preventDefault();
+		var section = form.closest( '.rapm-spot' );
+		var button  = form.querySelector( 'button[type="submit"]' );
+		var place   = form.querySelector( 'select[name="placement"]' ).value;
+		button.disabled = true;
+		say( section, T.saving );
+		post( { action: 'rapm_save_layout', nonce: cfg.nonce, placement: place, split: '1', cols: '60-40', side: 'right', phone: 'promo', width: 'full' } ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
+			window.location.hash = 'rapm-spot-hero-' + place;
+			window.location.reload();
+		} ).catch( function () {
+			button.disabled = false;
+			say( section, T.saveFailed );
+		} );
+	} );
+
 	/* ---- "Remove this spot" (1.29.1) ---------------------------------------- */
 
 	root.addEventListener( 'click', function ( e ) {

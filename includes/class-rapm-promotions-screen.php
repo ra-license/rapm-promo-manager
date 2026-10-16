@@ -18,6 +18,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 class RAPM_Promotions_Screen {
 
 	const PAGE   = 'rapm-promotions';
+
+	/**
+	 * Design Center (1.46.0, Phil: "just add a 'Design Center' above training
+	 * guide for these elements. It's accessible to everyone but I would only
+	 * let those able to manage it have training on it"). Split sliders, their
+	 * room photos and the promotion box canvas live here, so the Promotions
+	 * page stays simple for clients. Its how-to is on the page itself, not in
+	 * the client Training Guide.
+	 */
+	const DESIGN_PAGE = 'rapm-design-center';
 	const PARENT = 'edit.php?post_type=rapm_asset';
 	const NONCE  = 'rapm_promotions';
 
@@ -53,6 +63,7 @@ class RAPM_Promotions_Screen {
 			'rapm-add-asset',
 			self::LIST_SLUG,
 			'rapm-sliders',
+			self::DESIGN_PAGE,
 			'rapm-training-guide',
 			'rapm-help',
 			'rapm-settings',
@@ -67,6 +78,14 @@ class RAPM_Promotions_Screen {
 			'edit_posts',
 			self::PAGE,
 			array( __CLASS__, 'render_page' )
+		);
+		add_submenu_page(
+			self::PARENT,
+			__( 'Design Center', 'rapm' ),
+			__( 'Design Center', 'rapm' ),
+			'edit_posts',
+			self::DESIGN_PAGE,
+			array( __CLASS__, 'render_design_center' )
 		);
 		// A plain link, no screen of its own: WordPress links a submenu
 		// slug that isn't a plugin page straight to that address.
@@ -177,9 +196,15 @@ class RAPM_Promotions_Screen {
 		return add_query_arg( array_merge( array( 'page' => self::PAGE ), $args ), admin_url( self::PARENT ) );
 	}
 
+	/** The Design Center's address (1.46.0), optionally at one slider's section. */
+	public static function design_url( $placement = '' ) {
+		$url = add_query_arg( array( 'page' => self::DESIGN_PAGE ), admin_url( self::PARENT ) );
+		return $placement ? $url . '#rapm-spot-hero-' . sanitize_html_class( $placement ) : $url;
+	}
+
 	public static function enqueue( $hook ) {
 		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( self::PAGE !== $page ) {
+		if ( self::PAGE !== $page && self::DESIGN_PAGE !== $page ) {
 			return;
 		}
 		// 1.44.1: the live site's styles, for designed promotion box cards.
@@ -421,8 +446,13 @@ class RAPM_Promotions_Screen {
 				if ( 'promo_box' === $spot['kind'] && isset( $spots[ 'hero|' . $spot['placement'] ] ) && RAPM_Split::is_split( $spot['placement'] ) ) {
 					continue;
 				}
-				$box = 'hero' === $spot['kind'] && isset( $spots[ $box_key ] ) && RAPM_Split::is_split( $spot['placement'] ) ? $spots[ $box_key ] : null;
-				self::render_spot( $spot, $box );
+				// 1.46.0: a split slider is worked on in the Design Center;
+				// here it's a short card that links there.
+				if ( 'hero' === $spot['kind'] && RAPM_Split::is_split( $spot['placement'] ) ) {
+					self::render_split_pointer( $spot, isset( $spots[ $box_key ] ) ? $spots[ $box_key ] : null );
+					continue;
+				}
+				self::render_spot( $spot );
 			}
 			?>
 
@@ -587,7 +617,7 @@ class RAPM_Promotions_Screen {
 	 * room photos and the promotion box, each with its own cards, order,
 	 * count and Add card.
 	 */
-	private static function render_spot( $spot, $box = null ) {
+	private static function render_spot( $spot, $box = null, $where = 'promotions' ) {
 		$kind      = $spot['kind'];
 		$placement = $spot['placement'];
 		$kind_info = RAPM_Slots::kind_for( $kind, $placement );
@@ -655,8 +685,13 @@ class RAPM_Promotions_Screen {
 							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
 							<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
 						</form>
-						<?php if ( 'hero' === $kind ) : ?>
+						<?php if ( 'hero' === $kind && 'design' === $where ) : ?>
 							<?php self::render_layout_form( $placement, $heading ); ?>
+						<?php elseif ( 'hero' === $kind ) : ?>
+							<p>
+								<?php esc_html_e( 'Rooms beside a promotion that stays put:', 'rapm' ); ?>
+								<a href="<?php echo esc_url( self::design_url() ); ?>"><?php esc_html_e( 'make it a split slider in the Design Center', 'rapm' ); ?></a>.
+							</p>
 						<?php elseif ( 'promo_box' === $kind ) : ?>
 							<p>
 								<?php
@@ -719,6 +754,121 @@ class RAPM_Promotions_Screen {
 			<?php endif; // $box ?>
 			<p class="rapm-spot-status" aria-live="polite"></p>
 		</section>
+		<?php
+	}
+
+	/**
+	 * A split slider on the Promotions page (1.46.0): its name, where it
+	 * shows and what's showing, with a link to work on it in the Design
+	 * Center. No cards here, so clients aren't handed the design tools.
+	 */
+	private static function render_split_pointer( $spot, $box ) {
+		$placement = $spot['placement'];
+		$heading   = 'rapm-spot-hero-' . sanitize_html_class( $placement );
+		$used_on   = RAPM_Spot_Usage::for_spot( 'hero', $placement );
+		?>
+		<section class="rapm-spot rapm-split-pointer" aria-labelledby="<?php echo esc_attr( $heading ); ?>" data-kind="hero" data-placement="<?php echo esc_attr( $placement ); ?>">
+			<div class="rapm-spot-head">
+				<div class="rapm-spot-info">
+					<div class="rapm-spot-title">
+						<h2 id="<?php echo esc_attr( $heading ); ?>" class="rapm-spot-name"><?php echo esc_html( self::spot_name( 'hero', $placement ) ); ?></h2>
+						<span class="rapm-type-chip"><?php esc_html_e( 'Slider · Split view', 'rapm' ); ?></span>
+					</div>
+					<p class="rapm-spot-on">
+						<?php if ( $used_on ) : ?>
+							<?php esc_html_e( 'Shows on:', 'rapm' ); ?>
+							<?php
+							$links = array();
+							foreach ( $used_on as $use ) {
+								$links[] = $use['url'] ? '<a href="' . esc_url( $use['url'] ) . '" target="_blank" rel="noopener">' . esc_html( $use['label'] ) . '</a>' : esc_html( $use['label'] );
+							}
+							echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput -- each part escaped above.
+							?>
+						<?php else : ?>
+							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet.', 'rapm' ); ?></span>
+						<?php endif; ?>
+					</p>
+					<p>
+						<?php
+						/* translators: 1: what's showing in the room photos, 2: what's showing in the promotion box */
+						echo esc_html( sprintf( __( 'Room photos: %1$s. Promotion box: %2$s.', 'rapm' ), self::count_line( $spot['posts'] ), self::count_line( $box ? $box['posts'] : array() ) ) );
+						?>
+					</p>
+				</div>
+				<a class="button button-primary" href="<?php echo esc_url( self::design_url( $placement ) ); ?>"><?php esc_html_e( 'Open in the Design Center', 'rapm' ); ?></a>
+			</div>
+		</section>
+		<?php
+	}
+
+	/** The Design Center page (1.46.0). */
+	public static function render_design_center() {
+		$spots  = self::spots();
+		$split  = array();
+		$plain  = array();
+		foreach ( $spots as $spot ) {
+			if ( 'hero' !== $spot['kind'] ) {
+				continue;
+			}
+			if ( RAPM_Split::is_split( $spot['placement'] ) ) {
+				$split[] = $spot;
+			} else {
+				$plain[] = $spot;
+			}
+		}
+		?>
+		<div class="wrap rapm-promos rapm-design-center">
+			<div class="rapm-promos-head">
+				<div>
+					<h1 class="rapm-promos-title"><?php esc_html_e( 'Design Center', 'rapm' ); ?></h1>
+					<p class="rapm-promos-sub"><?php esc_html_e( 'Split sliders: room photos that take turns beside a promotion you design. Kept here so the Promotions page stays simple.', 'rapm' ); ?></p>
+				</div>
+			</div>
+			<hr class="wp-header-end" />
+
+			<details class="rapm-dc-how">
+				<summary><?php esc_html_e( 'How it works', 'rapm' ); ?></summary>
+				<ol>
+					<li><?php esc_html_e( 'Pick a slider below and turn on split view. Its section here then holds its Layout (widths, which side the promotion is on, full page or the site\'s width, and what phones show first), its room photos and its promotion box.', 'rapm' ); ?></li>
+					<?php /* translators: 1: width, 2: height */ ?>
+					<li><?php echo esc_html( sprintf( __( 'Room photos take turns like any slider. On computers they\'re %1$d by %2$d (4 by 3); phone pictures don\'t change. Drag the cards to change their order.', 'rapm' ), (int) RAPM_Slots::get( 'hero_split_desktop' )['width'], (int) RAPM_Slots::get( 'hero_split_desktop' )['height'] ) ); ?></li>
+					<li><?php esc_html_e( 'The promotion box shows one promotion at a time: the first one that is on and within its dates. With none, the room photos go full width.', 'rapm' ); ?></li>
+					<?php /* translators: 1: width, 2: height */ ?>
+					<li><?php echo esc_html( sprintf( __( 'A promotion is either designed here (drag the headline, smaller line, button, Google or Font Awesome icons and your own pictures onto a square, on a color or a picture) or a finished %1$d by %2$d graphic.', 'rapm' ), (int) RAPM_Slots::get( 'promo_box_image' )['width'], (int) RAPM_Slots::get( 'promo_box_image' )['height'] ) ); ?></li>
+					<li><?php esc_html_e( 'On the Promotions page a split slider shows as one short card with a link back here.', 'rapm' ); ?></li>
+				</ol>
+			</details>
+
+			<section class="rapm-spot rapm-dc-make">
+				<h2 class="rapm-spot-name"><?php esc_html_e( 'Make a slider split', 'rapm' ); ?></h2>
+				<?php if ( $plain ) : ?>
+					<form class="rapm-make-split">
+						<label for="rapm-make-split-spot"><?php esc_html_e( 'Slider', 'rapm' ); ?></label>
+						<select id="rapm-make-split-spot" name="placement">
+							<?php foreach ( $plain as $spot ) : ?>
+								<option value="<?php echo esc_attr( $spot['placement'] ); ?>"><?php echo esc_html( self::spot_name( 'hero', $spot['placement'] ) ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<button type="submit" class="button button-primary"><?php esc_html_e( 'Turn on split view', 'rapm' ); ?></button>
+					</form>
+					<p class="description"><?php esc_html_e( 'Its pictures on computers then need to be 4 by 3; pictures already in it are trimmed to that shape until they\'re replaced. You can turn split view off again in its Layout.', 'rapm' ); ?></p>
+				<?php else : ?>
+					<p class="description"><?php esc_html_e( 'Every slider is already split. Add a new slider with "+ New spot" on the Promotions page.', 'rapm' ); ?></p>
+				<?php endif; ?>
+				<p class="rapm-spot-status" aria-live="polite"></p>
+			</section>
+
+			<?php if ( ! $split ) : ?>
+				<p class="rapm-dc-none"><?php esc_html_e( 'No split sliders yet.', 'rapm' ); ?></p>
+			<?php endif; ?>
+			<?php
+			foreach ( $split as $spot ) {
+				$box_key = 'promo_box|' . $spot['placement'];
+				$box     = isset( $spots[ $box_key ] ) ? $spots[ $box_key ] : array( 'kind' => 'promo_box', 'placement' => $spot['placement'], 'posts' => array() );
+				self::render_spot( $spot, $box, 'design' );
+			}
+			?>
+		</div>
 		<?php
 	}
 
