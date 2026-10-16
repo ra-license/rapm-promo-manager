@@ -22,6 +22,11 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The Design Center shows "Make a slider split" (offering the Living Room slider) and the split slider's two areas with its Layout.
   - "Turn on split view" saved `split: 1` for the Living Room slider. After reloading, it's listed in the Design Center and gone from the choices.
   - No PHP errors.
+- **Installed on staging (2026-10-16).**
+  - The menu shows Design Center above Training Guide.
+  - The Design Center holds "Split test slider" (two areas, with its Layout) and offers the Home page slider under "Make a slider split".
+  - The Promotions page shows Split test slider as a short card, and no Layout setting anywhere. No errors.
+  - Not yet in production; 1.45.0 isn't either.
 - **Next:** 1.47.0, the Google Fonts picker.
 
 ## 1.45.0
