@@ -4,6 +4,25 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.42.2
+
+**Fix: an "Update now" request could sit waiting for 30 minutes.** Found on staging during the first real test of 1.42.1.
+- **What happened:** staging picked up the request ("Updating…") but didn't install. The new diagnostics in Plugin Monitor 1.3.1 showed the state: 1 request waiting to run, no run scheduled, WordPress's update lock free, and the scheduler running on page loads.
+- **Root cause:** in 1.42.0, a request only ran from the one-off scheduled job set when it arrived, or from a fresh instruction. If that job didn't run the update, nothing retried it until the monitor re-sent the request after 30 minutes. There are two ways that happens:
+  - WordPress silently refuses to schedule a job if an identical one is set within 10 minutes.
+  - When the job fires, WordPress's update lock is busy, and 1.42.0 then simply stopped.
+  - From staging's state I couldn't tell which one hit. The fix covers both.
+- **Fix (`RA_Monitor_Updates` 1.0.1):**
+  - **Every check runs what's waiting:** every poll, including the regular 15-minute one, now runs anything already waiting, not just new instructions.
+  - **A busy lock retries:** when the update lock is busy, it tries again in 2 minutes.
+  - **No silent drops:** a run is scheduled after clearing any earlier one, so the 10-minute duplicate rule can't drop it.
+  - **Clicks start promptly:** a run started from an admin page (the test button) also starts WordPress's scheduler straight away.
+- **How it was checked (WordPress Playground, WordPress 7.1.3, PHP 8.3, monitor 1.3.1):**
+  - **Staging's exact state:** picked up from an admin page, then the scheduled run wiped. The next regular check found the waiting request with no new instruction, installed 1.0.1 (still active) and reported "done, 1.0.0 → 1.0.1".
+  - **Busy lock:** nothing changed, the request stayed queued, and a retry was set for 120 seconds. After the lock freed, the retry installed 1.0.2, reported done and released the lock.
+  - **Rescheduling:** an existing run a minute out no longer blocks scheduling one now.
+  - **PHP:** the in-browser PHP check found no issues.
+
 ## 1.42.1
 
 **No code changes.** This release records the 1.42.0 rollout steps below. It was also the first release installed with "Update now": staging got it from the Plugin Monitor button rather than from its Plugins screen. That proves a real download and install from GitHub, on a real host, through the new path.

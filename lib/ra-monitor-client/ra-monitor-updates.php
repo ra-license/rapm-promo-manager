@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Updates 1.0.0
+ * RA Monitor Updates 1.0.1
  *
  * Lets R&A's Plugin Monitor (help.ramarketing.com) ask this site to update
  * an R&A plugin right away, instead of waiting for WordPress's twice-daily
@@ -47,7 +47,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 	class RA_Monitor_Updates {
 
-		const VERSION = '1.0.0';
+		const VERSION = '1.0.1';
 
 		// The check-in address; polls go to /poll next to it, so the
 		// monitor's "Receive this site's own check-ins here" testing switch
@@ -219,6 +219,40 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			if ( ! empty( $data['commands'] ) && is_array( $data['commands'] ) ) {
 				self::accept( $data['commands'] );
 			}
+
+			// 1.0.1: anything still waiting runs now, new or not. Before,
+			// only a fresh instruction started a run, so one whose run never
+			// happened (Promo Manager 1.42.1 on staging: nothing scheduled,
+			// lock free) waited until the monitor re-sent it 30 minutes later.
+			self::run_waiting();
+		}
+
+		/**
+		 * Runs the queue: right here when WordPress's scheduler is the one
+		 * polling, which is where updates belong, or as a scheduled job
+		 * started straight away when it's a click (the test button).
+		 */
+		private static function run_waiting() {
+			$queue = get_option( self::QUEUE_OPTION, array() );
+			if ( ! is_array( $queue ) || ! $queue ) {
+				return;
+			}
+			if ( wp_doing_cron() ) {
+				self::run_queue();
+				return;
+			}
+			self::schedule_run( 0 );
+			spawn_cron();
+		}
+
+		/**
+		 * Clears any earlier run first: WordPress won't schedule a job if an
+		 * identical one is already set within 10 minutes, and silently
+		 * dropping a run is what left staging's update waiting.
+		 */
+		private static function schedule_run( $delay ) {
+			wp_clear_scheduled_hook( self::RUN_HOOK );
+			wp_schedule_single_event( time() + (int) $delay, self::RUN_HOOK );
 		}
 
 		/**
@@ -245,17 +279,6 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				$queue[ $id ] = $slug;
 			}
 			update_option( self::QUEUE_OPTION, $queue, false );
-
-			if ( ! $queue ) {
-				return;
-			}
-			// Polls run from WordPress's scheduler, which is where updates
-			// belong. Anything else (a test button) hands it to the scheduler.
-			if ( wp_doing_cron() ) {
-				self::run_queue();
-			} else {
-				wp_schedule_single_event( time(), self::RUN_HOOK );
-			}
 		}
 
 		private static function load_upgrader() {
@@ -274,9 +297,10 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				return;
 			}
 			// WordPress's own updater uses this lock too, so the two never
-			// update at the same time. If it's busy, the queue waits for the
-			// next poll.
+			// update at the same time. If it's busy, try again in 2 minutes
+			// (1.0.1; before, the queue waited for a fresh instruction).
 			if ( ! WP_Upgrader::create_lock( 'auto_updater' ) ) {
+				self::schedule_run( 2 * MINUTE_IN_SECONDS );
 				return;
 			}
 
