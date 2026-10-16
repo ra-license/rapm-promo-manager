@@ -73,6 +73,14 @@
 .rapm-rename { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rapm-rename label { font-size: 12px; color: #50575e; }
 .rapm-rename input { min-width: 220px; }
+/* Split view layout (1.43.0). */
+.rapm-layout { margin: 10px 0 8px; display: grid; gap: 8px; justify-items: start; }
+.rapm-layout-row { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; border: 0; font-size: 12px; }
+.rapm-layout-row legend { font-size: 12px; font-weight: 600; color: #1d2327; margin-bottom: 4px; padding: 0; }
+.rapm-layout-split { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12px; color: #50575e; }
+.rapm-layout-split[hidden] { display: none; }
+.rapm-layout-split label { display: inline-flex; align-items: center; gap: 6px; }
+.rapm-layout-split .description { flex-basis: 100%; margin: 0; }
 
 .rapm-promos-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 20px; }
 .rapm-promos-foot p { margin: 0; font-size: 13px; color: #50575e; max-width: 760px; }

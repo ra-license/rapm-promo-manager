@@ -4,6 +4,41 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.43.0
+
+**New: split view for Sliders.** From the call with Ashley (Frizzell) and the mockup Phil approved on 2026-10-16 (https://claude.ai/artifact/ANgWYAc5uHSyTFzG7pFUiZ): room photos rotate on one side while a promotion stays put on the other, like Frizzell's current home page.
+- **Turning it on:** each Slider spot on the Promotions screen has a new **Layout** setting: Full width (as before) or Split. Split adds three choices:
+  - **Widths:** 60/40 (default, rooms larger), 50/50, or 2/1.
+  - **Promotion on the:** right (default) or left.
+  - **On phones, show first:** the promotion (default) or the room photos.
+  - Settings are saved on the spot (`rapm_spots`: `split`, `split_cols`, `split_side`, `split_phone`; defaults aren't stored). Saving clears the cache for the pages the Slider is on.
+- **Room photos are 4:3 in split view:** Phil asked for a larger room. A new slot, `hero_split_desktop` (1600x1200), replaces `hero_desktop` for that spot's computer pictures, through the new `RAPM_Slots::kind_for()`. The add form, the save check, the link checker, Drive/Dropbox sync and the Promotions screen cards all use it. Phone pictures don't change. Pictures already in a slider switched to split are trimmed to 4:3 until they're replaced; the Layout setting says so.
+- **The promotion box:** a new kind, `promo_box` ("Promotion box"), with the same placement as its Slider, so it has the usual dates, on/off switch, order and cache clearing. One picture for every screen (new slot `promo_box_image`, 1200x1500, the size in the mockup). It can be used two ways:
+  - **A finished graphic:** no headline, smaller line or button. It's shown whole, with a blurred copy of itself filling any gap (as on phones since 1.41.1), so it still works at 50/50 or 2/1.
+  - **Live words:** a background picture with a headline, smaller line and button over it, with the same color, style and typeface choices as a slide.
+- **Which promotion shows:** the box shows the first promotion, in Promotions screen order, that is on and within its dates. This is decided in the visitor's browser (`RAPM_Schedule.watch`), so it changes on time behind a page cache. The first live picture loads right away, like the Slider's.
+- **With none live:** the box hides and the room photos take the full width. They show at 2:1 then: a 4:3 photo at full width would have been about 950px tall on a 1280px screen.
+- **Shop bar:** stays under the room photos (Phil: shop bar slightly smaller). In split view it's one compact row of smaller cards that scrolls sideways with the scroll dots, as in the mockup, so many products don't stack into a tall bar and stretch the box.
+- **Promotions screen:** a Slider set to split always shows its promotion box right under it, with "Add a promotion", even before the box has one. The box's "Shows on" lists the Slider's pages.
+- **Shortcode:** `[rapm_promo_box placement="home"]` shows a box on its own anywhere.
+- **New file:** `includes/class-rapm-split.php` (`RAPM_Split`).
+- **How it was checked:**
+  - **Real render (php-wasm, the plugin's own PHP and CSS, Swiper 11):**
+    - 60/40, 50/50, 2/1 and left all came out at the right widths.
+    - Room slides measured 4:3 (596x447). The box ran the full height of the room plus the shop bar.
+    - An ended box promotion was skipped and the live one shown. Words over a picture also showed correctly.
+    - With nothing live, the room was full width at 2:1 (1280x640), and the product dots followed the trimmed picture.
+    - On a phone (375px): the promotion came first, at 4:5, with no sideways scroll; room first also worked.
+    - The box on its own worked.
+    - The normal full-width slider is unchanged (3.2:1, no split).
+    - No PHP warnings.
+  - **WordPress Playground (WordPress latest, PHP 8.3):**
+    - Saving Split stored only `split: 1`. The promotion box spot appeared under the slider.
+    - The box form asks for one 1200x1500 picture; the split slider's form asks for 1600x1200.
+    - The page showed the room and the box side by side.
+  - **PHP:** all 29 PHP files parse.
+- **Not in this release (next):** Google icons (Material Symbols) and drag-to-place for icons and words in the box (the "canvas"), then the Google Fonts picker. Between-sales slides (Kenna), planned as 1.43.0, move to a later release.
+
 ## 1.42.2
 
 **Fix: an "Update now" request could sit waiting for 30 minutes.** Found on staging during the first real test of 1.42.1.

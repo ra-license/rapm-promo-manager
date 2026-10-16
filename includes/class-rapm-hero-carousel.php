@@ -44,7 +44,8 @@ class RAPM_Hero_Carousel {
 		);
 
 		$placement = sanitize_title( $atts['placement'] );
-		$kind      = RAPM_Slots::kind( $kind_key );
+		// 1.43.0: a Slider set to split view uses 4:3 computer pictures.
+		$kind      = RAPM_Slots::kind_for( $kind_key, $placement );
 		$slots     = RAPM_Slots::all();
 
 		$query = new WP_Query(
@@ -185,7 +186,8 @@ class RAPM_Hero_Carousel {
 		</script>
 		<?php
 		wp_reset_postdata();
-		return ob_get_clean();
+		// 1.43.0: beside its promotion box, when the spot is set to split.
+		return 'hero' === $kind_key && class_exists( 'RAPM_Split' ) ? RAPM_Split::wrap( $placement, ob_get_clean() ) : ob_get_clean();
 	}
 
 	/**
@@ -404,7 +406,7 @@ class RAPM_Hero_Carousel {
 		return $schema;
 	}
 
-	const SHORTCODE_TAGS = array( 'rapm_hero', 'rapm_fold_banner' );
+	const SHORTCODE_TAGS = array( 'rapm_hero', 'rapm_fold_banner', 'rapm_promo_box' );
 
 	/**
 	 * Whether to load the files early, in <head>, on this request. Only an

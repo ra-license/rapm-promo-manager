@@ -245,6 +245,42 @@
 		} ).catch( function () { say( section, T.saveFailed ); } );
 	} );
 
+	/* ---- Split view layout (1.43.0) ----------------------------------------- */
+
+	root.addEventListener( 'change', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-layout' ) : null;
+		if ( ! form || 'split' !== e.target.name ) { return; }
+		form.querySelector( '.rapm-layout-split' ).hidden = '1' !== e.target.value;
+	} );
+
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-layout' ) : null;
+		if ( ! form ) { return; }
+		e.preventDefault();
+		var section = form.closest( '.rapm-spot' );
+		var picked  = form.querySelector( 'input[name="split"]:checked' );
+		var button  = form.querySelector( 'button[type="submit"]' );
+		button.disabled = true;
+		say( section, T.saving );
+		post( {
+			action: 'rapm_save_layout',
+			nonce: cfg.nonce,
+			placement: section.getAttribute( 'data-placement' ),
+			split: picked ? picked.value : '0',
+			cols: form.querySelector( 'select[name="cols"]' ).value,
+			side: form.querySelector( 'select[name="side"]' ).value,
+			phone: form.querySelector( 'select[name="phone"]' ).value
+		} ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
+			// Split changes the picture size the slider asks for and adds
+			// its promotion box below, so show the screen fresh.
+			window.location.reload();
+		} ).catch( function () {
+			button.disabled = false;
+			say( section, T.saveFailed );
+		} );
+	} );
+
 	/* ---- "Remove this spot" (1.29.1) ---------------------------------------- */
 
 	root.addEventListener( 'click', function ( e ) {

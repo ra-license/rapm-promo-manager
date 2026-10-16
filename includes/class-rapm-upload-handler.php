@@ -135,7 +135,8 @@ class RAPM_Upload_Handler {
 		if ( ! isset( $kinds[ $kind_key ] ) ) {
 			$kind_key = 'hero';
 		}
-		$kind         = RAPM_Slots::kind( $kind_key );
+		// 1.43.0: a Slider set to split view asks for 4:3 computer pictures.
+		$kind         = RAPM_Slots::kind_for( $kind_key, $placement );
 		$has_images   = (bool) $kind['desktop']; // false for text-only kinds (Marquee)
 		// Shop the Look (1.30.0): one room photo of any shape, a tab name,
 		// and what each screen shows; words show under the photo, not on it.
@@ -150,6 +151,9 @@ class RAPM_Upload_Handler {
 		// form's live preview script reads them.
 		$is_quick     = 'quick_links' === $kind_key;
 		$quick_hide   = $is_quick ? ' style="display:none;"' : '';
+		// Promotion box (1.43.0): one picture for every screen too, but
+		// with all the word settings of a slide.
+		$is_box       = 'promo_box' === $kind_key;
 		$tab_label    = $m( '_rapm_tab_label' );
 		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
 		// 1.36.0: phones have their own position; a look saved before has none and uses the computer one.
@@ -377,7 +381,7 @@ class RAPM_Upload_Handler {
 									if ( ! res.success ) { return; }
 									var count = res.data.count;
 									if ( 0 === count ) {
-										summaryEl.textContent = <?php echo wp_json_encode( $is_look ? __( 'Nothing else is in this spot yet, so this will be its first tab.', 'rapm' ) : __( 'Nothing else is using this spot yet — this will be its own, separate carousel.', 'rapm' ) ); ?>;
+										summaryEl.textContent = <?php echo wp_json_encode( $is_look ? __( 'Nothing else is in this spot yet, so this will be its first tab.', 'rapm' ) : ( $is_box ? __( 'Nothing else is in this promotion box yet, so this is the one that will show.', 'rapm' ) : __( 'Nothing else is using this spot yet — this will be its own, separate carousel.', 'rapm' ) ) ); ?>;
 										return;
 									}
 									var names = res.data.titles.map( function ( t ) { return '"' + t + '"'; } ).join( ', ' );
@@ -387,7 +391,7 @@ class RAPM_Upload_Handler {
 									var lead = 1 === count
 										? <?php echo wp_json_encode( __( '1 other promotion already uses this spot', 'rapm' ) ); ?>
 										: count + <?php echo wp_json_encode( __( ' other promotions already use this spot', 'rapm' ) ); ?>;
-									summaryEl.textContent = lead + ' (' + names + <?php echo wp_json_encode( $is_look ? __( ') — each one is its own tab in the same bar.', 'rapm' ) : __( ') — they\'ll all take turns rotating together in the same carousel.', 'rapm' ) ); ?>;
+									summaryEl.textContent = lead + ' (' + names + <?php echo wp_json_encode( $is_look ? __( ') — each one is its own tab in the same bar.', 'rapm' ) : ( $is_box ? __( ') — the box shows one at a time: the first one on the Promotions screen that is on and within its dates.', 'rapm' ) : __( ') — they\'ll all take turns rotating together in the same carousel.', 'rapm' ) ) ); ?>;
 								} );
 							}, 300 );
 						}
@@ -409,7 +413,9 @@ class RAPM_Upload_Handler {
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Images', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'Upload whatever picture you have — any common format (JPG, PNG, whatever your phone or camera saves) is fine. This tool will automatically resize/convert it for you if needed, and will tell you clearly if it can\'t be used.', 'rapm' ); ?></p>
-				<?php if ( $is_quick ) : ?>
+				<?php if ( $is_box ) : ?>
+				<p class="description"><?php esc_html_e( 'The promotion box uses one picture on every screen: beside the slider on computers, and above or below it on phones. Two ways to use it: a finished graphic with its words already on it (leave the headline, smaller line and button blank in the next step, and the whole graphic always shows), or a background picture with words typed over it in the next step.', 'rapm' ); ?></p>
+				<?php elseif ( $is_quick ) : ?>
 				<p class="description"><?php esc_html_e( 'Quick links use one picture on every screen. Phones show it small, as a round thumbnail or a little card, so pick a picture whose subject is near the middle.', 'rapm' ); ?></p>
 				<?php else : ?>
 				<p class="description"><?php esc_html_e( 'Upload both below on every promotion — visitors on a computer automatically see the Desktop one, visitors on a phone automatically see the Mobile one. You never need to create a separate promotion for each device.', 'rapm' ); ?></p>
@@ -418,7 +424,7 @@ class RAPM_Upload_Handler {
 				<?php if ( $has_images ) : ?>
 				<table class="form-table">
 					<tr>
-						<th><label><?php echo $is_look ? esc_html__( 'Room photo', 'rapm' ) : esc_html__( 'Desktop Promotion', 'rapm' ); ?></label></th>
+						<th><label><?php echo $is_look ? esc_html__( 'Room photo', 'rapm' ) : ( $is_box ? esc_html__( 'Promotion picture', 'rapm' ) : esc_html__( 'Desktop Promotion', 'rapm' ) ); ?></label></th>
 						<td>
 							<?php if ( $img_desktop ) : ?>
 								<?php echo wp_get_attachment_image( $img_desktop, array( 240, 75 ), false, array( 'style' => 'display:block;margin-bottom:8px;border-radius:6px;object-fit:cover;' ) ); ?>
@@ -478,7 +484,7 @@ class RAPM_Upload_Handler {
 						</td>
 					</tr>
 					<?php if ( ! $is_look ) : ?>
-					<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; Quick links use one picture everywhere. ?>>
+					<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; Quick links and the promotion box use one picture everywhere. ?>>
 						<th><label><?php esc_html_e( 'Mobile Promotion', 'rapm' ); ?></label></th>
 						<td>
 							<?php if ( $img_mobile ) : ?>
@@ -1039,7 +1045,7 @@ class RAPM_Upload_Handler {
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'This shows exactly what visitors will see, updating as you type or choose a picture. If something looks off — text overlapping, hard to read, etc. — fix it here before saving.', 'rapm' ); ?></p>
-				<p>
+				<p<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box has one picture. ?>>
 					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-desktop" aria-pressed="true"><?php esc_html_e( 'Desktop', 'rapm' ); ?></button>
 					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-mobile" aria-pressed="false"><?php esc_html_e( 'Mobile', 'rapm' ); ?></button>
 				</p>
@@ -1237,6 +1243,7 @@ class RAPM_Upload_Handler {
 								body.append( 'url', url );
 								body.append( 'which', which );
 								body.append( 'kind', <?php echo wp_json_encode( $kind_key ); ?> );
+								body.append( 'placement', <?php echo wp_json_encode( $placement ); ?> );
 								body.append( 'asset_id', <?php echo (int) $asset_id; ?> );
 								fetch( linkPreviewAjax, { method: 'POST', body: body, credentials: 'same-origin' } )
 									.then( function ( r ) { return r.json(); } )
@@ -1485,7 +1492,7 @@ class RAPM_Upload_Handler {
 		if ( ! isset( $kinds[ $kind_key ] ) ) {
 			$kind_key = 'hero';
 		}
-		$kind       = RAPM_Slots::kind( $kind_key );
+		$kind       = RAPM_Slots::kind_for( $kind_key, isset( $_POST['rapm_placement'] ) ? sanitize_title( wp_unslash( $_POST['rapm_placement'] ) ) : 'default' );
 		$has_images = (bool) $kind['desktop'];
 		$is_look    = 'look' === $kind_key;
 		$has_pins   = in_array( $kind_key, array( 'hero', 'fold_banner' ), true );
@@ -2211,7 +2218,7 @@ class RAPM_Upload_Handler {
 
 		$url      = isset( $_POST['url'] ) ? esc_url_raw( wp_unslash( $_POST['url'] ) ) : '';
 		$which    = isset( $_POST['which'] ) && 'mobile' === $_POST['which'] ? 'mobile' : 'desktop';
-		$kind     = RAPM_Slots::kind( isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : 'hero' );
+		$kind     = RAPM_Slots::kind_for( isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : 'hero', isset( $_POST['placement'] ) ? sanitize_title( wp_unslash( $_POST['placement'] ) ) : 'default' );
 		$asset_id = isset( $_POST['asset_id'] ) ? absint( $_POST['asset_id'] ) : 0;
 		$slots    = RAPM_Slots::all();
 		if ( ! $url || empty( $kind[ $which ] ) || ! isset( $slots[ $kind[ $which ] ] ) ) {

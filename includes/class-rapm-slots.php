@@ -104,6 +104,31 @@ class RAPM_Slots {
 				'max_kb'                 => 150,
 				'format'                 => 'webp',
 			),
+			// Split view (1.43.0, from the mockup Phil approved on
+			// 2026-10-16): a Slider set to split shows its room photos 4:3
+			// beside the promotion box, so its computer pictures use this
+			// shape instead of hero_desktop. 1600 wide covers the 60% column
+			// of a 1920px screen with room to spare. Phones keep hero_mobile.
+			'hero_split_desktop'  => array(
+				'label'                  => __( 'Slider in split view — Desktop', 'rapm' ),
+				'width'                  => 1600,
+				'height'                 => 1200,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 300,
+				'format'                 => 'webp',
+			),
+			// The promotion box beside it: 4:5, the size the mockup named
+			// ("1200 x 1500 on computers and phones"). A picture with nothing
+			// over it is shown whole, fitted inside with a blurred copy of
+			// itself filling any gap, so it still works at 50/50 or 2/1.
+			'promo_box_image'     => array(
+				'label'                  => __( 'Promotion box — Picture', 'rapm' ),
+				'width'                  => 1200,
+				'height'                 => 1500,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 250,
+				'format'                 => 'webp',
+			),
 			// Shop the Look (1.30.0): one room photo per look, any shape.
 			// 'flexible' means no required shape: the photo is shown
 			// cover-cropped to fill a wide hero on computers and a 4:3 box on
@@ -196,6 +221,16 @@ class RAPM_Slots {
 				'shortcode'             => 'rapm_quick_links',
 				'has_elementor_widget'  => false,
 			),
+			// Promotion box (1.43.0): what shows beside a Slider set to
+			// split view (see RAPM_Split). One picture for every screen.
+			'promo_box'   => array(
+				'label'                 => __( 'Promotion box', 'rapm' ),
+				'help'                  => __( 'A sale or offer shown beside a slider, when the slider is set to split view.', 'rapm' ),
+				'desktop'               => 'promo_box_image',
+				'mobile'                => 'promo_box_image',
+				'shortcode'             => 'rapm_promo_box',
+				'has_elementor_widget'  => false,
+			),
 			// Shop the Look (1.30.0, from the mockup Phil approved on
 			// 2026-10-06): a wide room photo with a bar of tabs under it, one
 			// tab per look. One photo for every screen, so 'mobile' reuses the
@@ -214,6 +249,19 @@ class RAPM_Slots {
 	public static function kind( $kind_key ) {
 		$kinds = self::kinds();
 		return isset( $kinds[ $kind_key ] ) ? $kinds[ $kind_key ] : $kinds['hero'];
+	}
+
+	/**
+	 * A kind as used in one spot (1.43.0): a Slider set to split view takes
+	 * 4:3 computer pictures (hero_split_desktop) instead of the wide ones.
+	 * Everything that checks or shows a picture's size goes through this.
+	 */
+	public static function kind_for( $kind_key, $placement ) {
+		$kind = self::kind( $kind_key );
+		if ( 'hero' === $kind_key && class_exists( 'RAPM_Split' ) && RAPM_Split::is_split( $placement ) ) {
+			$kind['desktop'] = 'hero_split_desktop';
+		}
+		return $kind;
 	}
 
 	/**

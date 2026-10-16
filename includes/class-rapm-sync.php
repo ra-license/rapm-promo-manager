@@ -96,7 +96,8 @@ class RAPM_Sync {
 			return;
 		}
 		$kind_key = get_post_meta( $asset_id, '_rapm_kind', true ) ?: 'hero'; // phpcs:ignore
-		$kind     = isset( $kinds[ $kind_key ] ) ? $kinds[ $kind_key ] : $kinds['hero'];
+		// 1.43.0: per spot, so a split Slider's pictures are checked at 4:3.
+		$kind     = RAPM_Slots::kind_for( isset( $kinds[ $kind_key ] ) ? $kind_key : 'hero', get_post_meta( $asset_id, '_rapm_placement', true ) ?: 'default' ); // phpcs:ignore
 		$slot     = $slots[ $kind[ $which ] ];
 		$old_id   = (int) get_post_meta( $asset_id, '_rapm_image_' . $which . '_id', true );
 

@@ -64,6 +64,12 @@ class RAPM_Cache {
 		self::hook();
 	}
 
+	/** A spot's own setting changed (split view, 1.43.0): clear the pages it's on. */
+	public static function queue_spot( $key ) {
+		self::$keys[ $key ] = true;
+		self::hook();
+	}
+
 	private static function hook() {
 		if ( ! self::$hooked ) {
 			self::$hooked = true;
@@ -82,6 +88,12 @@ class RAPM_Cache {
 		foreach ( array_keys( self::$ids ) as $id ) {
 			if ( get_post( $id ) ) {
 				$keys[ self::spot_key( $id ) ] = true;
+			}
+		}
+		// 1.43.0: a promotion box in split view is on its Slider's pages.
+		foreach ( array_keys( $keys ) as $key ) {
+			if ( 0 === strpos( $key, 'promo_box|' ) ) {
+				$keys[ 'hero|' . substr( $key, strlen( 'promo_box|' ) ) ] = true;
 			}
 		}
 		self::$ids  = array();

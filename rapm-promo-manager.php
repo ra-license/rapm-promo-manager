@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.42.2
+ * Version: 1.43.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.42.2' );
+define( 'RAPM_VERSION', '1.43.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -33,6 +33,7 @@ require_once RAPM_DIR . 'includes/class-rapm-training-guide.php';
 require_once RAPM_DIR . 'includes/class-rapm-link-source.php';
 require_once RAPM_DIR . 'includes/class-rapm-sync.php';
 require_once RAPM_DIR . 'includes/class-rapm-hero-carousel.php';
+require_once RAPM_DIR . 'includes/class-rapm-split.php';
 require_once RAPM_DIR . 'includes/class-rapm-marquee.php';
 require_once RAPM_DIR . 'includes/class-rapm-quick-links.php';
 require_once RAPM_DIR . 'includes/class-rapm-coupon-book.php';
@@ -79,6 +80,7 @@ final class RAPM_Plugin {
 		add_action( 'admin_enqueue_scripts', array( 'RAPM_Promotions_Screen', 'enqueue' ) );
 		add_action( 'wp_ajax_rapm_toggle_asset', array( 'RAPM_Promotions_Screen', 'ajax_toggle' ) );
 		add_action( 'wp_ajax_rapm_rename_spot', array( 'RAPM_Promotions_Screen', 'ajax_rename' ) );
+		add_action( 'wp_ajax_rapm_save_layout', array( 'RAPM_Promotions_Screen', 'ajax_save_layout' ) );
 		add_action( 'wp_ajax_rapm_create_spot', array( 'RAPM_Promotions_Screen', 'ajax_create_spot' ) );
 		add_action( 'wp_ajax_rapm_remove_spot', array( 'RAPM_Promotions_Screen', 'ajax_remove_spot' ) );
 		add_filter( 'wp_untrash_post_status', array( 'RAPM_Promotions_Screen', 'untrash_status' ), 10, 3 );
@@ -127,6 +129,7 @@ final class RAPM_Plugin {
 		add_shortcode( 'rapm_quick_links', array( 'RAPM_Quick_Links', 'shortcode' ) );
 		add_shortcode( 'rapm_coupon_book', array( 'RAPM_Coupon_Book', 'shortcode' ) );
 		add_shortcode( 'rapm_looks', array( 'RAPM_Looks', 'shortcode' ) );
+		add_shortcode( 'rapm_promo_box', array( 'RAPM_Split', 'shortcode' ) );
 		add_shortcode( 'rapm_promotions_calendar', array( 'RAPM_Calendar', 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Assets', 'register' ), 5 );
 		add_action( 'wp_enqueue_scripts', array( 'RAPM_Hero_Carousel', 'enqueue' ) );

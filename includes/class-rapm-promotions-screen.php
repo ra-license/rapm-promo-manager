@@ -30,6 +30,7 @@ class RAPM_Promotions_Screen {
 		'coupon'      => 170,
 		'marquee'     => 170,
 		'quick_links' => 240,
+		'promo_box'   => 200,
 	);
 
 	/**
@@ -244,16 +245,28 @@ class RAPM_Promotions_Screen {
 			list( $kind, $placement ) = explode( '|', $key, 2 );
 			$spots[ $key ] = array( 'kind' => $kind, 'placement' => $placement, 'posts' => array() );
 		}
+		// 1.43.0: a Slider set to split view always shows its promotion box
+		// spot, even before it has a promotion, so there's a place to add one.
+		foreach ( $spots as $spot ) {
+			$box_key = 'promo_box|' . $spot['placement'];
+			if ( 'hero' === $spot['kind'] && ! isset( $spots[ $box_key ] ) && RAPM_Split::is_split( $spot['placement'] ) ) {
+				$spots[ $box_key ] = array( 'kind' => 'promo_box', 'placement' => $spot['placement'], 'posts' => array() );
+			}
+		}
 
 		uasort(
 			$spots,
 			function ( $a, $b ) {
-				$ka = array_search( $a['kind'], self::KIND_ORDER, true );
-				$kb = array_search( $b['kind'], self::KIND_ORDER, true );
+				// A promotion box sorts right after the Slider it sits beside.
+				$ka = array_search( 'promo_box' === $a['kind'] ? 'hero' : $a['kind'], self::KIND_ORDER, true );
+				$kb = array_search( 'promo_box' === $b['kind'] ? 'hero' : $b['kind'], self::KIND_ORDER, true );
 				$ka = false === $ka ? 99 : $ka;
 				$kb = false === $kb ? 99 : $kb;
 				if ( $ka !== $kb ) {
 					return $ka - $kb;
+				}
+				if ( $a['placement'] === $b['placement'] ) {
+					return 'promo_box' === $a['kind'] ? 1 : ( 'promo_box' === $b['kind'] ? -1 : 0 );
 				}
 				if ( 'home' === $a['placement'] || 'home' === $b['placement'] ) {
 					return 'home' === $a['placement'] ? -1 : 1;
@@ -560,12 +573,17 @@ class RAPM_Promotions_Screen {
 	private static function render_spot( $spot ) {
 		$kind      = $spot['kind'];
 		$placement = $spot['placement'];
-		$kind_info = RAPM_Slots::kind( $kind );
+		$kind_info = RAPM_Slots::kind_for( $kind, $placement );
 		$slot      = RAPM_Slots::get( $kind_info['desktop'] );
 		$ratio     = $slot ? (int) $slot['width'] . ' / ' . (int) $slot['height'] : '16 / 9';
 		$min       = isset( self::CARD_MIN[ $kind ] ) ? self::CARD_MIN[ $kind ] : 220;
 		$name      = self::spot_name( $kind, $placement );
 		$used_on   = RAPM_Spot_Usage::for_spot( $kind, $placement );
+		// 1.43.0: a promotion box in split view shows wherever its Slider does.
+		$box_split = 'promo_box' === $kind && RAPM_Split::is_split( $placement );
+		if ( $box_split ) {
+			$used_on = array_merge( RAPM_Spot_Usage::for_spot( 'hero', $placement ), $used_on );
+		}
 		$heading   = 'rapm-spot-' . sanitize_html_class( $kind . '-' . $placement );
 		$add_url   = add_query_arg(
 			array(
@@ -620,6 +638,21 @@ class RAPM_Promotions_Screen {
 							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
 							<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
 						</form>
+						<?php if ( 'hero' === $kind ) : ?>
+							<?php self::render_layout_form( $placement, $heading ); ?>
+						<?php elseif ( 'promo_box' === $kind ) : ?>
+							<p>
+								<?php
+								echo esc_html(
+									$box_split
+										/* translators: %s: the slider's name */
+										? sprintf( __( 'Shows beside "%s", which is set to split view. The first promotion here that is on and within its dates shows; when none is, the slider goes back to full width.', 'rapm' ), self::spot_name( 'hero', $placement ) )
+										/* translators: %s: the slider's name */
+										: sprintf( __( 'Shows beside "%s" only when that slider\'s layout is set to Split.', 'rapm' ), self::spot_name( 'hero', $placement ) )
+								);
+								?>
+							</p>
+						<?php endif; ?>
 						<?php if ( RAPM_Spots::is_carousel( $kind ) ) : ?>
 							<p><?php esc_html_e( 'Main heading (H1) for search engines: set it where the spot is placed, only on pages with no other H1. In Elementor, turn on "Main heading (H1)" in its Promo Carousel widget, or add heading="h1" to its code on that page.', 'rapm' ); ?></p>
 						<?php endif; ?>
@@ -646,7 +679,7 @@ class RAPM_Promotions_Screen {
 				?>
 				<a class="rapm-add" href="<?php echo esc_url( $add_url ); ?>">
 					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
-					<span><?php echo 'look' === $kind ? esc_html__( 'Add a look', 'rapm' ) : esc_html__( 'Add a picture', 'rapm' ); ?></span>
+					<span><?php echo 'look' === $kind ? esc_html__( 'Add a look', 'rapm' ) : ( 'promo_box' === $kind ? esc_html__( 'Add a promotion', 'rapm' ) : esc_html__( 'Add a picture', 'rapm' ) ); ?></span>
 				</a>
 			</div>
 
@@ -663,6 +696,87 @@ class RAPM_Promotions_Screen {
 			<p class="rapm-spot-status" aria-live="polite"></p>
 		</section>
 		<?php
+	}
+
+	/**
+	 * Split view settings for a Slider spot (1.43.0, from the mockup Phil
+	 * approved on 2026-10-16). Saved with rapm_save_layout; the screen
+	 * reloads after, since split changes the picture size the slider asks
+	 * for and adds the promotion box spot below it.
+	 */
+	private static function render_layout_form( $placement, $heading ) {
+		$s    = RAPM_Split::settings( $placement );
+		$hd   = RAPM_Slots::get( 'hero_split_desktop' );
+		$cols = array(
+			'60-40' => __( '60 / 40 (rooms larger)', 'rapm' ),
+			'50-50' => __( '50 / 50', 'rapm' ),
+			'67-33' => __( '2 / 1 (promotion narrower)', 'rapm' ),
+		);
+		?>
+		<form class="rapm-layout">
+			<fieldset class="rapm-layout-row">
+				<legend><?php esc_html_e( 'Layout', 'rapm' ); ?></legend>
+				<label><input type="radio" name="split" value="0"<?php checked( ! $s['split'] ); ?> /> <?php esc_html_e( 'Full width: one rotating slider', 'rapm' ); ?></label>
+				<label><input type="radio" name="split" value="1"<?php checked( $s['split'] ); ?> /> <?php esc_html_e( 'Split: rooms rotate, a promotion box stays beside them', 'rapm' ); ?></label>
+			</fieldset>
+			<div class="rapm-layout-split"<?php echo $s['split'] ? '' : ' hidden'; ?>>
+				<label><?php esc_html_e( 'Widths', 'rapm' ); ?>
+					<select name="cols">
+						<?php foreach ( $cols as $value => $label ) : ?>
+							<option value="<?php echo esc_attr( $value ); ?>"<?php selected( $s['cols'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				<label><?php esc_html_e( 'Promotion on the', 'rapm' ); ?>
+					<select name="side">
+						<option value="right"<?php selected( $s['side'], 'right' ); ?>><?php esc_html_e( 'Right', 'rapm' ); ?></option>
+						<option value="left"<?php selected( $s['side'], 'left' ); ?>><?php esc_html_e( 'Left', 'rapm' ); ?></option>
+					</select>
+				</label>
+				<label><?php esc_html_e( 'On phones, show first', 'rapm' ); ?>
+					<select name="phone">
+						<option value="promo"<?php selected( $s['phone'], 'promo' ); ?>><?php esc_html_e( 'The promotion', 'rapm' ); ?></option>
+						<option value="room"<?php selected( $s['phone'], 'room' ); ?>><?php esc_html_e( 'The room photos', 'rapm' ); ?></option>
+					</select>
+				</label>
+				<p class="description">
+					<?php
+					/* translators: 1: width in pixels, 2: height in pixels */
+					echo esc_html( sprintf( __( 'In split view the room photos on computers are shaped 4 by 3: %1$d by %2$d pixels. Pictures already in this slider are trimmed to that shape, so swap them for 4 by 3 photos to show the whole room. Phone pictures stay the same.', 'rapm' ), (int) $hd['width'], (int) $hd['height'] ) );
+					?>
+				</p>
+			</div>
+			<button type="submit" class="button button-small"><?php esc_html_e( 'Save layout', 'rapm' ); ?></button>
+		</form>
+		<?php
+	}
+
+	public static function ajax_save_layout() {
+		check_ajax_referer( self::NONCE, 'nonce' );
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
+		}
+		$placement = isset( $_POST['placement'] ) ? sanitize_title( wp_unslash( $_POST['placement'] ) ) : '';
+		if ( ! $placement ) {
+			wp_send_json_error( array( 'message' => __( 'Missing spot.', 'rapm' ) ), 400 );
+		}
+		$split = ! empty( $_POST['split'] ) && '1' === $_POST['split'];
+		$cols  = isset( $_POST['cols'] ) ? sanitize_key( wp_unslash( $_POST['cols'] ) ) : '';
+		$side  = isset( $_POST['side'] ) && 'left' === $_POST['side'] ? 'left' : 'right';
+		$phone = isset( $_POST['phone'] ) && 'room' === $_POST['phone'] ? 'room' : 'promo';
+		// Defaults aren't stored, so a spot left at them follows any later change of default.
+		RAPM_Spots::update(
+			'hero',
+			$placement,
+			array(
+				'split'       => $split ? 1 : null,
+				'split_cols'  => isset( RAPM_Split::COLS[ $cols ] ) && '60-40' !== $cols ? $cols : null,
+				'split_side'  => 'left' === $side ? 'left' : null,
+				'split_phone' => 'room' === $phone ? 'room' : null,
+			)
+		);
+		RAPM_Cache::queue_spot( 'hero|' . $placement );
+		wp_send_json_success( array( 'reload' => true ) );
 	}
 
 	private static function render_card( $post, $d ) {

@@ -86,6 +86,7 @@ class RAPM_Spots {
 			'marquee'     => __( 'tiles', 'rapm' ),
 			'quick_links' => __( 'quick links', 'rapm' ),
 			'look'        => __( 'looks', 'rapm' ),
+			'promo_box'   => __( 'promotion box', 'rapm' ),
 		);
 		if ( 'home' === $placement ) {
 			$where = __( 'Home page', 'rapm' );

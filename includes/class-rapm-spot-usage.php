@@ -34,6 +34,7 @@ class RAPM_Spot_Usage {
 		'rapm_quick_links'         => 'quick_links',
 		'rapm_coupon_book'         => 'coupon',
 		'rapm_looks'               => 'look',
+		'rapm_promo_box'           => 'promo_box',
 		'rapm_promotions_calendar' => 'calendar',
 	);
 
