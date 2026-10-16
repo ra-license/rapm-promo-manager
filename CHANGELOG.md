@@ -10,6 +10,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Root cause:** WordPress returns a post's title as HTML (`get_the_title()` turns " - " into `&#8211;`, quotes into `&#8217;`, and so on). The library's script escapes text itself, so the encoded form was shown literally. Picture names in the canvas editor's "On the design" list (1.45.0) had the same problem.
 - **Fix:** both now decode the title to plain text once (`RAPM_Library::plain_title()`), and the browser escapes it as usual.
 - **Also on staging, 1.48.0 working with real data:** 22 promotions in 10 spots, 19 showing, 3 ended, 6 needing a look (the split test room photos with no phone picture, quick links with no alt text), and 3.8 MB of pictures. The designed promotion box is drawn on its card. No errors.
+- **Installed on staging (2026-10-16):** the library serves `rapm-library.js?ver=1.48.1`. Names read "Coupon – Free Delivery Bedroom Sets" and "Coupon – $100 Off Rugs", with no codes left. No errors. Not yet in production (1.48.0 isn't either).
 
 ## 1.48.0
 
