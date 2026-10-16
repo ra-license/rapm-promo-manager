@@ -23,7 +23,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - No PHP errors. PHP parses.
 - **Installed on staging (2026-10-16).**
   - "Split test slider" is one section: Room photos (3 cards, "3 showing now") beside Promotion box (1 card showing its design). There is no separate box section, and no errors.
-  - Not yet in production.
+  - **Pushed to the production repo (2026-10-16)** with Phil's OK: main and the tags `v1.44.0` and `v1.44.1`. Live sites get it the normal way (Plugins screen, or "Update now" in the Plugin Monitor). Nothing changes on a live site until a slider is set to split and a promotion box is designed.
 
 ## 1.44.0
 
