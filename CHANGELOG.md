@@ -14,6 +14,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - At 1280px: full page is 0px from both edges, with no sideways scroll. The site's page width option stays inside the container (140px each side).
   - At phone width (360px): full width, with no sideways scroll.
   - No PHP warnings.
+- **Installed on staging (2026-10-16)** through its Plugins screen. On /split-view-test/ the block runs from edge to edge of the 1425px page (0px each side), with no sideways scroll, and the site serves `rapm-hero.css?ver=1.43.1`. Not yet in production.
 
 ## 1.43.0
 
