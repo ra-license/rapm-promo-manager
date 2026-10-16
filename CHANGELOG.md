@@ -16,6 +16,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Block 1200px down the page: the full 4:3 (842 tall, within one screen).
   - Product dots follow the trimmed photo.
   - No PHP warnings.
+- **Installed on staging (2026-10-16).** On /split-view-test/ in a 1920x902 window, the block starts 272px down (under the header), and the room is 1133x630, ending exactly at the bottom of the screen. The box is 756x630. Not yet in production.
+- **Seen on staging, still open:** at that shape (wider than tall) the sample 4:5 graphic fills only about two-thirds of the box's width, with the blurred copy on either side.
 
 ## 1.43.1
 
