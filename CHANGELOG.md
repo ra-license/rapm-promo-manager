@@ -4,6 +4,17 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.43.1
+
+**Split view fills the page's width.** Phil, after trying 1.43.0 on staging: the room and the promotion should fill the width of the page.
+- **Root cause:** the split block sat inside the theme's page container. On staging (WoodMart) that is capped at 1430px with 15px padding, so on any screen wider than that the block stopped at about 1400px, with white margins on both sides.
+- **Fix:** split view now runs edge to edge by default, the room at the left edge and the promotion at the right, 16px apart. It uses the same method as Shop the Look's `width="full"`: the page's width without the scrollbar (`--rapm-split-vw`, set by `RAPM_Split`'s script), with the block centered out of its column.
+- **New Width choice:** the slider's Layout setting has "Full page, edge to edge" (default) or "The site's page width" (saved as `split_width` = `content`), for a spot placed inside a narrow column, where breaking out would look wrong.
+- **How it was checked (php-wasm render inside a 1000px theme-style container):**
+  - At 1280px: full page is 0px from both edges, with no sideways scroll. The site's page width option stays inside the container (140px each side).
+  - At phone width (360px): full width, with no sideways scroll.
+  - No PHP warnings.
+
 ## 1.43.0
 
 **New: split view for Sliders.** From the call with Ashley (Frizzell) and the mockup Phil approved on 2026-10-16 (https://claude.ai/artifact/ANgWYAc5uHSyTFzG7pFUiZ): room photos rotate on one side while a promotion stays put on the other, like Frizzell's current home page.

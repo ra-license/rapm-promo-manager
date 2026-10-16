@@ -43,6 +43,11 @@ class RAPM_Split {
 			'cols'  => $cols,
 			'side'  => isset( $spot['split_side'] ) && 'left' === $spot['split_side'] ? 'left' : 'right',
 			'phone' => isset( $spot['split_phone'] ) && 'room' === $spot['split_phone'] ? 'room' : 'promo',
+			// 1.43.1 (Phil, after the staging test): the room and the box
+			// fill the page's width by default, not the theme's narrower
+			// page width. 'content' keeps it inside, for a spot placed in a
+			// column.
+			'width' => isset( $spot['split_width'] ) && 'content' === $spot['split_width'] ? 'content' : 'full',
 		);
 	}
 
@@ -67,7 +72,7 @@ class RAPM_Split {
 		}
 		$slot    = RAPM_Slots::get( 'promo_box_image' );
 		$id      = 'rapm-split-' . wp_unique_id();
-		$classes = 'rapm-split rapm-split-promo-' . $s['side'] . ( 'room' === $s['phone'] ? ' rapm-split-room-first' : '' );
+		$classes = 'rapm-split rapm-split-promo-' . $s['side'] . ( 'room' === $s['phone'] ? ' rapm-split-room-first' : '' ) . ( 'full' === $s['width'] ? ' is-full' : '' );
 		ob_start();
 		?>
 		<div class="<?php echo esc_attr( $classes ); ?>" id="<?php echo esc_attr( $id ); ?>" style="--rapm-split-cols:<?php echo esc_attr( $cols ); ?>;--rapm-pb-ratio:<?php echo esc_attr( (int) $slot['width'] . ' / ' . (int) $slot['height'] ); ?>;">
@@ -207,6 +212,13 @@ class RAPM_Split {
 					var wrap = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
 					var box = wrap && wrap.querySelector( '[data-rapm-pb]' );
 					if ( ! box ) { return; }
+					// Full page width: the page's width without the scrollbar,
+					// which 100vw would include (as in rapm-looks.js).
+					if ( wrap.classList.contains( 'is-full' ) ) {
+						var fullWidth = function () { wrap.style.setProperty( '--rapm-split-vw', document.documentElement.clientWidth + 'px' ); };
+						fullWidth();
+						window.addEventListener( 'resize', fullWidth );
+					}
 					RAPM_Schedule.watch( box, '.rapm-pb-item', function ( active ) {
 						Array.prototype.forEach.call( box.querySelectorAll( '.rapm-pb-item' ), function ( item ) {
 							item.hidden = item !== active[ 0 ];

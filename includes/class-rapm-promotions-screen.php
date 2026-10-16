@@ -733,6 +733,12 @@ class RAPM_Promotions_Screen {
 						<option value="left"<?php selected( $s['side'], 'left' ); ?>><?php esc_html_e( 'Left', 'rapm' ); ?></option>
 					</select>
 				</label>
+				<label><?php esc_html_e( 'Width', 'rapm' ); ?>
+					<select name="width">
+						<option value="full"<?php selected( $s['width'], 'full' ); ?>><?php esc_html_e( 'Full page, edge to edge', 'rapm' ); ?></option>
+						<option value="content"<?php selected( $s['width'], 'content' ); ?>><?php esc_html_e( 'The site\'s page width', 'rapm' ); ?></option>
+					</select>
+				</label>
 				<label><?php esc_html_e( 'On phones, show first', 'rapm' ); ?>
 					<select name="phone">
 						<option value="promo"<?php selected( $s['phone'], 'promo' ); ?>><?php esc_html_e( 'The promotion', 'rapm' ); ?></option>
@@ -764,6 +770,7 @@ class RAPM_Promotions_Screen {
 		$cols  = isset( $_POST['cols'] ) ? sanitize_key( wp_unslash( $_POST['cols'] ) ) : '';
 		$side  = isset( $_POST['side'] ) && 'left' === $_POST['side'] ? 'left' : 'right';
 		$phone = isset( $_POST['phone'] ) && 'room' === $_POST['phone'] ? 'room' : 'promo';
+		$width = isset( $_POST['width'] ) && 'content' === $_POST['width'] ? 'content' : 'full';
 		// Defaults aren't stored, so a spot left at them follows any later change of default.
 		RAPM_Spots::update(
 			'hero',
@@ -773,6 +780,7 @@ class RAPM_Promotions_Screen {
 				'split_cols'  => isset( RAPM_Split::COLS[ $cols ] ) && '60-40' !== $cols ? $cols : null,
 				'split_side'  => 'left' === $side ? 'left' : null,
 				'split_phone' => 'room' === $phone ? 'room' : null,
+				'split_width' => 'content' === $width ? 'content' : null,
 			)
 		);
 		RAPM_Cache::queue_spot( 'hero|' . $placement );

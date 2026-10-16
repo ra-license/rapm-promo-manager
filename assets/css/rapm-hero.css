@@ -232,6 +232,12 @@
 	gap: 16px;
 	align-items: stretch;
 }
+/* 1.43.1, full page width (the default): out of the theme's page width,
+   edge to edge. --rapm-split-vw is the page's width without the scrollbar
+   (RAPM_Split's script). Assumes the column is centered on the page, as a
+   page's content area or a full-width Elementor container is; a spot in a
+   narrow column should use the spot's "Site's page width" instead. */
+.rapm-split.is-full { width: var(--rapm-split-vw, 100vw); max-width: none; margin-left: calc(50% - var(--rapm-split-vw, 100vw) / 2); }
 .rapm-split-main { min-width: 0; }
 .rapm-split-side { min-width: 0; position: relative; }
 .rapm-split-promo-left .rapm-split-side { order: -1; }

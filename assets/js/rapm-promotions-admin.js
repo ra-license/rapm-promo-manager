@@ -269,7 +269,8 @@
 			split: picked ? picked.value : '0',
 			cols: form.querySelector( 'select[name="cols"]' ).value,
 			side: form.querySelector( 'select[name="side"]' ).value,
-			phone: form.querySelector( 'select[name="phone"]' ).value
+			phone: form.querySelector( 'select[name="phone"]' ).value,
+			width: form.querySelector( 'select[name="width"]' ).value
 		} ).then( function ( res ) {
 			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
 			// Split changes the picture size the slider asks for and adds
