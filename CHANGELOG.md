@@ -4,6 +4,10 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.42.1
+
+**No code changes.** This release records the 1.42.0 rollout steps below. It was also the first release installed with "Update now": staging got it from the Plugin Monitor button rather than from its Plugins screen. That proves a real download and install from GitHub, on a real host, through the new path.
+
 ## 1.42.0
 
 **New: "Update now" from the Plugin Monitor, one website at a time.** Phil: "I just want a way to click update now for specific websites to push an update from the plugin monitor."
