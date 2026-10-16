@@ -4,6 +4,14 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.43.3
+
+**The promotion box picture is square: 1200x1200 (was 1200x1500).** Phil's pick, after seeing 1.43.2 on staging.
+- **Why:** with the room held to the screen (1.43.2), the box is wider than it is tall on big monitors. On staging at 1920x902 it measured 756x630 (6:5), so a 4:5 graphic filled only about two-thirds of its width, with blurred bands at the sides. On a 1440 laptop it's about 9:10. Square sits between the two, so the bands stay thin on both.
+- **Phones:** the box keeps its picture's shape at full width, so it's now square (about 390px tall on a 390px phone, was about 490). The room photos come into view sooner.
+- **Pictures already uploaded:** a promotion box picture saved at 1200x1500 still shows whole (fitted, with the blurred fill). The new size only applies to pictures added from now on. Graphics should be designed square.
+- **Not changed:** stretching or cropping the graphic to fill the box was ruled out, since it would cut off words that are part of the graphic.
+
 ## 1.43.2
 
 **Split view fits the screen on computers.** Phil, on staging at 1903px wide: the room ran past the bottom of the screen.

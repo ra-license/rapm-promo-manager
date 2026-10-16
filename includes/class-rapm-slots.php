@@ -117,14 +117,18 @@ class RAPM_Slots {
 				'max_kb'                 => 300,
 				'format'                 => 'webp',
 			),
-			// The promotion box beside it: 4:5, the size the mockup named
-			// ("1200 x 1500 on computers and phones"). A picture with nothing
-			// over it is shown whole, fitted inside with a blurred copy of
-			// itself filling any gap, so it still works at 50/50 or 2/1.
+			// The promotion box beside it: square since 1.43.3 (Phil, after
+			// the staging test). The mockup's 4:5 (1200x1500) left wide
+			// blurred bands once the room was held to the screen (1.43.2):
+			// the box measured about 9:10 on a 1440 laptop and 6:5 on a 1920
+			// monitor, and square sits between the two. On phones it's also
+			// shorter, so the room shows sooner. A picture with nothing over
+			// it is shown whole, fitted inside with a blurred copy of itself
+			// filling any gap, so other widths still work.
 			'promo_box_image'     => array(
 				'label'                  => __( 'Promotion box — Picture', 'rapm' ),
 				'width'                  => 1200,
-				'height'                 => 1500,
+				'height'                 => 1200,
 				'aspect_ratio_tolerance' => 0.02,
 				'max_kb'                 => 250,
 				'format'                 => 'webp',

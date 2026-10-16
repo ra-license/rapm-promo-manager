@@ -297,10 +297,10 @@
 .rapm-split .rapm-pins-card-img img { width: 52px; height: 52px; }
 
 /* Phones: one column, the promotion first unless the spot says room
-   first. The box keeps its picture's 4:5 shape at full width. */
+   first. The box keeps its picture's shape (square) at full width. */
 @media (max-width: 768px) {
 	.rapm-split { grid-template-columns: minmax(0, 1fr); gap: 0; }
-	.rapm-split .rapm-split-side { order: -1; aspect-ratio: var(--rapm-pb-ratio, 4 / 5); }
+	.rapm-split .rapm-split-side { order: -1; aspect-ratio: var(--rapm-pb-ratio, 1 / 1); }
 	.rapm-split.rapm-split-room-first .rapm-split-side { order: 1; }
 	.rapm-split .rapm-pins-shelf { padding: 12px 12px 4px; }
 	.rapm-split .rapm-pins-panel { grid-template-columns: minmax(0, 1fr); }
