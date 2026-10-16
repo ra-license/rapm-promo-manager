@@ -21,6 +21,9 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Checked in WordPress Playground:**
   - The screen shows one section with two areas and two grids. The box section is gone, and the designed promotion's card shows its design.
   - No PHP errors. PHP parses.
+- **Installed on staging (2026-10-16).**
+  - "Split test slider" is one section: Room photos (3 cards, "3 showing now") beside Promotion box (1 card showing its design). There is no separate box section, and no errors.
+  - Not yet in production.
 
 ## 1.44.0
 
