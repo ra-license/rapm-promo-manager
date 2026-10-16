@@ -51,7 +51,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - **Forged requests:** a bad signature got 401 `bad_signature`, and a correctly signed request 2 hours old got 401 `stale`. Another site reporting a result for this site's request was ignored.
     - **Final run:** a good 1.0.2 "release" installed and reported "done".
   - **Not tested in Playground:** WordPress's own restore of the old version after a fatal error. It relies on WordPress calling itself over HTTP, which Playground can't do.
-- **Not yet checked:** a real site polling help.ramarketing.com and updating from GitHub. That needs Plugin Monitor 1.3.0 installed there first.
+- **RA Plugin Monitor 1.3.0 installed at help.ramarketing.com (2026-10-16)** with Phil's OK. It was installed in his Chrome: Plugins → Add New → Upload, the 1.3.0 zip, then "Replace current with uploaded" over 1.2.0. WordPress said "Plugin updated successfully."
+  - **Dashboard:** the same 14 websites, 18 rows, 17 all good and 1 needing attention as before the upgrade. No errors.
+  - **Rows:** every row reads "'Update now' needs a newer version of this plugin", since no site runs 1.42.0 yet.
+  - **The new address:** an unsigned POST to `/wp-json/ra-monitor/v1/poll` got 401 `bad_signature`, so the address exists and refuses unsigned requests. `/checkin` answered the same.
+  - **The reworked check-in:** the monitor's own "Send a test check-in" (signed, sent over the internet) reported "Test check-in received and saved correctly", and the counts didn't change.
+  - **Staging:** it reports to its own copy of the monitor, still 1.2.0. To test "Update now" there, that copy needs 1.3.0 too.
+- **Not yet checked:** a real site polling help.ramarketing.com and updating from GitHub. That needs a site on 1.42.0.
 
 ## 1.41.1
 
