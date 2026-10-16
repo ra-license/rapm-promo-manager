@@ -14,7 +14,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - php-wasm, phone width: the box is square (375x375), no PHP warnings.
   - **Installed on staging (2026-10-16):** the test promotion was swapped for a square sample through its edit form. At 1920x902 the box is 756x630 and the graphic shows 630 wide, so the blurred bands are 63px each side (the 4:5 graphic left about 126px each side).
   - An attempt to edit it through the wrong form address was turned away by the size check ("needs to be 1920x600"), so nothing changed.
-  - Not yet in production.
+- **Pushed to the production repo (2026-10-16)** with Phil's OK: main and the tags `v1.43.0` through `v1.43.3`. Live sites get it the normal way (Plugins screen, or "Update now" in the Plugin Monitor). Split view stays off on every slider until it's turned on in the slider's Layout setting.
 - **Not changed:** stretching or cropping the graphic to fill the box was ruled out, since it would cut off words that are part of the graphic.
 
 ## 1.43.2
