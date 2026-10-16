@@ -364,3 +364,6 @@
 .rapm-pb-board[data-style="elegant"] .rapm-pb-t.is-headline { font-weight: 600; }
 .rapm-pb-board[data-style="minimal"] .rapm-pb-t.is-headline { font-weight: 500; letter-spacing: 0.03em; }
 .rapm-pb .rapm-pb-item.is-design .rapm-pb-img { z-index: 1; }
+/* 1.45.0: a Media Library picture on the canvas (a logo or badge), sized
+   by its width; never smaller than 24px. */
+.rapm-pb-board .rapm-pb-t.is-img { width: max(24px, calc(var(--s, 30) * 1cqw)); max-width: none; height: auto; display: block; }

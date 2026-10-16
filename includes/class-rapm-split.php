@@ -27,6 +27,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class RAPM_Split {
 
+	/** Google Material Symbols' drawing area. */
+	const MS_BOX = '0 -960 960 960';
+
 	/** Saved value => columns (room first). */
 	const COLS = array(
 		'60-40' => '3fr 2fr',
@@ -145,6 +148,21 @@ class RAPM_Split {
 		return '<div class="rapm-pb" data-rapm-pb>' . $items . '</div>';
 	}
 
+	/**
+	 * The canvas for the form's editor (1.45.0): sanitized, plus each
+	 * picture's address and name, which the editor shows but never saves.
+	 */
+	public static function canvas_for_editor( $raw ) {
+		$canvas = self::sanitize_canvas( is_array( $raw ) ? $raw : array() );
+		foreach ( $canvas['items'] as $i => $it ) {
+			if ( 'img' === $it['k'] ) {
+				$canvas['items'][ $i ]['u'] = (string) wp_get_attachment_image_url( $it['a'], 'medium_large' );
+				$canvas['items'][ $i ]['t'] = get_the_title( $it['a'] );
+			}
+		}
+		return $canvas;
+	}
+
 	/** 1.44.0: 'design' (made on the canvas) or 'graphic' (a finished picture, as before). */
 	public static function box_mode( $asset_id ) {
 		return 'design' === get_post_meta( $asset_id, '_rapm_box_mode', true ) ? 'design' : 'graphic';
@@ -168,15 +186,16 @@ class RAPM_Split {
 			'pic'   => ! empty( $raw['pic'] ),
 			'items' => array(),
 		);
-		$seen  = array();
-		$icons = 0;
+		$seen   = array();
+		$icons  = 0;
+		$images = 0;
 		$items = isset( $raw['items'] ) && is_array( $raw['items'] ) ? $raw['items'] : array();
 		foreach ( $items as $it ) {
-			if ( ! is_array( $it ) || empty( $it['k'] ) || ! in_array( $it['k'], array( 'headline', 'sub', 'btn', 'icon' ), true ) ) {
+			if ( ! is_array( $it ) || empty( $it['k'] ) || ! in_array( $it['k'], array( 'headline', 'sub', 'btn', 'icon', 'img' ), true ) ) {
 				continue;
 			}
 			$k     = $it['k'];
-			$limit = array( 'headline' => array( 3, 20 ), 'sub' => array( 2, 12 ), 'btn' => array( 2, 8 ), 'icon' => array( 4, 40 ) );
+			$limit = array( 'headline' => array( 3, 20 ), 'sub' => array( 2, 12 ), 'btn' => array( 2, 8 ), 'icon' => array( 4, 40 ), 'img' => array( 5, 100 ) );
 			$color = isset( $it['c'] ) ? sanitize_hex_color( (string) $it['c'] ) : '';
 			$item  = array(
 				'k' => $k,
@@ -186,13 +205,28 @@ class RAPM_Split {
 				'c' => $color ? $color : '#1d3557',
 			);
 			if ( 'icon' === $k ) {
-				$name = isset( $it['n'] ) ? preg_replace( '/[^a-z0-9_]/', '', strtolower( (string) $it['n'] ) ) : '';
+				$name = isset( $it['n'] ) ? preg_replace( '/[^a-z0-9_-]/', '', strtolower( (string) $it['n'] ) ) : '';
 				$d    = isset( $it['d'] ) ? (string) $it['d'] : '';
 				if ( '' === $name || '' === $d || strlen( $d ) > 20000 || ! preg_match( '/^[MmLlHhVvCcSsQqTtAaZz0-9.,\-\s]+$/', $d ) || ++$icons > 12 ) {
 					continue;
 				}
 				$item['n'] = $name;
 				$item['d'] = $d;
+				// 1.45.0: where it's from, and its drawing area (Font
+				// Awesome icons vary in width: "0 0 640 512" for a couch).
+				$item['f'] = isset( $it['f'] ) && in_array( $it['f'], array( 'fas', 'far', 'fab' ), true ) ? $it['f'] : 'ms';
+				$item['v'] = self::MS_BOX;
+				if ( 'ms' !== $item['f'] && isset( $it['v'] ) && preg_match( '/^0 0 (\d{1,4}) (\d{1,4})$/', (string) $it['v'], $vb ) && (int) $vb[1] > 0 && (int) $vb[2] > 0 ) {
+					$item['v'] = '0 0 ' . (int) $vb[1] . ' ' . (int) $vb[2];
+				}
+			} elseif ( 'img' === $k ) {
+				// 1.45.0: a Media Library picture (a logo or badge), by ID only.
+				$a = isset( $it['a'] ) ? absint( $it['a'] ) : 0;
+				if ( ! $a || ! wp_attachment_is_image( $a ) || ++$images > 6 ) {
+					continue;
+				}
+				$item['a'] = $a;
+				unset( $item['c'] );
 			} elseif ( isset( $seen[ $k ] ) ) {
 				continue;
 			} else {
@@ -234,7 +268,18 @@ class RAPM_Split {
 			foreach ( $canvas['items'] as $it ) {
 				$pos = 'left:' . $it['x'] . '%;top:' . $it['y'] . '%;--s:' . $it['s'] . ';';
 				if ( 'icon' === $it['k'] ) {
-					echo '<span class="rapm-pb-t is-icon" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '" aria-hidden="true"><svg viewBox="0 -960 960 960" focusable="false"><path d="' . esc_attr( $it['d'] ) . '"/></svg></span>';
+					// Font Awesome Free's icons are CC BY 4.0; its own SVGs
+					// carry this credit, so ours do too.
+					$credit = 'ms' === $it['f'] ? '' : '<!-- Font Awesome Free by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free -->';
+					echo '<span class="rapm-pb-t is-icon" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '" aria-hidden="true"><svg viewBox="' . esc_attr( $it['v'] ) . '" focusable="false">' . $credit . '<path d="' . esc_attr( $it['d'] ) . '"/></svg></span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed comment text.
+					continue;
+				}
+				if ( 'img' === $it['k'] ) {
+					$img = wp_get_attachment_image_url( $it['a'], 'medium_large' );
+					if ( $img ) {
+						$img_alt = get_post_meta( $it['a'], '_wp_attachment_image_alt', true );
+						echo '<img class="rapm-pb-t is-img" src="' . esc_url( $img ) . '" alt="' . esc_attr( $img_alt ) . '" style="' . esc_attr( $pos ) . '" loading="lazy" decoding="async" />';
+					}
 					continue;
 				}
 				$text = $texts[ $it['k'] ];

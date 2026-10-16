@@ -50,6 +50,8 @@ class RAPM_Upload_Handler {
 		// 1.44.0: the promotion box canvas. Does nothing on other types' forms.
 		wp_enqueue_style( 'rapm-box-canvas-css', RAPM_URL . 'assets/css/rapm-box-canvas.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-box-canvas-js', RAPM_URL . 'assets/js/rapm-box-canvas.js', array(), RAPM_VERSION, true );
+		// 1.45.0: "Your pictures" opens WordPress's own Media Library.
+		wp_enqueue_media();
 	}
 
 	/**
@@ -1994,8 +1996,11 @@ class RAPM_Upload_Handler {
 	 * (rapm-hero.css), so it shows exactly what ships.
 	 */
 	private static function render_box_canvas( $box_mode, $image_id, $canvas ) {
-		$canvas  = RAPM_Split::sanitize_canvas( is_array( $canvas ) ? $canvas : array() );
+		$canvas  = RAPM_Split::canvas_for_editor( $canvas );
 		$picture = $image_id ? wp_get_attachment_image_url( $image_id, 'large' ) : '';
+		// 1.45.0: Font Awesome from the site's own Elementor, when it has it.
+		$fa_dir  = WP_PLUGIN_DIR . '/elementor/assets/lib/font-awesome/json/';
+		$fa_url  = file_exists( $fa_dir . 'solid.json' ) ? plugins_url( 'elementor/assets/lib/font-awesome/json/' ) : '';
 		$text    = array(
 			'headline'   => __( 'Headline', 'rapm' ),
 			'sub'        => __( 'Smaller line', 'rapm' ),
@@ -2012,10 +2017,14 @@ class RAPM_Upload_Handler {
 			'remove'     => __( 'Remove this icon', 'rapm' ),
 			'noIcons'    => __( 'No icons match. Try a simpler word, like sofa, bed, truck or sale.', 'rapm' ),
 			'iconFailed' => __( 'That icon couldn\'t be loaded from Google just now. Please try again.', 'rapm' ),
+			'picture'     => __( 'Picture', 'rapm' ),
+			'removePic'   => __( 'Remove this picture', 'rapm' ),
+			'pickPicture' => __( 'Pick a picture, like a logo or a badge', 'rapm' ),
+			'usePicture'  => __( 'Put it on the design', 'rapm' ),
 		);
 		$bgs = array( '#f3ead8', '#ffffff', '#1d3557', '#c8102e', '#2f2f2f', '#e6efe9' );
 		?>
-		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
 			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
 			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it. Click it to change its size or color. Arrow keys move the one you picked a little at a time (hold Shift to move it more). A pink line shows when it\'s centered.', 'rapm' ); ?></p>
@@ -2046,10 +2055,24 @@ class RAPM_Upload_Handler {
 						<p class="description rapm-cv-nopic"><?php esc_html_e( 'To use a picture as the background, upload one in step 1. It fills the whole box.', 'rapm' ); ?></p>
 					</div>
 					<div class="rapm-cv-panel">
-						<h3><?php esc_html_e( 'Add an icon', 'rapm' ); ?></h3>
-						<input type="search" class="rapm-cv-search regular-text" placeholder="<?php esc_attr_e( 'Search, like sofa, bed, truck or sale', 'rapm' ); ?>" aria-label="<?php esc_attr_e( 'Search icons', 'rapm' ); ?>" />
-						<div class="rapm-cv-icons"></div>
-						<p class="description"><?php esc_html_e( 'Google\'s free Material Symbols, 3,929 icons. A picked icon is saved with this promotion, so your website never loads anything from Google for it.', 'rapm' ); ?></p>
+						<h3><?php esc_html_e( 'Add an icon or picture', 'rapm' ); ?></h3>
+						<p class="rapm-cv-seg rapm-cv-tabs">
+							<button type="button" class="button" data-tab="ms" aria-pressed="true"><?php esc_html_e( 'Google icons', 'rapm' ); ?></button>
+							<?php if ( $fa_url ) : ?>
+								<button type="button" class="button" data-tab="fa" aria-pressed="false"><?php esc_html_e( 'Font Awesome', 'rapm' ); ?></button>
+							<?php endif; ?>
+							<button type="button" class="button" data-tab="media" aria-pressed="false"><?php esc_html_e( 'Your pictures', 'rapm' ); ?></button>
+						</p>
+						<div class="rapm-cv-iconpick">
+							<input type="search" class="rapm-cv-search regular-text" placeholder="<?php esc_attr_e( 'Search, like sofa, bed, truck or sale', 'rapm' ); ?>" aria-label="<?php esc_attr_e( 'Search icons', 'rapm' ); ?>" />
+							<div class="rapm-cv-icons"></div>
+						</div>
+						<p class="description rapm-cv-src-ms"><?php esc_html_e( 'Google\'s free Material Symbols, 3,929 icons. A picked icon is saved with this promotion, so your website never loads anything from Google for it.', 'rapm' ); ?></p>
+						<p class="description rapm-cv-src-fa" hidden><?php esc_html_e( 'The Font Awesome icons that come with Elementor (Font Awesome Free, 1,616 icons, including social media logos). A picked icon is saved with this promotion.', 'rapm' ); ?></p>
+						<div class="rapm-cv-media" hidden>
+							<p><button type="button" class="button rapm-cv-pick"><?php esc_html_e( 'Choose from the Media Library', 'rapm' ); ?></button></p>
+							<p class="description"><?php esc_html_e( 'A logo, a brand badge or a "Made in USA" seal, for example. A PNG or SVG with a see-through background looks best. Drag it into place and set its size like an icon.', 'rapm' ); ?></p>
+						</div>
 					</div>
 					<div class="rapm-cv-panel">
 						<h3><?php esc_html_e( 'On the design', 'rapm' ); ?></h3>

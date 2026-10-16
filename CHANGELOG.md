@@ -4,6 +4,34 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.45.0
+
+**New: Font Awesome icons and Media Library pictures on the promotion box canvas.** Phil's pick from the mockup: Elementor's icons (Font Awesome) plus the Media Library.
+- **The icon picker has three tabs:** Google icons (as in 1.44.0), Font Awesome, and Your pictures.
+- **Font Awesome:**
+  - The icons come from the site's own Elementor copy: Font Awesome Free 5.15.3, 1,616 icons (1,002 solid, 152 regular, 462 brand logos). Checked in Elementor 4.3.5's files (`assets/lib/font-awesome/json`, each icon as width, height and drawing).
+  - Nothing extra is bundled. The tab shows only on sites with Elementor's files.
+  - A picked icon is saved with the promotion like a Google one, plus its own drawing area (Font Awesome icons vary in width; the couch is 640 by 512).
+  - The page draws it with Font Awesome's own credit line, as Font Awesome Free's icons are CC BY 4.0.
+  - Font Awesome has names but no search words, so shopper words point at the right icons. For example, "sofa" finds the couch (it found nothing before this), "sale" finds tag and percent, and "financing" finds credit card.
+- **Your pictures:**
+  - "Choose from the Media Library" opens WordPress's own Media Library (upload or pick), for a logo, a brand badge or a "Made in USA" seal.
+  - The picture drags and sizes like an icon (by its width, never under 24px), with no color.
+  - It's saved by its Media Library ID only. The page shows it with its alt text and loads it lazily.
+  - Up to 6 per promotion.
+- **Saved safely** (`RAPM_Split::sanitize_canvas()`):
+  - Icon sources: only fas, far, fab or Google.
+  - Drawing areas: must be `0 0 width height` with real numbers; anything else falls back to Google's.
+  - Pictures: must be real Media Library images. A page or other post is dropped, and an address sent from the browser is ignored.
+- **How it was checked (WordPress Playground with Elementor 4.3.5 installed, the real form clicked through):**
+  - The Font Awesome tab showed its starter icons from Elementor's files. Adding the couch and dragging it to the top worked.
+  - "Your pictures" opened the Media Library. Picking a badge and dragging it to the lower right worked.
+  - It saved as `fas` couch with the drawing area `0 0 640 512`, and as the picture by ID.
+  - Re-opening restored both, with the badge's thumbnail. In the Font Awesome tab, "sofa" found the couch.
+  - The page drew the couch with the Font Awesome credit and the badge with its alt text ("Made in USA badge"), as placed, with no PHP errors.
+  - **Tampered input:** a drawing area with an injected attribute, an unknown icon source, a page posing as a picture, a fake picture address, an out-of-range size and a 7th picture were all dropped, clamped or replaced.
+- **Next:** 1.46.0, the Google Fonts picker.
+
 ## 1.44.1
 
 **A split slider and its promotion box are one section on the Promotions screen.** Phil, on staging: "This is not very intuitive. I need these both housed within the same section for the split slider."

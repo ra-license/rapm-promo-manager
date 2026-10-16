@@ -54,3 +54,8 @@
 .rapm-cv-sel { display: grid; gap: 6px; }
 .rapm-cv-sel input[type="range"] { width: 100%; max-width: 320px; }
 .rapm-cv-remove { color: #b32d2e; }
+.rapm-cv-ic svg { width: 26px; height: 26px; fill: currentColor; }
+.rapm-cv-iconpick[hidden], .rapm-cv-media[hidden], .rapm-cv-src-ms[hidden], .rapm-cv-src-fa[hidden] { display: none; }
+.rapm-cv-item.is-img img { display: block; width: 100%; height: auto; pointer-events: none; }
+.rapm-cv-board .rapm-cv-item.is-img { width: max(24px, calc(var(--s, 30) * 1cqw)); }
+.rapm-cv-layer-ic img { width: 18px; height: 18px; object-fit: contain; display: block; }
