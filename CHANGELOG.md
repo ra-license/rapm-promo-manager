@@ -47,6 +47,11 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Tampered layout:** a script in an icon, a fake color, out-of-range numbers, a second headline and an unknown piece were all dropped or clamped.
   - **php-wasm render at 390, 1440 and 1903 wide:** every piece stays inside the square, there's no sideways scroll and no warnings. On a phone the headline is 37px and the button text 13.5px.
   - **PHP:** all files parse.
+- **Installed on staging (2026-10-16)** through its Plugins screen.
+  - The form has the canvas and the "How is this promotion made?" choice. The icon list loads (3,929 icons, compressed by the host).
+  - The sample promotion on /split-view-test/ was switched to a design through its edit form: a red sofa icon, the words, truck and card icons, and the button.
+  - It shows beside the room photos with no sideways scroll. The page's only Google request is the theme's own fonts (Lato, Poppins), none from the plugin.
+  - Not yet in production.
 - **Next:** 1.45.0 adds Font Awesome icons (Elementor's set) and Media Library pictures to the same picker. 1.46.0 adds the Google Fonts picker.
 
 ## 1.43.3
