@@ -145,10 +145,126 @@ class RAPM_Split {
 		return '<div class="rapm-pb" data-rapm-pb>' . $items . '</div>';
 	}
 
+	/** 1.44.0: 'design' (made on the canvas) or 'graphic' (a finished picture, as before). */
+	public static function box_mode( $asset_id ) {
+		return 'design' === get_post_meta( $asset_id, '_rapm_box_mode', true ) ? 'design' : 'graphic';
+	}
+
+	/**
+	 * The canvas layout (1.44.0), checked value by value: the browser sends
+	 * it as JSON (rapm-box-canvas.js), so nothing in it is trusted. Returns
+	 * array( 'bg' => '#hex' or '', 'pic' => bool, 'items' => list ). Each
+	 * item is array( 'k', 'x', 'y', 's', 'c' ) plus 'n' and 'd' for an icon.
+	 * The headline, smaller line and button can each appear once; up to 12
+	 * icons. An icon's drawing must be plain SVG path data (letters for the
+	 * path commands, numbers, commas, dots, minus signs and spaces), so it
+	 * can't carry markup or script.
+	 */
+	public static function sanitize_canvas( $raw ) {
+		$raw   = is_array( $raw ) ? $raw : array();
+		$bg    = isset( $raw['bg'] ) ? sanitize_hex_color( (string) $raw['bg'] ) : '';
+		$out   = array(
+			'bg'    => $bg ? $bg : '',
+			'pic'   => ! empty( $raw['pic'] ),
+			'items' => array(),
+		);
+		$seen  = array();
+		$icons = 0;
+		$items = isset( $raw['items'] ) && is_array( $raw['items'] ) ? $raw['items'] : array();
+		foreach ( $items as $it ) {
+			if ( ! is_array( $it ) || empty( $it['k'] ) || ! in_array( $it['k'], array( 'headline', 'sub', 'btn', 'icon' ), true ) ) {
+				continue;
+			}
+			$k     = $it['k'];
+			$limit = array( 'headline' => array( 3, 20 ), 'sub' => array( 2, 12 ), 'btn' => array( 2, 8 ), 'icon' => array( 4, 40 ) );
+			$color = isset( $it['c'] ) ? sanitize_hex_color( (string) $it['c'] ) : '';
+			$item  = array(
+				'k' => $k,
+				'x' => round( max( 0, min( 100, isset( $it['x'] ) ? (float) $it['x'] : 50 ) ), 1 ),
+				'y' => round( max( 0, min( 100, isset( $it['y'] ) ? (float) $it['y'] : 50 ) ), 1 ),
+				's' => round( max( $limit[ $k ][0], min( $limit[ $k ][1], isset( $it['s'] ) ? (float) $it['s'] : $limit[ $k ][0] ) ), 1 ),
+				'c' => $color ? $color : '#1d3557',
+			);
+			if ( 'icon' === $k ) {
+				$name = isset( $it['n'] ) ? preg_replace( '/[^a-z0-9_]/', '', strtolower( (string) $it['n'] ) ) : '';
+				$d    = isset( $it['d'] ) ? (string) $it['d'] : '';
+				if ( '' === $name || '' === $d || strlen( $d ) > 20000 || ! preg_match( '/^[MmLlHhVvCcSsQqTtAaZz0-9.,\-\s]+$/', $d ) || ++$icons > 12 ) {
+					continue;
+				}
+				$item['n'] = $name;
+				$item['d'] = $d;
+			} elseif ( isset( $seen[ $k ] ) ) {
+				continue;
+			} else {
+				$seen[ $k ] = true;
+			}
+			$out['items'][] = $item;
+		}
+		return $out;
+	}
+
+	/**
+	 * A promotion made on the canvas (1.44.0): its background (a color, or
+	 * its picture cover-cropped to fill the box), and a square design area
+	 * fitted inside the box holding the words and icons where they were
+	 * placed. Sizes are a share of the square's width (cqw), with a floor
+	 * so words stay readable on phones; the whole square shows on every
+	 * screen, so the design looks the same everywhere, only smaller.
+	 */
+	private static function render_design( $asset_id, $src, $url, $load_attrs ) {
+		$canvas   = self::sanitize_canvas( get_post_meta( $asset_id, '_rapm_canvas', true ) );
+		$use_pic  = $canvas['pic'] && $src;
+		$bg       = $use_pic ? '#111111' : ( $canvas['bg'] ? $canvas['bg'] : '#f3ead8' );
+		$texts    = array(
+			'headline' => get_post_meta( $asset_id, '_rapm_headline', true ),
+			'sub'      => get_post_meta( $asset_id, '_rapm_subhead', true ),
+			'btn'      => get_post_meta( $asset_id, '_rapm_cta_text', true ),
+		);
+		$style    = get_post_meta( $asset_id, '_rapm_text_style', true ) ?: 'bold'; // phpcs:ignore
+		$font     = get_post_meta( $asset_id, '_rapm_text_font', true );
+		$alt      = get_post_meta( $asset_id, '_rapm_alt_text', true );
+		$headline = $texts['headline'];
+		ob_start();
+		?>
+		<?php if ( $use_pic ) : ?>
+			<img class="rapm-pb-img" src="<?php echo esc_url( $src ); ?>" alt="" <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> />
+		<?php endif; ?>
+		<div class="rapm-pb-board" data-style="<?php echo esc_attr( $style ); ?>" style="<?php echo esc_attr( RAPM_Elementor::font_family_css( $font ) ); ?>">
+			<?php
+			foreach ( $canvas['items'] as $it ) {
+				$pos = 'left:' . $it['x'] . '%;top:' . $it['y'] . '%;--s:' . $it['s'] . ';';
+				if ( 'icon' === $it['k'] ) {
+					echo '<span class="rapm-pb-t is-icon" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '" aria-hidden="true"><svg viewBox="0 -960 960 960" focusable="false"><path d="' . esc_attr( $it['d'] ) . '"/></svg></span>';
+					continue;
+				}
+				$text = $texts[ $it['k'] ];
+				if ( '' === (string) $text ) {
+					continue;
+				}
+				if ( 'headline' === $it['k'] ) {
+					echo '<h2 class="rapm-pb-t is-headline" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '">' . esc_html( $text ) . '</h2>';
+				} elseif ( 'sub' === $it['k'] ) {
+					echo '<p class="rapm-pb-t is-sub" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '">' . esc_html( $text ) . '</p>';
+				} else {
+					echo '<span class="rapm-pb-t is-btn" style="' . esc_attr( $pos . 'background:' . $it['c'] ) . '">' . esc_html( $text ) . '</span>';
+				}
+			}
+			?>
+		</div>
+		<?php if ( $url ) : ?>
+			<a href="<?php echo esc_url( $url ); ?>" class="rapm-slide-link" aria-label="<?php echo esc_attr( $headline ? $headline : $alt ); ?>"></a>
+		<?php endif; ?>
+		<?php
+		return array( ob_get_clean(), $bg );
+	}
+
 	private static function render_item( $asset_id, &$eager ) {
 		$image_id = (int) get_post_meta( $asset_id, '_rapm_image_desktop_id', true );
 		$src      = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
-		if ( ! $src ) {
+		$design   = 'design' === self::box_mode( $asset_id );
+		// A finished graphic needs its picture; a design can be words and
+		// icons on a plain color.
+		if ( ! $src && ! $design ) {
 			return '';
 		}
 		$headline   = get_post_meta( $asset_id, '_rapm_headline', true );
@@ -170,6 +286,10 @@ class RAPM_Split {
 			$eager = false;
 		}
 		$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
+		if ( $design ) {
+			list( $inner, $bg ) = self::render_design( $asset_id, $src, $url, $load_attrs );
+			return '<div class="rapm-pb-item is-design" data-rapm-key="' . (int) $asset_id . '" data-rapm-start="' . esc_attr( $starts_at ) . '" data-rapm-end="' . esc_attr( $ends_at ) . '" hidden style="' . esc_attr( 'background:' . $bg ) . '">' . $inner . '</div>';
+		}
 		// A finished graphic (no words over it) is shown whole, with a
 		// blurred copy of itself behind any gap, so its own words are never
 		// cut off whatever the box's shape. Words over a picture fill the

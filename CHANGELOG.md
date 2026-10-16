@@ -4,6 +4,51 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.44.0
+
+**New: design the promotion box on a canvas, with Google icons.** From the mockup Phil approved on 2026-10-16 (https://claude.ai/artifact/Xwyizh61GsuHzZLbaqgvNz). Phil: "make them movable within the box as a canvas so the clients can place them where they want (kind of like canva)."
+- **How a promotion box is made (new first choice on its form):**
+  - "Design it here" (the default for new ones): place the words and icons yourself. A picture is optional.
+  - "A finished graphic": the whole graphic shows, as before, and there is nothing to type.
+  - Saved as `_rapm_box_mode`. Promotion boxes saved before 1.44.0 stay graphics, and words already typed on them still show as before.
+- **The canvas (Your Message step):**
+  - Drag the headline, smaller line, button and icons anywhere on a square design area. Pink lines show when a piece is centered, and arrow keys nudge it (Shift for bigger steps).
+  - Click a piece to change its size (a slider) and color (six swatches or any color). Icons can be removed.
+  - The words still come from the Headline, Smaller line and Button Text boxes, and the Text Style and Typeface (Elementor global fonts) still apply. Alignment and Text Color are hidden for the box, since each piece has its own place and color.
+  - "On the design" lists every piece with its position.
+- **Background:** a color (six swatches or any color), or the picture from step 1 cover-cropped to fill the box.
+- **Square design area:** the square is fitted inside the box and the background fills the rest, so what the client places is exactly what shows on every screen. Sizes are a share of the square's width, with a floor so words stay readable on phones (headline 18px, smaller line 13px, button 11px, icons 16px). The editor uses the live site's own styles (`rapm-hero.css`), so it shows exactly what ships.
+- **Google icons:**
+  - All 3,929 Google Material Symbols (Outlined, Apache 2.0) can be searched.
+  - The list of names and search words is bundled (`assets/data/material-symbols.json`, 1.2MB). It loads only in the admin, the first time the icon search is clicked.
+  - Picking an icon fetches its drawing from Google and saves it with the promotion as plain SVG path data. Visitors' pages load no icon font and make no request to Google.
+- **Search words:**
+  - **Root cause of a miss found while testing:** "sofa" found nothing. The first version of the list kept only 10 of Google's search words per icon, and Google lists them alphabetically, so "sofa" was cut from both sofa-shaped icons.
+  - **Fix:** the list now keeps all of Google's words for each icon (merging Google's duplicate entries) and adds a few shopper words Google doesn't use, such as truck (delivery), sale (price tags), sofa and financing.
+  - Icons whose name matches come before icons that only match by search word.
+- **Saved safely:** the layout (`_rapm_canvas`) is checked value by value (`RAPM_Split::sanitize_canvas()`):
+  - Pieces: only the four kinds, at most one of each word piece, at most 12 icons.
+  - Positions and sizes: clamped to their ranges.
+  - Colors: must be real hex colors.
+  - Icon drawings: must be plain path data. A drawing containing markup or script is dropped.
+- **Fix: full width on block themes, for split view and Shop the Look's `width="full"`.**
+  - **Root cause:** found on Twenty Twenty-Five. Block themes give every block in the content `margin-left/right: auto !important` (`wp-includes/block-supports/layout.php`, checked in WordPress's source). That pinned the block to the content's left edge and pushed it past the right side, with a sideways scrollbar.
+  - **Fix:** the full-width rules set their margins with `!important` too, from a more specific selector.
+  - WoodMart (staging) wasn't affected.
+- **How it was checked:**
+  - **WordPress Playground, the real form, clicked through:**
+    - A design with no picture got past step 1.
+    - Typed words showed on the canvas as typed. Dragging the headline and an icon moved them.
+    - Searching "sofa" found 4 icons. Adding one, then making it red and bigger, worked.
+    - It saved with `_rapm_box_mode` = design, no picture, and the icon at 50, 13.5, size 19, red, with its drawing.
+    - Re-opening the promotion restored the design.
+    - The page showed the design beside the slider, with the icon drawn inline, no request to Google and no PHP errors.
+    - The block-theme scrollbar was found and fixed here.
+  - **Tampered layout:** a script in an icon, a fake color, out-of-range numbers, a second headline and an unknown piece were all dropped or clamped.
+  - **php-wasm render at 390, 1440 and 1903 wide:** every piece stays inside the square, there's no sideways scroll and no warnings. On a phone the headline is 37px and the button text 13.5px.
+  - **PHP:** all files parse.
+- **Next:** 1.45.0 adds Font Awesome icons (Elementor's set) and Media Library pictures to the same picker. 1.46.0 adds the Google Fonts picker.
+
 ## 1.43.3
 
 **The promotion box picture is square: 1200x1200 (was 1200x1500).** Phil's pick, after seeing 1.43.2 on staging.

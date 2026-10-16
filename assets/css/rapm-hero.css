@@ -237,7 +237,13 @@
    (RAPM_Split's script). Assumes the column is centered on the page, as a
    page's content area or a full-width Elementor container is; a spot in a
    narrow column should use the spot's "Site's page width" instead. */
-.rapm-split.is-full { width: var(--rapm-split-vw, 100vw); max-width: none; margin-left: calc(50% - var(--rapm-split-vw, 100vw) / 2); }
+/* 1.44.0: !important because block themes (Twenty Twenty-Five and other
+   "constrained" layouts) give every block in the content
+   margin-left/right: auto !important (wp-includes/block-supports/
+   layout.php), which pinned the block to the content's left edge and
+   pushed it past the right side of the page. This selector is more
+   specific, so it wins. */
+.rapm-split.is-full { width: var(--rapm-split-vw, 100vw); max-width: none; margin-left: calc(50% - var(--rapm-split-vw, 100vw) / 2) !important; margin-right: 0 !important; }
 .rapm-split-main { min-width: 0; }
 .rapm-split-side { min-width: 0; position: relative; }
 .rapm-split-promo-left .rapm-split-side { order: -1; }
@@ -306,3 +312,55 @@
 	.rapm-split .rapm-pins-panel { grid-template-columns: minmax(0, 1fr); }
 	.rapm-split .rapm-pins-card { flex-basis: 82%; }
 }
+
+/* Promotion box canvas (1.44.0, RAPM_Split::render_design()): a square
+   design area fitted inside the box, the background (a color, or the
+   picture cover-cropped) filling the rest. Each piece is placed by its
+   middle (left/top as a share of the square) and sized as a share of the
+   square's width (--s, in cqw), with a floor in px so words stay readable
+   on phones. Shared with the form's editor (rapm-box-canvas.js), so the
+   editor shows exactly what ships. Long words wrap within the square. */
+.rapm-pb-item.is-design { container-type: size; }
+.rapm-pb-board {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: min(100cqw, 100cqh);
+	aspect-ratio: 1 / 1;
+	transform: translate(-50%, -50%);
+	container-type: inline-size;
+	z-index: 2;
+	pointer-events: none;
+}
+.rapm-pb-t {
+	position: absolute;
+	transform: translate(-50%, -50%);
+	margin: 0;
+	padding: 0;
+	width: max-content;
+	max-width: 96cqw;
+	text-align: center;
+	line-height: 1.08;
+	white-space: normal;
+	overflow-wrap: break-word;
+	box-sizing: border-box;
+}
+.rapm-pb-board .rapm-pb-t.is-headline { font-size: max(18px, calc(var(--s, 10) * 1cqw)); font-weight: 800; letter-spacing: 0.01em; color: inherit; font-family: inherit; text-transform: none; }
+.rapm-pb-board .rapm-pb-t.is-sub { font-size: max(13px, calc(var(--s, 5) * 1cqw)); font-weight: 500; line-height: 1.2; font-family: inherit; }
+.rapm-pb-board .rapm-pb-t.is-btn {
+	font-size: max(11px, calc(var(--s, 3.6) * 1cqw));
+	font-weight: 700;
+	line-height: 1;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding: 0.8em 1.4em;
+	border-radius: 999px;
+	color: #fff;
+	white-space: nowrap;
+	font-family: inherit;
+}
+.rapm-pb-t.is-icon { font-size: max(16px, calc(var(--s, 10) * 1cqw)); line-height: 0; }
+.rapm-pb-t.is-icon svg { display: block; width: 1em; height: 1em; fill: currentColor; }
+.rapm-pb-board[data-style="elegant"] .rapm-pb-t.is-headline { font-weight: 600; }
+.rapm-pb-board[data-style="minimal"] .rapm-pb-t.is-headline { font-weight: 500; letter-spacing: 0.03em; }
+.rapm-pb .rapm-pb-item.is-design .rapm-pb-img { z-index: 1; }

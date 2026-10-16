@@ -1,0 +1,56 @@
+/* Promotion box canvas (1.44.0), on the promotion box form. The design
+   area itself uses the live site's styles (.rapm-pb-item.is-design,
+   .rapm-pb-board and .rapm-pb-t in rapm-hero.css); this file only adds the
+   editor around it. */
+.rapm-cv { margin: 8px 0 24px; }
+.rapm-cv[hidden] { display: none; }
+.rapm-cv-layout { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 20px; align-items: start; margin-top: 12px; }
+@media (max-width: 1100px) { .rapm-cv-layout { grid-template-columns: minmax(0, 1fr); } }
+.rapm-cv-stage {
+	position: relative;
+	inset: auto;
+	width: 100%;
+	max-width: 520px;
+	aspect-ratio: 1 / 1;
+	overflow: hidden;
+	border-radius: 4px;
+	box-shadow: 0 0 0 1px #c3c4c7;
+	touch-action: none;
+}
+.rapm-cv-stage:focus-visible { outline: 2px solid #2271b1; outline-offset: 3px; }
+.rapm-cv-stage .rapm-cv-bgimg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; z-index: 1; }
+.rapm-cv-stage .rapm-cv-board { pointer-events: auto; }
+.rapm-cv-item { cursor: grab; user-select: none; -webkit-user-select: none; }
+.rapm-cv-item.is-on { outline: 2px solid #2271b1; outline-offset: 4px; }
+.rapm-cv-item.is-empty { opacity: 0.45; font-style: italic; }
+.rapm-cv-guide { position: absolute; background: #e0398a; pointer-events: none; z-index: 3; }
+.rapm-cv-guide.v { left: 50%; top: 0; bottom: 0; width: 1px; }
+.rapm-cv-guide.h { top: 50%; left: 0; right: 0; height: 1px; }
+.rapm-cv-guide[hidden] { display: none; }
+.rapm-cv-side { display: grid; gap: 14px; min-width: 0; }
+.rapm-cv-panel { background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.rapm-cv-panel h3 { margin: 0; font-size: 14px; }
+.rapm-cv-panel p { margin: 0; }
+.rapm-cv-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.rapm-cv-seg .button[aria-pressed="true"] { background: #2271b1; border-color: #2271b1; color: #fff; }
+.rapm-cv-bgcolors, .rapm-cv-swatches { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rapm-cv-bgcolors[hidden], .rapm-cv-nopic[hidden] { display: none; }
+.rapm-cv-sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #c3c4c7; padding: 0; cursor: pointer; }
+.rapm-cv-sw[aria-pressed="true"] { box-shadow: 0 0 0 2px #2271b1; }
+.rapm-cv-panel input[type="color"] { width: 40px; height: 28px; padding: 1px; vertical-align: middle; }
+.rapm-cv-search { width: 100%; max-width: none; }
+.rapm-cv-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; max-height: 250px; overflow: auto; padding: 2px; }
+.rapm-cv-ic { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border: 1px solid #dcdcde; border-radius: 4px; background: #fff; cursor: pointer; font-size: 11px; line-height: 1.2; color: #1d2327; overflow-wrap: anywhere; }
+.rapm-cv-ic:hover, .rapm-cv-ic:focus-visible { border-color: #2271b1; }
+.rapm-cv-ic:disabled { opacity: 0.5; cursor: wait; }
+.rapm-cv-ic img { width: 26px; height: 26px; }
+.rapm-cv-icons > p { grid-column: 1 / -1; }
+.rapm-cv-layers { display: grid; gap: 4px; }
+.rapm-cv-layer { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #dcdcde; border-radius: 4px; background: #fff; text-align: left; cursor: pointer; font-size: 13px; color: #1d2327; }
+.rapm-cv-layer[aria-pressed="true"] { border-color: #2271b1; background: #f0f6fc; }
+.rapm-cv-layer-ic { display: inline-block; width: 18px; height: 18px; }
+.rapm-cv-layer-ic svg { width: 18px; height: 18px; fill: currentColor; display: block; }
+.rapm-cv-xy { margin-left: auto; font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: #646970; }
+.rapm-cv-sel { display: grid; gap: 6px; }
+.rapm-cv-sel input[type="range"] { width: 100%; max-width: 320px; }
+.rapm-cv-remove { color: #b32d2e; }

@@ -168,7 +168,7 @@
    scrollbar (rapm-looks.js). Assumes the section's column is centered on
    the page, as a page-wide Elementor container is. The words and cards
    (the shelf, and the overlay's padding) stay at the 1400px content width. */
-.rapm-looks.is-full { width: var(--rapm-looks-vw, 100vw); max-width: none; margin-left: calc(50% - var(--rapm-looks-vw, 100vw) / 2); }
+.rapm-looks.is-full { width: var(--rapm-looks-vw, 100vw); max-width: none; margin-left: calc(50% - var(--rapm-looks-vw, 100vw) / 2) !important; margin-right: 0 !important; } /* 1.44.0: !important, see .rapm-split.is-full in rapm-hero.css (block themes). */
 
 /* 1.32.0, height="screen": the photo plus the tab bar end at the bottom of
    the screen. --rapm-looks-top (where the section starts, so the header and

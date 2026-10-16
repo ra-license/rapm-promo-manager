@@ -47,6 +47,9 @@ class RAPM_Upload_Handler {
 		// the preview. Does nothing on other types' forms.
 		wp_enqueue_style( 'rapm-look-editor-css', RAPM_URL . 'assets/css/rapm-look-editor.css', array( 'rapm-looks-css' ), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-look-editor-js', RAPM_URL . 'assets/js/rapm-look-editor.js', array(), RAPM_VERSION, true );
+		// 1.44.0: the promotion box canvas. Does nothing on other types' forms.
+		wp_enqueue_style( 'rapm-box-canvas-css', RAPM_URL . 'assets/css/rapm-box-canvas.css', array( 'rapm-hero-css' ), RAPM_VERSION );
+		wp_enqueue_script( 'rapm-box-canvas-js', RAPM_URL . 'assets/js/rapm-box-canvas.js', array(), RAPM_VERSION, true );
 	}
 
 	/**
@@ -154,6 +157,10 @@ class RAPM_Upload_Handler {
 		// Promotion box (1.43.0): one picture for every screen too, but
 		// with all the word settings of a slide.
 		$is_box       = 'promo_box' === $kind_key;
+		// 1.44.0: how a promotion box is made. 'design' is the canvas (words
+		// and icons placed by hand); 'graphic' is a finished picture. A new
+		// one starts as a design; one saved before 1.44.0 stays a graphic.
+		$box_mode     = $is_edit ? RAPM_Split::box_mode( $asset_id ) : 'design';
 		$tab_label    = $m( '_rapm_tab_label' );
 		$focus        = RAPM_Looks::sanitize_focus( $m( '_rapm_focus', 'center center' ) );
 		// 1.36.0: phones have their own position; a look saved before has none and uses the computer one.
@@ -414,7 +421,23 @@ class RAPM_Upload_Handler {
 				<h2><?php esc_html_e( 'Images', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'Upload whatever picture you have — any common format (JPG, PNG, whatever your phone or camera saves) is fine. This tool will automatically resize/convert it for you if needed, and will tell you clearly if it can\'t be used.', 'rapm' ); ?></p>
 				<?php if ( $is_box ) : ?>
-				<p class="description"><?php esc_html_e( 'The promotion box uses one picture on every screen: beside the slider on computers, and above or below it on phones. Two ways to use it: a finished graphic with its words already on it (leave the headline, smaller line and button blank in the next step, and the whole graphic always shows), or a background picture with words typed over it in the next step.', 'rapm' ); ?></p>
+				<table class="form-table">
+					<tr>
+						<th><?php esc_html_e( 'How is this promotion made?', 'rapm' ); ?></th>
+						<td>
+							<label style="display:block;margin-bottom:8px;">
+								<input type="radio" name="rapm_box_mode" value="design" <?php checked( 'design', $box_mode ); ?> />
+								<?php esc_html_e( 'Design it here: place the words and icons yourself in the next step, on a color or a picture', 'rapm' ); ?>
+							</label>
+							<label style="display:block;">
+								<input type="radio" name="rapm_box_mode" value="graphic" <?php checked( 'graphic', $box_mode ); ?> />
+								<?php esc_html_e( 'A finished graphic, with its words already on it', 'rapm' ); ?>
+							</label>
+							<p class="description rapm-box-mode-note" data-mode="design"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'A picture is optional: use one as the background, or leave it out and pick a color in the next step.', 'rapm' ); ?></p>
+							<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'The whole graphic always shows, on every screen. Make it square (1200 by 1200).', 'rapm' ); ?></p>
+						</td>
+					</tr>
+				</table>
 				<?php elseif ( $is_quick ) : ?>
 				<p class="description"><?php esc_html_e( 'Quick links use one picture on every screen. Phones show it small, as a round thumbnail or a little card, so pick a picture whose subject is near the middle.', 'rapm' ); ?></p>
 				<?php else : ?>
@@ -591,6 +614,8 @@ class RAPM_Upload_Handler {
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Words Under the Tabs', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'These show in your website\'s own fonts and colors, under the bar of tabs. If the page\'s Shop the Look spot puts the words on the photo, the headline and smaller line go on the photo and the button goes under it, beside the products. Nothing is printed into the picture file.', 'rapm' ); ?></p>
+				<?php elseif ( $is_box ) : ?>
+				<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'This promotion is a finished graphic, so there\'s nothing to type: its own words show. To type words and place icons instead, choose "Design it here" in step 1.', 'rapm' ); ?></p>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Sale Text', 'rapm' ); ?></h2>
 				<table class="form-table">
@@ -614,7 +639,7 @@ class RAPM_Upload_Handler {
 				<p class="description"><?php esc_html_e( 'This type doesn\'t use a picture — just type the text below.', 'rapm' ); ?></p>
 				<?php endif; ?>
 
-				<div id="rapm-text-fields" <?php echo 'image' === $text_mode ? 'style="display:none;"' : ''; ?>>
+				<div id="rapm-text-fields" <?php echo ( $is_box ? 'graphic' === $box_mode : 'image' === $text_mode ) ? 'style="display:none;"' : ''; ?>>
 					<table class="form-table">
 						<tr>
 							<th><label for="rapm_headline"><?php echo $is_quick ? esc_html__( 'Name under the picture', 'rapm' ) : esc_html__( 'Headline', 'rapm' ); ?></label></th>
@@ -638,7 +663,7 @@ class RAPM_Upload_Handler {
 						</tr>
 						<?php endif; ?>
 						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
-						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
+						<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box places and colors each piece on its canvas. ?>>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_align" name="rapm_text_align">
@@ -648,7 +673,7 @@ class RAPM_Upload_Handler {
 								</select>
 							</td>
 						</tr>
-						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
+						<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_color"><?php esc_html_e( 'Text Color', 'rapm' ); ?></label></th>
 							<td>
 								<input type="color" id="rapm_text_color" name="rapm_text_color" value="<?php echo esc_attr( $m( '_rapm_text_color', '#ffffff' ) ); ?>" style="height:32px;width:60px;padding:2px;vertical-align:middle;" />
@@ -683,7 +708,10 @@ class RAPM_Upload_Handler {
 						<?php endif; // ! $is_look ?>
 					</table>
 				</div>
-				<?php if ( $has_images && ! $is_look ) : ?>
+				<?php if ( $is_box ) : ?>
+					<?php self::render_box_canvas( $box_mode, $img_desktop, $m( '_rapm_canvas', array() ) ); ?>
+				<?php endif; ?>
+				<?php if ( $has_images && ! $is_look && ! $is_box ) : ?>
 				<script>
 					( function () {
 						var typeFields = document.getElementById( 'rapm-text-fields' );
@@ -1043,8 +1071,14 @@ class RAPM_Upload_Handler {
 				<?php if ( $is_look ) : ?>
 					<?php self::render_look_preview(); ?>
 				<?php elseif ( $has_images ) : ?>
+				<?php if ( $is_box ) : // 1.44.0: the canvas in step 2 is the box's preview. ?>
+				<style>#rapm-live-preview-head, #rapm-preview-wrap { display: none; }</style>
+				<p class="description"><?php esc_html_e( 'The promotion box shows the first promotion that is on and within its dates. A design looks the way it does in step 2; a finished graphic always shows whole.', 'rapm' ); ?></p>
+				<?php endif; ?>
+				<div id="rapm-live-preview-head">
 				<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'This shows exactly what visitors will see, updating as you type or choose a picture. If something looks off — text overlapping, hard to read, etc. — fix it here before saving.', 'rapm' ); ?></p>
+				</div>
 				<p<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box has one picture. ?>>
 					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-desktop" aria-pressed="true"><?php esc_html_e( 'Desktop', 'rapm' ); ?></button>
 					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-mobile" aria-pressed="false"><?php esc_html_e( 'Mobile', 'rapm' ); ?></button>
@@ -1399,6 +1433,12 @@ class RAPM_Upload_Handler {
 						// enforced server-side (see RAPM_Upload_Handler::
 						// handle_save()), this is just a friendlier, earlier
 						// heads-up for a non-technical audience.
+						// 1.44.0: a promotion box designed here doesn't need a picture.
+						function boxDesign() {
+							var picked = document.querySelector( 'input[name="rapm_box_mode"]:checked' );
+							return !! picked && 'design' === picked.value;
+						}
+
 						function validateStep1() {
 							var warning = document.getElementById( 'rapm-step-1-warning' );
 							var title   = document.getElementById( 'rapm_title' );
@@ -1419,10 +1459,10 @@ class RAPM_Upload_Handler {
 							var desktopUrlField       = document.getElementById( 'rapm_image_desktop_url' );
 							var hasExistingDesktop    = <?php echo $img_desktop ? 'true' : 'false'; ?>;
 							if ( usingLink ) {
-								if ( ! hasExistingDesktop && ! ( desktopUrlField && desktopUrlField.value.trim() ) ) {
+								if ( ! hasExistingDesktop && ! ( desktopUrlField && desktopUrlField.value.trim() ) && ! boxDesign() ) {
 									messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please paste a link to the room photo before moving on.', 'rapm' ) : __( 'Please paste a link to a desktop picture before moving on.', 'rapm' ) ); ?> );
 								}
-							} else if ( ! hasExistingDesktop && ! ( desktopFileInput.files && desktopFileInput.files[0] ) ) {
+							} else if ( ! hasExistingDesktop && ! ( desktopFileInput.files && desktopFileInput.files[0] ) && ! boxDesign() ) {
 								messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please upload the room photo before moving on.', 'rapm' ) : __( 'Please upload a desktop picture before moving on.', 'rapm' ) ); ?> );
 							}
 							<?php endif; ?>
@@ -1496,6 +1536,9 @@ class RAPM_Upload_Handler {
 		$has_images = (bool) $kind['desktop'];
 		$is_look    = 'look' === $kind_key;
 		$has_pins   = in_array( $kind_key, array( 'hero', 'fold_banner' ), true );
+		// 1.44.0: a promotion box is designed here or is a finished graphic.
+		$is_box     = 'promo_box' === $kind_key;
+		$box_mode   = $is_box && isset( $_POST['rapm_box_mode'] ) && 'design' === $_POST['rapm_box_mode'] ? 'design' : 'graphic';
 
 		// Shop the Look (1.30.0): the tab name is what shoppers click, so a
 		// look can't be saved without one.
@@ -1576,7 +1619,8 @@ class RAPM_Upload_Handler {
 			// someone publish an asset that will never actually appear
 			// anywhere, with no error to explain why.
 			$has_desktop_image = $new_desktop_id || ( $is_edit && get_post_meta( $asset_id, '_rapm_image_desktop_id', true ) );
-			if ( ! $has_desktop_image ) {
+			// A promotion box designed here can be words and icons on a color.
+			if ( ! $has_desktop_image && ! ( $is_box && 'design' === $box_mode ) ) {
 				if ( $is_look ) {
 					$desktop_required_msg = 'link' === $desktop_source
 						? __( 'Please paste a link to the room photo. A look needs one to show anywhere.', 'rapm' )
@@ -1663,6 +1707,15 @@ class RAPM_Upload_Handler {
 		update_post_meta( $asset_id, '_rapm_kind', $kind_key );
 
 		$text_mode = isset( $_POST['rapm_text_mode'] ) && 'image' === $_POST['rapm_text_mode'] ? 'image' : 'type';
+		if ( $is_box ) {
+			// A finished graphic has its words on it, so none are typed.
+			$text_mode = 'graphic' === $box_mode ? 'image' : 'type';
+			update_post_meta( $asset_id, '_rapm_box_mode', $box_mode );
+			if ( 'design' === $box_mode ) {
+				$posted_canvas = isset( $_POST['rapm_canvas'] ) ? json_decode( wp_unslash( $_POST['rapm_canvas'] ), true ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- sanitized by sanitize_canvas().
+				update_post_meta( $asset_id, '_rapm_canvas', RAPM_Split::sanitize_canvas( is_array( $posted_canvas ) ? $posted_canvas : array() ) );
+			}
+		}
 		update_post_meta( $asset_id, '_rapm_text_mode', $text_mode );
 
 		$meta_fields = array(
@@ -1932,6 +1985,97 @@ class RAPM_Upload_Handler {
 	 * assets/js/rapm-look-editor.js runs all of it, and the look's photo
 	 * checks and preview, from the settings printed here.
 	 */
+	/**
+	 * The promotion box canvas (1.44.0, from the mockup Phil approved on
+	 * 2026-10-16): a square design area to drag the words and Google icons
+	 * around, the background, an icon search, and the selected piece's size
+	 * and color. rapm-box-canvas.js runs it and keeps the hidden rapm_canvas
+	 * field up to date. The design area uses the live site's own styles
+	 * (rapm-hero.css), so it shows exactly what ships.
+	 */
+	private static function render_box_canvas( $box_mode, $image_id, $canvas ) {
+		$canvas  = RAPM_Split::sanitize_canvas( is_array( $canvas ) ? $canvas : array() );
+		$picture = $image_id ? wp_get_attachment_image_url( $image_id, 'large' ) : '';
+		$text    = array(
+			'headline'   => __( 'Headline', 'rapm' ),
+			'sub'        => __( 'Smaller line', 'rapm' ),
+			'btn'        => __( 'Button', 'rapm' ),
+			'icon'       => __( 'Icon', 'rapm' ),
+			/* translators: %s: Headline, Smaller line or Button */
+			'empty'      => __( '(%s: type it above)', 'rapm' ),
+			'pick'       => __( 'Click something on the design to change its size or color.', 'rapm' ),
+			'wordsAbove' => __( 'Change its words in the boxes above. Leave a box blank to leave it off.', 'rapm' ),
+			'size'       => __( 'Size', 'rapm' ),
+			'color'      => __( 'Color', 'rapm' ),
+			'btnColor'   => __( 'Button color', 'rapm' ),
+			'otherColor' => __( 'Any other color', 'rapm' ),
+			'remove'     => __( 'Remove this icon', 'rapm' ),
+			'noIcons'    => __( 'No icons match. Try a simpler word, like sofa, bed, truck or sale.', 'rapm' ),
+			'iconFailed' => __( 'That icon couldn\'t be loaded from Google just now. Please try again.', 'rapm' ),
+		);
+		$bgs = array( '#f3ead8', '#ffffff', '#1d3557', '#c8102e', '#2f2f2f', '#e6efe9' );
+		?>
+		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
+			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it. Click it to change its size or color. Arrow keys move the one you picked a little at a time (hold Shift to move it more). A pink line shows when it\'s centered.', 'rapm' ); ?></p>
+			<div class="rapm-cv-layout">
+				<div class="rapm-cv-main">
+					<div class="rapm-cv-stage rapm-pb-item is-design" tabindex="0" aria-label="<?php esc_attr_e( 'Promotion design', 'rapm' ); ?>">
+						<img class="rapm-cv-bgimg" alt="" hidden />
+						<div class="rapm-cv-board rapm-pb-board">
+							<span class="rapm-cv-guide v" hidden></span>
+							<span class="rapm-cv-guide h" hidden></span>
+						</div>
+					</div>
+					<p class="description"><?php esc_html_e( 'This square shows on every screen, in the middle of the promotion box. On wider boxes the background fills the rest.', 'rapm' ); ?></p>
+				</div>
+				<div class="rapm-cv-side">
+					<div class="rapm-cv-panel">
+						<h3><?php esc_html_e( 'Background', 'rapm' ); ?></h3>
+						<p class="rapm-cv-seg">
+							<button type="button" class="button" data-bgmode="color" aria-pressed="true"><?php esc_html_e( 'A color', 'rapm' ); ?></button>
+							<button type="button" class="button" data-bgmode="pic" aria-pressed="false"><?php esc_html_e( 'The picture from step 1', 'rapm' ); ?></button>
+						</p>
+						<p class="rapm-cv-bgcolors">
+							<?php foreach ( $bgs as $c ) : ?>
+								<button type="button" class="rapm-cv-sw" data-bg="<?php echo esc_attr( $c ); ?>" style="background:<?php echo esc_attr( $c ); ?>" aria-label="<?php echo esc_attr( $c ); ?>" aria-pressed="false"></button>
+							<?php endforeach; ?>
+							<input type="color" id="rapm-cv-bgcolor" value="#f3ead8" aria-label="<?php esc_attr_e( 'Any other background color', 'rapm' ); ?>" />
+						</p>
+						<p class="description rapm-cv-nopic"><?php esc_html_e( 'To use a picture as the background, upload one in step 1. It fills the whole box.', 'rapm' ); ?></p>
+					</div>
+					<div class="rapm-cv-panel">
+						<h3><?php esc_html_e( 'Add an icon', 'rapm' ); ?></h3>
+						<input type="search" class="rapm-cv-search regular-text" placeholder="<?php esc_attr_e( 'Search, like sofa, bed, truck or sale', 'rapm' ); ?>" aria-label="<?php esc_attr_e( 'Search icons', 'rapm' ); ?>" />
+						<div class="rapm-cv-icons"></div>
+						<p class="description"><?php esc_html_e( 'Google\'s free Material Symbols, 3,929 icons. A picked icon is saved with this promotion, so your website never loads anything from Google for it.', 'rapm' ); ?></p>
+					</div>
+					<div class="rapm-cv-panel">
+						<h3><?php esc_html_e( 'On the design', 'rapm' ); ?></h3>
+						<div class="rapm-cv-layers"></div>
+						<div class="rapm-cv-sel"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			// Design it here / A finished graphic (1.44.0): shows what each one needs.
+			( function () {
+				var radios = document.querySelectorAll( 'input[name="rapm_box_mode"]' );
+				function sync() {
+					var picked = document.querySelector( 'input[name="rapm_box_mode"]:checked' );
+					var mode = picked ? picked.value : 'graphic';
+					Array.prototype.forEach.call( document.querySelectorAll( '.rapm-box-mode-note' ), function ( n ) { n.hidden = n.getAttribute( 'data-mode' ) !== mode; } );
+					document.getElementById( 'rapm-canvas' ).hidden = 'design' !== mode;
+					document.getElementById( 'rapm-text-fields' ).style.display = 'design' === mode ? '' : 'none';
+				}
+				Array.prototype.forEach.call( radios, function ( r ) { r.addEventListener( 'change', sync ); } );
+			} )();
+		</script>
+		<?php
+	}
+
 	private static function render_look_pieces( $image_id, $dots, $focus, $photo_btn = array(), $mobile_id = 0, $banner = false, $focus_phone = '', $photo_words = true ) {
 		$focus_phone = '' !== $focus_phone ? $focus_phone : $focus;
 		?>
