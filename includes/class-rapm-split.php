@@ -258,6 +258,21 @@ class RAPM_Split {
 		return array( ob_get_clean(), $bg );
 	}
 
+	/**
+	 * A small copy of a designed promotion for its card on the Promotions
+	 * screen (1.44.1): the same markup and styles as the website, without
+	 * the link. '' for a finished graphic (its card shows the picture).
+	 */
+	public static function card_preview( $asset_id ) {
+		if ( 'design' !== self::box_mode( $asset_id ) ) {
+			return '';
+		}
+		$image_id = (int) get_post_meta( $asset_id, '_rapm_image_desktop_id', true );
+		$src      = $image_id ? wp_get_attachment_image_url( $image_id, 'large' ) : '';
+		list( $inner, $bg ) = self::render_design( $asset_id, $src, '', 'loading="lazy"' );
+		return '<span class="rapm-pb-item is-design rapm-card-design" style="' . esc_attr( 'background:' . $bg ) . '">' . $inner . '</span>';
+	}
+
 	private static function render_item( $asset_id, &$eager ) {
 		$image_id = (int) get_post_meta( $asset_id, '_rapm_image_desktop_id', true );
 		$src      = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';

@@ -54,10 +54,8 @@
 				card.hidden = ! visible;
 				if ( match ) { matches++; }
 			} );
-			var add      = section.querySelector( '.rapm-add' );
-			var endedRow = section.querySelector( '.rapm-ended-row' );
-			if ( add ) { add.hidden = !! q; }
-			if ( endedRow ) { endedRow.hidden = !! q; }
+			// A split slider (1.44.1) has an Add card and ended row per area.
+			section.querySelectorAll( '.rapm-add, .rapm-ended-row' ).forEach( function ( el ) { el.hidden = !! q; } );
 			section.hidden = !! q && 0 === matches;
 			if ( ! section.hidden ) { anyShown = true; }
 		} );
@@ -146,7 +144,8 @@
 				sw.setAttribute( 'aria-checked', res.data.on ? 'true' : 'false' );
 				applyState( card, res.data.card );
 				refreshTabOrder( section );
-				section.querySelector( '.rapm-spot-count' ).textContent = res.data.countLine;
+				// The count of the card's own area in a split slider (1.44.1).
+				( sw.closest( '.rapm-split-area' ) || section ).querySelector( '.rapm-spot-count' ).textContent = res.data.countLine;
 				say( section, title + ': ' + res.data.card.status );
 			} )
 			.catch( function () {
@@ -172,7 +171,8 @@
 
 	function moveCard( card, dir ) {
 		var section = card.closest( '.rapm-spot' );
-		var shown   = cardsIn( section ).filter( function ( c ) { return ! c.hidden; } );
+		// Only within its own grid: a split slider (1.44.1) has two.
+		var shown   = Array.prototype.slice.call( card.parentNode.children ).filter( function ( c ) { return c.classList.contains( 'rapm-card' ) && ! c.hidden; } );
 		var i       = shown.indexOf( card );
 		var other   = shown[ i + dir ];
 		if ( ! other ) { return; }

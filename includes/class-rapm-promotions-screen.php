@@ -182,7 +182,9 @@ class RAPM_Promotions_Screen {
 		if ( self::PAGE !== $page ) {
 			return;
 		}
-		wp_enqueue_style( 'rapm-promotions-admin', RAPM_URL . 'assets/css/rapm-promotions-admin.css', array(), RAPM_VERSION );
+		// 1.44.1: the live site's styles, for designed promotion box cards.
+		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
+		wp_enqueue_style( 'rapm-promotions-admin', RAPM_URL . 'assets/css/rapm-promotions-admin.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-promotions-admin', RAPM_URL . 'assets/js/rapm-promotions-admin.js', array(), RAPM_VERSION, true );
 		wp_localize_script(
 			'rapm-promotions-admin',
@@ -413,7 +415,14 @@ class RAPM_Promotions_Screen {
 
 			<?php
 			foreach ( $spots as $spot ) {
-				self::render_spot( $spot );
+				// 1.44.1 (Phil): a split slider and its promotion box are one
+				// section, so the box isn't listed again on its own.
+				$box_key = 'promo_box|' . $spot['placement'];
+				if ( 'promo_box' === $spot['kind'] && isset( $spots[ 'hero|' . $spot['placement'] ] ) && RAPM_Split::is_split( $spot['placement'] ) ) {
+					continue;
+				}
+				$box = 'hero' === $spot['kind'] && isset( $spots[ $box_key ] ) && RAPM_Split::is_split( $spot['placement'] ) ? $spots[ $box_key ] : null;
+				self::render_spot( $spot, $box );
 			}
 			?>
 
@@ -570,7 +579,15 @@ class RAPM_Promotions_Screen {
 		// phpcs:enable
 	}
 
-	private static function render_spot( $spot ) {
+	/**
+	 * One spot's section. $box (1.44.1) is the promotion box spot of a
+	 * Slider set to split view: Phil found the two separate sections hard to
+	 * follow ("I need these both housed within the same section"), so the
+	 * Slider's section then holds two areas laid out like the website, the
+	 * room photos and the promotion box, each with its own cards, order,
+	 * count and Add card.
+	 */
+	private static function render_spot( $spot, $box = null ) {
 		$kind      = $spot['kind'];
 		$placement = $spot['placement'];
 		$kind_info = RAPM_Slots::kind_for( $kind, $placement );
@@ -610,7 +627,7 @@ class RAPM_Promotions_Screen {
 				<div class="rapm-spot-info">
 					<div class="rapm-spot-title">
 						<h2 id="<?php echo esc_attr( $heading ); ?>" class="rapm-spot-name"><?php echo esc_html( $name ); ?></h2>
-						<span class="rapm-type-chip"><?php echo esc_html( RAPM_Spots::type_label( $kind ) ); ?></span>
+						<span class="rapm-type-chip"><?php echo esc_html( $box ? __( 'Slider · Split view', 'rapm' ) : RAPM_Spots::type_label( $kind ) ); ?></span>
 					</div>
 					<p class="rapm-spot-on">
 						<?php if ( $used_on ) : ?>
@@ -627,7 +644,7 @@ class RAPM_Promotions_Screen {
 						<?php else : ?>
 							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Put its spot code (below) on a page to show it.', 'rapm' ); ?></span>
 						<?php endif; ?>
-						<?php if ( count( $spot['posts'] ) > 1 ) : ?>
+						<?php if ( count( $spot['posts'] ) > 1 && ! $box ) : ?>
 							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : ( 'quick_links' === $kind ? esc_html__( 'Drag to change the order they show in', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ) ); ?></span>
 						<?php endif; ?>
 					</p>
@@ -661,12 +678,18 @@ class RAPM_Promotions_Screen {
 						<?php endif; ?>
 					</div>
 				</div>
-				<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
+				<?php if ( ! $box ) : ?>
+					<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
+				<?php endif; ?>
 			</div>
 
 			<?php if ( 'look' === $kind ) : ?>
 				<?php self::render_tab_order( $live ); ?>
 			<?php endif; ?>
+
+			<?php if ( $box ) : ?>
+				<?php self::render_split_areas( $spot, $box, $live, $ended, $min, $ratio, $add_url ); ?>
+			<?php else : ?>
 
 			<div class="rapm-grid" style="<?php echo esc_attr( '--rapm-min:' . $min . 'px;--rapm-ratio:' . $ratio ); ?>">
 				<?php
@@ -693,8 +716,109 @@ class RAPM_Promotions_Screen {
 					</button>
 				</p>
 			<?php endif; ?>
+			<?php endif; // $box ?>
 			<p class="rapm-spot-status" aria-live="polite"></p>
 		</section>
+		<?php
+	}
+
+	/** Cards, in order: live ones, then ended ones, each as array( post, describe() ). */
+	private static function split_posts( $posts ) {
+		$live  = array();
+		$ended = array();
+		foreach ( $posts as $post ) {
+			$d = self::describe( $post );
+			if ( 'ended' === $d['state'] ) {
+				$ended[] = array( $post, $d );
+			} else {
+				$live[] = array( $post, $d );
+			}
+		}
+		return array( $live, $ended );
+	}
+
+	/** One area's cards, Add card and "Show ended" button (1.44.1, split sliders). */
+	private static function render_area_grid( $live, $ended, $min, $ratio, $add_url, $add_label ) {
+		?>
+		<div class="rapm-grid" style="<?php echo esc_attr( '--rapm-min:' . $min . 'px;--rapm-ratio:' . $ratio ); ?>">
+			<?php
+			foreach ( $live as $item ) {
+				self::render_card( $item[0], $item[1] );
+			}
+			foreach ( $ended as $item ) {
+				self::render_card( $item[0], $item[1] );
+			}
+			?>
+			<a class="rapm-add" href="<?php echo esc_url( $add_url ); ?>">
+				<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+				<span><?php echo esc_html( $add_label ); ?></span>
+			</a>
+		</div>
+		<?php if ( $ended ) : ?>
+			<p class="rapm-ended-row">
+				<button type="button" class="button rapm-ended-toggle" aria-expanded="false" data-count="<?php echo esc_attr( count( $ended ) ); ?>">
+					<?php
+					/* translators: %d: number of promotions whose end date has passed */
+					echo esc_html( sprintf( __( 'Show %d ended', 'rapm' ), count( $ended ) ) );
+					?>
+				</button>
+			</p>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * A split slider's two areas (1.44.1), side by side in the same widths
+	 * and order as on the website (promotion on the left when the slider is
+	 * set that way), stacking on narrow screens. Each area carries its own
+	 * kind, so the on/off switch, drag order and count work per area.
+	 */
+	private static function render_split_areas( $spot, $box, $live, $ended, $min, $ratio, $add_url ) {
+		$placement = $spot['placement'];
+		$s         = RAPM_Split::settings( $placement );
+		$cols      = RAPM_Split::COLS[ $s['cols'] ];
+		$room      = RAPM_Slots::get( 'hero_split_desktop' );
+		$pic       = RAPM_Slots::get( 'promo_box_image' );
+		list( $box_live, $box_ended ) = self::split_posts( $box['posts'] );
+		$box_add = add_query_arg(
+			array(
+				'page'      => 'rapm-add-asset',
+				'kind'      => 'promo_box',
+				'placement' => $placement,
+			),
+			admin_url( self::PARENT )
+		);
+		$room_side = 'left' === $s['side'] ? __( 'right', 'rapm' ) : __( 'left', 'rapm' );
+		$box_side  = 'left' === $s['side'] ? __( 'left', 'rapm' ) : __( 'right', 'rapm' );
+		?>
+		<div class="rapm-split-areas<?php echo 'left' === $s['side'] ? ' is-promo-left' : ''; ?>" style="<?php echo esc_attr( '--rapm-areas:' . $cols ); ?>">
+			<div class="rapm-split-area" data-area="hero">
+				<div class="rapm-split-area-head">
+					<h3><?php esc_html_e( 'Room photos', 'rapm' ); ?></h3>
+					<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
+				</div>
+				<p class="description">
+					<?php
+					/* translators: 1: left or right, 2: width in pixels, 3: height in pixels */
+					echo esc_html( sprintf( __( 'Take turns on the %1$s. Computer pictures are %2$d by %3$d. Drag to change the order.', 'rapm' ), $room_side, (int) $room['width'], (int) $room['height'] ) );
+					?>
+				</p>
+				<?php self::render_area_grid( $live, $ended, $min, $ratio, $add_url, __( 'Add a room photo', 'rapm' ) ); ?>
+			</div>
+			<div class="rapm-split-area" data-area="promo_box">
+				<div class="rapm-split-area-head">
+					<h3><?php esc_html_e( 'Promotion box', 'rapm' ); ?></h3>
+					<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $box['posts'] ) ); ?></p>
+				</div>
+				<p class="description">
+					<?php
+					/* translators: 1: left or right, 2: width in pixels, 3: height in pixels */
+					echo esc_html( sprintf( __( 'Stays put on the %1$s. Shows the first one that is on and within its dates; with none, the room photos go full width. Design it here, or use a finished %2$d by %3$d graphic.', 'rapm' ), $box_side, (int) $pic['width'], (int) $pic['height'] ) );
+					?>
+				</p>
+				<?php self::render_area_grid( $box_live, $box_ended, self::CARD_MIN['promo_box'], (int) $pic['width'] . ' / ' . (int) $pic['height'], $box_add, __( 'Add a promotion', 'rapm' ) ); ?>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -811,7 +935,10 @@ class RAPM_Promotions_Screen {
 		?>
 		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?>" data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title . ( $tab ? ' ' . $tab : '' ) ) ); ?>"<?php echo $tab ? ' data-tab="' . esc_attr( $tab ) . '"' : ''; ?><?php echo $ended ? ' hidden' : ''; ?>>
 			<a class="rapm-card-pic" href="<?php echo esc_url( $edit_url ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'Edit %s', 'rapm' ), $title ) ); ?>" draggable="false">
-				<?php if ( $image ) : ?>
+				<?php $design = 'promo_box' === get_post_meta( $id, '_rapm_kind', true ) ? RAPM_Split::card_preview( $id ) : ''; ?>
+				<?php if ( $design ) : // 1.44.1: a designed promotion box shows its design. ?>
+					<?php echo $design; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in RAPM_Split::render_design(). ?>
+				<?php elseif ( $image ) : ?>
 					<img src="<?php echo esc_url( $image ); ?>" alt="" loading="lazy" draggable="false" />
 				<?php else : ?>
 					<span class="rapm-card-nopic"><?php esc_html_e( 'No picture yet', 'rapm' ); ?></span>

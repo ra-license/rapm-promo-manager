@@ -134,3 +134,16 @@
 .rapm-tab-order-list li { counter-increment: rapm-tab; display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 3px 10px 3px 4px; background: #fff; border: 1px solid #dcdcde; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .rapm-tab-order-list li::before { content: counter(rapm-tab); width: 18px; height: 18px; border-radius: 50%; background: #1d2327; color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
 .rapm-tab-order-none { font-size: 13px; color: #8a4b00; }
+
+/* Split slider (1.44.1): the room photos and the promotion box as two
+   areas of one section, in the website's widths and order. */
+.rapm-split-areas { display: grid; grid-template-columns: var(--rapm-areas, 3fr 2fr); gap: 16px; align-items: start; }
+.rapm-split-areas.is-promo-left .rapm-split-area[data-area="promo_box"] { order: -1; }
+.rapm-split-area { min-width: 0; border: 1px solid #dcdcde; border-radius: 6px; padding: 12px 14px; background: #fcfcfc; display: grid; gap: 8px; align-content: start; }
+.rapm-split-area-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.rapm-split-area-head h3 { margin: 0; font-size: 14px; }
+.rapm-split-area-head .rapm-spot-count { margin: 0; }
+.rapm-split-area > .description { margin: 0; }
+@media (max-width: 960px) { .rapm-split-areas { grid-template-columns: minmax(0, 1fr); } }
+.rapm-card-pic .rapm-card-design { position: relative; inset: auto; display: block; width: 100%; aspect-ratio: var(--rapm-ratio, 1 / 1); }
+.rapm-card-pic .rapm-card-design .rapm-pb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; aspect-ratio: auto; }

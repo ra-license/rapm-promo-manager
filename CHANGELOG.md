@@ -4,6 +4,24 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.44.1
+
+**A split slider and its promotion box are one section on the Promotions screen.** Phil, on staging: "This is not very intuitive. I need these both housed within the same section for the split slider."
+- **Before:** the room photos and the promotion box were two separate sections ("Split test slider" and "Split test promotion box"), so editing one side of the banner meant finding the other section.
+- **Now:** a slider set to split view shows as one section, labeled "Slider · Split view", with the Layout setting on top. Under it are two areas, side by side in the same widths and order as on the website (the promotion first when it's on the left). They stack on narrow screens.
+  - **Room photos:** "Take turns on the left", the computer picture size, and an "Add a room photo" card.
+  - **Promotion box:** "Stays put on the right", which promotion shows, and an "Add a promotion" card.
+  - Each area has its own cards, count, on/off switches, drag order and "Show ended".
+  - The separate promotion box section no longer appears for a split slider. With split turned off, a box that has promotions is still listed on its own, as before.
+- **Designed promotions show their design on their card** (they showed "No picture yet" when there was no picture), drawn with the website's own styles.
+- **Screen script fixes for two grids in one section:**
+  - "Move earlier / later" stays within the card's own area.
+  - The on/off switch updates its own area's count.
+  - Search hides each area's Add card.
+- **Checked in WordPress Playground:**
+  - The screen shows one section with two areas and two grids. The box section is gone, and the designed promotion's card shows its design.
+  - No PHP errors. PHP parses.
+
 ## 1.44.0
 
 **New: design the promotion box on a canvas, with Google icons.** From the mockup Phil approved on 2026-10-16 (https://claude.ai/artifact/Xwyizh61GsuHzZLbaqgvNz). Phil: "make them movable within the box as a canvas so the clients can place them where they want (kind of like canva)."
