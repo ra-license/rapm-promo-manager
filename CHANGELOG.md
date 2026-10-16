@@ -24,6 +24,9 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - In the form, selecting the headline showed "Font: Site default". The picker listed Elementor's four brand fonts, then Google's most popular, each in its own lettering. Searching "playfair" found Playfair Display, Playfair and Playfair Display SC.
   - Picking it changed the headline on the canvas. Saving stored `ff: Playfair Display`.
   - The page links `/wp-content/uploads/rapm-fonts/playfair-display/playfair-display.css`, sets the headline's font with a Georgia/serif fallback, and has no reference to Google's font servers. The headline shows in Playfair Display. No PHP errors.
+- **Installed on staging (2026-10-16)** through its Plugins screen ("1.47.0 Updated!").
+  - Not yet checked there: copying a font on the real host. Right after the install, staging's Cloudflare bot check ("Performing security verification") and a sign-in prompt blocked further admin requests, probably from my rapid scripted checks. Phil needs to sign back in before that check can run.
+  - Not in production.
 - **Next:** 1.48.0, the Design Center asset library (mockup first).
 
 ## 1.46.0
