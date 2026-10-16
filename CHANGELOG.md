@@ -25,7 +25,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Picking it changed the headline on the canvas. Saving stored `ff: Playfair Display`.
   - The page links `/wp-content/uploads/rapm-fonts/playfair-display/playfair-display.css`, sets the headline's font with a Georgia/serif fallback, and has no reference to Google's font servers. The headline shows in Playfair Display. No PHP errors.
 - **Installed on staging (2026-10-16)** through its Plugins screen ("1.47.0 Updated!").
-  - Not yet checked there: copying a font on the real host. Right after the install, staging's Cloudflare bot check ("Performing security verification") and a sign-in prompt blocked further admin requests, probably from my rapid scripted checks. Phil needs to sign back in before that check can run.
+  - Right after the install, staging's Cloudflare bot check and a sign-in prompt blocked further admin requests, probably from my rapid scripted checks. Phil signed back in.
+  - **Font copy confirmed on the real host:** the test promotion's headline was set to Playfair Display and saved through its own form. Staging copied the font to `/wp-content/uploads/rapm-fonts/playfair-display/` (stylesheet and woff2). The test page loads both from staging itself, and the headline renders in Playfair Display (`document.fonts.check` true). The only Google font request on the page is the theme's own.
   - Not in production.
 - **Next:** 1.48.0, the Design Center asset library (mockup first).
 
