@@ -26,7 +26,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The menu shows Design Center above Training Guide.
   - The Design Center holds "Split test slider" (two areas, with its Layout) and offers the Home page slider under "Make a slider split".
   - The Promotions page shows Split test slider as a short card, and no Layout setting anywhere. No errors.
-  - Not yet in production; 1.45.0 isn't either.
+  - **Pushed to the production repo (2026-10-16)** with Phil's OK, together with 1.45.0: main and the tags `v1.45.0` and `v1.46.0`.
 - **Next:** 1.47.0, the Google Fonts picker.
 
 ## 1.45.0
@@ -58,7 +58,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Installed on staging (2026-10-16).**
   - The promotion box form shows all three tabs. Staging's Elementor serves Font Awesome (1,002 solid icons read), and the Media Library scripts load.
   - The test page serves `rapm-hero.css?ver=1.45.0` with the design and no errors.
-  - Not yet in production.
+  - Pushed to production with 1.46.0 (2026-10-16).
 - **Next:** the Google Fonts picker (now 1.47.0; 1.46.0 became the Design Center).
 
 ## 1.44.1
