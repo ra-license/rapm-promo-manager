@@ -22,6 +22,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Busy lock:** nothing changed, the request stayed queued, and a retry was set for 120 seconds. After the lock freed, the retry installed 1.0.2, reported done and released the lock.
   - **Rescheduling:** an existing run a minute out no longer blocks scheduling one now.
   - **PHP:** the in-browser PHP check found no issues.
+- **Confirmed on staging (2026-10-16), installed through "Update now":** the stuck 1.42.1 request was re-sent by the monitor, and staging (on 1.42.0) installed the newest release from the staging repo. Its monitor shows "Updated from 1.42.0 to 1.42.2", requested by R&A Marketing. The site serves `rapm-hero.css?ver=1.42.2`, with no errors. After that: 0 requests waiting, the update lock free.
+- **Pushed to the production repo (2026-10-16)** with Phil's OK (main and the `v1.42.2` tag). This also carries 1.42.0 and 1.42.1. Help desk monitor: 1.3.1.
 
 ## 1.42.1
 
