@@ -196,9 +196,10 @@ class RAPM_Promotions_Screen {
 		return add_query_arg( array_merge( array( 'page' => self::PAGE ), $args ), admin_url( self::PARENT ) );
 	}
 
-	/** The Design Center's open tab (1.48.0): 'split' (Split sliders) or 'library' (Asset library). */
+	/** The Design Center's open tab: 'split' (Split sliders), 'library' (Asset library, 1.48.0) or 'brand' (Brand kit, 1.50.0). */
 	public static function design_tab() {
-		return isset( $_GET['tab'] ) && 'library' === sanitize_key( wp_unslash( $_GET['tab'] ) ) ? 'library' : 'split'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return in_array( $tab, array( 'library', 'brand' ), true ) ? $tab : 'split';
 	}
 
 	/** The Design Center's address (1.46.0), optionally at one slider's section. */
@@ -214,6 +215,9 @@ class RAPM_Promotions_Screen {
 		}
 		if ( self::DESIGN_PAGE === $page && self::design_tab() === 'library' ) {
 			RAPM_Library::enqueue();
+		}
+		if ( self::DESIGN_PAGE === $page && self::design_tab() === 'brand' ) {
+			RAPM_Brand_Kit::enqueue();
 		}
 		// 1.44.1: the live site's styles, for designed promotion box cards.
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
@@ -834,11 +838,20 @@ class RAPM_Promotions_Screen {
 			</div>
 			<hr class="wp-header-end" />
 
-			<?php // 1.48.0: two tabs, as plain links. ?>
+			<?php // 1.48.0: tabs, as plain links (1.50.0 adds the Brand kit). ?>
 			<nav class="nav-tab-wrapper rapm-dc-tabs" aria-label="<?php esc_attr_e( 'Design Center', 'rapm' ); ?>">
 				<a href="<?php echo esc_url( self::design_url() ); ?>" class="nav-tab<?php echo 'split' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'split' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Split sliders', 'rapm' ); ?></a>
 				<a href="<?php echo esc_url( add_query_arg( 'tab', 'library', self::design_url() ) ); ?>" class="nav-tab<?php echo 'library' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'library' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Asset library', 'rapm' ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( 'tab', 'brand', self::design_url() ) ); ?>" class="nav-tab<?php echo 'brand' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'brand' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Brand kit', 'rapm' ); ?></a>
 			</nav>
+
+			<?php if ( 'brand' === self::design_tab() ) : ?>
+				<?php RAPM_Brand_Kit::render(); ?>
+			</div>
+			<?php
+			return;
+			endif;
+			?>
 
 			<?php if ( 'library' === self::design_tab() ) : ?>
 				<?php RAPM_Library::render(); ?>

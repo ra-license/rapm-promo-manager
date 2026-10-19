@@ -195,8 +195,17 @@ class RAPM_Ready {
 		$bg     = $canvas['pic'] ? '' : ( $canvas['bg'] ? $canvas['bg'] : '#f3ead8' );
 		$words  = 0;
 		$edge   = array();
+		$site   = null;
 		foreach ( $canvas['items'] as $it ) {
 			$k = $it['k'];
+			// 1.50.0: a color linked to Elementor is checked at the website's value today.
+			if ( ! empty( $it['cg'] ) ) {
+				$site = null === $site ? RAPM_Elementor::color_value_map() : $site;
+				$now  = isset( $site[ $it['cg'] ] ) ? sanitize_hex_color( $site[ $it['cg'] ] ) : '';
+				if ( $now ) {
+					$it['c'] = $now;
+				}
+			}
 			if ( isset( $texts[ $k ] ) ) {
 				if ( '' === trim( $texts[ $k ] ) ) {
 					continue;

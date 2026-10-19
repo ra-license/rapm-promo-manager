@@ -208,6 +208,10 @@ class RAPM_Split {
 			$k     = $it['k'];
 			$limit = array( 'headline' => array( 3, 20 ), 'sub' => array( 2, 12 ), 'btn' => array( 2, 8 ), 'icon' => array( 4, 40 ), 'img' => array( 5, 100 ) );
 			$color = isset( $it['c'] ) ? sanitize_hex_color( (string) $it['c'] ) : '';
+			// 1.50.0: a website (Elementor) color stays linked: cg is its
+			// global color ID, c its value now (the fallback, and what the
+			// readability check measures).
+			$cg    = isset( $it['cg'] ) ? sanitize_key( (string) $it['cg'] ) : '';
 			$item  = array(
 				'k' => $k,
 				'x' => round( max( 0, min( 100, isset( $it['x'] ) ? (float) $it['x'] : 50 ) ), 1 ),
@@ -215,6 +219,9 @@ class RAPM_Split {
 				's' => round( max( $limit[ $k ][0], min( $limit[ $k ][1], isset( $it['s'] ) ? (float) $it['s'] : $limit[ $k ][0] ) ), 1 ),
 				'c' => $color ? $color : '#1d3557',
 			);
+			if ( $cg && 'img' !== $k ) {
+				$item['cg'] = $cg;
+			}
 			if ( 'icon' === $k ) {
 				$name = isset( $it['n'] ) ? preg_replace( '/[^a-z0-9_-]/', '', strtolower( (string) $it['n'] ) ) : '';
 				$d    = isset( $it['d'] ) ? (string) $it['d'] : '';
@@ -253,6 +260,13 @@ class RAPM_Split {
 				} elseif ( $fg ) {
 					$item['fg'] = $fg;
 				}
+				// 1.50.0 (brand kit text styles): weight and ALL CAPS.
+				if ( isset( $it['fw'] ) && in_array( (int) $it['fw'], array( 400, 500, 600, 700, 800, 900 ), true ) ) {
+					$item['fw'] = (int) $it['fw'];
+				}
+				if ( ! empty( $it['tt'] ) ) {
+					$item['tt'] = true;
+				}
 			}
 			$out['items'][] = $item;
 		}
@@ -289,11 +303,19 @@ class RAPM_Split {
 			<?php
 			foreach ( $canvas['items'] as $it ) {
 				$pos = 'left:' . $it['x'] . '%;top:' . $it['y'] . '%;--s:' . $it['s'] . ';';
+				// 1.50.0: a linked website color follows Elementor's global color.
+				$col = ! empty( $it['cg'] ) ? 'var(--e-global-color-' . $it['cg'] . ', ' . $it['c'] . ')' : ( isset( $it['c'] ) ? $it['c'] : '' );
+				if ( ! empty( $it['fw'] ) ) {
+					$pos .= 'font-weight:' . (int) $it['fw'] . ';';
+				}
+				if ( ! empty( $it['tt'] ) ) {
+					$pos .= 'text-transform:uppercase;';
+				}
 				if ( 'icon' === $it['k'] ) {
 					// Font Awesome Free's icons are CC BY 4.0; its own SVGs
 					// carry this credit, so ours do too.
 					$credit = 'ms' === $it['f'] ? '' : '<!-- Font Awesome Free by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free -->';
-					echo '<span class="rapm-pb-t is-icon" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '" aria-hidden="true"><svg viewBox="' . esc_attr( $it['v'] ) . '" focusable="false">' . $credit . '<path d="' . esc_attr( $it['d'] ) . '"/></svg></span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed comment text.
+					echo '<span class="rapm-pb-t is-icon" style="' . esc_attr( $pos . 'color:' . $col ) . '" aria-hidden="true"><svg viewBox="' . esc_attr( $it['v'] ) . '" focusable="false">' . $credit . '<path d="' . esc_attr( $it['d'] ) . '"/></svg></span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed comment text.
 					continue;
 				}
 				if ( 'img' === $it['k'] ) {
@@ -316,11 +338,11 @@ class RAPM_Split {
 					$pos .= RAPM_Elementor::font_family_css( $it['fg'] );
 				}
 				if ( 'headline' === $it['k'] ) {
-					echo '<h2 class="rapm-pb-t is-headline" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '">' . esc_html( $text ) . '</h2>';
+					echo '<h2 class="rapm-pb-t is-headline" style="' . esc_attr( $pos . 'color:' . $col ) . '">' . esc_html( $text ) . '</h2>';
 				} elseif ( 'sub' === $it['k'] ) {
-					echo '<p class="rapm-pb-t is-sub" style="' . esc_attr( $pos . 'color:' . $it['c'] ) . '">' . esc_html( $text ) . '</p>';
+					echo '<p class="rapm-pb-t is-sub" style="' . esc_attr( $pos . 'color:' . $col ) . '">' . esc_html( $text ) . '</p>';
 				} else {
-					echo '<span class="rapm-pb-t is-btn" style="' . esc_attr( $pos . 'background:' . $it['c'] ) . '">' . esc_html( $text ) . '</span>';
+					echo '<span class="rapm-pb-t is-btn" style="' . esc_attr( $pos . 'background:' . $col ) . '">' . esc_html( $text ) . '</span>';
 				}
 			}
 			?>

@@ -4,6 +4,33 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.50.0
+
+**New: Brand kit, a third tab in the Design Center.** Design Center roadmap step 4, built to the mockup Phil approved (https://claude.ai/artifact/NfgxFBRHXzuHUnsRmZd3P2). New `RAPM_Brand_Kit`, saved in the `rapm_brand_kit` option.
+- **Who can use it (Phil's rule, Oct 19):** anything that changes Elementor or the live site must be for administrators only. The kit does neither. It only reads Elementor's colors and fonts, and colors, styles and templates are copied into a design when used. So it's open to everyone who edits promotions, like the rest of the Design Center.
+- **Colors:**
+  - **From your website (Elementor):** the Global Colors, shown read-only with a "linked" mark. In the canvas they come first ("Website colors (linked)"). A piece colored with one saves the link (`cg`), and the live site draws it as `var(--e-global-color-<id>, <saved hex>)`, so changing the color in Elementor's Site Settings changes the design too. The canvas and the Ready checks use the website's current value.
+  - **Saved colors:** added by hand with a name, up to 40. These replace the six fixed swatches in the canvas and the background choices; they are plain values, not linked.
+  - **Pick colors from a picture:** choose any Media Library picture. It's grouped into up to 8 colors in the browser: k-means started from colors far apart, so a small blue sofa isn't swallowed by a beige wall, and near-repeats are dropped. The moods Colorful, Muted, Deep and Light each keep the five that fit best; "Save these 5" adds them to Saved colors. The picture isn't sent anywhere.
+- **Text styles (up to 30):** name, font (Site default, the site's Elementor brand fonts, or any Google font by name), weight 400–900, size, color and ALL CAPS, with a live preview. In the canvas, a headline, smaller line or button gets a "Text style" menu; picking one copies its settings onto that piece, so editing the style later never changes a live promotion. Word pieces also get their own ALL CAPS checkbox. New canvas fields: `fw` (weight) and `tt` (caps).
+- **Logos and badges (up to 30):** picked from the Media Library and shown first under "Your pictures" in the canvas, one click to place.
+- **Templates (up to 50, plus three R&A starters):**
+  - "Start from a template" above the canvas shows the store's templates and the starters (Sale, Event, Financing) as small previews.
+  - "Use" asks on the card first, then replaces the design and the headline, smaller line and button words. It's a copy.
+  - "Save as template…" names the current design and saves it, words included.
+  - In the Brand kit, store templates can be renamed (type over the name) or removed; the starters can't.
+  - The starters take their colors from the site: for each spot, the first site color that white words can sit on (4.5:1) and that isn't the background, kept linked; otherwise a safe default.
+- **No browser pop-ups:** using or removing a template asks on the card itself, and the template name is typed into a field next to the button. Some sites and previews block pop-ups, and they're easy to miss.
+- **Safety:**
+  - Both saves (`rapm_brand_kit_save`, `rapm_brand_kit_add_template`) check a security code and the "edit posts" permission.
+  - Every value is cleaned on the server: hex colors, known weights, sizes 2–20, Google font names matched to the list, image attachments only, template canvases through the same cleaner as promotions, and names as plain text.
+  - Tested in WordPress Playground with Elementor:
+    - A bad security code is refused.
+    - HTML in a name is stripped.
+    - A missing picture is dropped from a template.
+
+---
+
 ## 1.49.0
 
 **New: "Ready to go live" checks in the Design Center's Asset library.** Design Center roadmap step 3, built to the "Quick checks" Phil approved in the Asset library mockup (https://claude.ai/artifact/7QB12FYVVSSB4sNJi67VV6). New `RAPM_Ready`.

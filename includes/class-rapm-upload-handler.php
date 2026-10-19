@@ -2043,6 +2043,24 @@ class RAPM_Upload_Handler {
 			'removePic'   => __( 'Remove this picture', 'rapm' ),
 			'pickPicture' => __( 'Pick a picture, like a logo or a badge', 'rapm' ),
 			'usePicture'  => __( 'Put it on the design', 'rapm' ),
+			'siteColors'  => __( 'Website colors (linked)', 'rapm' ),
+			'savedColors' => __( 'Saved colors', 'rapm' ),
+			'textStyle'   => __( 'Text style', 'rapm' ),
+			'noStyle'     => __( 'No style', 'rapm' ),
+			'styleHint'   => __( 'A style sets the font, weight, size, color and letter case at once. Manage styles in Design Center › Brand kit.', 'rapm' ),
+			'caps'        => __( 'ALL CAPS', 'rapm' ),
+			'useTpl'      => __( 'Use', 'rapm' ),
+			'tplAsk'      => __( 'Replace this design, and the headline, smaller line and button words, with the template?', 'rapm' ),
+			'tplName'     => __( 'Template name', 'rapm' ),
+			'tplYes'      => __( 'Yes, replace it', 'rapm' ),
+			'tplSave'     => __( 'Save template', 'rapm' ),
+			'cancel'      => __( 'Cancel', 'rapm' ),
+			'tplSaved'    => __( 'Saved as a template.', 'rapm' ),
+			'tplFailed'   => __( 'The template didn\'t save. Please try again.', 'rapm' ),
+			'starter'     => __( 'R&A starter', 'rapm' ),
+			'thisStore'   => __( 'This store', 'rapm' ),
+			'yourLogos'   => __( 'From your brand kit', 'rapm' ),
+			'manageKit'   => __( 'Manage the brand kit', 'rapm' ),
 			'font'        => __( 'Font', 'rapm' ),
 			'fontDefault' => __( 'Site default', 'rapm' ),
 			'fontSearch'  => __( 'Search Google Fonts', 'rapm' ),
@@ -2052,12 +2070,33 @@ class RAPM_Upload_Handler {
 			'fontNote'    => __( 'A Google font is copied to this website when you save, so visitors never load it from Google.', 'rapm' ),
 			'fontSample'  => __( 'Big Sale 30% Off', 'rapm' ),
 		);
-		$bgs = array( '#f3ead8', '#ffffff', '#1d3557', '#c8102e', '#2f2f2f', '#e6efe9' );
+		// 1.50.0: the brand kit (website colors, saved colors, styles, logos, templates).
+		$kit = RAPM_Brand_Kit::for_browser();
+		$bgs = array();
+		foreach ( $kit['site'] as $c ) {
+			$bgs[ $c['hex'] ] = $c['name'];
+		}
+		foreach ( $kit['colors'] as $c ) {
+			$bgs[ $c['hex'] ] = $c['name'];
+		}
+		$bgs += array( '#f3ead8' => __( 'Cream', 'rapm' ), '#ffffff' => __( 'White', 'rapm' ), '#2f2f2f' => __( 'Charcoal', 'rapm' ) );
 		?>
-		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-kit="<?php echo esc_attr( wp_json_encode( $kit ) ); ?>" data-kit-nonce="<?php echo esc_attr( wp_create_nonce( RAPM_Brand_Kit::NONCE ) ); ?>" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-kit-url="<?php echo esc_url( add_query_arg( 'tab', 'brand', RAPM_Promotions_Screen::design_url() ) ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
 			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
 			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
 			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it. Click it to change its size or color. Arrow keys move the one you picked a little at a time (hold Shift to move it more). A pink line shows when it\'s centered.', 'rapm' ); ?></p>
+			<?php // 1.50.0: templates from the brand kit. ?>
+			<div class="rapm-cv-tplbar">
+				<button type="button" class="button" id="rapm-cv-tpltoggle" aria-expanded="false"><?php esc_html_e( 'Start from a template', 'rapm' ); ?></button>
+				<button type="button" class="button" id="rapm-cv-savetpl"><?php esc_html_e( 'Save as template…', 'rapm' ); ?></button>
+				<span class="rapm-cv-tplform" id="rapm-cv-tplform" hidden>
+					<input type="text" id="rapm-cv-tplname" maxlength="60" placeholder="<?php esc_attr_e( 'Template name, like Fall sale', 'rapm' ); ?>" aria-label="<?php esc_attr_e( 'Template name', 'rapm' ); ?>" />
+					<button type="button" class="button button-primary" id="rapm-cv-tplsave"><?php esc_html_e( 'Save template', 'rapm' ); ?></button>
+					<button type="button" class="button-link" id="rapm-cv-tplcancel"><?php esc_html_e( 'Cancel', 'rapm' ); ?></button>
+				</span>
+				<span class="rapm-cv-tplmsg" id="rapm-cv-tplmsg" aria-live="polite"></span>
+			</div>
+			<div class="rapm-cv-tpls" id="rapm-cv-tpls" hidden></div>
 			<div class="rapm-cv-layout">
 				<div class="rapm-cv-main">
 					<div class="rapm-cv-stage rapm-pb-item is-design" tabindex="0" aria-label="<?php esc_attr_e( 'Promotion design', 'rapm' ); ?>">
@@ -2077,8 +2116,8 @@ class RAPM_Upload_Handler {
 							<button type="button" class="button" data-bgmode="pic" aria-pressed="false"><?php esc_html_e( 'The picture from step 1', 'rapm' ); ?></button>
 						</p>
 						<p class="rapm-cv-bgcolors">
-							<?php foreach ( $bgs as $c ) : ?>
-								<button type="button" class="rapm-cv-sw" data-bg="<?php echo esc_attr( $c ); ?>" style="background:<?php echo esc_attr( $c ); ?>" aria-label="<?php echo esc_attr( $c ); ?>" aria-pressed="false"></button>
+							<?php foreach ( $bgs as $c => $c_name ) : ?>
+								<button type="button" class="rapm-cv-sw" data-bg="<?php echo esc_attr( $c ); ?>" style="background:<?php echo esc_attr( $c ); ?>" aria-label="<?php echo esc_attr( $c_name ); ?>" title="<?php echo esc_attr( $c_name ); ?>" aria-pressed="false"></button>
 							<?php endforeach; ?>
 							<input type="color" id="rapm-cv-bgcolor" value="#f3ead8" aria-label="<?php esc_attr_e( 'Any other background color', 'rapm' ); ?>" />
 						</p>

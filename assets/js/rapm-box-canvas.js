@@ -22,6 +22,12 @@
  * attachment ID and s its width; u is only its address for this editor,
  * which the server works out again.
  *
+ * 1.50.0: the brand kit (RAPM_Brand_Kit) supplies the color choices (the
+ * website's Elementor colors, kept linked as cg, then saved colors), text
+ * styles (copied onto a piece: font, fw weight, size, color, tt ALL CAPS),
+ * logos first under "Your pictures", and templates ("Start from a
+ * template", "Save as template…").
+ *
  * 1.47.0: a headline, smaller line or button can have its own font: ff, a
  * Google Fonts family (copied to the website when the promotion is saved,
  * RAPM_Fonts), or fg, one of the site's Elementor brand fonts by ID.
@@ -52,6 +58,12 @@
 	// point at the right icons (1.45.0; "sofa" found nothing without this).
 	var FA_WORDS = { sofa: 'couch', loveseat: 'couch', sectional: 'couch', mattress: 'bed', bedroom: 'bed', recliner: 'chair', delivery: 'truck shipping-fast', shipping: 'truck shipping-fast', sale: 'tag tags percent percentage', discount: 'percent percentage tag', deal: 'tag tags', financing: 'credit-card money-check-alt', payment: 'credit-card', price: 'tag dollar-sign', gift: 'gift', award: 'award medal trophy', quality: 'award certificate check-circle', location: 'map-marker-alt', store: 'store store-alt', showroom: 'store', calendar: 'calendar-alt calendar', event: 'calendar-alt', social: 'facebook instagram pinterest twitter youtube' };
 	var faBase = root.getAttribute( 'data-fa' ) || '';
+	var kit = JSON.parse( root.getAttribute( 'data-kit' ) || '{}' );
+	kit.site = kit.site || [];
+	kit.colors = kit.colors || [];
+	kit.styles = kit.styles || [];
+	kit.logos = kit.logos || [];
+	kit.templates = kit.templates || [];
 	// 1.47.0: fonts. brand is the site's Elementor fonts, ID => [ title, family ].
 	var brand = JSON.parse( root.getAttribute( 'data-brand' ) || '{}' );
 	var gList = null; // [ family, category, weights ] from the bundled list, loaded on first use
@@ -62,6 +74,10 @@
 	var tab = 'ms';
 
 	var state = parse( field.value );
+	// A linked color shows the website's color today, if it was changed in Elementor.
+	state.items.forEach( function ( it ) {
+		kit.site.forEach( function ( c ) { if ( it.cg === c.id ) { it.c = c.hex; } } );
+	} );
 	var selected = -1;
 	var list = null; // the icon names and search words, loaded on first use
 
@@ -227,6 +243,8 @@
 			n.style.color = it.c;
 		}
 		if ( isWords( it ) ) {
+			n.style.fontWeight = it.fw ? String( it.fw ) : '';
+			n.style.textTransform = it.tt ? 'uppercase' : '';
 			var fam = fontFamilyOf( it );
 			n.style.fontFamily = fam ? '"' + fam + '", sans-serif' : '';
 			if ( fam ) { loadFonts( [ fam ] ); }
@@ -257,10 +275,24 @@
 			h += '<div class="rapm-cv-fontpick"' + ( fontOpen ? '' : ' hidden' ) + '><input type="search" class="rapm-cv-fontsearch regular-text" placeholder="' + esc( T.fontSearch ) + '" value="' + esc( fontQuery ) + '"><div class="rapm-cv-fontlist"></div><p class="description">' + esc( T.fontNote ) + '</p></div>';
 		}
 		h += '<p><label for="rapm-cv-size">' + esc( T.size ) + '</label><br><input type="range" id="rapm-cv-size" min="' + lim[ 0 ] + '" max="' + lim[ 1 ] + '" step="0.2" value="' + it.s + '"></p>';
+		if ( isWords( it ) && kit.styles.length ) {
+			h += '<p><label for="rapm-cv-style">' + esc( T.textStyle ) + '</label><br><select id="rapm-cv-style"><option value="">' + esc( T.noStyle ) + '</option>' +
+				kit.styles.map( function ( st, i ) { return '<option value="' + i + '">' + esc( st.name || ( 'Style ' + ( i + 1 ) ) ) + '</option>'; } ).join( '' ) + '</select></p>';
+		}
+		if ( isWords( it ) ) {
+			h += '<p><label><input type="checkbox" id="rapm-cv-caps"' + ( it.tt ? ' checked' : '' ) + '> ' + esc( T.caps ) + '</label></p>';
+		}
 		if ( 'img' !== it.k ) {
-			h += '<p><span>' + esc( 'btn' === it.k ? T.btnColor : T.color ) + '</span><br><span class="rapm-cv-swatches">' + SWATCHES.map( function ( c ) {
-				return '<button type="button" class="rapm-cv-sw" data-color="' + c + '" style="background:' + c + '" aria-label="' + esc( c ) + '" aria-pressed="' + ( c === it.c ) + '"></button>';
-			} ).join( '' ) + '<input type="color" id="rapm-cv-color" value="' + esc( it.c ) + '" aria-label="' + esc( T.otherColor ) + '"></span></p>';
+			var sw = function ( c, cg, name ) {
+				return '<button type="button" class="rapm-cv-sw" data-color="' + esc( c ) + '"' + ( cg ? ' data-cg="' + esc( cg ) + '"' : '' ) + ' style="background:' + esc( c ) + '" aria-label="' + esc( name || c ) + '" title="' + esc( name || c ) + '" aria-pressed="' + ( c === it.c && ( cg || '' ) === ( it.cg || '' ) ) + '"></button>';
+			};
+			h += '<p><span>' + esc( 'btn' === it.k ? T.btnColor : T.color ) + '</span></p>';
+			if ( kit.site.length ) {
+				h += '<p class="rapm-cv-swrow"><span class="rapm-cv-swlabel">' + esc( T.siteColors ) + '</span><span class="rapm-cv-swatches">' + kit.site.map( function ( c ) { return sw( c.hex, c.id, c.name ); } ).join( '' ) + '</span></p>';
+			}
+			var saved = kit.colors.length ? kit.colors.map( function ( c ) { return sw( c.hex, '', c.name ); } ) : SWATCHES.map( function ( c ) { return sw( c, '', c ); } );
+			h += '<p class="rapm-cv-swrow"><span class="rapm-cv-swlabel">' + esc( T.savedColors ) + '</span><span class="rapm-cv-swatches">' + saved.join( '' ) +
+				'<input type="color" id="rapm-cv-color" value="' + esc( it.c ) + '" aria-label="' + esc( T.otherColor ) + '"></span></p>';
 		}
 		if ( ! isWords( it ) ) { h += '<p><button type="button" class="button-link rapm-cv-remove">' + esc( 'img' === it.k ? T.removePic : T.remove ) + '</button></p>'; }
 		selBox.innerHTML = h;
@@ -485,6 +517,121 @@
 		searchTimer = setTimeout( refreshSearch, 150 );
 	} );
 
+	/* ---- Templates and logos (1.50.0) ------------------------------------- */
+
+	function miniBoard( tpl ) {
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'rapm-pb-item is-design rapm-cv-mini';
+		wrap.style.background = tpl.canvas.bg || '#f3ead8';
+		var b = document.createElement( 'div' );
+		b.className = 'rapm-pb-board';
+		( tpl.canvas.items || [] ).forEach( function ( it ) {
+			var n = document.createElement( 'div' );
+			n.className = 'rapm-pb-t is-' + it.k;
+			place( n, it );
+			if ( 'icon' === it.k ) { n.innerHTML = svg( it.d, it.v ); }
+			else if ( 'img' === it.k ) { n.innerHTML = '<img src="' + esc( it.u || '' ) + '" alt="">'; }
+			else { n.textContent = ( tpl.texts || {} )[ { headline: 'headline', sub: 'sub', btn: 'btn' }[ it.k ] ] || ''; }
+			b.appendChild( n );
+		} );
+		wrap.appendChild( b );
+		return wrap;
+	}
+
+	function toggleTemplates() {
+		var box = root.querySelector( '#rapm-cv-tpls' );
+		var btn = root.querySelector( '#rapm-cv-tpltoggle' );
+		box.hidden = ! box.hidden;
+		btn.setAttribute( 'aria-expanded', String( ! box.hidden ) );
+		if ( box.hidden ) { return; }
+		box.innerHTML = '';
+		kit.templates.forEach( function ( tpl, i ) {
+			var card = document.createElement( 'div' );
+			card.className = 'rapm-cv-tpl';
+			card.appendChild( miniBoard( tpl ) );
+			var cap = document.createElement( 'div' );
+			cap.className = 'rapm-cv-tplcap';
+			cap.innerHTML = '<span><b>' + esc( tpl.name ) + '</b><br><small>' + esc( tpl.starter ? T.starter : T.thisStore ) + '</small></span><button type="button" class="button button-small" data-tpl="' + i + '">' + esc( T.useTpl ) + '</button>';
+			card.appendChild( cap );
+			box.appendChild( card );
+		} );
+		var link = document.createElement( 'p' );
+		link.className = 'rapm-cv-tplmore';
+		link.innerHTML = '<a href="' + esc( root.getAttribute( 'data-kit-url' ) || '#' ) + '">' + esc( T.manageKit ) + '</a>';
+		box.appendChild( link );
+	}
+
+	// Asks on the card itself (no browser pop-up) before replacing the design.
+	function askTemplate( b ) {
+		var i = b.getAttribute( 'data-tpl' );
+		b.closest( '.rapm-cv-tplcap' ).innerHTML = '<span class="rapm-cv-tplask">' + esc( T.tplAsk ) + '</span>' +
+			'<span><button type="button" class="button button-small button-primary" data-tplyes="' + i + '">' + esc( T.tplYes ) + '</button> ' +
+			'<button type="button" class="button-link" data-tplno="1">' + esc( T.cancel ) + '</button></span>';
+	}
+
+	function useTemplate( i ) {
+		var tpl = kit.templates[ i ];
+		if ( ! tpl ) { return; }
+		state = JSON.parse( JSON.stringify( tpl.canvas ) );
+		state.bg = state.bg || '';
+		var fields = { rapm_headline: 'headline', rapm_subhead: 'sub', rapm_cta_text: 'btn' };
+		Object.keys( fields ).forEach( function ( id ) {
+			var el = document.getElementById( id );
+			if ( el && tpl.texts && tpl.texts[ fields[ id ] ] ) { el.value = tpl.texts[ fields[ id ] ]; }
+		} );
+		selected = -1;
+		toggleTemplates();
+		render();
+		save();
+	}
+
+	function showSaveForm( on ) {
+		root.querySelector( '#rapm-cv-tplform' ).hidden = ! on;
+		root.querySelector( '#rapm-cv-savetpl' ).hidden = on;
+		root.querySelector( '#rapm-cv-tplmsg' ).textContent = '';
+		if ( on ) { root.querySelector( '#rapm-cv-tplname' ).focus(); }
+	}
+
+	function saveTemplate() {
+		var name = root.querySelector( '#rapm-cv-tplname' ).value;
+		var msg = root.querySelector( '#rapm-cv-tplmsg' );
+		if ( ! name.trim() ) { root.querySelector( '#rapm-cv-tplname' ).focus(); return; }
+		var fd = new FormData();
+		fd.append( 'action', 'rapm_brand_kit_add_template' );
+		fd.append( 'nonce', root.getAttribute( 'data-kit-nonce' ) );
+		fd.append( 'name', name.trim() );
+		fd.append( 'canvas', JSON.stringify( state ) );
+		fd.append( 'texts', JSON.stringify( { headline: words( 'headline' ), sub: words( 'sub' ), btn: words( 'btn' ) } ) );
+		fetch( root.getAttribute( 'data-ajax' ), { method: 'POST', body: fd, credentials: 'same-origin' } ).then( function ( r ) { return r.json(); } ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( res && res.data && res.data.message ? res.data.message : T.tplFailed ); }
+			kit.templates.unshift( res.data.template );
+			root.querySelector( '#rapm-cv-tplname' ).value = '';
+			showSaveForm( false );
+			msg.textContent = T.tplSaved;
+			if ( ! root.querySelector( '#rapm-cv-tpls' ).hidden ) { toggleTemplates(); toggleTemplates(); }
+		} ).catch( function ( err ) { msg.textContent = err.message || T.tplFailed; } );
+	}
+
+	function addLogo( i ) {
+		var l = kit.logos[ i ];
+		if ( ! l ) { return; }
+		state.items.push( { k: 'img', a: l.a, u: l.u, t: l.t, x: 50, y: 50, s: 30 } );
+		selected = state.items.length - 1;
+		render();
+		save();
+	}
+
+	function showLogos() {
+		var box = root.querySelector( '.rapm-cv-media' );
+		if ( ! box || ! kit.logos.length || box.querySelector( '.rapm-cv-logos' ) ) { return; }
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'rapm-cv-logos';
+		wrap.innerHTML = '<p class="rapm-cv-swlabel">' + esc( T.yourLogos ) + '</p>' + kit.logos.map( function ( l, i ) {
+			return '<button type="button" class="rapm-cv-ic" data-logo="' + i + '" title="' + esc( l.t ) + '"><img src="' + esc( l.u ) + '" alt=""><span>' + esc( l.t ) + '</span></button>';
+		} ).join( '' );
+		box.insertBefore( wrap, box.firstChild );
+	}
+
 	/* ---- Clicks and changes -------------------------------------------- */
 
 	root.addEventListener( 'click', function ( e ) {
@@ -506,7 +653,23 @@
 			return;
 		}
 		if ( b.classList.contains( 'rapm-cv-layer' ) ) { selected = +b.getAttribute( 'data-i' ); render(); return; }
-		if ( b.hasAttribute( 'data-color' ) ) { state.items[ selected ].c = b.getAttribute( 'data-color' ); render(); save(); return; }
+		if ( b.hasAttribute( 'data-color' ) ) {
+			var ci = state.items[ selected ];
+			ci.c = b.getAttribute( 'data-color' );
+			// A website color stays linked to Elementor; a saved one is a plain value.
+			if ( b.hasAttribute( 'data-cg' ) ) { ci.cg = b.getAttribute( 'data-cg' ); } else { delete ci.cg; }
+			render();
+			save();
+			return;
+		}
+		if ( b.hasAttribute( 'data-tpl' ) ) { askTemplate( b ); return; }
+		if ( b.hasAttribute( 'data-tplyes' ) ) { useTemplate( +b.getAttribute( 'data-tplyes' ) ); return; }
+		if ( b.hasAttribute( 'data-tplno' ) ) { toggleTemplates(); toggleTemplates(); return; }
+		if ( 'rapm-cv-tpltoggle' === b.id ) { toggleTemplates(); return; }
+		if ( 'rapm-cv-savetpl' === b.id ) { showSaveForm( true ); return; }
+		if ( 'rapm-cv-tplcancel' === b.id ) { showSaveForm( false ); return; }
+		if ( 'rapm-cv-tplsave' === b.id ) { saveTemplate(); return; }
+		if ( b.hasAttribute( 'data-logo' ) ) { addLogo( +b.getAttribute( 'data-logo' ) ); return; }
 		if ( b.hasAttribute( 'data-bg' ) ) { state.bg = b.getAttribute( 'data-bg' ); state.pic = 0; render(); save(); return; }
 		if ( b.hasAttribute( 'data-bgmode' ) ) { state.pic = 'pic' === b.getAttribute( 'data-bgmode' ) ? 1 : 0; render(); save(); return; }
 		if ( b.classList.contains( 'rapm-cv-remove' ) ) { state.items.splice( selected, 1 ); selected = -1; render(); save(); }
@@ -529,6 +692,7 @@
 		}
 		if ( 'rapm-cv-color' === e.target.id && it ) {
 			it.c = e.target.value;
+			delete it.cg;
 			var m = board.querySelector( '.rapm-cv-item[data-i="' + selected + '"]' );
 			if ( m ) { place( m, it ); }
 			field.value = JSON.stringify( state );
@@ -541,6 +705,29 @@
 		}
 	} );
 	root.addEventListener( 'change', function ( e ) {
+		var si = state.items[ selected ];
+		if ( 'rapm-cv-style' === e.target.id && si && '' !== e.target.value ) {
+			// A style is copied onto the piece: later changes to the style don't touch it.
+			var st = kit.styles[ +e.target.value ];
+			delete si.ff;
+			delete si.fg;
+			delete si.cg;
+			if ( st.ff ) { si.ff = st.ff; }
+			if ( st.fg ) { si.fg = st.fg; }
+			si.fw = st.fw;
+			si.s = Math.max( LIMITS[ si.k ][ 0 ], Math.min( LIMITS[ si.k ][ 1 ], st.s ) );
+			si.c = st.c;
+			si.tt = !! st.tt;
+			render();
+			save();
+			return;
+		}
+		if ( 'rapm-cv-caps' === e.target.id && si ) {
+			si.tt = e.target.checked;
+			render();
+			save();
+			return;
+		}
 		if ( /^rapm-cv-(size|color|bgcolor)$/.test( e.target.id ) ) { render(); save(); }
 	} );
 
@@ -564,6 +751,7 @@
 	}
 
 	showIcons( '' );
+	showLogos();
 	render();
 	save();
 } )();
