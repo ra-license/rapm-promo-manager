@@ -29,6 +29,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The two sections fold and unfold.
   - A private page and a draft page with the same spot are both listed with the right notes and Edit links.
   - The Promotions page, Design Center, Asset library, promotion form and home page load without errors.
+- **Installed on staging (2026-10-19):** the split test slider, which said "Not on any page yet", now shows "Promotions `/promotions/` · Edit page" and "Split view test `/split-view-test/` (private page) · Edit page". The published Promotions page was missing before too: the saved list was out of date, and renaming it made the site rebuild it. Not yet in production (1.51.0 isn't either).
 
 ---
 
