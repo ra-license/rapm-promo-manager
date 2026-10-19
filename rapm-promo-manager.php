@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.48.1
+ * Version: 1.49.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.48.1' );
+define( 'RAPM_VERSION', '1.49.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -36,6 +36,7 @@ require_once RAPM_DIR . 'includes/class-rapm-hero-carousel.php';
 require_once RAPM_DIR . 'includes/class-rapm-split.php';
 require_once RAPM_DIR . 'includes/class-rapm-fonts.php';
 require_once RAPM_DIR . 'includes/class-rapm-library.php';
+require_once RAPM_DIR . 'includes/class-rapm-ready.php';
 require_once RAPM_DIR . 'includes/class-rapm-marquee.php';
 require_once RAPM_DIR . 'includes/class-rapm-quick-links.php';
 require_once RAPM_DIR . 'includes/class-rapm-coupon-book.php';
@@ -85,6 +86,7 @@ final class RAPM_Plugin {
 		add_action( 'wp_ajax_rapm_save_layout', array( 'RAPM_Promotions_Screen', 'ajax_save_layout' ) );
 		add_action( 'wp_ajax_rapm_library_bulk', array( 'RAPM_Library', 'ajax_bulk' ) );
 		add_action( 'wp_ajax_rapm_library_replace', array( 'RAPM_Library', 'ajax_replace' ) );
+		add_action( 'wp_ajax_rapm_check_links', array( 'RAPM_Ready', 'ajax_check_links' ) );
 		add_action( 'wp_ajax_rapm_create_spot', array( 'RAPM_Promotions_Screen', 'ajax_create_spot' ) );
 		add_action( 'wp_ajax_rapm_remove_spot', array( 'RAPM_Promotions_Screen', 'ajax_remove_spot' ) );
 		add_filter( 'wp_untrash_post_status', array( 'RAPM_Promotions_Screen', 'untrash_status' ), 10, 3 );

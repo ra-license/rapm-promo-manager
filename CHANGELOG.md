@@ -4,6 +4,53 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.49.0
+
+**New: "Ready to go live" checks in the Design Center's Asset library.** Design Center roadmap step 3, built to the "Quick checks" Phil approved in the Asset library mockup (https://claude.ai/artifact/7QB12FYVVSSB4sNJi67VV6). New `RAPM_Ready`.
+- **Every promotion gets a checklist,** each item marked Problem (red), Needs a look (amber), Good to know (blue) or OK (green), and a verdict.
+  - **Picture size against what its spot needs (computer and phone):**
+    - The right size is OK.
+    - The right shape but smaller "will look soft on sharp screens".
+    - A different shape "will be trimmed" (Problem).
+    - A Shop the Look photo under its minimum width.
+  - **File weight** over the spot's limit.
+  - **A failed Google Drive/Dropbox link** (Problem; the last good copy still shows).
+  - **No picture at all** (Problem).
+  - **No phone picture** on a Slider or Feature banner.
+  - **No "What's in the picture" (alt) text.**
+  - **Product dots or the photo button at the very bottom of the phone picture,** where the browser bar can cover them (the Kemper lesson).
+  - **Turned off but dated to show.**
+  - **Doesn't link anywhere.**
+  - **Link checks:** the link works / goes to a page that doesn't work (with its code) / couldn't be checked from the server / hasn't been checked yet.
+  - **Designed promotion boxes:**
+    - **Readability:** WCAG contrast of each word piece against the background color, and the button's white text against its color. At least 3 to 1 for the headline and big words, 4.5 to 1 for the rest.
+    - **Phone size:** the smaller line under 14px on a 375px-wide phone.
+    - **Edges:** pieces that may run past the square's edge (estimated from their length, so it says "may").
+    - **Missing parts:** no words at all, and Media Library pictures on the design with no alt text.
+    - **Words on a picture:** reported as "check it by eye", since that contrast can't be measured.
+- **The library shows it:**
+  - The summary counts problems and need-a-look.
+  - New chips: **Problems** and **Needs a look**.
+  - Cards get a red "Problem" or amber "Needs a look" badge, with the count and the top issue on hover. The table lists the top issue.
+  - The details panel has the full **Ready to go live** list, problems first. Ended promotions are left out of the counts.
+- **Gaps in the schedule (next 30 days):** for each spot that's on a page (or a promotion box beside a split slider), the library lists stretches when nothing is turned on and dated to show ("From Oct 24, 6:53 pm to Oct 28, 6:53 pm, nothing shows"). It also flags an empty promotion box ("its slider shows full width").
+- **Check links:**
+  - Checks the links of the promotions in the current view, 8 at a time, from the server: a HEAD request, then GET if refused.
+  - The answer is remembered on each promotion (`_rapm_link_check`) until its link changes. Links are never checked on page load.
+  - Answers a firewall gives a server (401, 403, 429, 503, or none) are reported as "couldn't be checked", not as broken. Staging's Cloudflare blocks scripted requests, as found on 2026-10-16.
+- **How it was checked (WordPress Playground with Elementor 4.3.5):**
+  - A right-size room photo passed.
+  - A 1200×900 photo in the 1600×1200 split slider said "will look soft".
+  - A 1920×600 photo was a Problem ("will be trimmed").
+  - A designed box with gold words on cream:
+    - It measured 1.5 to 1 (headline) and 1.8 to 1 (button). Both were Problems.
+    - Its 3%-size smaller line was flagged as about 13px on a phone.
+    - Its long headline at the left was flagged "may run past the edge" (its card preview shows exactly that).
+  - **Schedule:** with one room photo ending in 5 days and the next starting in 9, the library listed the 4-day gap and the empty promotion box.
+  - **Links:** "Check links" stored a 404 for a missing page, which became a Problem, and a 200 for the home page.
+  - No PHP errors.
+- **Not in this release:** the same checks inside the add/edit form while editing, and on the clients' Promotions page. Those are candidates for later, if wanted.
+
 ## 1.48.1
 
 **Fix: names with a dash or quote showed codes in the Asset library.** Found on staging right after installing 1.48.0: "Coupon &#8211; Free Delivery".

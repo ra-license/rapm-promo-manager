@@ -84,7 +84,16 @@ class RAPM_Library {
 		);
 	}
 
+	/** 1.49.0: an item with its "Ready to go live" checks and verdict. */
 	private static function item( $post ) {
+		$item           = self::facts( $post );
+		$item['checks'] = RAPM_Ready::checks( $item['id'], $item );
+		$item['ready']  = RAPM_Ready::verdict( $item['checks'] );
+		$item['hasLink'] = '' !== $item['link'];
+		return $item;
+	}
+
+	private static function facts( $post ) {
 		$id        = (int) $post->ID;
 		$kind      = get_post_meta( $id, '_rapm_kind', true ) ?: 'hero'; // phpcs:ignore
 		$placement = get_post_meta( $id, '_rapm_placement', true ) ?: 'default'; // phpcs:ignore
@@ -108,24 +117,6 @@ class RAPM_Library {
 			},
 			$pages
 		);
-
-		// "Needs a look": plain facts only (1.49.0 adds the full checks).
-		$flags = array();
-		foreach ( array( 'desktop' => $desk, 'mobile' => $phone ) as $which => $pic ) {
-			if ( $pic && $pic['error'] ) {
-				$flags[] = 'desktop' === $which ? __( 'Computer picture link failed', 'rapm' ) : __( 'Phone picture link failed', 'rapm' );
-			}
-		}
-		if ( $desk && $slot && $desk['w'] && ! RAPM_Slots::dimensions_match( $slot, $desk['w'], $desk['h'] ) ) {
-			/* translators: 1: the picture's size, 2: the size the spot needs */
-			$flags[] = sprintf( __( 'Picture is %1$s; needs %2$s', 'rapm' ), $desk['w'] . '×' . $desk['h'], RAPM_Slots::is_flexible( $slot ) ? sprintf( __( 'up to %d wide', 'rapm' ), (int) $slot['width'] ) : (int) $slot['width'] . '×' . (int) $slot['height'] );
-		}
-		if ( ! $design && '' === trim( $alt ) ) {
-			$flags[] = __( 'No alt text', 'rapm' );
-		}
-		if ( in_array( $kind, array( 'hero', 'fold_banner' ), true ) && ! $phone ) {
-			$flags[] = __( 'No phone picture', 'rapm' );
-		}
 
 		$editor   = (int) get_post_meta( $id, '_edit_last', true );
 		$editor   = $editor ? get_the_author_meta( 'display_name', $editor ) : '';
@@ -159,7 +150,7 @@ class RAPM_Library {
 			'alt'      => $alt,
 			'link'     => (string) $url,
 			'pages'    => $pages,
-			'flags'    => $flags,
+			'checks'   => array(),
 			'created'  => get_the_date( 'M j, Y', $post ),
 			'saved'    => get_the_modified_date( 'M j, Y', $post ),
 			'editor'   => (string) $editor,
@@ -183,6 +174,8 @@ class RAPM_Library {
 		$data = array(
 			'items' => $items,
 			'spots' => $spots,
+			// 1.49.0: stretches of the next 30 days with nothing set to show.
+			'gaps'  => RAPM_Ready::spot_gaps( $items, $spots ),
 		);
 		?>
 		<div class="rapm-lib" id="rapm-lib">
@@ -202,12 +195,15 @@ class RAPM_Library {
 					<option value="name"><?php esc_html_e( 'Name A–Z', 'rapm' ); ?></option>
 					<option value="weight"><?php esc_html_e( 'Heaviest files', 'rapm' ); ?></option>
 				</select>
+				<button type="button" class="button" id="rapm-lib-links"><?php esc_html_e( 'Check links', 'rapm' ); ?></button>
 				<span class="rapm-lib-seg" role="group" aria-label="<?php esc_attr_e( 'View', 'rapm' ); ?>">
 					<button type="button" class="button" data-view="grid" aria-pressed="true"><?php esc_html_e( 'Cards', 'rapm' ); ?></button>
 					<button type="button" class="button" data-view="table" aria-pressed="false"><?php esc_html_e( 'Table', 'rapm' ); ?></button>
 				</span>
 			</div>
 			<div class="rapm-lib-chips" id="rapm-lib-chips" role="group" aria-label="<?php esc_attr_e( 'Status', 'rapm' ); ?>"></div>
+			<?php // 1.49.0: schedule gaps by spot, and the link check. ?>
+			<div class="rapm-lib-gaps" id="rapm-lib-gaps" hidden></div>
 			<div id="rapm-lib-results" aria-live="polite"></div>
 			<?php // Below the cards and pinned to the bottom of the screen, so ticking a box never moves the cards. ?>
 			<div class="rapm-lib-bulk" id="rapm-lib-bulk" hidden></div>
@@ -239,6 +235,15 @@ class RAPM_Library {
 					'hidden'       => __( 'Turned off', 'rapm' ),
 					'ended'        => __( 'Ended', 'rapm' ),
 					'flags'        => __( 'Needs a look', 'rapm' ),
+					'fails'        => __( 'Problems', 'rapm' ),
+					'ready'        => __( 'Ready to go live', 'rapm' ),
+					'problem'      => __( 'Problem', 'rapm' ),
+					'readyAll'     => __( 'Everything checks out.', 'rapm' ),
+					'gapsTitle'    => __( 'Gaps in the schedule (next 30 days)', 'rapm' ),
+					'checkingLinks' => __( 'Checking links: %1$d of %2$d…', 'rapm' ),
+					'linksDone'    => __( 'Links checked. Refreshing…', 'rapm' ),
+					'noLinks'      => __( 'No links to check in this view.', 'rapm' ),
+					'readyNote'    => __( 'Checks use what the plugin can measure. Words on a photo and how a design looks still need your eye.', 'rapm' ),
 					'all'          => __( 'Everything', 'rapm' ),
 					'none'         => __( 'No promotions match. Try "Everything" or clear the search.', 'rapm' ),
 					'selected'     => __( '%d selected', 'rapm' ),

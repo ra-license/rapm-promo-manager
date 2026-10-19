@@ -41,6 +41,11 @@
 
 	function selCount() { return Object.keys( sel ).length; }
 
+	// 1.49.0: the checks that matter most, for badges ("fail" first).
+	function issues( it ) {
+		return it.checks.filter( function ( c ) { return 'fail' === c.level; } ).concat( it.checks.filter( function ( c ) { return 'warn' === c.level; } ) );
+	}
+
 	/* ---- Filters ---------------------------------------------------------- */
 
 	var types = {};
@@ -55,7 +60,8 @@
 		var fs = $( 'rapm-lib-spot' ).value;
 		var list = items.filter( function ( it ) {
 			if ( 'live' === status && 'ended' === it.state ) { return false; }
-			if ( 'flags' === status && ! it.flags.length ) { return false; }
+			if ( 'flags' === status && 'warn' !== it.ready ) { return false; }
+			if ( 'fails' === status && 'fail' !== it.ready ) { return false; }
 			if ( [ 'showing', 'upcoming', 'hidden', 'ended' ].indexOf( status ) !== -1 && it.state !== status ) { return false; }
 			if ( ft && it.kind !== ft ) { return false; }
 			if ( fs && it.spot !== fs ) { return false; }
@@ -80,13 +86,22 @@
 	function renderChips() {
 		var c = { showing: 0, upcoming: 0, hidden: 0, ended: 0 };
 		var flags = 0;
+		var fails = 0;
 		var kb = 0;
-		items.forEach( function ( it ) { c[ it.state ] = ( c[ it.state ] || 0 ) + 1; if ( it.flags.length ) { flags++; } kb += weight( it ); } );
-		var opts = [ [ 'live', T.notEnded, items.length - c.ended ], [ 'showing', T.showing, c.showing ], [ 'upcoming', T.upcoming, c.upcoming ], [ 'hidden', T.hidden, c.hidden ], [ 'ended', T.ended, c.ended ], [ 'flags', T.flags, flags ], [ 'all', T.all, items.length ] ];
+		items.forEach( function ( it ) {
+			c[ it.state ] = ( c[ it.state ] || 0 ) + 1;
+			// Ended promotions don't count toward problems: they're done.
+			if ( 'ended' !== it.state ) {
+				if ( 'fail' === it.ready ) { fails++; }
+				if ( 'warn' === it.ready ) { flags++; }
+			}
+			kb += weight( it );
+		} );
+		var opts = [ [ 'live', T.notEnded, items.length - c.ended ], [ 'fails', T.fails, fails ], [ 'flags', T.flags, flags ], [ 'showing', T.showing, c.showing ], [ 'upcoming', T.upcoming, c.upcoming ], [ 'hidden', T.hidden, c.hidden ], [ 'ended', T.ended, c.ended ], [ 'all', T.all, items.length ] ];
 		$( 'rapm-lib-chips' ).innerHTML = opts.map( function ( o ) {
 			return '<button type="button" class="rapm-lib-chip" data-status="' + o[ 0 ] + '" aria-pressed="' + ( status === o[ 0 ] ) + '">' + esc( o[ 1 ] ) + ' <span>' + o[ 2 ] + '</span></button>';
 		} ).join( '' );
-		$( 'rapm-lib-summary' ).innerHTML = '<b>' + items.length + '</b> ' + esc( T.promotions ) + ' · <b>' + Object.keys( spots ).length + '</b> ' + esc( T.spots ) + ' · <b>' + c.showing + '</b> ' + esc( T.showingNow ) + ' · <b>' + flags + '</b> ' + esc( T.needLook ) + ' · <b>' + ( kb / 1024 ).toFixed( 1 ) + ' MB</b> ' + esc( T.ofPictures );
+		$( 'rapm-lib-summary' ).innerHTML = '<b>' + items.length + '</b> ' + esc( T.promotions ) + ' · <b>' + Object.keys( spots ).length + '</b> ' + esc( T.spots ) + ' · <b>' + c.showing + '</b> ' + esc( T.showingNow ) + ' · <b>' + fails + '</b> ' + esc( T.fails.toLowerCase() ) + ' · <b>' + flags + '</b> ' + esc( T.needLook ) + ' · <b>' + ( kb / 1024 ).toFixed( 1 ) + ' MB</b> ' + esc( T.ofPictures );
 	}
 
 	function pic( it ) {
@@ -102,6 +117,41 @@
 		return s + ( it.desk ? ' · ' + it.desk.from : '' );
 	}
 
+	function renderGaps() {
+		var gaps = data.gaps || {};
+		var keys = Object.keys( gaps );
+		var box = $( 'rapm-lib-gaps' );
+		box.hidden = ! keys.length;
+		if ( ! keys.length ) { return; }
+		box.innerHTML = '<h3>' + esc( T.gapsTitle ) + '</h3><ul>' + keys.map( function ( k ) {
+			var name = spots[ k ] ? spots[ k ].name : k;
+			return gaps[ k ].map( function ( g ) { return '<li><b>' + esc( name ) + ':</b> ' + esc( g ) + '</li>'; } ).join( '' );
+		} ).join( '' ) + '</ul>';
+	}
+
+	function checkLinks() {
+		var ids = filtered().filter( function ( it ) { return it.hasLink; } ).map( function ( it ) { return it.id; } );
+		if ( ! ids.length ) { say( T.noLinks ); return; }
+		var total = ids.length;
+		var done = 0;
+		var btn = $( 'rapm-lib-links' );
+		btn.disabled = true;
+		( function next() {
+			var batch = ids.splice( 0, 8 );
+			if ( ! batch.length ) {
+				say( T.linksDone );
+				setTimeout( function () { window.location.reload(); }, 600 );
+				return;
+			}
+			say( T.checkingLinks.replace( '%1$d', done ).replace( '%2$d', total ) );
+			post( { action: 'rapm_check_links', ids: batch } ).then( function ( res ) {
+				if ( ! res || ! res.success ) { throw new Error( T.failed ); }
+				done += batch.length;
+				next();
+			} ).catch( function () { btn.disabled = false; say( T.failed ); } );
+		} )();
+	}
+
 	function render() {
 		renderChips();
 		var list = filtered();
@@ -115,7 +165,7 @@
 			box.innerHTML = '<div class="rapm-lib-grid">' + list.map( function ( it ) {
 				return '<article class="rapm-lib-card' + ( sel[ it.id ] ? ' is-on' : '' ) + ( 'ended' === it.state ? ' is-ended' : '' ) + '" data-id="' + it.id + '" tabindex="0" aria-label="' + esc( it.name ) + '">' +
 					'<div class="rapm-lib-pic">' + pic( it ) + '<input type="checkbox" class="rapm-lib-sel" aria-label="' + esc( fmt( T.select, it.name ) ) + '"' + ( sel[ it.id ] ? ' checked' : '' ) + '>' +
-					( it.flags.length ? '<span class="rapm-lib-flag">' + esc( it.flags[ 0 ] ) + ( it.flags.length > 1 ? ' +' + ( it.flags.length - 1 ) : '' ) + '</span>' : '' ) + '</div>' +
+					( 'ready' !== it.ready && 'ended' !== it.state ? '<span class="rapm-lib-flag is-' + it.ready + '" title="' + esc( issues( it )[ 0 ].text ) + '">' + esc( 'fail' === it.ready ? T.problem : T.flags ) + ( issues( it ).length > 1 ? ' · ' + issues( it ).length : '' ) + '</span>' : '' ) + '</div>' +
 					'<div class="rapm-lib-body"><div class="rapm-lib-name">' + esc( it.name ) + '</div>' +
 					'<div class="rapm-lib-meta"><span class="rapm-lib-type">' + esc( it.type ) + '</span><span>' + esc( it.spotName ) + '</span></div>' +
 					'<div class="rapm-lib-meta"><span class="rapm-lib-pill is-' + it.state + '">' + esc( it.status ) + '</span><span>' + esc( it.when ) + '</span></div>' +
@@ -125,7 +175,7 @@
 			box.innerHTML = '<div class="rapm-lib-table-wrap"><table class="widefat striped rapm-lib-table"><thead><tr><td class="check-column"><input type="checkbox" id="rapm-lib-all" aria-label="' + esc( T.selectAll ) + '"></td><th></th><th>' + esc( T.colName ) + '</th><th>' + esc( T.colType ) + '</th><th>' + esc( T.colSpot ) + '</th><th>' + esc( T.colStatus ) + '</th><th>' + esc( T.colDates ) + '</th><th>' + esc( T.computer ) + '</th><th>' + esc( T.phone ) + '</th><th>' + esc( T.colSource ) + '</th><th>' + esc( T.altText ) + '</th></tr></thead><tbody>' +
 				list.map( function ( it ) {
 					return '<tr data-id="' + it.id + '"' + ( sel[ it.id ] ? ' class="is-on"' : '' ) + '><td class="check-column"><input type="checkbox" class="rapm-lib-sel" aria-label="' + esc( fmt( T.select, it.name ) ) + '"' + ( sel[ it.id ] ? ' checked' : '' ) + '></td>' +
-						'<td>' + pic( it ) + '</td><td><a href="#" class="rapm-lib-open"><strong>' + esc( it.name ) + '</strong></a>' + ( it.flags.length ? '<br><span class="rapm-lib-flagtext">' + esc( it.flags.join( ' · ' ) ) + '</span>' : '' ) + '</td>' +
+						'<td>' + pic( it ) + '</td><td><a href="#" class="rapm-lib-open"><strong>' + esc( it.name ) + '</strong></a>' + ( 'ready' !== it.ready && 'ended' !== it.state ? '<br><span class="rapm-lib-flagtext is-' + it.ready + '">' + esc( issues( it )[ 0 ].text ) + ( issues( it ).length > 1 ? ' (+' + ( issues( it ).length - 1 ) + ')' : '' ) + '</span>' : '' ) + '</td>' +
 						'<td>' + esc( it.type ) + '</td><td>' + esc( it.spotName ) + '</td><td><span class="rapm-lib-pill is-' + it.state + '">' + esc( it.status ) + '</span></td>' +
 						'<td class="rapm-lib-num">' + esc( ( it.start || '–' ).replace( 'T', ' ' ) ) + ' → ' + esc( ( it.end || '–' ).replace( 'T', ' ' ) ) + '</td>' +
 						'<td class="rapm-lib-num">' + ( it.design ? esc( T.designed ) : ( it.desk ? it.desk.w + '×' + it.desk.h + ' · ' + it.desk.kb + ' ' + esc( T.kb ) : '–' ) ) + '</td>' +
@@ -235,7 +285,12 @@
 			( it.needPhone || it.phone ? picRow( T.phone, it.phone, it.needPhone ) : '' ) +
 			'<dt>' + esc( T.comesFrom ) + '</dt><dd>' + esc( src ) + ( it.check ? ' <a class="button button-small" href="' + esc( it.check ) + '">' + esc( T.checkNow ) + '</a>' : '' ) + '</dd>' +
 			'<dt>' + esc( T.altText ) + '</dt><dd>' + ( it.alt ? esc( it.alt ) : '<span class="rapm-lib-flagtext">' + esc( T.noneYet ) + '</span>' ) + '</dd></dl></section>';
-		h += '<section><h3>' + esc( T.needsLook ) + '</h3>' + ( it.flags.length ? '<ul class="rapm-lib-flags">' + it.flags.map( function ( f ) { return '<li>' + esc( f ) + '</li>'; } ).join( '' ) + '</ul>' : '<p class="description">' + esc( T.allGood ) + '</p>' ) + '</section>';
+		// 1.49.0: Ready to go live, problems first, then things to know, then passes.
+		var order = { fail: 0, warn: 1, info: 2, pass: 3 };
+		var sorted = it.checks.slice().sort( function ( a, b ) { return order[ a.level ] - order[ b.level ]; } );
+		h += '<section><h3>' + esc( T.ready ) + ' <span class="rapm-lib-verdict is-' + it.ready + '">' + esc( 'fail' === it.ready ? T.problem : ( 'warn' === it.ready ? T.flags : T.readyAll ) ) + '</span></h3>' +
+			'<ul class="rapm-lib-checks">' + sorted.map( function ( c ) { return '<li class="is-' + c.level + '"><span class="rapm-lib-dot" aria-hidden="true"></span><span>' + esc( c.text ) + '</span></li>'; } ).join( '' ) + '</ul>' +
+			'<p class="description">' + esc( T.readyNote ) + '</p></section>';
 		h += '<section><h3>' + esc( T.whereShows ) + '</h3>' + ( it.pages.length ? '<ul>' + it.pages.map( function ( p ) { return '<li>' + ( p.url ? '<a href="' + esc( p.url ) + '" target="_blank" rel="noopener">' + esc( p.label ) + '</a>' : esc( p.label ) ) + '</li>'; } ).join( '' ) + '</ul>' : '<p class="description">' + esc( T.notPlaced ) + '</p>' ) +
 			( it.link ? '<p class="description">' + esc( T.linksTo ) + ': ' + esc( it.link ) + '</p>' : '' ) + '</section>';
 		h += '<section><h3>' + esc( T.history ) + '</h3><p>' + esc( T.lastSaved ) + ' ' + esc( it.saved ) + ( it.editor ? ' ' + esc( T.by ) + ' ' + esc( it.editor ) : '' ) + '<br>' + esc( T.created ) + ' ' + esc( it.created ) + '</p></section>';
@@ -321,6 +376,7 @@
 		if ( 'rapm-lib-close' === t.id || 'rapm-lib-drawer-bg' === t.id ) { closeDrawer(); return; }
 		if ( 'rapm-lib-replace' === t.id ) { var r = $( 'rapm-lib-replace-box' ); r.hidden = ! r.hidden; return; }
 		if ( 'rapm-lib-replace-go' === t.id ) { replacePicture(); return; }
+		if ( 'rapm-lib-links' === t.id ) { checkLinks(); return; }
 		var open = t.closest( '.rapm-lib-card, .rapm-lib-open' );
 		if ( open && ! t.closest( 'input' ) ) {
 			e.preventDefault();
@@ -334,5 +390,6 @@
 	} );
 
 	Array.prototype.forEach.call( root.querySelectorAll( '[data-view]' ), function ( b ) { b.setAttribute( 'aria-pressed', String( b.getAttribute( 'data-view' ) === view ) ); } );
+	renderGaps();
 	render();
 } )();

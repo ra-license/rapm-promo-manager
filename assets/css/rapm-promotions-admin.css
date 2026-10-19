@@ -224,3 +224,21 @@
 .rapm-lib-kv dt { color: #646970; }
 .rapm-lib-kv dd { margin: 0; overflow-wrap: anywhere; }
 .rapm-lib-flags { margin: 0 0 0 18px; list-style: disc; color: #8a5300; }
+
+/* "Ready to go live" (1.49.0). */
+.rapm-lib-flag.is-fail { background: #fbe8e7; color: #b0312f; }
+.rapm-lib-flagtext.is-fail { color: #b0312f; }
+.rapm-lib-verdict { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; margin-left: 6px; vertical-align: middle; background: #e6f4ec; color: #1d7a46; font-family: -apple-system, "Segoe UI", sans-serif; }
+.rapm-lib-verdict.is-warn { background: #fcf0d6; color: #8a5300; }
+.rapm-lib-verdict.is-fail { background: #fbe8e7; color: #b0312f; }
+.rapm-lib-checks { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.rapm-lib-checks li { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; }
+.rapm-lib-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex: none; background: #8c8f94; }
+.rapm-lib-checks .is-pass .rapm-lib-dot { background: #1d7a46; }
+.rapm-lib-checks .is-warn .rapm-lib-dot { background: #dba617; }
+.rapm-lib-checks .is-fail .rapm-lib-dot { background: #b0312f; }
+.rapm-lib-checks .is-info .rapm-lib-dot { background: #2271b1; }
+.rapm-lib-gaps { background: #fcf9e8; border: 1px solid #dba617; border-radius: 6px; padding: 10px 14px; }
+.rapm-lib-gaps[hidden] { display: none; }
+.rapm-lib-gaps h3 { margin: 0 0 6px; font-size: 14px; }
+.rapm-lib-gaps ul { margin: 0 0 0 18px; list-style: disc; display: grid; gap: 4px; font-size: 13px; }
