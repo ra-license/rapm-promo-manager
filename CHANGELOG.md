@@ -46,6 +46,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - Bring forward with the piece staying picked.
     - Hide and lock.
     - A real mouse drag that snapped to the middle.
+- **Installed on staging (2026-10-19):** the promotion box form shows Undo/Redo and the forward, back, hide and lock buttons for each piece. Nothing was saved there. Not yet in production.
 
 ---
 
