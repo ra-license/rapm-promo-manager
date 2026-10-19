@@ -28,6 +28,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - A bad security code is refused.
     - HTML in a name is stripped.
     - A missing picture is dropped from a template.
+- **Installed on staging (2026-10-19):** the Brand kit tab shows ABC's 10 Elementor colors as linked, and the three starters use ABC's green and red. No errors. The kit was left empty for Phil to try.
+- **Pushed to the production repo (2026-10-19)** with Phil's OK: main and the tag `v1.50.0`.
 
 ---
 
