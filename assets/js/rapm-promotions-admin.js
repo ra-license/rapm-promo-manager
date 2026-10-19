@@ -270,7 +270,10 @@
 			cols: form.querySelector( 'select[name="cols"]' ).value,
 			side: form.querySelector( 'select[name="side"]' ).value,
 			phone: form.querySelector( 'select[name="phone"]' ).value,
-			width: form.querySelector( 'select[name="width"]' ).value
+			width: form.querySelector( 'select[name="width"]' ).value,
+			// 1.52.0: how the promotion box changes.
+			box: ( form.querySelector( 'input[name="box"]:checked' ) || { value: 'still' } ).value,
+			every: form.querySelector( 'select[name="every"]' ).value
 		} ).then( function ( res ) {
 			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
 			// Split changes the picture size the slider asks for and adds
@@ -280,6 +283,33 @@
 			button.disabled = false;
 			say( section, T.saveFailed );
 		} );
+	} );
+
+	/* ---- Linked groups: "Goes with" on a room photo (1.52.0) ---------------- */
+
+	root.addEventListener( 'change', function ( e ) {
+		var sel = e.target;
+		if ( ! sel.hasAttribute || ! sel.hasAttribute( 'data-goes' ) ) { return; }
+		var card    = sel.closest( '.rapm-card' );
+		var section = sel.closest( '.rapm-spot' );
+		var opt     = sel.options[ sel.selectedIndex ];
+		sel.disabled = true;
+		say( section, T.saving );
+		post( { action: 'rapm_goes_with', nonce: cfg.nonce, id: sel.getAttribute( 'data-goes' ), box: sel.value } ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
+			card.style.setProperty( '--rapm-group', opt.getAttribute( 'data-color' ) );
+			var issue = card.querySelector( '.rapm-goes-ended' );
+			if ( issue ) { issue.remove(); }
+			// Recount each promotion's photos from the menus.
+			Array.prototype.forEach.call( section.querySelectorAll( '[data-group]' ), function ( p ) {
+				var n = section.querySelectorAll( 'select[data-goes]' );
+				var count = Array.prototype.filter.call( n, function ( s ) { return s.value === p.getAttribute( 'data-group' ); } ).length;
+				p.textContent = ( 1 === count ? T.goesOne : T.goesMany ).replace( '%d', count );
+			} );
+			say( section, T.goesSaved );
+		} ).catch( function () {
+			say( section, T.saveFailed );
+		} ).then( function () { sel.disabled = false; } );
 	} );
 
 	/* ---- Design Center: "Turn on split view" (1.46.0) ----------------------- */

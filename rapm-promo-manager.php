@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.51.1
+ * Version: 1.52.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.51.1' );
+define( 'RAPM_VERSION', '1.52.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -85,6 +85,7 @@ final class RAPM_Plugin {
 		add_action( 'wp_ajax_rapm_toggle_asset', array( 'RAPM_Promotions_Screen', 'ajax_toggle' ) );
 		add_action( 'wp_ajax_rapm_rename_spot', array( 'RAPM_Promotions_Screen', 'ajax_rename' ) );
 		add_action( 'wp_ajax_rapm_save_layout', array( 'RAPM_Promotions_Screen', 'ajax_save_layout' ) );
+		add_action( 'wp_ajax_rapm_goes_with', array( 'RAPM_Promotions_Screen', 'ajax_goes_with' ) );
 		add_action( 'wp_ajax_rapm_library_bulk', array( 'RAPM_Library', 'ajax_bulk' ) );
 		add_action( 'wp_ajax_rapm_library_replace', array( 'RAPM_Library', 'ajax_replace' ) );
 		add_action( 'wp_ajax_rapm_check_links', array( 'RAPM_Ready', 'ajax_check_links' ) );

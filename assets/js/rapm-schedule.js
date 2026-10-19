@@ -75,6 +75,12 @@
 		var allSlides  = Array.prototype.slice.call( wrapper.querySelectorAll( '.swiper-slide' ) );
 		var instance   = null;
 		var max        = Math.max( 0, parseInt( options.max, 10 ) || 0 );
+		// 1.52.0: a split slider can set root.rapmArrange( slides ) to
+		// choose the play order (linked groups). It may return copies of a
+		// slide (a photo that plays in every group); those are kept here so
+		// the next build removes them.
+		var extras     = [];
+		var lastSig    = null;
 
 		// 1.41.1: a picture-only slide shows its whole phone picture with a
 		// blurred copy of it filling the sides (rapm-hero.css). The copy is
@@ -100,7 +106,25 @@
 		// started yet (or has ended) never takes up one of the spots.
 		function shownSlides() {
 			var active = allSlides.filter( isActive );
-			return max ? active.slice( 0, max ) : active;
+			active = max ? active.slice( 0, max ) : active;
+			return 'function' === typeof root.rapmArrange ? root.rapmArrange( active ) : active;
+		}
+
+		// What's playing, to tell whether anything changed.
+		function sig( list ) {
+			return list.map( function ( s ) { return ( s.getAttribute( 'data-rapm-key' ) || '' ) + '@' + ( s.getAttribute( 'data-rapm-pair' ) || '' ); } ).join( ',' );
+		}
+
+		// 1.52.0: tells the split view which slide is showing.
+		function announce( slide, index ) {
+			var ev;
+			try {
+				ev = new CustomEvent( 'rapm:slide', { detail: { slide: slide || null, index: index || 0 } } );
+			} catch ( e ) {
+				ev = document.createEvent( 'CustomEvent' );
+				ev.initCustomEvent( 'rapm:slide', false, false, { slide: slide || null, index: index || 0 } );
+			}
+			root.dispatchEvent( ev );
 		}
 
 		function build() {
@@ -115,13 +139,16 @@
 				instance = null;
 			}
 
-			allSlides.forEach( function ( s ) {
+			allSlides.concat( extras ).forEach( function ( s ) {
 				if ( s.parentNode === wrapper ) { wrapper.removeChild( s ); }
 			} );
 			var active = shownSlides();
+			extras = active.filter( function ( s ) { return -1 === allSlides.indexOf( s ); } );
+			lastSig = sig( active );
 
 			if ( 0 === active.length ) {
 				root.style.display = 'none';
+				announce( null, 0 );
 				return;
 			}
 			active.forEach( function ( s ) { wrapper.appendChild( s ); } );
@@ -130,6 +157,7 @@
 
 			var SwiperClass = swiperClass();
 			if ( typeof SwiperClass === 'undefined' ) {
+				announce( active[ 0 ], 0 );
 				return; // Not loaded yet (e.g. delayed by a JS optimizer) — slides stay visible as a static stack.
 			}
 
@@ -169,8 +197,15 @@
 
 			instance = new SwiperClass( selector, config );
 			liveCarousels.push( instance );
+			var current = instance;
+			current.on( 'slideChange', function () {
+				if ( current.destroyed ) { return; }
+				announce( current.slides[ current.activeIndex ], current.realIndex );
+			} );
+			announce( current.slides[ current.activeIndex ], current.realIndex );
 		}
 
+		root.rapmRebuild = build;
 		build();
 
 		// Re-check periodically so a scheduled asset can appear or
@@ -182,12 +217,11 @@
 		// in the wrapper: Swiper 8 adds copies of the slides in loop mode,
 		// and counting those (before 1.27.1) rebuilt the carousel every
 		// minute even when nothing had changed.
+		// 1.52.0: compares what would play (keys, and each one's linked
+		// promotion) with what is playing, since a linked group can change
+		// when only its promotion starts or ends.
 		setInterval( function () {
-			var stillShown     = shownSlides();
-			var currentlyShown = allSlides.filter( function ( s ) { return s.parentNode === wrapper; } ).length;
-			var changed = stillShown.length !== currentlyShown ||
-				stillShown.some( function ( s ) { return s.parentNode !== wrapper; } );
-			if ( changed ) { build(); }
+			if ( sig( shownSlides() ) !== lastSig ) { build(); }
 		}, 60000 );
 	}
 
@@ -297,5 +331,139 @@
 		return build;
 	}
 
-	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots };
+	/**
+	 * A split slider's promotion box, or [rapm_promo_box] on its own
+	 * (RAPM_Split). Moved here from an inline script in 1.52.0: WordPress
+	 * rewrites "&&" in a page's own content to "&#038;&#038;", which broke
+	 * the inline copy wherever the slider's code was typed into a page
+	 * rather than an Elementor widget. Runs for every .rapm-split and
+	 * .rapm-pb-solo on the page, once each.
+	 *
+	 * Shows the first live promotion and hides the rest, checking again
+	 * every minute (watch). With none live, the box hides and the Slider
+	 * takes the full width; Swiper is told to measure again.
+	 *
+	 * 1.52.0: with "Changes with its room photos" (linked), the room slider
+	 * plays, for each live promotion in order, the photos that go with it
+	 * and then the "Any promotion" photos (copies, after the first group),
+	 * each marked with data-rapm-pair; photos of a promotion that isn't live
+	 * drop out. The box shows the promotion paired with the slide that's
+	 * showing. With "Rotates on its own" (timer), it moves to the next live
+	 * promotion every few room photos. Either way the box changes at the
+	 * same moment as the photo, with a short fade.
+	 */
+	function split( wrap ) {
+		if ( ! wrap || wrap.rapmSplit ) { return; }
+		wrap.rapmSplit = true;
+		var box = wrap && wrap.querySelector( '[data-rapm-pb]' );
+		if ( ! box ) { return; }
+		// Full page width: the page's width without the scrollbar,
+		// which 100vw would include (as in rapm-looks.js).
+		var isFull = wrap.classList.contains( 'is-full' );
+		var main = wrap.querySelector( '.rapm-split-main' );
+		// 1.43.2 (Phil, on staging at 1903px wide): a 4:3 room
+		// in a wide column ran past the bottom of the screen. On
+		// computers the room is kept within the screen below
+		// where the block starts (the header), when it starts in
+		// the first screen, but never less than half as tall as
+		// its column is wide. rapm-hero.css trims the photos
+		// evenly top and bottom to that height.
+		var size = function () {
+			if ( ! main ) { return; } // [rapm_promo_box] on its own has no room photos.
+			if ( isFull ) { wrap.style.setProperty( '--rapm-split-vw', document.documentElement.clientWidth + 'px' ); }
+			var top = wrap.getBoundingClientRect().top + ( window.pageYOffset || document.documentElement.scrollTop || 0 );
+			var screenH = window.innerHeight;
+			var room = screenH - ( top < screenH * 0.6 ? top : 0 );
+			wrap.style.setProperty( '--rapm-split-maxh', Math.round( Math.max( room, main.clientWidth / 2 ) ) + 'px' );
+		};
+		size();
+		var sizing = 0;
+		window.addEventListener( 'resize', function () {
+			if ( sizing ) { return; }
+			sizing = 1;
+			window.requestAnimationFrame( function () { size(); sizing = 0; } );
+		} );
+		var mode = wrap.getAttribute( 'data-rapm-box-mode' ) || 'still';
+		var every = parseInt( wrap.getAttribute( 'data-rapm-box-every' ), 10 ) || 3;
+		var items = Array.prototype.slice.call( box.querySelectorAll( '.rapm-pb-item' ) );
+		var keyOf = function ( el ) { return el ? el.getAttribute( 'data-rapm-key' ) : ''; };
+		var shown = null;
+		var empty = null;
+		// Shows one promotion (or none), fading it in when it changes.
+		var show = function ( item ) {
+			if ( item === shown && null !== empty ) { return; }
+			var had = shown;
+			shown = item || null;
+			items.forEach( function ( el ) {
+				el.hidden = el !== shown;
+				el.classList.remove( 'is-in' );
+			} );
+			if ( shown && had && shown !== had ) {
+				void shown.offsetWidth; // restart the fade
+				shown.classList.add( 'is-in' );
+			}
+			if ( empty !== ! shown ) {
+				empty = ! shown;
+				wrap.classList.toggle( 'rapm-split-empty', empty );
+				window.dispatchEvent( new Event( 'resize' ) );
+			}
+		};
+		var carousel = 'still' === mode ? null : wrap.querySelector( '.rapm-split-main [data-rapm-carousel]' );
+		if ( ! carousel ) {
+			watch( box, '.rapm-pb-item', function ( active ) { show( active[ 0 ] ); } );
+		} else {
+			var liveItems = function () { return items.filter( isActive ); };
+			if ( 'linked' === mode ) {
+				carousel.rapmArrange = function ( slides ) {
+					var keys = items.map( keyOf );
+					var live = liveItems();
+					var anyPhotos = slides.filter( function ( s ) {
+						var g = s.getAttribute( 'data-rapm-goes' );
+						return ! g || -1 === keys.indexOf( g );
+					} );
+					var out = [];
+					var used = [];
+					live.forEach( function ( item ) {
+						var k = keyOf( item );
+						slides.filter( function ( s ) { return s.getAttribute( 'data-rapm-goes' ) === k; } ).concat( anyPhotos ).forEach( function ( s ) {
+							var el = -1 === used.indexOf( s ) ? s : s.cloneNode( true );
+							used.push( s );
+							el.setAttribute( 'data-rapm-pair', k );
+							out.push( el );
+						} );
+					} );
+					if ( ! live.length ) {
+						anyPhotos.forEach( function ( s ) { s.removeAttribute( 'data-rapm-pair' ); out.push( s ); } );
+					}
+					return out;
+				};
+			}
+			carousel.addEventListener( 'rapm:slide', function ( e ) {
+				var slide = e.detail && e.detail.slide;
+				if ( 'linked' === mode ) {
+					var pair = slide ? slide.getAttribute( 'data-rapm-pair' ) : '';
+					show( pair ? items.filter( function ( el ) { return keyOf( el ) === pair; } )[ 0 ] : null );
+				} else {
+					var live = liveItems();
+					show( live.length ? live[ Math.floor( ( e.detail.index || 0 ) / every ) % live.length ] : null );
+				}
+			} );
+			// The slider may already be running (it starts first on
+			// the page): build it again with the new order.
+			if ( carousel.rapmRebuild ) { carousel.rapmRebuild(); }
+		}
+	}
+
+	function splitAll() {
+		Array.prototype.forEach.call( document.querySelectorAll( '.rapm-split, .rapm-pb-solo' ), split );
+	}
+	if ( 'loading' === document.readyState ) {
+		document.addEventListener( 'DOMContentLoaded', splitAll );
+	} else {
+		splitAll();
+	}
+	window.addEventListener( 'load', splitAll );
+	window.addEventListener( 'elementor/popup/show', splitAll );
+
+	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split };
 } )( window );

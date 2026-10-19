@@ -51,7 +51,30 @@ class RAPM_Split {
 			// page width. 'content' keeps it inside, for a spot placed in a
 			// column.
 			'width' => isset( $spot['split_width'] ) && 'content' === $spot['split_width'] ? 'content' : 'full',
+			// 1.52.0 (linked groups, from the mockup Phil approved on
+			// 2026-10-19, https://claude.ai/artifact/B9qJbi9tZoivL7H2STS1ax):
+			// how the promotion box changes. 'still' shows the first live
+			// one (as before, and the default); 'linked' plays each live
+			// promotion with the room photos that go with it, then the
+			// next; 'timer' changes it every `every` room photos.
+			'box'   => isset( $spot['split_box'] ) && in_array( $spot['split_box'], array( 'linked', 'timer' ), true ) ? $spot['split_box'] : 'still',
+			'every' => isset( $spot['split_every'] ) && in_array( (int) $spot['split_every'], array( 2, 4 ), true ) ? (int) $spot['split_every'] : 3,
 		);
+	}
+
+	/** Group colors (1.52.0), in the promotion box's order, for the Design Center's stripes. */
+	const GROUP_COLORS = array( '#d9a42b', '#4f86c6', '#2f9e6e', '#c0504d', '#8a63c8', '#d9822b', '#3aa6b9', '#b5577e' );
+
+	/**
+	 * The promotion box promotion a room photo goes with (1.52.0), or 0 for
+	 * "Any promotion". Only an ID of a promotion box in the same spot counts.
+	 */
+	public static function goes_with( $asset_id ) {
+		$box = (int) get_post_meta( $asset_id, '_rapm_goes_with', true );
+		if ( ! $box || 'promo_box' !== get_post_meta( $box, '_rapm_kind', true ) || get_post_meta( $box, '_rapm_placement', true ) !== get_post_meta( $asset_id, '_rapm_placement', true ) ) {
+			return 0;
+		}
+		return $box;
 	}
 
 	public static function is_split( $placement ) {
@@ -78,11 +101,11 @@ class RAPM_Split {
 		$classes = 'rapm-split rapm-split-promo-' . $s['side'] . ( 'room' === $s['phone'] ? ' rapm-split-room-first' : '' ) . ( 'full' === $s['width'] ? ' is-full' : '' );
 		ob_start();
 		?>
-		<div class="<?php echo esc_attr( $classes ); ?>" id="<?php echo esc_attr( $id ); ?>" style="--rapm-split-cols:<?php echo esc_attr( $cols ); ?>;--rapm-pb-ratio:<?php echo esc_attr( (int) $slot['width'] . ' / ' . (int) $slot['height'] ); ?>;">
+		<div class="<?php echo esc_attr( $classes ); ?>" id="<?php echo esc_attr( $id ); ?>" data-rapm-box-mode="<?php echo esc_attr( $s['box'] ); ?>" data-rapm-box-every="<?php echo (int) $s['every']; ?>" style="--rapm-split-cols:<?php echo esc_attr( $cols ); ?>;--rapm-pb-ratio:<?php echo esc_attr( (int) $slot['width'] . ' / ' . (int) $slot['height'] ); ?>;">
 			<div class="rapm-split-main"><?php echo $carousel_html; // phpcs:ignore WordPress.Security.EscapeOutput -- built and escaped by RAPM_Hero_Carousel. ?></div>
 			<div class="rapm-split-side"><?php echo $box; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in render_box(). ?></div>
 		</div>
-		<?php self::print_script( $id ); ?>
+		<?php // The box's script is in rapm-schedule.js (1.52.0), which finds every .rapm-split itself. ?>
 		<?php
 		return ob_get_clean();
 	}
@@ -102,7 +125,6 @@ class RAPM_Split {
 		?>
 		<div class="rapm-pb-solo" id="<?php echo esc_attr( $id ); ?>" style="aspect-ratio:<?php echo esc_attr( (int) $slot['width'] . ' / ' . (int) $slot['height'] ); ?>;"><?php echo $box; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in render_box(). ?></div>
 		<?php
-		self::print_script( $id );
 		return ob_get_clean();
 	}
 
@@ -481,64 +503,4 @@ class RAPM_Split {
 		return ob_get_clean();
 	}
 
-	/**
-	 * Shows the first live promotion and hides the rest, checking again
-	 * every minute (RAPM_Schedule.watch). With none live, the box hides and
-	 * the Slider takes the full width; Swiper is told to measure again.
-	 */
-	private static function print_script( $id ) {
-		?>
-		<script>
-			( function () {
-				var waited = false;
-				function init() {
-					if ( typeof RAPM_Schedule === 'undefined' ) {
-						if ( ! waited ) { waited = true; window.addEventListener( 'load', init ); }
-						return;
-					}
-					var wrap = document.getElementById( <?php echo wp_json_encode( $id ); ?> );
-					var box = wrap && wrap.querySelector( '[data-rapm-pb]' );
-					if ( ! box ) { return; }
-					// Full page width: the page's width without the scrollbar,
-					// which 100vw would include (as in rapm-looks.js).
-					var isFull = wrap.classList.contains( 'is-full' );
-					var main = wrap.querySelector( '.rapm-split-main' );
-					// 1.43.2 (Phil, on staging at 1903px wide): a 4:3 room
-					// in a wide column ran past the bottom of the screen. On
-					// computers the room is kept within the screen below
-					// where the block starts (the header), when it starts in
-					// the first screen, but never less than half as tall as
-					// its column is wide. rapm-hero.css trims the photos
-					// evenly top and bottom to that height.
-					var size = function () {
-						if ( isFull ) { wrap.style.setProperty( '--rapm-split-vw', document.documentElement.clientWidth + 'px' ); }
-						var top = wrap.getBoundingClientRect().top + ( window.pageYOffset || document.documentElement.scrollTop || 0 );
-						var screenH = window.innerHeight;
-						var room = screenH - ( top < screenH * 0.6 ? top : 0 );
-						wrap.style.setProperty( '--rapm-split-maxh', Math.round( Math.max( room, main.clientWidth / 2 ) ) + 'px' );
-					};
-					size();
-					var sizing = 0;
-					window.addEventListener( 'resize', function () {
-						if ( sizing ) { return; }
-						sizing = 1;
-						window.requestAnimationFrame( function () { size(); sizing = 0; } );
-					} );
-					RAPM_Schedule.watch( box, '.rapm-pb-item', function ( active ) {
-						Array.prototype.forEach.call( box.querySelectorAll( '.rapm-pb-item' ), function ( item ) {
-							item.hidden = item !== active[ 0 ];
-						} );
-						wrap.classList.toggle( 'rapm-split-empty', ! active.length );
-						window.dispatchEvent( new Event( 'resize' ) );
-					} );
-				}
-				if ( document.readyState === 'loading' ) {
-					document.addEventListener( 'DOMContentLoaded', init );
-				} else {
-					init();
-				}
-			} )();
-		</script>
-		<?php
-	}
 }

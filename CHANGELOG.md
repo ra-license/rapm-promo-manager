@@ -4,6 +4,42 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.52.0
+
+**New: room photos linked to promotions in a split slider.** Built to the mockup Phil approved (https://claude.ai/artifact/B9qJbi9tZoivL7H2STS1ax), his choice "B+A". It started from his report on staging: with two promotion box promotions live, only the room photos rotated. That was by design (the box showed only the first live promotion), not a bug.
+- **New Layout setting, "Promotion box"**, for each split slider:
+  - **Changes with its room photos (linked):** each live promotion, in card order, plays with the room photos that go with it and then the "Any promotion" photos. Then the box moves to the next promotion.
+  - **Rotates on its own:** the box moves to the next live promotion every 2, 3 or 4 room photos, at the same moment as a photo change.
+  - **Stays put:** the first live promotion, as before.
+  - Existing sliders keep "Stays put" (the default isn't stored), so no live site changes until someone picks another option.
+- **"Goes with" on each room photo** (Design Center, linked sliders):
+  - The choices are Any promotion or one of the slider's promotions. Choices save right away, and only to a promotion in the same slider.
+  - Cards get a color stripe per promotion; colors follow the box's order, so they don't shift when one ends.
+  - Each promotion's card says how many room photos go with it.
+- **Dates:**
+  - A group plays only while its promotion is live. Its photos stop with it, even without their own end date.
+  - Their cards say "Not playing: the promotion it goes with has ended", and the promotion's card counts the photos that stopped.
+  - The Ready check warns about each one.
+  - A link to a promotion that was deleted or moved counts as "Any promotion".
+- **On the website:**
+  - The box changes at the same moment as the photo, fading in over half a second (instant for visitors who ask for less motion).
+  - "Any promotion" photos play inside every group; after the first group they're copies of the slide.
+  - As before, what's live is worked out in the visitor's browser, so groups start and stop on time behind a page cache, rechecked every minute.
+  - The slider (`rapm-schedule.js`) now lets the split view set the play order, and says which slide is showing.
+- **Fix, found while testing: the box's script moved into `rapm-schedule.js`.**
+  - **Root cause:** the box's script was printed inline. On a page where the slider's code is typed into the page's own content (not an Elementor widget), WordPress rewrites `&&` to `&#038;&#038;`, which breaks the script. Earlier tests used Elementor pages, so it didn't show.
+  - **Fix:** the script now lives in the plugin's script file and finds every split slider and `[rapm_promo_box]` itself, so nothing is left for WordPress to rewrite.
+  - A `[rapm_promo_box]` on its own no longer runs the room-height code that only applies to split sliders.
+- **Tested in WordPress Playground with Elementor**, on a regular (non-Elementor) page with two promotions and five room photos (two each, one "Any"):
+  - **Linked:** Y1, Y2 and Any beside Fall Savings; then B1, B2 and Any beside Test; then it repeats.
+  - **With Fall Savings ended:** only B1, B2 and Any beside Test.
+  - **Rotates on its own, every 2:** the box changes after every 2 photos.
+  - **Stays put:** Fall Savings throughout.
+  - **Saving:** the Layout setting and "Goes with" save, and a link to a promotion outside the slider is refused (400).
+  - **Design Center:** stripes, counts and ended notes are drawn. The Ready warning shows in linked mode only.
+
+---
+
 ## 1.51.1
 
 **Easier to work in the canvas, and the Design Center shows the pages each spot is on.** Both requested by Phil on 2026-10-19 after trying 1.51.0 on staging ("It's hard to navigate").

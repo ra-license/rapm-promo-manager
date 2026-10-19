@@ -246,3 +246,12 @@
 .rapm-spot-page { display: block; margin-top: 2px; }
 .rapm-spot-path { font-size: 12px; padding: 1px 5px; }
 .rapm-spot-note { color: #996800; }
+/* 1.52.0: linked groups in a split slider. */
+.rapm-layout-box { display: grid; gap: 6px; margin: 10px 0 6px; border: 0; padding: 0; }
+.rapm-layout-box legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+.rapm-layout-box label { display: block; }
+.rapm-layout-box .description { margin-left: 4px; }
+.rapm-card.has-group { border-top: 5px solid var(--rapm-group); }
+.rapm-goes { display: grid; gap: 2px; margin-top: 8px; font-size: 12px; color: #50575e; }
+.rapm-goes select { width: 100%; max-width: 100%; font-size: 13px; }
+.rapm-goes-count { margin: 6px 0 0; font-size: 12px; color: #50575e; }

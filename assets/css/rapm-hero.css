@@ -268,6 +268,10 @@
 .rapm-pb-solo { position: relative; width: 100%; }
 .rapm-pb-item { position: absolute; inset: 0; overflow: hidden; }
 .rapm-pb-item[hidden] { display: none; }
+/* 1.52.0: a promotion fades in when the box changes to it (linked or rotating box). */
+.rapm-pb-item.is-in { animation: rapm-pb-in 0.5s ease both; }
+@keyframes rapm-pb-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .rapm-pb-item.is-in { animation: none; } }
 /* Scoped like .rapm-slide-img, so a theme's img rules can't outrank it. */
 .rapm-pb .rapm-pb-item .rapm-pb-img {
 	position: absolute;

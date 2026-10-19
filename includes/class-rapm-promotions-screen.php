@@ -240,6 +240,10 @@ class RAPM_Promotions_Screen {
 					'nameSaved'   => __( 'Name saved.', 'rapm' ),
 					'noResults'   => __( 'No promotions match “%s”.', 'rapm' ),
 					'confirmRemove' => __( 'Remove "%s"? It has no promotions and isn\'t on any page.', 'rapm' ),
+					// 1.52.0: linked groups.
+					'goesSaved'   => __( 'Saved. It plays with that promotion now.', 'rapm' ),
+					'goesOne'     => __( '%d room photo goes with it', 'rapm' ),
+					'goesMany'    => __( '%d room photos go with it', 'rapm' ),
 				),
 			)
 		);
@@ -909,15 +913,15 @@ class RAPM_Promotions_Screen {
 	}
 
 	/** One area's cards, Add card and "Show ended" button (1.44.1, split sliders). */
-	private static function render_area_grid( $live, $ended, $min, $ratio, $add_url, $add_label ) {
+	private static function render_area_grid( $live, $ended, $min, $ratio, $add_url, $add_label, $links = null ) {
 		?>
 		<div class="rapm-grid" style="<?php echo esc_attr( '--rapm-min:' . $min . 'px;--rapm-ratio:' . $ratio ); ?>">
 			<?php
 			foreach ( $live as $item ) {
-				self::render_card( $item[0], $item[1] );
+				self::render_card( $item[0], $item[1], $links );
 			}
 			foreach ( $ended as $item ) {
-				self::render_card( $item[0], $item[1] );
+				self::render_card( $item[0], $item[1], $links );
 			}
 			?>
 			<a class="rapm-add" href="<?php echo esc_url( $add_url ); ?>">
@@ -961,6 +965,28 @@ class RAPM_Promotions_Screen {
 		);
 		$room_side = 'left' === $s['side'] ? __( 'right', 'rapm' ) : __( 'left', 'rapm' );
 		$box_side  = 'left' === $s['side'] ? __( 'left', 'rapm' ) : __( 'right', 'rapm' );
+		// 1.52.0: linked groups. Each promotion gets a color in box order;
+		// each room photo says which one it goes with.
+		$linked = 'linked' === $s['box'];
+		$groups = array();
+		// Colors follow the box's own order, so one never changes color
+		// when another promotion ends.
+		foreach ( $box['posts'] as $n => $bp ) {
+			$groups[ $bp->ID ] = array(
+				'label' => '' !== get_the_title( $bp ) ? wp_strip_all_tags( html_entity_decode( get_the_title( $bp ), ENT_QUOTES, 'UTF-8' ) ) : __( '(no name)', 'rapm' ),
+				'color' => RAPM_Split::GROUP_COLORS[ $n % count( RAPM_Split::GROUP_COLORS ) ],
+				'ended' => 'ended' === self::describe( $bp )['state'],
+				'count' => 0,
+			);
+		}
+		foreach ( $spot['posts'] as $post ) {
+			$g = RAPM_Split::goes_with( $post->ID );
+			if ( $g && isset( $groups[ $g ] ) ) {
+				$groups[ $g ]['count']++;
+			}
+		}
+		$room_links = $linked ? array( 'type' => 'room', 'groups' => $groups ) : null;
+		$box_links  = $linked ? array( 'type' => 'box', 'groups' => $groups ) : null;
 		?>
 		<div class="rapm-split-areas<?php echo 'left' === $s['side'] ? ' is-promo-left' : ''; ?>" style="<?php echo esc_attr( '--rapm-areas:' . $cols ); ?>">
 			<div class="rapm-split-area" data-area="hero">
@@ -974,7 +1000,7 @@ class RAPM_Promotions_Screen {
 					echo esc_html( sprintf( __( 'Take turns on the %1$s. Computer pictures are %2$d by %3$d. Drag to change the order.', 'rapm' ), $room_side, (int) $room['width'], (int) $room['height'] ) );
 					?>
 				</p>
-				<?php self::render_area_grid( $live, $ended, $min, $ratio, $add_url, __( 'Add a room photo', 'rapm' ) ); ?>
+				<?php self::render_area_grid( $live, $ended, $min, $ratio, $add_url, __( 'Add a room photo', 'rapm' ), $room_links ); ?>
 			</div>
 			<div class="rapm-split-area" data-area="promo_box">
 				<div class="rapm-split-area-head">
@@ -983,11 +1009,20 @@ class RAPM_Promotions_Screen {
 				</div>
 				<p class="description">
 					<?php
-					/* translators: 1: left or right, 2: width in pixels, 3: height in pixels */
-					echo esc_html( sprintf( __( 'Stays put on the %1$s. Shows the first one that is on and within its dates; with none, the room photos go full width. Design it here, or use a finished %2$d by %3$d graphic.', 'rapm' ), $box_side, (int) $pic['width'], (int) $pic['height'] ) );
+					$how = array(
+						/* translators: %s: left or right */
+						'still'  => __( 'On the %s. Shows the first one that is on and within its dates (set how it changes in the Layout above).', 'rapm' ),
+						/* translators: %s: left or right */
+						'linked' => __( 'On the %s. Each one plays with the room photos that go with it, in this order, then the next.', 'rapm' ),
+						/* translators: %s: left or right */
+						'timer'  => __( 'On the %s. Takes turns, moving to the next one every few room photos, in this order.', 'rapm' ),
+					);
+					echo esc_html( sprintf( $how[ $s['box'] ], $box_side ) . ' ' );
+					/* translators: 1: width in pixels, 2: height in pixels */
+					echo esc_html( sprintf( __( 'With none showing, the room photos go full width. Design it here, or use a finished %1$d by %2$d graphic.', 'rapm' ), (int) $pic['width'], (int) $pic['height'] ) );
 					?>
 				</p>
-				<?php self::render_area_grid( $box_live, $box_ended, self::CARD_MIN['promo_box'], (int) $pic['width'] . ' / ' . (int) $pic['height'], $box_add, __( 'Add a promotion', 'rapm' ) ); ?>
+				<?php self::render_area_grid( $box_live, $box_ended, self::CARD_MIN['promo_box'], (int) $pic['width'] . ' / ' . (int) $pic['height'], $box_add, __( 'Add a promotion', 'rapm' ), $box_links ); ?>
 			</div>
 		</div>
 		<?php
@@ -1040,6 +1075,18 @@ class RAPM_Promotions_Screen {
 						<option value="room"<?php selected( $s['phone'], 'room' ); ?>><?php esc_html_e( 'The room photos', 'rapm' ); ?></option>
 					</select>
 				</label>
+				<?php // 1.52.0: how the promotion box changes. ?>
+				<fieldset class="rapm-layout-box">
+					<legend><?php esc_html_e( 'Promotion box', 'rapm' ); ?></legend>
+					<label><input type="radio" name="box" value="linked"<?php checked( $s['box'], 'linked' ); ?> /> <strong><?php esc_html_e( 'Changes with its room photos', 'rapm' ); ?></strong> <span class="description"><?php esc_html_e( 'Each promotion plays with the room photos that go with it (set on each photo below), then the next one.', 'rapm' ); ?></span></label>
+					<label><input type="radio" name="box" value="timer"<?php checked( $s['box'], 'timer' ); ?> /> <strong><?php esc_html_e( 'Rotates on its own', 'rapm' ); ?></strong> <span class="description"><?php esc_html_e( 'Moves to the next promotion every', 'rapm' ); ?>
+						<select name="every" aria-label="<?php esc_attr_e( 'Room photos per promotion', 'rapm' ); ?>">
+							<?php foreach ( array( 2, 3, 4 ) as $n ) : ?>
+								<option value="<?php echo (int) $n; ?>"<?php selected( $s['every'], $n ); ?>><?php echo esc_html( sprintf( /* translators: %d: number of room photos */ __( '%d room photos', 'rapm' ), $n ) ); ?></option>
+							<?php endforeach; ?>
+						</select></span></label>
+					<label><input type="radio" name="box" value="still"<?php checked( $s['box'], 'still' ); ?> /> <strong><?php esc_html_e( 'Stays put', 'rapm' ); ?></strong> <span class="description"><?php esc_html_e( 'Shows the first promotion that is on and within its dates.', 'rapm' ); ?></span></label>
+				</fieldset>
 				<p class="description">
 					<?php
 					/* translators: 1: width in pixels, 2: height in pixels */
@@ -1067,22 +1114,26 @@ class RAPM_Promotions_Screen {
 		$phone = isset( $_POST['phone'] ) && 'room' === $_POST['phone'] ? 'room' : 'promo';
 		$width = isset( $_POST['width'] ) && 'content' === $_POST['width'] ? 'content' : 'full';
 		// Defaults aren't stored, so a spot left at them follows any later change of default.
-		RAPM_Spots::update(
-			'hero',
-			$placement,
-			array(
-				'split'       => $split ? 1 : null,
-				'split_cols'  => isset( RAPM_Split::COLS[ $cols ] ) && '60-40' !== $cols ? $cols : null,
-				'split_side'  => 'left' === $side ? 'left' : null,
-				'split_phone' => 'room' === $phone ? 'room' : null,
-				'split_width' => 'content' === $width ? 'content' : null,
-			)
+		$fields = array(
+			'split'       => $split ? 1 : null,
+			'split_cols'  => isset( RAPM_Split::COLS[ $cols ] ) && '60-40' !== $cols ? $cols : null,
+			'split_side'  => 'left' === $side ? 'left' : null,
+			'split_phone' => 'room' === $phone ? 'room' : null,
+			'split_width' => 'content' === $width ? 'content' : null,
 		);
+		// 1.52.0: only the Layout form sends these; "Turn on split view" leaves them.
+		if ( isset( $_POST['box'] ) ) {
+			$box                   = sanitize_key( wp_unslash( $_POST['box'] ) );
+			$every                 = isset( $_POST['every'] ) ? (int) $_POST['every'] : 3;
+			$fields['split_box']   = in_array( $box, array( 'linked', 'timer' ), true ) ? $box : null;
+			$fields['split_every'] = in_array( $every, array( 2, 4 ), true ) ? $every : null;
+		}
+		RAPM_Spots::update( 'hero', $placement, $fields );
 		RAPM_Cache::queue_spot( 'hero|' . $placement );
 		wp_send_json_success( array( 'reload' => true ) );
 	}
 
-	private static function render_card( $post, $d ) {
+	private static function render_card( $post, $d, $links = null ) {
 		$id         = $post->ID;
 		$title      = get_the_title( $post );
 		$title      = '' !== $title ? $title : __( '(no name)', 'rapm' );
@@ -1104,7 +1155,14 @@ class RAPM_Promotions_Screen {
 			}
 		}
 		?>
-		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?>" data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title . ( $tab ? ' ' . $tab : '' ) ) ); ?>"<?php echo $tab ? ' data-tab="' . esc_attr( $tab ) . '"' : ''; ?><?php echo $ended ? ' hidden' : ''; ?>>
+		<?php
+		// 1.52.0: a split slider's linked groups (colors and "Goes with").
+		$goes  = $links && 'room' === $links['type'] ? RAPM_Split::goes_with( $id ) : 0;
+		$goes  = $goes && isset( $links['groups'][ $goes ] ) ? $goes : 0;
+		$group = $links && 'box' === $links['type'] && isset( $links['groups'][ $id ] ) ? $links['groups'][ $id ] : null;
+		$color = $group ? $group['color'] : ( $goes ? $links['groups'][ $goes ]['color'] : ( $links && 'room' === $links['type'] ? '#8c8f94' : '' ) );
+		?>
+		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?><?php echo $color ? ' has-group' : ''; ?>"<?php echo $color ? ' style="' . esc_attr( '--rapm-group:' . $color ) . '"' : ''; ?> data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title . ( $tab ? ' ' . $tab : '' ) ) ); ?>"<?php echo $tab ? ' data-tab="' . esc_attr( $tab ) . '"' : ''; ?><?php echo $ended ? ' hidden' : ''; ?>>
 			<a class="rapm-card-pic" href="<?php echo esc_url( $edit_url ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'Edit %s', 'rapm' ), $title ) ); ?>" draggable="false">
 				<?php $design = 'promo_box' === get_post_meta( $id, '_rapm_kind', true ) ? RAPM_Split::card_preview( $id ) : ''; ?>
 				<?php if ( $design ) : // 1.44.1: a designed promotion box shows its design. ?>
@@ -1151,6 +1209,27 @@ class RAPM_Promotions_Screen {
 				</div>
 				<?php if ( $link_issue ) : ?>
 					<p class="rapm-card-issue"><?php esc_html_e( 'The picture link stopped working. The last picture that worked is still showing.', 'rapm' ); ?></p>
+				<?php endif; ?>
+				<?php if ( $links && 'room' === $links['type'] && ! $ended ) : ?>
+					<?php if ( $goes && $links['groups'][ $goes ]['ended'] ) : ?>
+						<p class="rapm-card-issue rapm-goes-ended"><?php esc_html_e( 'Not playing: the promotion it goes with has ended. Pick another one below.', 'rapm' ); ?></p>
+					<?php endif; ?>
+					<label class="rapm-goes"><span><?php esc_html_e( 'Goes with', 'rapm' ); ?></span>
+						<select data-goes="<?php echo esc_attr( $id ); ?>">
+							<option value="0" data-color="#8c8f94"<?php selected( $goes, 0 ); ?>><?php esc_html_e( 'Any promotion', 'rapm' ); ?></option>
+							<?php foreach ( $links['groups'] as $gid => $g ) : ?>
+								<option value="<?php echo (int) $gid; ?>" data-color="<?php echo esc_attr( $g['color'] ); ?>"<?php selected( $goes, $gid ); ?>><?php echo esc_html( $g['label'] . ( $g['ended'] ? ' ' . __( '(ended)', 'rapm' ) : '' ) ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</label>
+				<?php endif; ?>
+				<?php if ( $group ) : ?>
+					<p class="rapm-goes-count" data-group="<?php echo esc_attr( $id ); ?>">
+						<?php echo esc_html( sprintf( /* translators: %d: number of room photos */ _n( '%d room photo goes with it', '%d room photos go with it', $group['count'], 'rapm' ), $group['count'] ) ); ?>
+					</p>
+					<?php if ( $ended && $group['count'] ) : ?>
+						<p class="rapm-card-issue"><?php echo esc_html( sprintf( /* translators: %d: number of room photos */ _n( '%d room photo that goes with it stopped playing.', '%d room photos that go with it stopped playing.', $group['count'], 'rapm' ), $group['count'] ) ); ?></p>
+					<?php endif; ?>
 				<?php endif; ?>
 			</div>
 		</article>
@@ -1199,6 +1278,30 @@ class RAPM_Promotions_Screen {
 	 * ------------------------------------------------------------------ */
 
 	/** The on/off switch: on = published (shows on the site), off = draft (doesn't). */
+	/**
+	 * 1.52.0: which promotion box promotion a room photo goes with (0 for
+	 * "Any promotion"). Both must be in the same split slider.
+	 */
+	public static function ajax_goes_with() {
+		check_ajax_referer( self::NONCE, 'nonce' );
+		$id  = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+		$box = isset( $_POST['box'] ) ? absint( $_POST['box'] ) : 0;
+		if ( ! $id || 'rapm_asset' !== get_post_type( $id ) || 'hero' !== get_post_meta( $id, '_rapm_kind', true ) || ! current_user_can( 'edit_post', $id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
+		}
+		$placement = (string) get_post_meta( $id, '_rapm_placement', true );
+		if ( $box && ( 'rapm_asset' !== get_post_type( $box ) || 'promo_box' !== get_post_meta( $box, '_rapm_kind', true ) || get_post_meta( $box, '_rapm_placement', true ) !== $placement ) ) {
+			wp_send_json_error( array( 'message' => __( 'That promotion isn\'t in this slider.', 'rapm' ) ), 400 );
+		}
+		if ( $box ) {
+			update_post_meta( $id, '_rapm_goes_with', $box );
+		} else {
+			delete_post_meta( $id, '_rapm_goes_with' );
+		}
+		RAPM_Cache::queue_spot( 'hero|' . $placement );
+		wp_send_json_success();
+	}
+
 	public static function ajax_toggle() {
 		check_ajax_referer( self::NONCE, 'nonce' );
 		$id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;

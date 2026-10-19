@@ -106,6 +106,14 @@ class RAPM_Ready {
 		if ( ! $item['design'] && ! $item['desk'] ) {
 			$add( 'fail', __( 'No picture, so it won\'t show anywhere.', 'rapm' ) );
 		}
+		// 1.52.0: a room photo linked to a promotion that has ended doesn't play.
+		if ( 'hero' === $kind && 'ended' !== $item['state'] ) {
+			$placement = (string) get_post_meta( $id, '_rapm_placement', true );
+			$goes      = RAPM_Split::goes_with( $id );
+			if ( $goes && RAPM_Split::is_split( $placement ) && 'linked' === RAPM_Split::settings( $placement )['box'] && 'ended' === RAPM_Promotions_Screen::describe( get_post( $goes ) )['state'] ) {
+				$add( 'warn', __( 'Goes with a promotion that has ended, so it isn\'t playing. Link it to another promotion or "Any promotion" in the Design Center.', 'rapm' ) );
+			}
+		}
 		if ( in_array( $kind, array( 'hero', 'fold_banner' ), true ) && ! $item['phone'] ) {
 			$add( 'warn', __( 'No phone picture: phones show the computer picture fitted inside a tall box.', 'rapm' ) );
 		}
