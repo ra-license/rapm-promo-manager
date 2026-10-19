@@ -49,6 +49,11 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Schedule:** with one room photo ending in 5 days and the next starting in 9, the library listed the 4-day gap and the empty promotion box.
   - **Links:** "Check links" stored a 404 for a missing page, which became a Problem, and a 200 for the home page.
   - No PHP errors.
+- **Installed on staging (2026-10-19):** the library serves `rapm-library.js?ver=1.49.0` with no errors.
+  - Of 19 promotions not ended: 0 problems, 6 need a look (the 3 split test room photos have no phone picture; 3 test quick links have no alt text), and 13 ready.
+  - The schedule check found a real gap: the **Home page slider** and **Promotions coupons** have nothing scheduled after Oct 31, 11:59 pm.
+  - "Check links" was not run on staging, to avoid tripping its Cloudflare bot check again.
+  - Not yet in production (1.48.0 and 1.48.1 aren't either).
 - **Not in this release:** the same checks inside the add/edit form while editing, and on the clients' Promotions page. Those are candidates for later, if wanted.
 
 ## 1.48.1
