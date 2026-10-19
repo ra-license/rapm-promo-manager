@@ -4,6 +4,51 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.51.0
+
+**New: canvas power tools, with Undo.** Design Center roadmap step 5, built to the mockup Phil approved (https://claude.ai/artifact/QGMZMdpipShtPp8TWk9MMw), with Undo added at his request.
+- **Front to back:**
+  - The design's list order is now its front-to-back order; the last piece is in front, which is how pieces were always drawn, so older designs look the same.
+  - "On the design" shows the list top-first with Bring forward and Send back buttons. Ctrl+] and Ctrl+[ (⌘ on a Mac) do the same for the picked piece.
+- **Hide (`h`):** the piece stays in the design but isn't drawn on the website or in template previews. Its row is struck through. The Ready check skips hidden pieces and lists how many are hidden ("Good to know").
+- **Lock (`l`):** a locked piece can't be dragged, nudged with the arrows or lined up. Clicking it says so. Its size, color and words can still be changed. It has no effect on the website.
+- **Picking several:** Shift-click on the square or in the list. Picked pieces drag and nudge together (locked ones stay put). Text effects change all the picked words.
+- **Arrange:**
+  - Line up left edges, centers across, right edges, tops, middles or bottoms.
+  - With one piece picked, it lines up with the square, for example to center a headline.
+  - Space evenly across or up and down works with 3 or more pieces: the first and last stay put and the gaps in between become equal. If the pieces overlap, it says there isn't room for gaps.
+  - All of it measures the pieces as drawn, so wide words and narrow icons line up by their real edges.
+- **Snapping guides:**
+  - While dragging, the piece's left edge, middle or right edge (and top, middle or bottom) snaps when it's within 1% of the square's middle or edges or of another piece's, and a pink guide shows where.
+  - Hold Alt (Option on a Mac) to place it freely.
+  - Before this, only the square's middle snapped.
+- **Text effects (headline, smaller line, button):**
+  - Shadow: None, Soft or Strong (`sh` 1 or 2).
+  - Outline: None, Thin or Thick (`ol` 1 or 2), in a website color (linked, `ocg`, so it follows Elementor), a saved brand-kit color, black, white or any other color (`oc`).
+  - The outline is drawn as eight thin shadows around the letters, which every browser draws the same way. Sizes are in em, so the effects scale with the words.
+  - The website (`RAPM_Split::text_shadow()`), the editor and the Brand kit previews build the same value.
+- **Undo and Redo:**
+  - Buttons above the square, plus Ctrl+Z / ⌘Z, and Shift+Ctrl+Z / Shift+⌘Z or Ctrl+Y. Typing in a text box keeps the browser's own undo for the words.
+  - They keep the last 30 steps of this visit.
+  - Nudges with the arrow keys and slider moves made within 1.5 seconds of each other count as one step.
+  - Using a template can be undone, and the undo brings back the headline, smaller line and button words too.
+- **Ready check:** words on a picture still say "check it by eye". When every word piece has an outline or a strong shadow, it says they should read well. On a plain color, an outline doesn't count toward contrast, so the words themselves still have to pass.
+- **Server:** every new value is checked: `h`, `l`, `sh` 1–2 and `ol` 1–2 on word pieces only, `oc` a hex color, and `ocg` a color ID.
+- **Tested in WordPress Playground with Elementor:**
+  - Server cleanup of good and bad values.
+  - The website output: hidden pieces left out, shadow and outline with a linked color.
+  - The Ready messages.
+  - In the editor:
+    - Picking several.
+    - Line up left and space evenly.
+    - Undo, Undo, Redo, and Ctrl+Z from the page.
+    - Effects on two picked words with a linked outline color.
+    - Bring forward with the piece staying picked.
+    - Hide and lock.
+    - A real mouse drag that snapped to the middle.
+
+---
+
 ## 1.50.0
 
 **New: Brand kit, a third tab in the Design Center.** Design Center roadmap step 4, built to the mockup Phil approved (https://claude.ai/artifact/NfgxFBRHXzuHUnsRmZd3P2). New `RAPM_Brand_Kit`, saved in the `rapm_brand_kit` option.

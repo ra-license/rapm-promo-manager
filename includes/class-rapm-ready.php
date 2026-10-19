@@ -196,8 +196,15 @@ class RAPM_Ready {
 		$words  = 0;
 		$edge   = array();
 		$site   = null;
+		$hidden = 0;
+		$helped = 0;
 		foreach ( $canvas['items'] as $it ) {
 			$k = $it['k'];
+			// 1.51.0: hidden pieces aren't on the website, so they aren't checked.
+			if ( ! empty( $it['h'] ) ) {
+				$hidden++;
+				continue;
+			}
 			// 1.50.0: a color linked to Elementor is checked at the website's value today.
 			if ( ! empty( $it['cg'] ) ) {
 				$site = null === $site ? RAPM_Elementor::color_value_map() : $site;
@@ -211,6 +218,9 @@ class RAPM_Ready {
 					continue;
 				}
 				$words++;
+				if ( ! empty( $it['ol'] ) || ( isset( $it['sh'] ) && 2 === (int) $it['sh'] ) ) {
+					$helped++;
+				}
 				// Readability (WCAG AA: 4.5 to 1, or 3 to 1 for big words).
 				$fg    = 'btn' === $k ? '#ffffff' : $it['c'];
 				$back  = 'btn' === $k ? $it['c'] : $bg;
@@ -255,7 +265,13 @@ class RAPM_Ready {
 		if ( ! $words ) {
 			$out[] = array( 'warn', __( 'The design has no words: type a headline so shoppers (and screen readers) know what it\'s about.', 'rapm' ) );
 		}
-		if ( $canvas['pic'] ) {
+		if ( $hidden ) {
+			/* translators: %d: number of pieces */
+			$out[] = array( 'info', sprintf( _n( '%d piece of the design is hidden, so it doesn\'t show on the website.', '%d pieces of the design are hidden, so they don\'t show on the website.', $hidden, 'rapm' ), $hidden ) );
+		}
+		if ( $canvas['pic'] && $helped && $helped === $words ) {
+			$out[] = array( 'info', __( 'The words are on a picture and all have an outline or a strong shadow, so they should read well. Check it by eye.', 'rapm' ) );
+		} elseif ( $canvas['pic'] ) {
 			$out[] = array( 'info', __( 'The words are on a picture, so how easy they are to read can\'t be measured. Check it by eye.', 'rapm' ) );
 		} elseif ( $words && ! array_filter( $out, function ( $c ) { return 'fail' === $c[0]; } ) ) {
 			$out[] = array( 'pass', __( 'Words are easy to read against the background.', 'rapm' ) );

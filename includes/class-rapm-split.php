@@ -222,6 +222,14 @@ class RAPM_Split {
 			if ( $cg && 'img' !== $k ) {
 				$item['cg'] = $cg;
 			}
+			// 1.51.0: hidden (kept in the design, not drawn on the website)
+			// and locked (can't be dragged in the editor).
+			if ( ! empty( $it['h'] ) ) {
+				$item['h'] = true;
+			}
+			if ( ! empty( $it['l'] ) ) {
+				$item['l'] = true;
+			}
 			if ( 'icon' === $k ) {
 				$name = isset( $it['n'] ) ? preg_replace( '/[^a-z0-9_-]/', '', strtolower( (string) $it['n'] ) ) : '';
 				$d    = isset( $it['d'] ) ? (string) $it['d'] : '';
@@ -267,10 +275,51 @@ class RAPM_Split {
 				if ( ! empty( $it['tt'] ) ) {
 					$item['tt'] = true;
 				}
+				// 1.51.0: shadow (1 soft, 2 strong) and outline (1 thin, 2
+				// thick) with its color, which can be a linked site color.
+				if ( isset( $it['sh'] ) && in_array( (int) $it['sh'], array( 1, 2 ), true ) ) {
+					$item['sh'] = (int) $it['sh'];
+				}
+				if ( isset( $it['ol'] ) && in_array( (int) $it['ol'], array( 1, 2 ), true ) ) {
+					$oc          = isset( $it['oc'] ) ? sanitize_hex_color( (string) $it['oc'] ) : '';
+					$item['ol']  = (int) $it['ol'];
+					$item['oc']  = $oc ? $oc : '#1d3557';
+					$ocg         = isset( $it['ocg'] ) ? sanitize_key( (string) $it['ocg'] ) : '';
+					if ( $ocg ) {
+						$item['ocg'] = $ocg;
+					}
+				}
 			}
 			$out['items'][] = $item;
 		}
 		return $out;
+	}
+
+	/**
+	 * Shadow and outline of a word piece (1.51.0), or ''. The outline is
+	 * eight thin shadows around the letters, which every browser draws the
+	 * same way; sizes are in em so they scale with the words. The editor
+	 * builds the same value (textShadow() in rapm-box-canvas.js).
+	 */
+	public static function text_shadow( $it ) {
+		$parts = array();
+		if ( ! empty( $it['ol'] ) ) {
+			$w = 2 === (int) $it['ol'] ? 0.06 : 0.03;
+			$c = ! empty( $it['ocg'] ) ? 'var(--e-global-color-' . $it['ocg'] . ', ' . $it['oc'] . ')' : $it['oc'];
+			for ( $a = 0; $a < 8; $a++ ) {
+				$r       = $a * M_PI / 4;
+				$parts[] = self::em( cos( $r ) * $w ) . ' ' . self::em( sin( $r ) * $w ) . ' 0 ' . $c;
+			}
+		}
+		if ( ! empty( $it['sh'] ) ) {
+			$parts[] = 2 === (int) $it['sh'] ? '0 0.06em 0.2em rgba(0,0,0,.75), 0 0 0.5em rgba(0,0,0,.35)' : '0 0.04em 0.12em rgba(0,0,0,.45)';
+		}
+		return implode( ', ', $parts );
+	}
+
+	private static function em( $v ) {
+		$v = round( $v, 3 );
+		return ( 0.0 === (float) $v ? '0' : rtrim( rtrim( number_format( $v, 3, '.', '' ), '0' ), '.' ) ) . 'em';
 	}
 
 	/**
@@ -302,6 +351,9 @@ class RAPM_Split {
 		<div class="rapm-pb-board" data-style="<?php echo esc_attr( $style ); ?>" style="<?php echo esc_attr( RAPM_Elementor::font_family_css( $font ) ); ?>">
 			<?php
 			foreach ( $canvas['items'] as $it ) {
+				if ( ! empty( $it['h'] ) ) {
+					continue; // 1.51.0: hidden pieces stay in the design only.
+				}
 				$pos = 'left:' . $it['x'] . '%;top:' . $it['y'] . '%;--s:' . $it['s'] . ';';
 				// 1.50.0: a linked website color follows Elementor's global color.
 				$col = ! empty( $it['cg'] ) ? 'var(--e-global-color-' . $it['cg'] . ', ' . $it['c'] . ')' : ( isset( $it['c'] ) ? $it['c'] : '' );
@@ -336,6 +388,10 @@ class RAPM_Split {
 					$pos .= 'font-family:' . RAPM_Fonts::css_family( $it['ff'] ) . ';';
 				} elseif ( ! empty( $it['fg'] ) ) {
 					$pos .= RAPM_Elementor::font_family_css( $it['fg'] );
+				}
+				$shadow = self::text_shadow( $it );
+				if ( $shadow ) {
+					$pos .= 'text-shadow:' . $shadow . ';';
 				}
 				if ( 'headline' === $it['k'] ) {
 					echo '<h2 class="rapm-pb-t is-headline" style="' . esc_attr( $pos . 'color:' . $col ) . '">' . esc_html( $text ) . '</h2>';

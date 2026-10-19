@@ -258,10 +258,12 @@
 		var c = tpl.canvas || {};
 		var h = '<div class="rapm-pb-item is-design rapm-cv-mini" style="background:' + esc( c.bg || '#f3ead8' ) + '"><div class="rapm-pb-board">';
 		( c.items || [] ).forEach( function ( it ) {
+			if ( it.h ) { return; }
 			var pos = 'left:' + it.x + '%;top:' + it.y + '%;--s:' + it.s + ';';
 			if ( 'btn' === it.k ) { pos += 'background:' + esc( it.c ) + ';color:#fff;'; } else if ( 'img' !== it.k ) { pos += 'color:' + esc( it.c ) + ';'; }
 			if ( it.fw ) { pos += 'font-weight:' + it.fw + ';'; }
 			if ( it.tt ) { pos += 'text-transform:uppercase;'; }
+			if ( it.sh || it.ol ) { pos += 'text-shadow:' + shadowOf( it ) + ';'; }
 			var fam = familyOf( it );
 			if ( fam ) { loadFont( fam ); pos += "font-family:'" + esc( fam ) + "',sans-serif;"; }
 			var inner;
@@ -271,6 +273,20 @@
 			h += '<div class="rapm-pb-t is-' + esc( it.k ) + '" style="' + pos + '">' + inner + '</div>';
 		} );
 		return h + '</div></div>';
+	}
+
+	// Same as textShadow() in rapm-box-canvas.js and RAPM_Split::text_shadow() (1.51.0).
+	function shadowOf( it ) {
+		var parts = [];
+		if ( it.ol ) {
+			var w = 2 === it.ol ? 0.06 : 0.03;
+			for ( var a = 0; a < 8; a++ ) {
+				var r = a * Math.PI / 4;
+				parts.push( ( Math.round( Math.cos( r ) * w * 1000 ) / 1000 ) + 'em ' + ( Math.round( Math.sin( r ) * w * 1000 ) / 1000 ) + 'em 0 ' + esc( it.oc || '#1d3557' ) );
+			}
+		}
+		if ( it.sh ) { parts.push( 2 === it.sh ? '0 0.06em 0.2em rgba(0,0,0,.75), 0 0 0.5em rgba(0,0,0,.35)' : '0 0.04em 0.12em rgba(0,0,0,.45)' ); }
+		return parts.join( ', ' );
 	}
 
 	function renderTemplates() {

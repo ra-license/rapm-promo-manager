@@ -132,3 +132,25 @@
 .rapm-cv-tplask { font-size: 12px; line-height: 1.35; }
 .rapm-kit-tpls .rapm-cv-tplcap input[type="text"] { width: 100%; font-weight: 600; font-size: 12px; padding: 0 4px; }
 .rapm-kit-tpls .rapm-cv-tplcap > span:first-child { flex: 1; min-width: 0; }
+/* Canvas power tools (1.51.0). */
+.rapm-cv-toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 8px; }
+.rapm-cv-status { font-size: 13px; color: #50575e; }
+.rapm-cv-item.is-hidden { display: none; }
+.rapm-cv-item.is-locked { cursor: not-allowed; }
+.rapm-cv-item.is-locked.is-on::after { content: attr(data-locked); position: absolute; top: -18px; right: -14px; font: 600 10px/16px -apple-system, "Segoe UI", sans-serif; color: #50575e; background: #fff; border: 1px solid #c3c4c7; border-radius: 999px; padding: 0 6px; text-transform: none; letter-spacing: 0; text-shadow: none; white-space: nowrap; }
+.rapm-cv-lrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; align-items: center; }
+.rapm-cv-lrow .rapm-cv-layer { min-width: 0; }
+.rapm-cv-lname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rapm-cv-lrow.is-off .rapm-cv-lname { color: #8c8f94; text-decoration: line-through; }
+.rapm-cv-lacts { display: flex; gap: 1px; }
+.rapm-cv-ib { width: 28px; height: 28px; display: inline-grid; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 4px; background: none; color: #50575e; cursor: pointer; }
+.rapm-cv-ib:hover:not(:disabled), .rapm-cv-ib:focus-visible { border-color: #c3c4c7; color: #1d2327; }
+.rapm-cv-ib[aria-pressed="true"] { color: #2271b1; }
+.rapm-cv-ib:disabled { opacity: 0.35; cursor: not-allowed; }
+.rapm-cv-ib svg { width: 16px; height: 16px; fill: currentColor; display: block; }
+.rapm-cv-arrange { border-top: 1px solid #dcdcde; margin-top: 10px; padding-top: 8px; }
+.rapm-cv-arrange p { margin: 4px 0; }
+.rapm-cv-arrbtns { display: flex; flex-wrap: wrap; gap: 2px; }
+.rapm-cv-fx { border-top: 1px solid #dcdcde; margin-top: 10px; padding-top: 6px; }
+.rapm-cv-fxrow { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 6px; align-items: center; margin: 6px 0; font-size: 13px; }
+.rapm-cv-fxrow .button[aria-pressed="true"] { background: #f0f6fc; border-color: #2271b1; color: #0a4b78; }

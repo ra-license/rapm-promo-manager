@@ -2069,6 +2069,36 @@ class RAPM_Upload_Handler {
 			'fontNone'    => __( 'No font matches. Try part of a name, like "play" or "sans".', 'rapm' ),
 			'fontNote'    => __( 'A Google font is copied to this website when you save, so visitors never load it from Google.', 'rapm' ),
 			'fontSample'  => __( 'Big Sale 30% Off', 'rapm' ),
+			// 1.51.0: canvas power tools.
+			'forward'      => __( 'Bring forward', 'rapm' ),
+			'back'         => __( 'Send back', 'rapm' ),
+			'hide'         => __( 'Hide', 'rapm' ),
+			'show'         => __( 'Hidden: click to show', 'rapm' ),
+			'lock'         => __( 'Lock', 'rapm' ),
+			'unlock'       => __( 'Locked: click to unlock', 'rapm' ),
+			'locked'       => __( 'locked', 'rapm' ),
+			'lockedMsg'    => __( 'That piece is locked. Unlock it under "On the design" to move it.', 'rapm' ),
+			'hiddenMsg'    => __( 'Hidden: it stays in the design but won\'t show on the website.', 'rapm' ),
+			'arrangeNone'  => __( 'Pick a piece on the square or in the list.', 'rapm' ),
+			'arrangeOne'   => __( 'One piece picked: it lines up with the square. Shift-click more to line them up with each other.', 'rapm' ),
+			/* translators: %d: number of pieces */
+			'arrangeMany'  => __( '%d pieces picked: they line up with each other.', 'rapm' ),
+			'arrangeThree' => __( 'Pick 3 or more to space them evenly.', 'rapm' ),
+			'arrangeLocked' => __( 'A picked piece is locked. Unlock it to line it up.', 'rapm' ),
+			'overlap'      => __( 'They overlap, so there isn\'t room for gaps between them.', 'rapm' ),
+			/* translators: %d: number of pieces */
+			'pickedMany'   => __( '%d pieces picked. Text effects change all the picked words; drag one to move them together.', 'rapm' ),
+			'effects'      => __( 'Text effects', 'rapm' ),
+			'shadow'       => __( 'Shadow', 'rapm' ),
+			'outline'      => __( 'Outline', 'rapm' ),
+			'outlineColor' => __( 'Outline color', 'rapm' ),
+			'none'         => __( 'None', 'rapm' ),
+			'soft'         => __( 'Soft', 'rapm' ),
+			'strong'       => __( 'Strong', 'rapm' ),
+			'thin'         => __( 'Thin', 'rapm' ),
+			'thick'        => __( 'Thick', 'rapm' ),
+			'black'        => __( 'Black', 'rapm' ),
+			'white'        => __( 'White', 'rapm' ),
 		);
 		// 1.50.0: the brand kit (website colors, saved colors, styles, logos, templates).
 		$kit = RAPM_Brand_Kit::for_browser();
@@ -2084,7 +2114,7 @@ class RAPM_Upload_Handler {
 		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-kit="<?php echo esc_attr( wp_json_encode( $kit ) ); ?>" data-kit-nonce="<?php echo esc_attr( wp_create_nonce( RAPM_Brand_Kit::NONCE ) ); ?>" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-kit-url="<?php echo esc_url( add_query_arg( 'tab', 'brand', RAPM_Promotions_Screen::design_url() ) ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
 			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
 			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it. Click it to change its size or color. Arrow keys move the one you picked a little at a time (hold Shift to move it more). A pink line shows when it\'s centered.', 'rapm' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it; it snaps into line with the middle, the edges and the other pieces (hold Alt or Option to place it freely). Click it to change its size or color, and Shift-click to pick more than one. Arrow keys move what you picked a little at a time (hold Shift to move it more).', 'rapm' ); ?></p>
 			<?php // 1.50.0: templates from the brand kit. ?>
 			<div class="rapm-cv-tplbar">
 				<button type="button" class="button" id="rapm-cv-tpltoggle" aria-expanded="false"><?php esc_html_e( 'Start from a template', 'rapm' ); ?></button>
@@ -2099,6 +2129,12 @@ class RAPM_Upload_Handler {
 			<div class="rapm-cv-tpls" id="rapm-cv-tpls" hidden></div>
 			<div class="rapm-cv-layout">
 				<div class="rapm-cv-main">
+					<?php // 1.51.0: Undo and Redo. ?>
+					<p class="rapm-cv-toolbar">
+						<button type="button" class="button" id="rapm-cv-undo" disabled title="<?php esc_attr_e( 'Undo (Ctrl+Z or ⌘Z)', 'rapm' ); ?>"><?php esc_html_e( 'Undo', 'rapm' ); ?></button>
+						<button type="button" class="button" id="rapm-cv-redo" disabled title="<?php esc_attr_e( 'Redo (Shift+Ctrl+Z or Shift+⌘Z)', 'rapm' ); ?>"><?php esc_html_e( 'Redo', 'rapm' ); ?></button>
+						<span class="rapm-cv-status" id="rapm-cv-status" aria-live="polite"></span>
+					</p>
 					<div class="rapm-cv-stage rapm-pb-item is-design" tabindex="0" aria-label="<?php esc_attr_e( 'Promotion design', 'rapm' ); ?>">
 						<img class="rapm-cv-bgimg" alt="" hidden />
 						<div class="rapm-cv-board rapm-pb-board">
@@ -2145,7 +2181,29 @@ class RAPM_Upload_Handler {
 					</div>
 					<div class="rapm-cv-panel">
 						<h3><?php esc_html_e( 'On the design', 'rapm' ); ?></h3>
+						<p class="description"><?php esc_html_e( 'The top of the list is in front. Arrows move a piece forward or back (Ctrl+] and Ctrl+[, or ⌘ on a Mac).', 'rapm' ); ?></p>
 						<div class="rapm-cv-layers"></div>
+						<div class="rapm-cv-arrange">
+							<p class="rapm-cv-swlabel"><?php esc_html_e( 'Arrange', 'rapm' ); ?></p>
+							<p class="rapm-cv-arrbtns">
+								<?php
+								$arrange = array(
+									array( 'al', 'left', __( 'Line up left edges', 'rapm' ), 'M3 2h2v20H3zM7 6h12v4H7zM7 14h8v4H7z' ),
+									array( 'al', 'cx', __( 'Line up centers across', 'rapm' ), 'M11 2h2v20h-2zM5 6h14v4H5zM7 14h10v4H7z' ),
+									array( 'al', 'right', __( 'Line up right edges', 'rapm' ), 'M19 2h2v20h-2zM5 6h12v4H5zM9 14h8v4H9z' ),
+									array( 'al', 'top', __( 'Line up tops', 'rapm' ), 'M2 3h20v2H2zM6 7h4v12H6zM14 7h4v8h-4z' ),
+									array( 'al', 'cy', __( 'Line up middles', 'rapm' ), 'M2 11h20v2H2zM6 5h4v14H6zM14 7h4v10h-4z' ),
+									array( 'al', 'bottom', __( 'Line up bottoms', 'rapm' ), 'M2 19h20v2H2zM6 5h4v12H6zM14 9h4v8h-4z' ),
+									array( 'dist', 'x', __( 'Space evenly across (3 or more)', 'rapm' ), 'M2 3h2v18H2zM20 3h2v18h-2zM9 7h6v10H9z' ),
+									array( 'dist', 'y', __( 'Space evenly up and down (3 or more)', 'rapm' ), 'M3 2h18v2H3zM3 20h18v2H3zM7 9h10v6H7z' ),
+								);
+								foreach ( $arrange as $a ) :
+									?>
+									<button type="button" class="rapm-cv-ib" data-<?php echo esc_attr( $a[0] ); ?>="<?php echo esc_attr( $a[1] ); ?>" title="<?php echo esc_attr( $a[2] ); ?>" aria-label="<?php echo esc_attr( $a[2] ); ?>" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="<?php echo esc_attr( $a[3] ); ?>"/></svg></button>
+								<?php endforeach; ?>
+							</p>
+							<p class="description rapm-cv-arrnote"></p>
+						</div>
 						<div class="rapm-cv-sel"></div>
 					</div>
 				</div>

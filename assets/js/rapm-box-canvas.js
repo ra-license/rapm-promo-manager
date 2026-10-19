@@ -28,6 +28,19 @@
  * logos first under "Your pictures", and templates ("Start from a
  * template", "Save as template…").
  *
+ * 1.51.0 (canvas power tools, from the mockup Phil approved on 2026-10-19,
+ * https://claude.ai/artifact/QGMZMdpipShtPp8TWk9MMw): the list order is the
+ * front-to-back order (last is in front, as it was always drawn); Layers
+ * shows it top-first with forward/back, hide (h: kept, not on the website)
+ * and lock (l: can't be dragged or nudged). Shift-click picks several
+ * pieces: they drag together, and Arrange lines them up or spaces them
+ * evenly (one piece lines up with the square). Dragging snaps to the
+ * square's middle and edges and to other pieces, with pink guides (hold
+ * Alt/Option to skip). Words can have a shadow (sh: 1 soft, 2 strong) and
+ * an outline (ol: 1 thin, 2 thick; oc its color, ocg a linked site color).
+ * Undo and Redo (Ctrl/Cmd+Z, Shift+Ctrl/Cmd+Z or Ctrl+Y) keep the last 30
+ * steps of this visit.
+ *
  * 1.47.0: a headline, smaller line or button can have its own font: ff, a
  * Google Fonts family (copied to the website when the promotion is saved,
  * RAPM_Fonts), or fg, one of the site's Elementor brand fonts by ID.
@@ -76,9 +89,24 @@
 	var state = parse( field.value );
 	// A linked color shows the website's color today, if it was changed in Elementor.
 	state.items.forEach( function ( it ) {
-		kit.site.forEach( function ( c ) { if ( it.cg === c.id ) { it.c = c.hex; } } );
+		kit.site.forEach( function ( c ) {
+			if ( it.cg === c.id ) { it.c = c.hex; }
+			if ( it.ocg === c.id ) { it.oc = c.hex; }
+		} );
 	} );
 	var selected = -1;
+	// 1.51.0: every picked piece (Shift-click); selected is the one whose
+	// settings show. render() keeps the two in step.
+	var picked = [];
+	// 1.51.0: Undo and Redo. Each step keeps the design before it (s) and,
+	// when the step changed the words (a template), the words before (w).
+	var undoStack = [];
+	var redoStack = [];
+	var committed = JSON.stringify( state );
+	var lastKey = '';
+	var lastAt = 0;
+	var pendingWords = null;
+	var UNDO_MAX = 30;
 	var list = null; // the icon names and search words, loaded on first use
 
 	function parse( raw ) {
@@ -96,9 +124,60 @@
 		return s;
 	}
 
-	function save() {
+	// Saves the design to the form and, if it changed, makes it one Undo
+	// step. Steps with the same key close together (nudging with the
+	// arrows, sliding the size) count as one.
+	function save( key ) {
 		field.value = JSON.stringify( state );
+		if ( field.value !== committed ) {
+			var now = Date.now();
+			if ( pendingWords || ! key || key !== lastKey || now - lastAt > 1500 ) {
+				undoStack.push( { s: committed, w: pendingWords } );
+				if ( undoStack.length > UNDO_MAX ) { undoStack.shift(); }
+			}
+			redoStack = [];
+			committed = field.value;
+			lastKey = key || '';
+			lastAt = now;
+		}
+		pendingWords = null;
 		renderLayers();
+		renderHistory();
+	}
+
+	function currentWords() {
+		return { headline: words( 'headline' ), sub: words( 'sub' ), btn: words( 'btn' ) };
+	}
+
+	function setWords( w ) {
+		var ids = { headline: 'rapm_headline', sub: 'rapm_subhead', btn: 'rapm_cta_text' };
+		Object.keys( ids ).forEach( function ( k ) {
+			var el = document.getElementById( ids[ k ] );
+			if ( el && undefined !== w[ k ] ) { el.value = w[ k ]; }
+		} );
+	}
+
+	function stepBack( from, to ) {
+		var step = from.pop();
+		if ( ! step ) { return; }
+		to.push( { s: committed, w: step.w ? currentWords() : null } );
+		if ( step.w ) { setWords( step.w ); }
+		state = JSON.parse( step.s );
+		committed = step.s;
+		lastKey = '';
+		selected = -1;
+		render();
+		field.value = committed;
+		renderHistory();
+	}
+
+	function undo() { stepBack( undoStack, redoStack ); }
+	function redo() { stepBack( redoStack, undoStack ); }
+
+	function renderHistory() {
+		var u = root.querySelector( '#rapm-cv-undo' ), r = root.querySelector( '#rapm-cv-redo' );
+		if ( u ) { u.disabled = ! undoStack.length; }
+		if ( r ) { r.disabled = ! redoStack.length; }
 	}
 
 	function words( k ) {
@@ -119,6 +198,28 @@
 
 	function isWords( it ) {
 		return 'icon' !== it.k && 'img' !== it.k;
+	}
+
+	// 1.51.0: shadow and outline, the same value the website uses
+	// (RAPM_Split::text_shadow()). The outline is eight thin shadows.
+	function em( v ) {
+		v = Math.round( v * 1000 ) / 1000;
+		return ( 0 === v ? '0' : v.toFixed( 3 ).replace( /0+$/, '' ).replace( /\.$/, '' ) ) + 'em';
+	}
+
+	function textShadow( it ) {
+		var parts = [];
+		if ( it.ol ) {
+			var w = 2 === it.ol ? 0.06 : 0.03;
+			for ( var a = 0; a < 8; a++ ) {
+				var r = a * Math.PI / 4;
+				parts.push( em( Math.cos( r ) * w ) + ' ' + em( Math.sin( r ) * w ) + ' 0 ' + ( it.oc || '#1d3557' ) );
+			}
+		}
+		if ( it.sh ) {
+			parts.push( 2 === it.sh ? '0 0.06em 0.2em rgba(0,0,0,.75), 0 0 0.5em rgba(0,0,0,.35)' : '0 0.04em 0.12em rgba(0,0,0,.45)' );
+		}
+		return parts.join( ', ' );
 	}
 
 	/* ---- Fonts (1.47.0) ------------------------------------------------- */
@@ -200,6 +301,9 @@
 	/* ---- Drawing the design ------------------------------------------- */
 
 	function render() {
+		picked = picked.filter( function ( i ) { return i >= 0 && i < state.items.length; } );
+		if ( selected >= state.items.length ) { selected = -1; }
+		if ( selected < 0 ) { picked = []; } else if ( -1 === picked.indexOf( selected ) ) { picked = [ selected ]; }
 		Array.prototype.slice.call( board.querySelectorAll( '.rapm-cv-item' ) ).forEach( function ( n ) { n.remove(); } );
 		var style = document.getElementById( 'rapm_text_style' );
 		var font = document.getElementById( 'rapm_text_font' );
@@ -208,8 +312,9 @@
 		state.items.forEach( function ( it, i ) {
 			var text = isWords( it ) ? words( it.k ) : '';
 			var n = document.createElement( 'div' );
-			n.className = 'rapm-cv-item rapm-pb-t is-' + it.k + ( i === selected ? ' is-on' : '' ) + ( isWords( it ) && ! text ? ' is-empty' : '' );
+			n.className = 'rapm-cv-item rapm-pb-t is-' + it.k + ( -1 !== picked.indexOf( i ) ? ' is-on' : '' ) + ( isWords( it ) && ! text ? ' is-empty' : '' ) + ( it.h ? ' is-hidden' : '' ) + ( it.l ? ' is-locked' : '' );
 			n.setAttribute( 'data-i', i );
+			if ( it.l ) { n.setAttribute( 'data-locked', T.locked ); }
 			place( n, it );
 			if ( 'icon' === it.k ) {
 				n.innerHTML = svg( it.d, it.v );
@@ -228,6 +333,8 @@
 		renderBg();
 		renderSel();
 		renderLayers();
+		renderArrange();
+		renderHistory();
 	}
 
 	function place( n, it ) {
@@ -248,17 +355,141 @@
 			var fam = fontFamilyOf( it );
 			n.style.fontFamily = fam ? '"' + fam + '", sans-serif' : '';
 			if ( fam ) { loadFonts( [ fam ] ); }
+			n.style.textShadow = textShadow( it );
 		}
 	}
 
+	// 1.51.0: top of the list is in front (the last piece), with forward,
+	// back, hide and lock for each.
+	var LICON = {
+		up: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l-6 6h4v6h4v-6h4z"/></svg>',
+		down: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18l6-6h-4V6h-4v6H6z"/></svg>',
+		eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6 5 2 12 2 12s4 7 10 7 10-7 10-7-4-7-10-7zm0 11a4 4 0 110-8 4 4 0 010 8z"/></svg>',
+		eyeoff: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4l17 17-1.4 1.4-3.2-3.2A11 11 0 0112 19C6 19 2 12 2 12a18 18 0 014.3-4.9L1.6 5.4zm9 1c6 0 10 7 10 7a18 18 0 01-3 3.8L8.9 5.7A10 10 0 0112 5z"/></svg>',
+		lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10V8a6 6 0 1112 0v2h1v12H5V10zm2 0h8V8a4 4 0 10-8 0z"/></svg>',
+		unlock: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10h11v12H5V10h1V8a6 6 0 0111.5-2.4l-1.9.8A4 4 0 008 8z"/></svg>'
+	};
+
 	function renderLayers() {
 		var box = root.querySelector( '.rapm-cv-layers' );
-		box.innerHTML = state.items.map( function ( it, i ) {
-			return '<button type="button" class="rapm-cv-layer" data-i="' + i + '" aria-pressed="' + ( i === selected ) + '">' +
+		var n = state.items.length;
+		var rows = [];
+		for ( var i = n - 1; i >= 0; i-- ) {
+			var it = state.items[ i ];
+			var name = esc( label( it ) );
+			rows.push( '<div class="rapm-cv-lrow' + ( it.h ? ' is-off' : '' ) + '">' +
+				'<button type="button" class="rapm-cv-layer" data-i="' + i + '" aria-pressed="' + ( -1 !== picked.indexOf( i ) ) + '">' +
 				( 'icon' === it.k ? '<span class="rapm-cv-layer-ic" style="color:' + esc( it.c ) + '">' + svg( it.d, it.v ) + '</span>' : '' ) +
 				( 'img' === it.k ? '<span class="rapm-cv-layer-ic"><img src="' + esc( it.u || '' ) + '" alt=""></span>' : '' ) +
-				'<span>' + esc( label( it ) ) + '</span><span class="rapm-cv-xy">' + Math.round( it.x ) + ', ' + Math.round( it.y ) + '</span></button>';
-		} ).join( '' );
+				'<span class="rapm-cv-lname">' + name + '</span></button>' +
+				'<span class="rapm-cv-lacts">' +
+				'<button type="button" class="rapm-cv-ib" data-fwd="' + i + '"' + ( i === n - 1 ? ' disabled' : '' ) + ' title="' + esc( T.forward ) + '" aria-label="' + esc( T.forward ) + ': ' + name + '">' + LICON.up + '</button>' +
+				'<button type="button" class="rapm-cv-ib" data-back="' + i + '"' + ( 0 === i ? ' disabled' : '' ) + ' title="' + esc( T.back ) + '" aria-label="' + esc( T.back ) + ': ' + name + '">' + LICON.down + '</button>' +
+				'<button type="button" class="rapm-cv-ib" data-hide="' + i + '" aria-pressed="' + !! it.h + '" title="' + esc( it.h ? T.show : T.hide ) + '" aria-label="' + esc( it.h ? T.show : T.hide ) + ': ' + name + '">' + ( it.h ? LICON.eyeoff : LICON.eye ) + '</button>' +
+				'<button type="button" class="rapm-cv-ib" data-lock="' + i + '" aria-pressed="' + !! it.l + '" title="' + esc( it.l ? T.unlock : T.lock ) + '" aria-label="' + esc( it.l ? T.unlock : T.lock ) + ': ' + name + '">' + ( it.l ? LICON.lock : LICON.unlock ) + '</button>' +
+				'</span></div>' );
+		}
+		box.innerHTML = rows.join( '' );
+	}
+
+	// Moves piece i one step forward (by 1) or back (by -1); the picked
+	// pieces stay picked.
+	function moveLayer( i, by ) {
+		var j = i + by;
+		if ( j < 0 || j >= state.items.length ) { return; }
+		var a = state.items[ i ];
+		state.items[ i ] = state.items[ j ];
+		state.items[ j ] = a;
+		var swap = function ( x ) { return x === i ? j : ( x === j ? i : x ); };
+		picked = picked.map( swap );
+		selected = swap( selected );
+		render();
+		save();
+	}
+
+	/* ---- Arrange (1.51.0) ------------------------------------------------ */
+
+	// Where piece i sits, in percent of the square.
+	function bounds( i ) {
+		var n = board.querySelector( '.rapm-cv-item[data-i="' + i + '"]' );
+		var b = board.getBoundingClientRect();
+		if ( ! n || ! b.width ) { return null; }
+		var r = n.getBoundingClientRect();
+		return { l: ( r.left - b.left ) / b.width * 100, r: ( r.right - b.left ) / b.width * 100, t: ( r.top - b.top ) / b.height * 100, b: ( r.bottom - b.top ) / b.height * 100, w: r.width / b.width * 100, h: r.height / b.height * 100 };
+	}
+
+	function movable() {
+		return picked.filter( function ( i ) { var it = state.items[ i ]; return it && ! it.h; } );
+	}
+
+	function renderArrange() {
+		var box = root.querySelector( '.rapm-cv-arrange' );
+		if ( ! box ) { return; }
+		var live = movable();
+		var locked = live.some( function ( i ) { return state.items[ i ].l; } );
+		var note = ! live.length ? T.arrangeNone : ( 1 === live.length ? T.arrangeOne : T.arrangeMany.replace( '%d', live.length ) + ( live.length < 3 ? ' ' + T.arrangeThree : '' ) );
+		if ( locked ) { note = T.arrangeLocked; }
+		box.querySelector( '.rapm-cv-arrnote' ).textContent = note;
+		Array.prototype.forEach.call( box.querySelectorAll( '[data-al]' ), function ( b ) { b.disabled = ! live.length || locked; } );
+		Array.prototype.forEach.call( box.querySelectorAll( '[data-dist]' ), function ( b ) { b.disabled = live.length < 3 || locked; } );
+	}
+
+	function clampAll( list ) {
+		list.forEach( function ( i ) {
+			var it = state.items[ i ];
+			it.x = Math.round( Math.max( 0, Math.min( 100, it.x ) ) * 10 ) / 10;
+			it.y = Math.round( Math.max( 0, Math.min( 100, it.y ) ) * 10 ) / 10;
+		} );
+	}
+
+	function align( how ) {
+		var live = movable();
+		var bs = live.map( bounds );
+		if ( ! live.length || bs.indexOf( null ) !== -1 ) { return; }
+		var box = 1 === live.length ? { l: 0, r: 100, t: 0, b: 100 } : {
+			l: Math.min.apply( null, bs.map( function ( b ) { return b.l; } ) ),
+			r: Math.max.apply( null, bs.map( function ( b ) { return b.r; } ) ),
+			t: Math.min.apply( null, bs.map( function ( b ) { return b.t; } ) ),
+			b: Math.max.apply( null, bs.map( function ( b ) { return b.b; } ) )
+		};
+		live.forEach( function ( i, n ) {
+			var it = state.items[ i ], b = bs[ n ];
+			if ( 'left' === how ) { it.x += box.l - b.l; }
+			if ( 'right' === how ) { it.x += box.r - b.r; }
+			if ( 'cx' === how ) { it.x += ( box.l + box.r ) / 2 - ( b.l + b.r ) / 2; }
+			if ( 'top' === how ) { it.y += box.t - b.t; }
+			if ( 'bottom' === how ) { it.y += box.b - b.b; }
+			if ( 'cy' === how ) { it.y += ( box.t + box.b ) / 2 - ( b.t + b.b ) / 2; }
+		} );
+		clampAll( live );
+		render();
+		save();
+	}
+
+	// Equal gaps between the pieces, keeping the first and last in place.
+	function distribute( axis ) {
+		var live = movable().map( function ( i ) { return { i: i, b: bounds( i ) }; } );
+		if ( live.length < 3 || live.some( function ( o ) { return ! o.b; } ) ) { return; }
+		var lo = 'x' === axis ? 'l' : 't', hi = 'x' === axis ? 'r' : 'b', size = 'x' === axis ? 'w' : 'h';
+		live.sort( function ( a, c ) { return a.b[ lo ] - c.b[ lo ]; } );
+		var start = live[ 0 ].b[ lo ];
+		var end = Math.max.apply( null, live.map( function ( o ) { return o.b[ hi ]; } ) );
+		var total = live.reduce( function ( s, o ) { return s + o.b[ size ]; }, 0 );
+		var gap = ( end - start - total ) / ( live.length - 1 );
+		var pos = start;
+		live.forEach( function ( o ) {
+			state.items[ o.i ][ axis ] += pos - o.b[ lo ];
+			pos += o.b[ size ] + gap;
+		} );
+		clampAll( live.map( function ( o ) { return o.i; } ) );
+		render();
+		save();
+		status( gap < 0 ? T.overlap : '' );
+	}
+
+	function status( t ) {
+		var el = root.querySelector( '#rapm-cv-status' );
+		if ( el ) { el.textContent = t; }
 	}
 
 	function renderSel() {
@@ -269,6 +500,7 @@
 		}
 		var lim = LIMITS[ it.k ];
 		var h = '<p><strong>' + esc( label( it ) ) + '</strong></p>';
+		if ( picked.length > 1 ) { h += '<p class="description">' + esc( T.pickedMany.replace( '%d', picked.length ) ) + '</p>'; }
 		if ( isWords( it ) ) {
 			h += '<p class="description">' + esc( T.wordsAbove ) + '</p>';
 			h += '<p><span>' + esc( T.font ) + '</span><br><button type="button" class="button rapm-cv-fontbtn" aria-expanded="' + fontOpen + '">' + esc( fontName( it ) ) + '</button></p>';
@@ -294,9 +526,38 @@
 			h += '<p class="rapm-cv-swrow"><span class="rapm-cv-swlabel">' + esc( T.savedColors ) + '</span><span class="rapm-cv-swatches">' + saved.join( '' ) +
 				'<input type="color" id="rapm-cv-color" value="' + esc( it.c ) + '" aria-label="' + esc( T.otherColor ) + '"></span></p>';
 		}
+		if ( isWords( it ) ) { h += effectsPanel( it ); }
 		if ( ! isWords( it ) ) { h += '<p><button type="button" class="button-link rapm-cv-remove">' + esc( 'img' === it.k ? T.removePic : T.remove ) + '</button></p>'; }
 		selBox.innerHTML = h;
 		if ( fontOpen && isWords( it ) ) { loadGoogleList().then( renderFontList ); }
+	}
+
+	// 1.51.0: shadow and outline for the picked words (all of them).
+	function effectsPanel( it ) {
+		var seg = function ( attr, now, opts ) {
+			return opts.map( function ( o ) {
+				return '<button type="button" class="button button-small" ' + attr + '="' + o[ 0 ] + '" aria-pressed="' + ( ( now || 0 ) === o[ 0 ] ) + '">' + esc( o[ 1 ] ) + '</button>';
+			} ).join( ' ' );
+		};
+		var h = '<div class="rapm-cv-fx"><p class="rapm-cv-swlabel">' + esc( T.effects ) + '</p>' +
+			'<p class="rapm-cv-fxrow"><span>' + esc( T.shadow ) + '</span><span>' + seg( 'data-sh', it.sh, [ [ 0, T.none ], [ 1, T.soft ], [ 2, T.strong ] ] ) + '</span></p>' +
+			'<p class="rapm-cv-fxrow"><span>' + esc( T.outline ) + '</span><span>' + seg( 'data-ol', it.ol, [ [ 0, T.none ], [ 1, T.thin ], [ 2, T.thick ] ] ) + '</span></p>';
+		if ( it.ol ) {
+			var oc = it.oc || '#1d3557';
+			var sw = function ( c, cg, name ) {
+				return '<button type="button" class="rapm-cv-sw" data-oc="' + esc( c ) + '"' + ( cg ? ' data-ocg="' + esc( cg ) + '"' : '' ) + ' style="background:' + esc( c ) + '" aria-label="' + esc( name ) + '" title="' + esc( name ) + '" aria-pressed="' + ( c === oc && ( cg || '' ) === ( it.ocg || '' ) ) + '"></button>';
+			};
+			var plain = kit.colors.map( function ( c ) { return [ c.hex, c.name ]; } ).concat( [ [ '#000000', T.black ], [ '#ffffff', T.white ] ] );
+			h += '<p class="rapm-cv-fxrow"><span>' + esc( T.outlineColor ) + '</span><span class="rapm-cv-swatches">' +
+				kit.site.map( function ( c ) { return sw( c.hex, c.id, c.name ); } ).join( '' ) +
+				plain.map( function ( c ) { return sw( c[ 0 ], '', c[ 1 ] ); } ).join( '' ) +
+				'<input type="color" id="rapm-cv-ocolor" value="' + esc( oc ) + '" aria-label="' + esc( T.otherColor ) + '"></span></p>';
+		}
+		return h + '</div>';
+	}
+
+	function pickedWords() {
+		return picked.map( function ( i ) { return state.items[ i ]; } ).filter( function ( it ) { return it && isWords( it ); } );
 	}
 
 	function renderBg() {
@@ -313,55 +574,133 @@
 
 	/* ---- Dragging ------------------------------------------------------- */
 
+	/*
+	 * 1.51.0: Shift-click picks several; dragging one of the picked pieces
+	 * moves them all (locked ones stay). The piece being dragged snaps
+	 * when its edge or middle is within 1% of the square's middle or edges
+	 * or another piece's, and a pink guide shows where; Alt/Option skips it.
+	 */
+	var SNAP = 1;
 	var drag = null;
 	board.addEventListener( 'pointerdown', function ( e ) {
 		var n = e.target.closest( '.rapm-cv-item' );
-		if ( ! n ) { selected = -1; render(); return; }
+		if ( ! n ) {
+			if ( ! e.shiftKey ) { selected = -1; render(); }
+			return;
+		}
 		e.preventDefault();
-		selected = +n.getAttribute( 'data-i' );
-		var it = state.items[ selected ];
-		var r = board.getBoundingClientRect();
-		drag = { it: it, r: r, dx: e.clientX - ( r.left + it.x / 100 * r.width ), dy: e.clientY - ( r.top + it.y / 100 * r.height ) };
-		board.setPointerCapture( e.pointerId );
+		var i = +n.getAttribute( 'data-i' );
+		if ( e.shiftKey ) {
+			togglePick( i );
+			return;
+		}
+		if ( -1 === picked.indexOf( i ) ) { picked = [ i ]; }
+		selected = i;
 		render();
 		stage.focus( { preventScroll: true } );
+		status( '' );
+		var it = state.items[ i ];
+		if ( it.l ) { status( T.lockedMsg ); return; }
+		var movers = movable().filter( function ( j ) { return ! state.items[ j ].l; } );
+		var r = board.getBoundingClientRect();
+		var xs = [ 0, 50, 100 ], ys = [ 0, 50, 100 ];
+		state.items.forEach( function ( o, j ) {
+			if ( o.h || -1 !== movers.indexOf( j ) ) { return; }
+			var b = bounds( j );
+			if ( b ) { xs.push( b.l, ( b.l + b.r ) / 2, b.r ); ys.push( b.t, ( b.t + b.b ) / 2, b.b ); }
+		} );
+		drag = { lead: i, r: r, sx: e.clientX, sy: e.clientY, xs: xs, ys: ys, from: movers.map( function ( j ) { return [ j, state.items[ j ].x, state.items[ j ].y ]; } ) };
+		board.setPointerCapture( e.pointerId );
 	} );
+
+	function togglePick( i ) {
+		var at = picked.indexOf( i );
+		if ( -1 === at ) {
+			picked.push( i );
+			selected = i;
+		} else {
+			picked.splice( at, 1 );
+			selected = picked.length ? picked[ picked.length - 1 ] : -1;
+		}
+		render();
+	}
+
+	function nearest( mine, targets ) {
+		var best = null;
+		mine.forEach( function ( p ) {
+			targets.forEach( function ( t ) {
+				var d = t - p;
+				if ( Math.abs( d ) < SNAP && ( ! best || Math.abs( d ) < Math.abs( best.d ) ) ) { best = { d: d, t: t }; }
+			} );
+		} );
+		return best;
+	}
+
+	function moveBy( dx, dy ) {
+		drag.from.forEach( function ( f ) {
+			var it = state.items[ f[ 0 ] ];
+			it.x = Math.round( Math.max( 0, Math.min( 100, f[ 1 ] + dx ) ) * 10 ) / 10;
+			it.y = Math.round( Math.max( 0, Math.min( 100, f[ 2 ] + dy ) ) * 10 ) / 10;
+			var n = board.querySelector( '.rapm-cv-item[data-i="' + f[ 0 ] + '"]' );
+			if ( n ) { place( n, it ); }
+		} );
+	}
+
 	board.addEventListener( 'pointermove', function ( e ) {
 		if ( ! drag ) { return; }
-		var x = ( e.clientX - drag.dx - drag.r.left ) / drag.r.width * 100;
-		var y = ( e.clientY - drag.dy - drag.r.top ) / drag.r.height * 100;
-		x = Math.max( 0, Math.min( 100, x ) );
-		y = Math.max( 0, Math.min( 100, y ) );
-		var sx = Math.abs( x - 50 ) < 1.5, sy = Math.abs( y - 50 ) < 1.5;
-		if ( sx ) { x = 50; }
-		if ( sy ) { y = 50; }
-		gv.hidden = ! sx;
-		gh.hidden = ! sy;
-		drag.it.x = Math.round( x * 10 ) / 10;
-		drag.it.y = Math.round( y * 10 ) / 10;
-		var n = board.querySelector( '.rapm-cv-item[data-i="' + selected + '"]' );
-		if ( n ) { place( n, drag.it ); }
+		var dx = ( e.clientX - drag.sx ) / drag.r.width * 100;
+		var dy = ( e.clientY - drag.sy ) / drag.r.height * 100;
+		moveBy( dx, dy );
+		gv.hidden = gh.hidden = true;
+		if ( e.altKey ) { return; }
+		var b = bounds( drag.lead );
+		if ( ! b ) { return; }
+		var bx = nearest( [ b.l, ( b.l + b.r ) / 2, b.r ], drag.xs );
+		var by = nearest( [ b.t, ( b.t + b.b ) / 2, b.b ], drag.ys );
+		if ( bx || by ) { moveBy( dx + ( bx ? bx.d : 0 ), dy + ( by ? by.d : 0 ) ); }
+		if ( bx ) { gv.style.left = bx.t + '%'; gv.hidden = false; }
+		if ( by ) { gh.style.top = by.t + '%'; gh.hidden = false; }
 	} );
 	function stop() {
 		if ( ! drag ) { return; }
 		drag = null;
 		gv.hidden = gh.hidden = true;
+		render();
 		save();
 	}
 	board.addEventListener( 'pointerup', stop );
 	board.addEventListener( 'pointercancel', stop );
 
 	stage.addEventListener( 'keydown', function ( e ) {
-		var it = state.items[ selected ];
-		if ( ! it || ! /^Arrow/.test( e.key ) ) { return; }
+		if ( ! picked.length || ! /^Arrow/.test( e.key ) || e.ctrlKey || e.metaKey ) { return; }
 		e.preventDefault();
+		var list = movable().filter( function ( i ) { return ! state.items[ i ].l; } );
+		if ( ! list.length ) { status( T.lockedMsg ); return; }
 		var d = e.shiftKey ? 5 : 1;
-		if ( 'ArrowLeft' === e.key ) { it.x = Math.max( 0, it.x - d ); }
-		if ( 'ArrowRight' === e.key ) { it.x = Math.min( 100, it.x + d ); }
-		if ( 'ArrowUp' === e.key ) { it.y = Math.max( 0, it.y - d ); }
-		if ( 'ArrowDown' === e.key ) { it.y = Math.min( 100, it.y + d ); }
+		list.forEach( function ( i ) {
+			var it = state.items[ i ];
+			if ( 'ArrowLeft' === e.key ) { it.x = Math.max( 0, it.x - d ); }
+			if ( 'ArrowRight' === e.key ) { it.x = Math.min( 100, it.x + d ); }
+			if ( 'ArrowUp' === e.key ) { it.y = Math.max( 0, it.y - d ); }
+			if ( 'ArrowDown' === e.key ) { it.y = Math.min( 100, it.y + d ); }
+		} );
 		render();
-		save();
+		save( 'nudge' );
+	} );
+
+	// Undo/Redo and front/back from the keyboard, unless typing in a box
+	// (which keeps the browser's own undo for the words).
+	document.addEventListener( 'keydown', function ( e ) {
+		if ( ! ( e.ctrlKey || e.metaKey ) || e.altKey || null === root.offsetParent ) { return; }
+		var t = e.target;
+		if ( t && ( /^(INPUT|TEXTAREA|SELECT)$/.test( t.tagName ) || t.isContentEditable ) ) { return; }
+		var k = e.key.toLowerCase();
+		if ( 'z' === k && ! e.shiftKey ) { e.preventDefault(); undo(); return; }
+		if ( ( 'z' === k && e.shiftKey ) || 'y' === k ) { e.preventDefault(); redo(); return; }
+		if ( ( ']' === e.key || '[' === e.key ) && selected >= 0 && root.contains( t ) ) {
+			e.preventDefault();
+			moveLayer( selected, ']' === e.key ? 1 : -1 );
+		}
 	} );
 
 	/* ---- Icons ---------------------------------------------------------- */
@@ -526,6 +865,7 @@
 		var b = document.createElement( 'div' );
 		b.className = 'rapm-pb-board';
 		( tpl.canvas.items || [] ).forEach( function ( it ) {
+			if ( it.h ) { return; }
 			var n = document.createElement( 'div' );
 			n.className = 'rapm-pb-t is-' + it.k;
 			place( n, it );
@@ -572,6 +912,7 @@
 	function useTemplate( i ) {
 		var tpl = kit.templates[ i ];
 		if ( ! tpl ) { return; }
+		pendingWords = currentWords(); // so Undo brings the words back too
 		state = JSON.parse( JSON.stringify( tpl.canvas ) );
 		state.bg = state.bg || '';
 		var fields = { rapm_headline: 'headline', rapm_subhead: 'sub', rapm_cta_text: 'btn' };
@@ -652,7 +993,55 @@
 			save();
 			return;
 		}
-		if ( b.classList.contains( 'rapm-cv-layer' ) ) { selected = +b.getAttribute( 'data-i' ); render(); return; }
+		if ( b.classList.contains( 'rapm-cv-layer' ) ) {
+			if ( e.shiftKey ) { togglePick( +b.getAttribute( 'data-i' ) ); return; }
+			selected = +b.getAttribute( 'data-i' );
+			picked = [ selected ];
+			render();
+			return;
+		}
+		if ( b.hasAttribute( 'data-fwd' ) ) { moveLayer( +b.getAttribute( 'data-fwd' ), 1 ); return; }
+		if ( b.hasAttribute( 'data-back' ) ) { moveLayer( +b.getAttribute( 'data-back' ), -1 ); return; }
+		if ( b.hasAttribute( 'data-hide' ) ) {
+			var hi = state.items[ +b.getAttribute( 'data-hide' ) ];
+			if ( hi.h ) { delete hi.h; } else { hi.h = true; }
+			render();
+			save();
+			status( hi.h ? T.hiddenMsg : '' );
+			return;
+		}
+		if ( b.hasAttribute( 'data-lock' ) ) {
+			var li = state.items[ +b.getAttribute( 'data-lock' ) ];
+			if ( li.l ) { delete li.l; } else { li.l = true; }
+			render();
+			save();
+			return;
+		}
+		if ( b.hasAttribute( 'data-al' ) ) { align( b.getAttribute( 'data-al' ) ); return; }
+		if ( b.hasAttribute( 'data-dist' ) ) { distribute( b.getAttribute( 'data-dist' ) ); return; }
+		if ( 'rapm-cv-undo' === b.id ) { undo(); return; }
+		if ( 'rapm-cv-redo' === b.id ) { redo(); return; }
+		if ( b.hasAttribute( 'data-sh' ) || b.hasAttribute( 'data-ol' ) ) {
+			var key = b.hasAttribute( 'data-sh' ) ? 'sh' : 'ol';
+			var v = +b.getAttribute( 'data-' + key );
+			pickedWords().forEach( function ( w ) {
+				if ( v ) { w[ key ] = v; } else { delete w[ key ]; }
+				if ( 'ol' === key && ! v ) { delete w.oc; delete w.ocg; }
+				if ( 'ol' === key && v && ! w.oc ) { w.oc = '#1d3557'; }
+			} );
+			render();
+			save();
+			return;
+		}
+		if ( b.hasAttribute( 'data-oc' ) ) {
+			pickedWords().forEach( function ( w ) {
+				w.oc = b.getAttribute( 'data-oc' );
+				if ( b.hasAttribute( 'data-ocg' ) ) { w.ocg = b.getAttribute( 'data-ocg' ); } else { delete w.ocg; }
+			} );
+			render();
+			save();
+			return;
+		}
 		if ( b.hasAttribute( 'data-color' ) ) {
 			var ci = state.items[ selected ];
 			ci.c = b.getAttribute( 'data-color' );
@@ -697,6 +1086,15 @@
 			if ( m ) { place( m, it ); }
 			field.value = JSON.stringify( state );
 		}
+		if ( 'rapm-cv-ocolor' === e.target.id ) {
+			pickedWords().forEach( function ( w ) {
+				w.oc = e.target.value;
+				delete w.ocg;
+				var o = board.querySelector( '.rapm-cv-item[data-i="' + state.items.indexOf( w ) + '"]' );
+				if ( o ) { place( o, w ); }
+			} );
+			field.value = JSON.stringify( state );
+		}
 		if ( 'rapm-cv-bgcolor' === e.target.id ) {
 			state.bg = e.target.value;
 			state.pic = 0;
@@ -728,7 +1126,7 @@
 			save();
 			return;
 		}
-		if ( /^rapm-cv-(size|color|bgcolor)$/.test( e.target.id ) ) { render(); save(); }
+		if ( /^rapm-cv-(size|color|bgcolor|ocolor)$/.test( e.target.id ) ) { render(); save( e.target.id ); }
 	} );
 
 	// The words, typeface and style come from the form's own fields.
