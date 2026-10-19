@@ -53,7 +53,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Of 19 promotions not ended: 0 problems, 6 need a look (the 3 split test room photos have no phone picture; 3 test quick links have no alt text), and 13 ready.
   - The schedule check found a real gap: the **Home page slider** and **Promotions coupons** have nothing scheduled after Oct 31, 11:59 pm.
   - "Check links" was not run on staging, to avoid tripping its Cloudflare bot check again.
-  - Not yet in production (1.48.0 and 1.48.1 aren't either).
+  - **Pushed to the production repo (2026-10-19)** with Phil's OK, together with 1.48.0 and 1.48.1: main and the tags `v1.48.0`, `v1.48.1` and `v1.49.0`.
 - **Not in this release:** the same checks inside the add/edit form while editing, and on the clients' Promotions page. Those are candidates for later, if wanted.
 
 ## 1.48.1
@@ -62,7 +62,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Root cause:** WordPress returns a post's title as HTML (`get_the_title()` turns " - " into `&#8211;`, quotes into `&#8217;`, and so on). The library's script escapes text itself, so the encoded form was shown literally. Picture names in the canvas editor's "On the design" list (1.45.0) had the same problem.
 - **Fix:** both now decode the title to plain text once (`RAPM_Library::plain_title()`), and the browser escapes it as usual.
 - **Also on staging, 1.48.0 working with real data:** 22 promotions in 10 spots, 19 showing, 3 ended, 6 needing a look (the split test room photos with no phone picture, quick links with no alt text), and 3.8 MB of pictures. The designed promotion box is drawn on its card. No errors.
-- **Installed on staging (2026-10-16):** the library serves `rapm-library.js?ver=1.48.1`. Names read "Coupon – Free Delivery Bedroom Sets" and "Coupon – $100 Off Rugs", with no codes left. No errors. Not yet in production (1.48.0 isn't either).
+- **Installed on staging (2026-10-16):** the library serves `rapm-library.js?ver=1.48.1`. Names read "Coupon – Free Delivery Bedroom Sets" and "Coupon – $100 Off Rugs", with no codes left. No errors. Pushed to production with 1.49.0 (2026-10-19).
 
 ## 1.48.0
 
