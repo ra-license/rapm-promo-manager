@@ -2145,40 +2145,7 @@ class RAPM_Upload_Handler {
 					<p class="description"><?php esc_html_e( 'This square shows on every screen, in the middle of the promotion box. On wider boxes the background fills the rest.', 'rapm' ); ?></p>
 				</div>
 				<div class="rapm-cv-side">
-					<div class="rapm-cv-panel">
-						<h3><?php esc_html_e( 'Background', 'rapm' ); ?></h3>
-						<p class="rapm-cv-seg">
-							<button type="button" class="button" data-bgmode="color" aria-pressed="true"><?php esc_html_e( 'A color', 'rapm' ); ?></button>
-							<button type="button" class="button" data-bgmode="pic" aria-pressed="false"><?php esc_html_e( 'The picture from step 1', 'rapm' ); ?></button>
-						</p>
-						<p class="rapm-cv-bgcolors">
-							<?php foreach ( $bgs as $c => $c_name ) : ?>
-								<button type="button" class="rapm-cv-sw" data-bg="<?php echo esc_attr( $c ); ?>" style="background:<?php echo esc_attr( $c ); ?>" aria-label="<?php echo esc_attr( $c_name ); ?>" title="<?php echo esc_attr( $c_name ); ?>" aria-pressed="false"></button>
-							<?php endforeach; ?>
-							<input type="color" id="rapm-cv-bgcolor" value="#f3ead8" aria-label="<?php esc_attr_e( 'Any other background color', 'rapm' ); ?>" />
-						</p>
-						<p class="description rapm-cv-nopic"><?php esc_html_e( 'To use a picture as the background, upload one in step 1. It fills the whole box.', 'rapm' ); ?></p>
-					</div>
-					<div class="rapm-cv-panel">
-						<h3><?php esc_html_e( 'Add an icon or picture', 'rapm' ); ?></h3>
-						<p class="rapm-cv-seg rapm-cv-tabs">
-							<button type="button" class="button" data-tab="ms" aria-pressed="true"><?php esc_html_e( 'Google icons', 'rapm' ); ?></button>
-							<?php if ( $fa_url ) : ?>
-								<button type="button" class="button" data-tab="fa" aria-pressed="false"><?php esc_html_e( 'Font Awesome', 'rapm' ); ?></button>
-							<?php endif; ?>
-							<button type="button" class="button" data-tab="media" aria-pressed="false"><?php esc_html_e( 'Your pictures', 'rapm' ); ?></button>
-						</p>
-						<div class="rapm-cv-iconpick">
-							<input type="search" class="rapm-cv-search regular-text" placeholder="<?php esc_attr_e( 'Search, like sofa, bed, truck or sale', 'rapm' ); ?>" aria-label="<?php esc_attr_e( 'Search icons', 'rapm' ); ?>" />
-							<div class="rapm-cv-icons"></div>
-						</div>
-						<p class="description rapm-cv-src-ms"><?php esc_html_e( 'Google\'s free Material Symbols, 3,929 icons. A picked icon is saved with this promotion, so your website never loads anything from Google for it.', 'rapm' ); ?></p>
-						<p class="description rapm-cv-src-fa" hidden><?php esc_html_e( 'The Font Awesome icons that come with Elementor (Font Awesome Free, 1,616 icons, including social media logos). A picked icon is saved with this promotion.', 'rapm' ); ?></p>
-						<div class="rapm-cv-media" hidden>
-							<p><button type="button" class="button rapm-cv-pick"><?php esc_html_e( 'Choose from the Media Library', 'rapm' ); ?></button></p>
-							<p class="description"><?php esc_html_e( 'A logo, a brand badge or a "Made in USA" seal, for example. A PNG or SVG with a see-through background looks best. Drag it into place and set its size like an icon.', 'rapm' ); ?></p>
-						</div>
-					</div>
+					<?php // 1.51.1: what you use most first; Background (open on a new design) and Add an icon or picture fold away. ?>
 					<div class="rapm-cv-panel">
 						<h3><?php esc_html_e( 'On the design', 'rapm' ); ?></h3>
 						<p class="description"><?php esc_html_e( 'The top of the list is in front. Arrows move a piece forward or back (Ctrl+] and Ctrl+[, or ⌘ on a Mac).', 'rapm' ); ?></p>
@@ -2206,6 +2173,40 @@ class RAPM_Upload_Handler {
 						</div>
 						<div class="rapm-cv-sel"></div>
 					</div>
+					<details class="rapm-cv-panel"<?php echo $canvas['items'] ? '' : ' open'; ?>>
+						<summary><span class="rapm-cv-sumtitle"><?php esc_html_e( 'Background', 'rapm' ); ?></span> <span class="rapm-cv-bgdot" aria-hidden="true"></span></summary>
+						<p class="rapm-cv-seg">
+							<button type="button" class="button" data-bgmode="color" aria-pressed="true"><?php esc_html_e( 'A color', 'rapm' ); ?></button>
+							<button type="button" class="button" data-bgmode="pic" aria-pressed="false"><?php esc_html_e( 'The picture from step 1', 'rapm' ); ?></button>
+						</p>
+						<p class="rapm-cv-bgcolors">
+							<?php foreach ( $bgs as $c => $c_name ) : ?>
+								<button type="button" class="rapm-cv-sw" data-bg="<?php echo esc_attr( $c ); ?>" style="background:<?php echo esc_attr( $c ); ?>" aria-label="<?php echo esc_attr( $c_name ); ?>" title="<?php echo esc_attr( $c_name ); ?>" aria-pressed="false"></button>
+							<?php endforeach; ?>
+							<input type="color" id="rapm-cv-bgcolor" value="#f3ead8" aria-label="<?php esc_attr_e( 'Any other background color', 'rapm' ); ?>" />
+						</p>
+						<p class="description rapm-cv-nopic"><?php esc_html_e( 'To use a picture as the background, upload one in step 1. It fills the whole box.', 'rapm' ); ?></p>
+					</details>
+					<details class="rapm-cv-panel">
+						<summary><span class="rapm-cv-sumtitle"><?php esc_html_e( 'Add an icon or picture', 'rapm' ); ?></span></summary>
+						<p class="rapm-cv-seg rapm-cv-tabs">
+							<button type="button" class="button" data-tab="ms" aria-pressed="true"><?php esc_html_e( 'Google icons', 'rapm' ); ?></button>
+							<?php if ( $fa_url ) : ?>
+								<button type="button" class="button" data-tab="fa" aria-pressed="false"><?php esc_html_e( 'Font Awesome', 'rapm' ); ?></button>
+							<?php endif; ?>
+							<button type="button" class="button" data-tab="media" aria-pressed="false"><?php esc_html_e( 'Your pictures', 'rapm' ); ?></button>
+						</p>
+						<div class="rapm-cv-iconpick">
+							<input type="search" class="rapm-cv-search regular-text" placeholder="<?php esc_attr_e( 'Search, like sofa, bed, truck or sale', 'rapm' ); ?>" aria-label="<?php esc_attr_e( 'Search icons', 'rapm' ); ?>" />
+							<div class="rapm-cv-icons"></div>
+						</div>
+						<p class="description rapm-cv-src-ms"><?php esc_html_e( 'Google\'s free Material Symbols, 3,929 icons. A picked icon is saved with this promotion, so your website never loads anything from Google for it.', 'rapm' ); ?></p>
+						<p class="description rapm-cv-src-fa" hidden><?php esc_html_e( 'The Font Awesome icons that come with Elementor (Font Awesome Free, 1,616 icons, including social media logos). A picked icon is saved with this promotion.', 'rapm' ); ?></p>
+						<div class="rapm-cv-media" hidden>
+							<p><button type="button" class="button rapm-cv-pick"><?php esc_html_e( 'Choose from the Media Library', 'rapm' ); ?></button></p>
+							<p class="description"><?php esc_html_e( 'A logo, a brand badge or a "Made in USA" seal, for example. A PNG or SVG with a see-through background looks best. Drag it into place and set its size like an icon.', 'rapm' ); ?></p>
+						</div>
+					</details>
 				</div>
 			</div>
 		</div>

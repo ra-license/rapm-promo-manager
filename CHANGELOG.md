@@ -4,6 +4,34 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.51.1
+
+**Easier to work in the canvas, and the Design Center shows the pages each spot is on.** Both requested by Phil on 2026-10-19 after trying 1.51.0 on staging ("It's hard to navigate").
+- **The design stays in view:**
+  - On screens wide enough for the two-column layout, Undo/Redo, the square and its note stay put while the settings on the right scroll, the way Canva and Figma keep the design fixed.
+  - The square shrinks if needed so all of it fits in the window.
+  - Narrower screens stack as before, where a fixed square would cover the settings.
+- **Shorter right column:**
+  - "On the design" (the list, Arrange and the picked piece's settings) now comes first.
+  - "Background" and "Add an icon or picture" fold open and closed.
+  - Background starts open on a new design and closed on an existing one, with a dot showing the current color.
+  - The icon panel starts closed.
+- **Pages shown with their address:**
+  - Wherever a spot's pages are listed (the Design Center's split sliders and Asset library, and the Promotions page), each page now shows its address (like `/split-view-test/`).
+  - Pages that aren't public are marked: private, draft, waiting for review or scheduled.
+  - People allowed to edit a page also get an Edit page link, which opens Elementor for an Elementor page.
+- **Fix, private and draft pages:**
+  - **Root cause:** the lookup only counted published pages. A spot placed on a private, draft or scheduled page said "Not on any page yet". On staging, the split test slider (on a private test page) showed exactly that.
+  - **Fix:** those pages now count, marked as not live.
+  - The saved list was renamed (`rapm_spot_usage_v2`), so every site rebuilds it on the next page view.
+- **Tested in WordPress Playground with Elementor:**
+  - The fixed square stays in view while scrolling past the open icon list and text effects.
+  - The two sections fold and unfold.
+  - A private page and a draft page with the same spot are both listed with the right notes and Edit links.
+  - The Promotions page, Design Center, Asset library, promotion form and home page load without errors.
+
+---
+
 ## 1.51.0
 
 **New: canvas power tools, with Undo.** Design Center roadmap step 5, built to the mockup Phil approved (https://claude.ai/artifact/QGMZMdpipShtPp8TWk9MMw), with Undo added at his request.

@@ -242,3 +242,7 @@
 .rapm-lib-gaps[hidden] { display: none; }
 .rapm-lib-gaps h3 { margin: 0 0 6px; font-size: 14px; }
 .rapm-lib-gaps ul { margin: 0 0 0 18px; list-style: disc; display: grid; gap: 4px; font-size: 13px; }
+/* 1.51.1: each page a spot is on, with its address and an Edit link. */
+.rapm-spot-page { display: block; margin-top: 2px; }
+.rapm-spot-path { font-size: 12px; padding: 1px 5px; }
+.rapm-spot-note { color: #996800; }

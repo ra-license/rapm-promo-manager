@@ -291,7 +291,12 @@
 		h += '<section><h3>' + esc( T.ready ) + ' <span class="rapm-lib-verdict is-' + it.ready + '">' + esc( 'fail' === it.ready ? T.problem : ( 'warn' === it.ready ? T.flags : T.readyAll ) ) + '</span></h3>' +
 			'<ul class="rapm-lib-checks">' + sorted.map( function ( c ) { return '<li class="is-' + c.level + '"><span class="rapm-lib-dot" aria-hidden="true"></span><span>' + esc( c.text ) + '</span></li>'; } ).join( '' ) + '</ul>' +
 			'<p class="description">' + esc( T.readyNote ) + '</p></section>';
-		h += '<section><h3>' + esc( T.whereShows ) + '</h3>' + ( it.pages.length ? '<ul>' + it.pages.map( function ( p ) { return '<li>' + ( p.url ? '<a href="' + esc( p.url ) + '" target="_blank" rel="noopener">' + esc( p.label ) + '</a>' : esc( p.label ) ) + '</li>'; } ).join( '' ) + '</ul>' : '<p class="description">' + esc( T.notPlaced ) + '</p>' ) +
+		h += '<section><h3>' + esc( T.whereShows ) + '</h3>' + ( it.pages.length ? '<ul>' + it.pages.map( function ( p ) {
+			return '<li>' + ( p.url ? '<a href="' + esc( p.url ) + '" target="_blank" rel="noopener">' + esc( p.label ) + '</a>' : esc( p.label ) ) +
+				( p.path ? ' <code>' + esc( p.path ) + '</code>' : '' ) +
+				( p.note ? ' <span class="description">(' + esc( p.note ) + ')</span>' : '' ) +
+				( p.edit ? ' · <a href="' + esc( p.edit ) + '">' + esc( T.editPage ) + '</a>' : '' ) + '</li>';
+		} ).join( '' ) + '</ul>' : '<p class="description">' + esc( T.notPlaced ) + '</p>' ) +
 			( it.link ? '<p class="description">' + esc( T.linksTo ) + ': ' + esc( it.link ) + '</p>' : '' ) + '</section>';
 		h += '<section><h3>' + esc( T.history ) + '</h3><p>' + esc( T.lastSaved ) + ' ' + esc( it.saved ) + ( it.editor ? ' ' + esc( T.by ) + ' ' + esc( it.editor ) : '' ) + '<br>' + esc( T.created ) + ' ' + esc( it.created ) + '</p></section>';
 		h += '<p class="rapm-lib-status" id="rapm-lib-dstatus" aria-live="polite"></p>';

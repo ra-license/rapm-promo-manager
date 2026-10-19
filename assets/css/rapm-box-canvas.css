@@ -154,3 +154,25 @@
 .rapm-cv-fx { border-top: 1px solid #dcdcde; margin-top: 10px; padding-top: 6px; }
 .rapm-cv-fxrow { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 6px; align-items: center; margin: 6px 0; font-size: 13px; }
 .rapm-cv-fxrow .button[aria-pressed="true"] { background: #f0f6fc; border-color: #2271b1; color: #0a4b78; }
+/* 1.51.1: the square stays in view while the settings scroll (two-column
+   layout only; stacked on narrower screens), and two sections fold away. */
+@media (min-width: 1101px) {
+	.rapm-cv-main { position: sticky; top: 46px; z-index: 5; }
+	/* Small enough that the buttons, square and note fit the window. */
+	.rapm-cv-main .rapm-cv-stage { max-width: min(520px, calc(100vh - 190px)); }
+	.rapm-cv-main > .description { max-width: min(520px, calc(100vh - 190px)); }
+}
+details.rapm-cv-panel { display: block; padding: 0; }
+details.rapm-cv-panel > summary { list-style: none; cursor: pointer; padding: 12px 14px; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; border-radius: 4px; }
+details.rapm-cv-panel > summary::-webkit-details-marker { display: none; }
+details.rapm-cv-panel > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid #50575e; border-bottom: 2px solid #50575e; transform: rotate(-45deg); transition: transform .15s; flex: none; }
+details.rapm-cv-panel[open] > summary::before { transform: rotate(45deg); }
+details.rapm-cv-panel > summary:hover { background: #f6f7f7; }
+details.rapm-cv-panel > summary:focus-visible { outline: 2px solid #2271b1; outline-offset: -2px; }
+details.rapm-cv-panel[open] > summary { border-bottom: 1px solid #f0f0f1; border-radius: 4px 4px 0 0; }
+details.rapm-cv-panel > :not(summary) { margin: 8px 14px; }
+details.rapm-cv-panel > :last-child { margin-bottom: 12px; }
+.rapm-cv-bgdot { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 0 1px #c3c4c7; margin-left: auto; }
+.rapm-cv-bgdot.is-pic { background: linear-gradient(135deg, #cdbfa8 0 50%, #6b4a33 50% 100%); }
+details.rapm-cv-panel[open] .rapm-cv-bgdot { display: none; }
+@media (prefers-reduced-motion: reduce) { details.rapm-cv-panel > summary::before { transition: none; } }

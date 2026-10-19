@@ -674,15 +674,7 @@ class RAPM_Promotions_Screen {
 					<p class="rapm-spot-on">
 						<?php if ( $used_on ) : ?>
 							<?php esc_html_e( 'Shows on:', 'rapm' ); ?>
-							<?php
-							$links = array();
-							foreach ( $used_on as $use ) {
-								$links[] = $use['url']
-									? '<a href="' . esc_url( $use['url'] ) . '" target="_blank" rel="noopener">' . esc_html( $use['label'] ) . '</a>'
-									: esc_html( $use['label'] );
-							}
-							echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput -- each part escaped above.
-							?>
+							<?php echo RAPM_Spot_Usage::links_html( $used_on ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in links_html(). ?>
 						<?php else : ?>
 							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Put its spot code (below) on a page to show it.', 'rapm' ); ?></span>
 						<?php endif; ?>
@@ -789,13 +781,7 @@ class RAPM_Promotions_Screen {
 					<p class="rapm-spot-on">
 						<?php if ( $used_on ) : ?>
 							<?php esc_html_e( 'Shows on:', 'rapm' ); ?>
-							<?php
-							$links = array();
-							foreach ( $used_on as $use ) {
-								$links[] = $use['url'] ? '<a href="' . esc_url( $use['url'] ) . '" target="_blank" rel="noopener">' . esc_html( $use['label'] ) . '</a>' : esc_html( $use['label'] );
-							}
-							echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput -- each part escaped above.
-							?>
+							<?php echo RAPM_Spot_Usage::links_html( $used_on ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in links_html(). ?>
 						<?php else : ?>
 							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet.', 'rapm' ); ?></span>
 						<?php endif; ?>

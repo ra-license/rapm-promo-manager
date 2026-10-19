@@ -570,6 +570,13 @@
 		root.querySelector( '.rapm-cv-nopic' ).hidden = hasPic;
 		Array.prototype.forEach.call( root.querySelectorAll( '[data-bg]' ), function ( b ) { b.setAttribute( 'aria-pressed', String( b.getAttribute( 'data-bg' ) === state.bg ) ); } );
 		root.querySelector( '#rapm-cv-bgcolor' ).value = /^#[0-9a-f]{6}$/i.test( state.bg ) ? state.bg : '#f3ead8';
+		// 1.51.1: the folded Background section shows the current choice.
+		var dot = root.querySelector( '.rapm-cv-bgdot' );
+		if ( dot ) {
+			var usePic = !! ( state.pic && hasPic );
+			dot.classList.toggle( 'is-pic', usePic );
+			dot.style.background = usePic ? '' : ( state.bg || '#f3ead8' );
+		}
 	}
 
 	/* ---- Dragging ------------------------------------------------------- */

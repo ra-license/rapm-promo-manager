@@ -19,12 +19,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  *   saved before 1.26.0 only exists here.
  * - Classic Text, Custom HTML and block widgets (sidebars and footers).
  *
+ * Since 1.51.1 private, draft, pending and scheduled pages count too, with
+ * that shown next to their name, so a sale page being built before it goes
+ * live (or a private test page) isn't reported as "not on any page".
+ *
  * The result is cached for 12 hours and dropped whenever any post or
  * widget is saved, so it's rebuilt at most once per change.
  */
 class RAPM_Spot_Usage {
 
-	const TRANSIENT = 'rapm_spot_usage';
+	const TRANSIENT = 'rapm_spot_usage_v2'; // v2 (1.51.1): adds status and path.
+
+	const STATUSES = "'publish', 'private', 'draft', 'pending', 'future'";
 
 	/** Shortcode tag => spot kind. 'calendar' isn't a spot, but is tracked the same way. */
 	const TAGS = array(
@@ -82,8 +88,8 @@ class RAPM_Spot_Usage {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT ID, post_type, post_title, post_content FROM {$wpdb->posts}
-				WHERE post_status = 'publish' AND post_type NOT IN ( 'revision', 'rapm_asset', 'nav_menu_item' )
+				"SELECT ID, post_type, post_title, post_status, post_content FROM {$wpdb->posts}
+				WHERE post_status IN ( " . self::STATUSES . " ) AND post_type NOT IN ( 'revision', 'rapm_asset', 'nav_menu_item' )
 				AND post_content LIKE %s",
 				$like
 			)
@@ -97,9 +103,9 @@ class RAPM_Spot_Usage {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT p.ID, p.post_type, p.post_title, pm.meta_value FROM {$wpdb->postmeta} pm
+				"SELECT p.ID, p.post_type, p.post_title, p.post_status, pm.meta_value FROM {$wpdb->postmeta} pm
 				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-				WHERE pm.meta_key = '_elementor_data' AND p.post_status = 'publish'
+				WHERE pm.meta_key = '_elementor_data' AND p.post_status IN ( " . self::STATUSES . " )
 				AND p.post_type NOT IN ( 'revision', 'rapm_asset' ) AND pm.meta_value LIKE %s",
 				'%' . $wpdb->esc_like( 'rapm' ) . '%'
 			)
@@ -200,11 +206,23 @@ class RAPM_Spot_Usage {
 				$label    = sprintf( __( '%s (used on other pages)', 'rapm' ), $label );
 				$sitewide = true;
 			}
+			$status = isset( $row->post_status ) ? $row->post_status : 'publish';
+			$notes  = array(
+				'private' => __( 'private page', 'rapm' ),
+				'draft'   => __( 'draft, not live yet', 'rapm' ),
+				'pending' => __( 'waiting for review, not live yet', 'rapm' ),
+				'future'  => __( 'scheduled, not live yet', 'rapm' ),
+			);
+			$url = $sitewide ? '' : (string) get_permalink( $id );
 			$entry = array(
 				'id'       => $id,
 				'label'    => $label,
-				'url'      => $sitewide ? '' : (string) get_permalink( $id ),
+				'url'      => $url,
 				'sitewide' => $sitewide,
+				// 1.51.1: the page's address on this site, and whether it's live.
+				'path'     => $url && in_array( $status, array( 'publish', 'private' ), true ) ? wp_make_link_relative( $url ) : '',
+				'status'   => $status,
+				'note'     => isset( $notes[ $status ] ) ? $notes[ $status ] : '',
 			);
 		}
 		foreach ( $found[ $key ] as $existing ) {
@@ -213,5 +231,48 @@ class RAPM_Spot_Usage {
 			}
 		}
 		$found[ $key ][] = $entry;
+	}
+
+	/**
+	 * Where a spot shows, for an admin screen (1.51.1): each page's name
+	 * (opens it in a new tab), its address, a note when it isn't live yet,
+	 * and an Edit link (Elementor's editor for an Elementor page) for people
+	 * allowed to edit it. The Edit link is worked out per viewer, since the
+	 * usage list is cached for everyone.
+	 */
+	public static function for_screen( $use ) {
+		$out = array(
+			'label' => $use['label'],
+			'url'   => isset( $use['url'] ) ? (string) $use['url'] : '',
+			'path'  => isset( $use['path'] ) ? (string) $use['path'] : '',
+			'note'  => isset( $use['note'] ) ? (string) $use['note'] : '',
+			'edit'  => '',
+		);
+		if ( ! empty( $use['id'] ) && current_user_can( 'edit_post', $use['id'] ) ) {
+			$out['edit'] = 'builder' === get_post_meta( $use['id'], '_elementor_edit_mode', true )
+				? admin_url( 'post.php?post=' . (int) $use['id'] . '&action=elementor' )
+				: (string) get_edit_post_link( $use['id'], 'raw' );
+		}
+		return $out;
+	}
+
+	/** The same as HTML: one line per page. */
+	public static function links_html( $used_on ) {
+		$lines = array();
+		foreach ( $used_on as $use ) {
+			$u    = self::for_screen( $use );
+			$line = $u['url'] ? '<a href="' . esc_url( $u['url'] ) . '" target="_blank" rel="noopener">' . esc_html( $u['label'] ) . '</a>' : esc_html( $u['label'] );
+			if ( $u['path'] ) {
+				$line .= ' <code class="rapm-spot-path">' . esc_html( $u['path'] ) . '</code>';
+			}
+			if ( $u['note'] ) {
+				$line .= ' <span class="rapm-spot-note">(' . esc_html( $u['note'] ) . ')</span>';
+			}
+			if ( $u['edit'] ) {
+				$line .= ' · <a href="' . esc_url( $u['edit'] ) . '">' . esc_html__( 'Edit page', 'rapm' ) . '</a>';
+			}
+			$lines[] = '<span class="rapm-spot-page">' . $line . '</span>';
+		}
+		return implode( '', $lines );
 	}
 }

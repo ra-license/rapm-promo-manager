@@ -111,12 +111,7 @@ class RAPM_Library {
 		if ( 'promo_box' === $kind && RAPM_Split::is_split( $placement ) ) {
 			$pages = array_merge( RAPM_Spot_Usage::for_spot( 'hero', $placement ), $pages );
 		}
-		$pages = array_map(
-			function ( $use ) {
-				return array( 'label' => $use['label'], 'url' => (string) $use['url'] );
-			},
-			$pages
-		);
+		$pages = array_map( array( 'RAPM_Spot_Usage', 'for_screen' ), $pages ); // 1.51.1: address, not-live note and Edit link too.
 
 		$editor   = (int) get_post_meta( $id, '_edit_last', true );
 		$editor   = $editor ? get_the_author_meta( 'display_name', $editor ) : '';
@@ -283,6 +278,7 @@ class RAPM_Library {
 					'needsLook'    => __( 'Needs a look', 'rapm' ),
 					'allGood'      => __( 'Nothing to look at. Full "Ready to go live" checks come in the next update.', 'rapm' ),
 					'whereShows'   => __( 'Where it shows', 'rapm' ),
+					'editPage'     => __( 'Edit page', 'rapm' ),
 					'notPlaced'    => __( 'Not on any page yet.', 'rapm' ),
 					'linksTo'      => __( 'Links to', 'rapm' ),
 					'history'      => __( 'History', 'rapm' ),
