@@ -30,6 +30,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - A private page and a draft page with the same spot are both listed with the right notes and Edit links.
   - The Promotions page, Design Center, Asset library, promotion form and home page load without errors.
 - **Installed on staging (2026-10-19):** the split test slider, which said "Not on any page yet", now shows "Promotions `/promotions/` · Edit page" and "Split view test `/split-view-test/` (private page) · Edit page". The published Promotions page was missing before too: the saved list was out of date, and renaming it made the site rebuild it. Not yet in production (1.51.0 isn't either).
+- **Pushed to the production repo (2026-10-19)** with Phil's OK, together with 1.51.0: main and the tags `v1.51.0` and `v1.51.1`.
 
 ---
 
@@ -75,7 +76,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - Bring forward with the piece staying picked.
     - Hide and lock.
     - A real mouse drag that snapped to the middle.
-- **Installed on staging (2026-10-19):** the promotion box form shows Undo/Redo and the forward, back, hide and lock buttons for each piece. Nothing was saved there. Not yet in production.
+- **Installed on staging (2026-10-19):** the promotion box form shows Undo/Redo and the forward, back, hide and lock buttons for each piece. Nothing was saved there. Pushed to production with 1.51.1 (2026-10-19).
 
 ---
 
