@@ -40,7 +40,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **The form's picker:** it loads the saved points and shows how much each shape keeps. A real mouse drag updated the value, label and previews.
   - **Asset library:** the details carry the points, and the Ready note appears for a panel with none.
   - **Not exercised directly:** "Replace everywhere" resetting the point. It's one line, reviewed in code.
-- **Installed on staging (2026-10-20):** "What stays in view" shows on the split test room photo's form, with the real photo and its previews ("1920 screen, tall header: Keeps 87% of the height"). Nothing was saved there. Not yet in production.
+- **Installed on staging (2026-10-20):** "What stays in view" shows on the split test room photo's form, with the real photo and its previews ("1920 screen, tall header: Keeps 87% of the height"). Nothing was saved there.
+- **Pushed to the production repo (2026-10-20)** with Phil's OK: main and the tag `v1.54.0`.
 
 ---
 
