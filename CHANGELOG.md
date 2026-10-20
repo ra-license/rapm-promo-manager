@@ -37,7 +37,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Stays put:** Fall Savings throughout.
   - **Saving:** the Layout setting and "Goes with" save, and a link to a promotion outside the slider is refused (400).
   - **Design Center:** stripes, counts and ended notes are drawn. The Ready warning shows in linked mode only.
-- **Installed on staging (2026-10-19):** the Design Center's split test slider shows the new "Promotion box" setting (Changes with its room photos / Rotates on its own / Stays put). The slider was left on Stays put for Phil to try. Not yet in production.
+- **Installed on staging (2026-10-19):** the Design Center's split test slider shows the new "Promotion box" setting (Changes with its room photos / Rotates on its own / Stays put). The slider was left on Stays put for Phil to try.
+- **Pushed to the production repo (2026-10-20)** with Phil's OK: main and the tag `v1.52.0`.
 
 ---
 
