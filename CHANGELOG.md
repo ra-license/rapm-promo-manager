@@ -37,6 +37,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **At phone width:** the panels stack at 320 px, and only the one at the middle of the screen is open (the first, then the second, then neither once scrolled past).
   - **The panel form:** it shows the new fields. A real form save stored the word, line, color, linked color, direction and word color, and kept the photo; the website then used `var(--e-global-color-accent, #123456)`.
   - **Admin:** the tab, the Promotions card, "Make new reveal panels" and the Ready checks work without errors.
+- **Installed on staging (2026-10-20):** Design Center › Reveal panels loads, with "Make new reveal panels"; no reveal panels made there yet. Not yet in production.
 - **Not in this release:** a Promo Carousel widget option in Elementor (use an Elementor Shortcode widget with the code), and choosing where a photo is trimmed (planned as 1.54.0, focal points).
 
 ---
