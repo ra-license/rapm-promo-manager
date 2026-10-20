@@ -159,6 +159,8 @@ class RAPM_Upload_Handler {
 		// Promotion box (1.43.0): one picture for every screen too, but
 		// with all the word settings of a slide.
 		$is_box       = 'promo_box' === $kind_key;
+		// Reveal panels (1.53.0): a color, one big word, a photo underneath.
+		$is_reveal    = 'reveal' === $kind_key;
 		// 1.44.0: how a promotion box is made. 'design' is the canvas (words
 		// and icons placed by hand); 'graphic' is a finished picture. A new
 		// one starts as a design; one saved before 1.44.0 stays a graphic.
@@ -191,7 +193,7 @@ class RAPM_Upload_Handler {
 		$error_message = isset( $_GET['rapm_error'] ) ? sanitize_text_field( wp_unslash( $_GET['rapm_error'] ) ) : '';
 		?>
 		<div class="wrap">
-			<?php if ( $is_box || ( 'hero' === $kind_key && RAPM_Split::is_split( $placement ) ) ) : // 1.46.0: split sliders are worked on in the Design Center. ?>
+			<?php if ( $is_box || $is_reveal || ( 'hero' === $kind_key && RAPM_Split::is_split( $placement ) ) ) : // 1.46.0: split sliders (and 1.53.0 reveal panels) are worked on in the Design Center. ?>
 				<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::design_url( $placement ) ); ?>">&larr; <?php esc_html_e( 'Design Center', 'rapm' ); ?></a></p>
 			<?php else : ?>
 				<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::url() ); ?>">&larr; <?php esc_html_e( 'All promotions', 'rapm' ); ?></a></p>
@@ -444,6 +446,8 @@ class RAPM_Upload_Handler {
 						</td>
 					</tr>
 				</table>
+				<?php elseif ( $is_reveal ) : ?>
+				<p class="description"><?php esc_html_e( 'The photo under the panel, shown when it opens. Computers use a square photo (1600 by 1600); phones stack the panels, so their photo is wider than tall (1200 by 1000). Keep the subject near the middle: the edges are trimmed to the panel\'s shape.', 'rapm' ); ?></p>
 				<?php elseif ( $is_quick ) : ?>
 				<p class="description"><?php esc_html_e( 'Quick links use one picture on every screen. Phones show it small, as a round thumbnail or a little card, so pick a picture whose subject is near the middle.', 'rapm' ); ?></p>
 				<?php else : ?>
@@ -622,6 +626,9 @@ class RAPM_Upload_Handler {
 				<p class="description"><?php esc_html_e( 'These show in your website\'s own fonts and colors, under the bar of tabs. If the page\'s Shop the Look spot puts the words on the photo, the headline and smaller line go on the photo and the button goes under it, beside the products. Nothing is printed into the picture file.', 'rapm' ); ?></p>
 				<?php elseif ( $is_box ) : ?>
 				<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'This promotion is a finished graphic, so there\'s nothing to type: its own words show. To type words and place icons instead, choose "Design it here" in step 1.', 'rapm' ); ?></p>
+				<?php elseif ( $is_reveal ) : ?>
+				<h2><?php esc_html_e( 'The Panel', 'rapm' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Before it opens, the panel is its color and the big word. When it opens (hover on computers, scrolling to it on phones), the photo shows, the word moves aside, and the short line and link label appear.', 'rapm' ); ?></p>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Sale Text', 'rapm' ); ?></h2>
 				<table class="form-table">
@@ -648,15 +655,16 @@ class RAPM_Upload_Handler {
 				<div id="rapm-text-fields" <?php echo ( $is_box ? 'graphic' === $box_mode : 'image' === $text_mode ) ? 'style="display:none;"' : ''; ?>>
 					<table class="form-table">
 						<tr>
-							<th><label for="rapm_headline"><?php echo $is_quick ? esc_html__( 'Name under the picture', 'rapm' ) : esc_html__( 'Headline', 'rapm' ); ?></label></th>
-							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Stanton 338 Living Room', 'rapm' ) : ( $is_quick ? esc_attr__( 'e.g. Design Services', 'rapm' ) : esc_attr__( 'e.g. Labor Day Sale', 'rapm' ) ); ?>" /></td>
+							<th><label for="rapm_headline"><?php echo $is_quick ? esc_html__( 'Name under the picture', 'rapm' ) : ( $is_reveal ? esc_html__( 'Big word', 'rapm' ) : esc_html__( 'Headline', 'rapm' ) ); ?></label></th>
+							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>"<?php echo $is_reveal ? ' maxlength="14"' : ''; ?> placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Stanton 338 Living Room', 'rapm' ) : ( $is_quick ? esc_attr__( 'e.g. Design Services', 'rapm' ) : ( $is_reveal ? esc_attr__( 'e.g. Living', 'rapm' ) : esc_attr__( 'e.g. Labor Day Sale', 'rapm' ) ) ); ?>" />
+							<?php if ( $is_reveal ) : ?><p class="description"><?php esc_html_e( 'One short word works best (up to 14 letters). It\'s shown in capitals, very large.', 'rapm' ); ?></p><?php endif; ?></td>
 						</tr>
 						<tr>
-							<th><label for="rapm_subhead"><?php esc_html_e( 'Smaller line under the headline', 'rapm' ); ?></label></th>
+							<th><label for="rapm_subhead"><?php echo $is_reveal ? esc_html__( 'Short line (shows with the photo)', 'rapm' ) : esc_html__( 'Smaller line under the headline', 'rapm' ); ?></label></th>
 							<td><input type="text" id="rapm_subhead" name="rapm_subhead" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_subhead' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. A deep gray sectional with its matching ottoman.', 'rapm' ) : ( $is_quick ? esc_attr__( 'Optional, e.g. Free in-store or in-home consultations', 'rapm' ) : esc_attr__( 'e.g. Up to 30% off sofas and sectionals', 'rapm' ) ); ?>" /></td>
 						</tr>
 						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
-							<th><label for="rapm_cta_text"><?php esc_html_e( 'Button Text', 'rapm' ); ?></label></th>
+							<th><label for="rapm_cta_text"><?php echo $is_reveal ? esc_html__( 'Link label (shows with the photo)', 'rapm' ) : esc_html__( 'Button Text', 'rapm' ); ?></label></th>
 							<td><input type="text" id="rapm_cta_text" name="rapm_cta_text" value="<?php echo esc_attr( $m( '_rapm_cta_text' ) ); ?>" placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Shop all Living Room', 'rapm' ) : esc_attr__( 'e.g. Shop Now', 'rapm' ); ?>" /></td>
 						</tr>
 						<?php if ( $is_look ) : // 1.40.0. ?>
@@ -669,7 +677,7 @@ class RAPM_Upload_Handler {
 						</tr>
 						<?php endif; ?>
 						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
-						<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box places and colors each piece on its canvas. ?>>
+						<tr<?php echo ( $is_quick || $is_box || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box places and colors each piece on its canvas. ?>>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_align" name="rapm_text_align">
@@ -680,13 +688,59 @@ class RAPM_Upload_Handler {
 							</td>
 						</tr>
 						<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
-							<th><label for="rapm_text_color"><?php esc_html_e( 'Text Color', 'rapm' ); ?></label></th>
+							<th><label for="rapm_text_color"><?php echo $is_reveal ? esc_html__( 'Word color', 'rapm' ) : esc_html__( 'Text Color', 'rapm' ); ?></label></th>
 							<td>
 								<input type="color" id="rapm_text_color" name="rapm_text_color" value="<?php echo esc_attr( $m( '_rapm_text_color', '#ffffff' ) ); ?>" style="height:32px;width:60px;padding:2px;vertical-align:middle;" />
-								<p class="description"><?php esc_html_e( 'Only changes the headline and smaller line — the button always stays white for readability.', 'rapm' ); ?></p>
+								<p class="description"><?php echo $is_reveal ? esc_html__( 'For the big word, the short line and the link label. White reads best on most colors and photos.', 'rapm' ) : esc_html__( 'Only changes the headline and smaller line — the button always stays white for readability.', 'rapm' ); ?></p>
 							</td>
 						</tr>
-						<tr<?php echo $quick_hide; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
+						<?php if ( $is_reveal ) : // 1.53.0. ?>
+							<?php
+							$panel_color = sanitize_hex_color( (string) $m( '_rapm_panel_color' ) );
+							$panel_color = $panel_color ? $panel_color : '#1d5a4c';
+							$panel_cg    = sanitize_key( (string) $m( '_rapm_panel_cg' ) );
+							$site_colors = RAPM_Brand_Kit::site_colors();
+							$kit_colors  = RAPM_Brand_Kit::get()['colors'];
+							?>
+							<tr>
+								<th><label for="rapm_panel_color"><?php esc_html_e( 'Panel color', 'rapm' ); ?></label></th>
+								<td>
+									<style>.rapm-panel-sw{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #c3c4c7;padding:0;cursor:pointer}.rapm-panel-sw[aria-pressed="true"]{box-shadow:0 0 0 2px #2271b1}</style>
+									<input type="hidden" id="rapm_panel_cg" name="rapm_panel_cg" value="<?php echo esc_attr( $panel_cg ); ?>" />
+									<p class="rapm-panel-swatches" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0;">
+										<?php foreach ( $site_colors as $c ) : ?>
+											<button type="button" class="rapm-panel-sw" data-hex="<?php echo esc_attr( $c['hex'] ); ?>" data-cg="<?php echo esc_attr( $c['id'] ); ?>" title="<?php echo esc_attr( $c['name'] . ' ' . __( '(website color, linked)', 'rapm' ) ); ?>" aria-label="<?php echo esc_attr( $c['name'] ); ?>" aria-pressed="<?php echo $panel_cg === $c['id'] ? 'true' : 'false'; ?>" style="<?php echo esc_attr( 'background:' . $c['hex'] ); ?>"></button>
+										<?php endforeach; ?>
+										<?php foreach ( $kit_colors as $c ) : ?>
+											<button type="button" class="rapm-panel-sw" data-hex="<?php echo esc_attr( $c['hex'] ); ?>" data-cg="" title="<?php echo esc_attr( $c['name'] ? $c['name'] : $c['hex'] ); ?>" aria-label="<?php echo esc_attr( $c['name'] ? $c['name'] : $c['hex'] ); ?>" aria-pressed="<?php echo ( ! $panel_cg && $panel_color === $c['hex'] ) ? 'true' : 'false'; ?>" style="<?php echo esc_attr( 'background:' . $c['hex'] ); ?>"></button>
+										<?php endforeach; ?>
+										<input type="color" id="rapm_panel_color" name="rapm_panel_color" value="<?php echo esc_attr( $panel_color ); ?>" aria-label="<?php esc_attr_e( 'Any other color', 'rapm' ); ?>" style="height:32px;width:60px;padding:2px;" />
+									</p>
+									<p class="description"><?php esc_html_e( 'The website\'s colors come first and stay linked: change one in Elementor and the panel follows. Then the brand kit\'s saved colors, or pick any color.', 'rapm' ); ?></p>
+									<script>
+										( function () {
+											var hex = document.getElementById( 'rapm_panel_color' );
+											var cg  = document.getElementById( 'rapm_panel_cg' );
+											var sws = document.querySelectorAll( '.rapm-panel-sw' );
+											function mark( b ) { Array.prototype.forEach.call( sws, function ( s ) { s.setAttribute( 'aria-pressed', s === b ? 'true' : 'false' ); } ); }
+											Array.prototype.forEach.call( sws, function ( b ) {
+												b.addEventListener( 'click', function () { hex.value = b.getAttribute( 'data-hex' ); cg.value = b.getAttribute( 'data-cg' ); mark( b ); } );
+											} );
+											hex.addEventListener( 'input', function () { cg.value = ''; mark( null ); } );
+										} )();
+									</script>
+								</td>
+							</tr>
+							<tr>
+								<th><?php esc_html_e( 'Big word reads', 'rapm' ); ?></th>
+								<td>
+									<label style="margin-right:14px;"><input type="radio" name="rapm_word_dir" value="across" <?php checked( 'side' !== $m( '_rapm_word_dir' ) ); ?> /> <?php esc_html_e( 'Across', 'rapm' ); ?></label>
+									<label><input type="radio" name="rapm_word_dir" value="side" <?php checked( 'side' === $m( '_rapm_word_dir' ) ); ?> /> <?php esc_html_e( 'Up the side', 'rapm' ); ?></label>
+									<p class="description"><?php esc_html_e( 'Up the side suits a longer word in a narrow panel. Phones always show it across.', 'rapm' ); ?></p>
+								</td>
+							</tr>
+						<?php endif; ?>
+						<tr<?php echo ( $is_quick || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_style"><?php esc_html_e( 'Text Style', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_style" name="rapm_text_style">
@@ -717,7 +771,7 @@ class RAPM_Upload_Handler {
 				<?php if ( $is_box ) : ?>
 					<?php self::render_box_canvas( $box_mode, $img_desktop, $m( '_rapm_canvas', array() ) ); ?>
 				<?php endif; ?>
-				<?php if ( $has_images && ! $is_look && ! $is_box ) : ?>
+				<?php if ( $has_images && ! $is_look && ! $is_box && ! $is_reveal ) : ?>
 				<script>
 					( function () {
 						var typeFields = document.getElementById( 'rapm-text-fields' );
@@ -1077,6 +1131,10 @@ class RAPM_Upload_Handler {
 				<?php if ( $is_look ) : ?>
 					<?php self::render_look_preview(); ?>
 				<?php elseif ( $has_images ) : ?>
+				<?php if ( $is_reveal ) : // 1.53.0: the slider preview doesn't show a reveal panel. ?>
+				<style>#rapm-live-preview-head, #rapm-preview-wrap, .rapm-preview-toggle-btn { display: none; }</style>
+				<p class="description"><?php esc_html_e( 'Reveal panels show side by side, up to four, in the order of their cards in the Design Center: the ones that are on and within their dates.', 'rapm' ); ?></p>
+				<?php endif; ?>
 				<?php if ( $is_box ) : // 1.44.0: the canvas in step 2 is the box's preview. ?>
 				<style>#rapm-live-preview-head, #rapm-preview-wrap { display: none; }</style>
 				<p class="description"><?php esc_html_e( 'The promotion box shows the first promotion that is on and within its dates. A design looks the way it does in step 2; a finished graphic always shows whole.', 'rapm' ); ?></p>
@@ -1814,6 +1872,18 @@ class RAPM_Upload_Handler {
 			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
 			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
 			update_post_meta( $asset_id, '_rapm_focus_phone', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus_phone'] ) ) : '' ) );
+		}
+		if ( 'reveal' === $kind_key ) {
+			// 1.53.0: the panel's color (a linked website color, or a fixed one) and the word's direction.
+			$panel_color = isset( $_POST['rapm_panel_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['rapm_panel_color'] ) ) : '';
+			update_post_meta( $asset_id, '_rapm_panel_color', $panel_color ? $panel_color : '#1d5a4c' );
+			$panel_cg = isset( $_POST['rapm_panel_cg'] ) ? sanitize_key( wp_unslash( $_POST['rapm_panel_cg'] ) ) : '';
+			if ( $panel_cg ) {
+				update_post_meta( $asset_id, '_rapm_panel_cg', $panel_cg );
+			} else {
+				delete_post_meta( $asset_id, '_rapm_panel_cg' );
+			}
+			update_post_meta( $asset_id, '_rapm_word_dir', isset( $_POST['rapm_word_dir'] ) && 'side' === $_POST['rapm_word_dir'] ? 'side' : 'across' );
 		}
 		if ( empty( get_post_meta( $asset_id, '_rapm_placement', true ) ) ) {
 			update_post_meta( $asset_id, '_rapm_placement', 'default' );

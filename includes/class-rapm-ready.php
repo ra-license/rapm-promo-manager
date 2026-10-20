@@ -114,8 +114,29 @@ class RAPM_Ready {
 				$add( 'warn', __( 'Goes with a promotion that has ended, so it isn\'t playing. Link it to another promotion or "Any promotion" in the Design Center.', 'rapm' ) );
 			}
 		}
-		if ( in_array( $kind, array( 'hero', 'fold_banner' ), true ) && ! $item['phone'] ) {
-			$add( 'warn', __( 'No phone picture: phones show the computer picture fitted inside a tall box.', 'rapm' ) );
+		// 1.53.0: a reveal panel's big word against its color (big words need 3 to 1).
+		if ( 'reveal' === $kind ) {
+			$panel = sanitize_hex_color( (string) get_post_meta( $id, '_rapm_panel_color', true ) );
+			$cg    = (string) get_post_meta( $id, '_rapm_panel_cg', true );
+			if ( $cg ) {
+				$map   = RAPM_Elementor::color_value_map();
+				$now   = isset( $map[ $cg ] ) ? sanitize_hex_color( $map[ $cg ] ) : '';
+				$panel = $now ? $now : $panel;
+			}
+			$word  = sanitize_hex_color( (string) get_post_meta( $id, '_rapm_text_color', true ) );
+			$ratio = $panel ? self::contrast( $word ? $word : '#ffffff', $panel ) : null;
+			if ( null !== $ratio && $ratio < 3 ) {
+				/* translators: %s: contrast like 2.1 */
+				$add( 'fail', sprintf( __( 'The big word is hard to read on the panel color: %s to 1; at least 3 to 1 is needed.', 'rapm' ), number_format_i18n( $ratio, 1 ) ) );
+			} elseif ( null !== $ratio ) {
+				$add( 'pass', __( 'The big word is easy to read on the panel color.', 'rapm' ) );
+			}
+			if ( '' === trim( (string) get_post_meta( $id, '_rapm_headline', true ) ) ) {
+				$add( 'fail', __( 'No big word, so the panel doesn\'t show.', 'rapm' ) );
+			}
+		}
+		if ( in_array( $kind, array( 'hero', 'fold_banner', 'reveal' ), true ) && ! $item['phone'] ) {
+			$add( 'warn', 'reveal' === $kind ? __( 'No phone photo: phones show the computer photo, trimmed to a wide panel.', 'rapm' ) : __( 'No phone picture: phones show the computer picture fitted inside a tall box.', 'rapm' ) );
 		}
 
 		// Alt text: screen readers and search.
@@ -154,7 +175,7 @@ class RAPM_Ready {
 		}
 
 		// Where it links.
-		$linked_kinds = array( 'hero', 'fold_banner', 'promo_box', 'coupon', 'quick_links', 'marquee' );
+		$linked_kinds = array( 'hero', 'fold_banner', 'promo_box', 'coupon', 'quick_links', 'marquee', 'reveal' );
 		if ( '' === $item['link'] ) {
 			if ( in_array( $kind, $linked_kinds, true ) ) {
 				$add( 'info', __( 'Doesn\'t link anywhere, so clicking it does nothing.', 'rapm' ) );

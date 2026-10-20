@@ -4,6 +4,43 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.53.0
+
+**New: Reveal panels**, a new kind of spot, worked on in the Design Center. It was modeled on the hero at hartandhill.com, which Phil asked about on 2026-10-20, and built to the mockup he approved (https://claude.ai/artifact/ChybrztYZZZJLc4Pr6rN7b) with the recommended choices: the words move aside, a short line and link label appear, and the reveal takes 0.8 seconds. New `RAPM_Reveal`, `[rapm_reveal placement="…"]` and `rapm-reveal.css`.
+- **What it is:**
+  - Two to four panels side by side, each a brand color with one big word.
+  - On computers, pointing at a panel or tabbing to it opens it: the photo underneath fades in, the word moves up and aside, and the short line and link label appear.
+  - The whole panel is the link.
+- **How Hart & Hill does it:** Elementor's own "background on hover" setting, a 2-second fade, and no links. On phones there's no hover, so their visitors only ever see the color blocks.
+- **Phones and touch screens:** the panels stack, each 320 px tall, and each one opens as it reaches the middle of the screen, then closes as it leaves. The word always reads across on phones.
+- **Each panel is a promotion (kind `reveal`)** with its own dates, using the usual form:
+  - **Big word** (the headline field, up to 14 letters, in capitals).
+  - **Short line and link label** (smaller line and button fields), which show with the photo.
+  - **Word color, and font** (the site's Elementor fonts).
+  - **Panel color:** the website's colors first, kept linked like brand-kit colors (`_rapm_panel_cg`); then the brand kit's saved colors, or any color.
+  - **Big word reads:** across, or up the side like Hart & Hill's "HILL". Phones always show it across.
+  - **Photos:** a computer photo (1600 by 1600, square, since a panel is wide with two side by side and tall with four) and a phone photo (1200 by 1000). The usual uploader, cropping and Google Drive/Dropbox links apply.
+- **On the website:**
+  - Up to four live panels, in card order, share the width. With none live, the spot hides.
+  - Which panels are live is worked out in the visitor's browser (rapm-schedule.js), as everywhere else.
+  - The first view is color and type only, so it appears at once; photos load quietly after.
+  - For visitors who've asked for less motion, the panel opens without fading or moving.
+  - Options in the code: `height` (default 560, for computers) and `phone_height` (default 320).
+- **Design Center › Reveal panels tab:**
+  - "How it works", and "Make new reveal panels" (a name; it lands on its section).
+  - Each spot with its cards, which show the panel closed beside its photo, plus the code, pages, order and on/off.
+  - On the Promotions page each one is a short card linking there, like a split slider.
+- **Ready check:** the big word against the panel color (3 to 1 for big words, using a linked color's current value), a missing big word, a missing phone photo, and link checks.
+- **Tested in WordPress Playground with Elementor**, on a regular page with three panels (two live, one starting Nov 27):
+  - The two live panels share the width, and the scheduled one stays hidden.
+  - **Real mouse hover:** each panel opens, the word moves, and the line and link label appear. HILL stays up the side, with its text beside it.
+  - **At phone width:** the panels stack at 320 px, and only the one at the middle of the screen is open (the first, then the second, then neither once scrolled past).
+  - **The panel form:** it shows the new fields. A real form save stored the word, line, color, linked color, direction and word color, and kept the photo; the website then used `var(--e-global-color-accent, #123456)`.
+  - **Admin:** the tab, the Promotions card, "Make new reveal panels" and the Ready checks work without errors.
+- **Not in this release:** a Promo Carousel widget option in Elementor (use an Elementor Shortcode widget with the code), and choosing where a photo is trimmed (planned as 1.54.0, focal points).
+
+---
+
 ## 1.52.0
 
 **New: room photos linked to promotions in a split slider.** Built to the mockup Phil approved (https://claude.ai/artifact/B9qJbi9tZoivL7H2STS1ax), his choice "B+A". It started from his report on staging: with two promotion box promotions live, only the room photos rotated. That was by design (the box showed only the first live promotion), not a bug.

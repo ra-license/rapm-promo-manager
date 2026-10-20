@@ -133,6 +133,26 @@ class RAPM_Slots {
 				'max_kb'                 => 250,
 				'format'                 => 'webp',
 			),
+			// Reveal panels (1.53.0): the photo under each panel. Square on
+			// computers: a panel is wide with two side by side and tall with
+			// four, so a square trims evenly either way. Phones stack the
+			// panels, each wider than tall.
+			'reveal_desktop'      => array(
+				'label'                  => __( 'Reveal panel — Desktop photo', 'rapm' ),
+				'width'                  => 1600,
+				'height'                 => 1600,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 350,
+				'format'                 => 'webp',
+			),
+			'reveal_mobile'       => array(
+				'label'                  => __( 'Reveal panel — Mobile photo', 'rapm' ),
+				'width'                  => 1200,
+				'height'                 => 1000,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 250,
+				'format'                 => 'webp',
+			),
 			// Shop the Look (1.30.0): one room photo per look, any shape.
 			// 'flexible' means no required shape: the photo is shown
 			// cover-cropped to fill a wide hero on computers and a 4:3 box on
@@ -233,6 +253,17 @@ class RAPM_Slots {
 				'desktop'               => 'promo_box_image',
 				'mobile'                => 'promo_box_image',
 				'shortcode'             => 'rapm_promo_box',
+				'has_elementor_widget'  => false,
+			),
+			// Reveal panels (1.53.0, RAPM_Reveal): brand-color panels with a
+			// big word that open up to a room photo. Worked on in the Design
+			// Center, like split sliders.
+			'reveal'      => array(
+				'label'                 => __( 'Reveal panels', 'rapm' ),
+				'help'                  => __( 'Two to four brand-color panels with one big word each, that open up to a room photo.', 'rapm' ),
+				'desktop'               => 'reveal_desktop',
+				'mobile'                => 'reveal_mobile',
+				'shortcode'             => 'rapm_reveal',
 				'has_elementor_widget'  => false,
 			),
 			// Shop the Look (1.30.0, from the mockup Phil approved on

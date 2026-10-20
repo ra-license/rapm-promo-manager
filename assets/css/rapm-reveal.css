@@ -1,0 +1,90 @@
+/* Reveal panels (1.53.0, RAPM_Reveal): brand-color panels with one big word
+   that open up to a photo. Computers: on hover or keyboard focus. Phones and
+   touch screens: as each panel reaches the middle of the screen
+   (rapm-schedule.js adds .is-on). */
+.rapm-rv {
+	display: grid;
+	grid-template-columns: repeat(var(--rv-n, 2), minmax(0, 1fr));
+	height: var(--rv-h, 560px);
+	overflow: hidden;
+	--rv-speed: 0.8s;
+}
+.rapm-rv[hidden], .rapm-rv-panel[hidden] { display: none; }
+.rapm-rv-panel {
+	position: relative;
+	display: block;
+	overflow: hidden;
+	isolation: isolate;
+	text-decoration: none;
+	color: #fff;
+	min-width: 0;
+	outline-offset: -4px;
+}
+.rapm-rv-panel:focus-visible { outline: 3px solid currentColor; }
+.rapm-rv-color, .rapm-rv-photo { position: absolute; inset: 0; z-index: -1; }
+.rapm-rv-color { background: var(--rv-color, #1d3557); transition: opacity var(--rv-speed) ease; }
+.rapm-rv-photo { opacity: 0; transform: scale(1.04); transition: opacity var(--rv-speed) ease, transform calc(var(--rv-speed) * 2) ease; }
+.rapm-rv-photo img { width: 100%; height: 100%; max-width: none; object-fit: cover; display: block; }
+.rapm-rv-words {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 100%;
+	padding: 0 6%;
+	box-sizing: border-box;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	transition: left var(--rv-speed) ease, top var(--rv-speed) ease, transform var(--rv-speed) ease;
+}
+.rapm-rv-word {
+	display: block;
+	font-size: clamp(40px, 6.5vw, 104px);
+	line-height: 0.9;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: clip;
+}
+.rapm-rv-more { display: block; margin-top: 12px; opacity: 0; transition: opacity var(--rv-speed) ease; }
+.rapm-rv-line { display: block; font-size: clamp(14px, 1.4vw, 19px); line-height: 1.3; font-weight: 500; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55); }
+.rapm-rv-go { display: inline-block; white-space: nowrap; margin-top: 10px; border: 1px solid currentColor; border-radius: 999px; padding: 0.45em 1.1em; font-size: clamp(12px, 1vw, 14px); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 600; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45); }
+
+/* A word up the side (like Hart & Hill's "HILL"), with the short line beside it. */
+.rapm-rv-panel.is-side .rapm-rv-words { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.rapm-rv-panel.is-side .rapm-rv-word { writing-mode: vertical-rl; transform: rotate(180deg); }
+.rapm-rv-panel.is-side .rapm-rv-more { margin-top: 0; text-align: left; max-width: 60%; }
+
+/* Open: the photo shows, the word moves up and aside, the rest appears. */
+.rapm-rv-panel.is-on .rapm-rv-color { opacity: 0; }
+.rapm-rv-panel.is-on .rapm-rv-photo { opacity: 1; transform: scale(1); }
+.rapm-rv-panel.is-on .rapm-rv-more { opacity: 1; }
+.rapm-rv-panel.is-on .rapm-rv-word { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); }
+.rapm-rv-panel.is-on .rapm-rv-words { left: 0; top: 26%; transform: translate(0, -50%); text-align: left; padding: 0 8%; }
+.rapm-rv-panel.is-side.is-on .rapm-rv-words { top: 50%; justify-content: flex-start; }
+.rapm-rv-panel.no-photo.is-on .rapm-rv-color { opacity: 1; }
+@media (hover: hover) and (min-width: 768px) {
+	.rapm-rv-panel:hover .rapm-rv-color, .rapm-rv-panel:focus-visible .rapm-rv-color { opacity: 0; }
+	.rapm-rv-panel.no-photo:hover .rapm-rv-color, .rapm-rv-panel.no-photo:focus-visible .rapm-rv-color { opacity: 1; }
+	.rapm-rv-panel:hover .rapm-rv-photo, .rapm-rv-panel:focus-visible .rapm-rv-photo { opacity: 1; transform: scale(1); }
+	.rapm-rv-panel:hover .rapm-rv-more, .rapm-rv-panel:focus-visible .rapm-rv-more { opacity: 1; }
+	.rapm-rv-panel:hover .rapm-rv-word, .rapm-rv-panel:focus-visible .rapm-rv-word { text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); }
+	.rapm-rv-panel:hover .rapm-rv-words, .rapm-rv-panel:focus-visible .rapm-rv-words { left: 0; top: 26%; transform: translate(0, -50%); text-align: left; padding: 0 8%; }
+	.rapm-rv-panel.is-side:hover .rapm-rv-words, .rapm-rv-panel.is-side:focus-visible .rapm-rv-words { top: 50%; justify-content: flex-start; }
+}
+
+/* Phones: stacked, each its own height; the word always reads across. */
+@media (max-width: 767px) {
+	.rapm-rv { grid-template-columns: minmax(0, 1fr); height: auto; }
+	.rapm-rv-panel { height: var(--rv-ph, 320px); }
+	.rapm-rv-word { font-size: clamp(40px, 15vw, 72px); }
+	.rapm-rv-panel.is-side .rapm-rv-words { display: block; }
+	.rapm-rv-panel.is-side .rapm-rv-word { writing-mode: horizontal-tb; transform: none; }
+	.rapm-rv-panel.is-side .rapm-rv-more { margin-top: 12px; max-width: none; }
+	.rapm-rv-panel.is-side.is-on .rapm-rv-words { top: 26%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.rapm-rv-color, .rapm-rv-photo, .rapm-rv-words, .rapm-rv-more { transition: none; }
+	.rapm-rv-photo { transform: none; }
+}

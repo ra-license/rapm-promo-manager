@@ -454,8 +454,37 @@
 		}
 	}
 
+	/**
+	 * Reveal panels (1.53.0, RAPM_Reveal). Shows the live panels, up to
+	 * four, and sets how many share the width. On phones and touch screens,
+	 * which have no hover, a panel opens (.is-on) while it's at the middle
+	 * of the screen; computers use :hover and keyboard focus in the CSS.
+	 */
+	var revealIo = null;
+	function reveal( root ) {
+		if ( ! root || root.rapmReveal ) { return; }
+		root.rapmReveal = true;
+		watch( root, '.rapm-rv-panel', function ( active ) {
+			var shown = active.slice( 0, 4 );
+			Array.prototype.forEach.call( root.querySelectorAll( '.rapm-rv-panel' ), function ( p ) {
+				p.hidden = -1 === shown.indexOf( p );
+			} );
+			root.style.setProperty( '--rv-n', Math.max( 1, shown.length ) );
+			root.hidden = ! shown.length;
+		} );
+		var touch = window.matchMedia && ! window.matchMedia( '(hover: hover) and (min-width: 768px)' ).matches;
+		if ( ! touch || ! ( 'IntersectionObserver' in window ) ) { return; }
+		if ( ! revealIo ) {
+			revealIo = new IntersectionObserver( function ( entries ) {
+				entries.forEach( function ( e ) { e.target.classList.toggle( 'is-on', e.isIntersecting ); } );
+			}, { rootMargin: '-50% 0px -50% 0px', threshold: 0 } );
+		}
+		Array.prototype.forEach.call( root.querySelectorAll( '.rapm-rv-panel' ), function ( p ) { revealIo.observe( p ); } );
+	}
+
 	function splitAll() {
 		Array.prototype.forEach.call( document.querySelectorAll( '.rapm-split, .rapm-pb-solo' ), split );
+		Array.prototype.forEach.call( document.querySelectorAll( '[data-rapm-reveal]' ), reveal );
 	}
 	if ( 'loading' === document.readyState ) {
 		document.addEventListener( 'DOMContentLoaded', splitAll );
@@ -465,5 +494,5 @@
 	window.addEventListener( 'load', splitAll );
 	window.addEventListener( 'elementor/popup/show', splitAll );
 
-	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split };
+	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split, reveal: reveal };
 } )( window );

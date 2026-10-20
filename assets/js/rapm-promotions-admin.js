@@ -312,6 +312,23 @@
 		} ).then( function () { sel.disabled = false; } );
 	} );
 
+	/* ---- Design Center: "Make new reveal panels" (1.53.0) -------------------- */
+
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-make-reveal' ) : null;
+		if ( ! form ) { return; }
+		e.preventDefault();
+		var section = form.closest( '.rapm-spot' );
+		var name    = form.querySelector( 'input[name="name"]' );
+		if ( ! name.value.trim() ) { name.focus(); return; }
+		say( section, T.saving );
+		post( { action: 'rapm_create_spot', nonce: cfg.nonce, kind: 'reveal', name: name.value.trim() } ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( res && res.data && res.data.message ? res.data.message : '' ); }
+			window.location.href = res.data.url;
+			window.location.reload();
+		} ).catch( function ( err ) { say( section, err.message || T.saveFailed ); } );
+	} );
+
 	/* ---- Design Center: "Turn on split view" (1.46.0) ----------------------- */
 
 	root.addEventListener( 'submit', function ( e ) {

@@ -41,6 +41,7 @@ class RAPM_Spot_Usage {
 		'rapm_coupon_book'         => 'coupon',
 		'rapm_looks'               => 'look',
 		'rapm_promo_box'           => 'promo_box',
+		'rapm_reveal'              => 'reveal',
 		'rapm_promotions_calendar' => 'calendar',
 	);
 

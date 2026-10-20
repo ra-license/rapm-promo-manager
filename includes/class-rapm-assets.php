@@ -41,6 +41,8 @@ class RAPM_Assets {
 		wp_register_style( 'rapm-looks-css', RAPM_URL . 'assets/css/rapm-looks.css', array(), RAPM_VERSION );
 		// 1.37.0: Quick links.
 		wp_register_style( 'rapm-quick-links-css', RAPM_URL . 'assets/css/rapm-quick-links.css', array(), RAPM_VERSION );
+		// 1.53.0: Reveal panels.
+		wp_register_style( 'rapm-reveal-css', RAPM_URL . 'assets/css/rapm-reveal.css', array(), RAPM_VERSION );
 		// 1.35.0: product dots and the "Shop now" button on Slider and Feature banner slides.
 		wp_register_style( 'rapm-pins-css', RAPM_URL . 'assets/css/rapm-pins.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_register_script( 'rapm-swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), self::SWIPER_VERSION, true );
@@ -84,6 +86,8 @@ class RAPM_Assets {
 				return array( array( 'rapm-looks-css' ), array( 'rapm-schedule-js', 'rapm-looks-js' ) );
 			case 'quick_links':
 				return array( array( 'rapm-quick-links-css' ), array( 'rapm-schedule-js' ) );
+			case 'reveal':
+				return array( array( 'rapm-reveal-css' ), array( 'rapm-schedule-js' ) );
 		}
 		return array( array(), array() );
 	}

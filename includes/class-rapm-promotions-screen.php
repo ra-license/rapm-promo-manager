@@ -41,6 +41,7 @@ class RAPM_Promotions_Screen {
 		'marquee'     => 170,
 		'quick_links' => 240,
 		'promo_box'   => 200,
+		'reveal'      => 220,
 	);
 
 	/**
@@ -199,7 +200,7 @@ class RAPM_Promotions_Screen {
 	/** The Design Center's open tab: 'split' (Split sliders), 'library' (Asset library, 1.48.0) or 'brand' (Brand kit, 1.50.0). */
 	public static function design_tab() {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return in_array( $tab, array( 'library', 'brand' ), true ) ? $tab : 'split';
+		return in_array( $tab, array( 'library', 'brand', 'reveal' ), true ) ? $tab : 'split'; // 1.53.0: Reveal panels.
 	}
 
 	/** The Design Center's address (1.46.0), optionally at one slider's section. */
@@ -468,6 +469,11 @@ class RAPM_Promotions_Screen {
 					self::render_split_pointer( $spot, isset( $spots[ $box_key ] ) ? $spots[ $box_key ] : null );
 					continue;
 				}
+				// 1.53.0: Reveal panels are worked on in the Design Center too.
+				if ( 'reveal' === $spot['kind'] ) {
+					self::render_reveal_pointer( $spot );
+					continue;
+				}
 				self::render_spot( $spot );
 			}
 			?>
@@ -683,7 +689,7 @@ class RAPM_Promotions_Screen {
 							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Put its spot code (below) on a page to show it.', 'rapm' ); ?></span>
 						<?php endif; ?>
 						<?php if ( count( $spot['posts'] ) > 1 && ! $box ) : ?>
-							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : ( 'quick_links' === $kind ? esc_html__( 'Drag to change the order they show in', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ) ); ?></span>
+							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : ( in_array( $kind, array( 'quick_links', 'reveal' ), true ) ? esc_html__( 'Drag to change the order they show in', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ) ); ?></span>
 						<?php endif; ?>
 					</p>
 					<div class="rapm-spot-ra">
@@ -745,7 +751,7 @@ class RAPM_Promotions_Screen {
 				?>
 				<a class="rapm-add" href="<?php echo esc_url( $add_url ); ?>">
 					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
-					<span><?php echo 'look' === $kind ? esc_html__( 'Add a look', 'rapm' ) : ( 'promo_box' === $kind ? esc_html__( 'Add a promotion', 'rapm' ) : esc_html__( 'Add a picture', 'rapm' ) ); ?></span>
+					<span><?php echo 'look' === $kind ? esc_html__( 'Add a look', 'rapm' ) : ( 'promo_box' === $kind ? esc_html__( 'Add a promotion', 'rapm' ) : ( 'reveal' === $kind ? esc_html__( 'Add a panel', 'rapm' ) : esc_html__( 'Add a picture', 'rapm' ) ) ); ?></span>
 				</a>
 			</div>
 
@@ -831,6 +837,7 @@ class RAPM_Promotions_Screen {
 			<?php // 1.48.0: tabs, as plain links (1.50.0 adds the Brand kit). ?>
 			<nav class="nav-tab-wrapper rapm-dc-tabs" aria-label="<?php esc_attr_e( 'Design Center', 'rapm' ); ?>">
 				<a href="<?php echo esc_url( self::design_url() ); ?>" class="nav-tab<?php echo 'split' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'split' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Split sliders', 'rapm' ); ?></a>
+				<a href="<?php echo esc_url( add_query_arg( 'tab', 'reveal', self::design_url() ) ); ?>" class="nav-tab<?php echo 'reveal' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'reveal' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Reveal panels', 'rapm' ); ?></a>
 				<a href="<?php echo esc_url( add_query_arg( 'tab', 'library', self::design_url() ) ); ?>" class="nav-tab<?php echo 'library' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'library' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Asset library', 'rapm' ); ?></a>
 				<a href="<?php echo esc_url( add_query_arg( 'tab', 'brand', self::design_url() ) ); ?>" class="nav-tab<?php echo 'brand' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'brand' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Brand kit', 'rapm' ); ?></a>
 			</nav>
@@ -845,6 +852,14 @@ class RAPM_Promotions_Screen {
 
 			<?php if ( 'library' === self::design_tab() ) : ?>
 				<?php RAPM_Library::render(); ?>
+			</div>
+			<?php
+			return;
+			endif;
+			?>
+
+			<?php if ( 'reveal' === self::design_tab() ) : ?>
+				<?php self::render_reveal_tab( $spots ); ?>
 			</div>
 			<?php
 			return;
@@ -894,6 +909,75 @@ class RAPM_Promotions_Screen {
 			}
 			?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Design Center › Reveal panels (1.53.0): every Reveal panels spot,
+	 * each with its panel cards (one promotion per panel) and its code, and
+	 * a form to make a new one.
+	 */
+	private static function render_reveal_tab( $spots ) {
+		$reveal = array_filter( $spots, function ( $s ) { return 'reveal' === $s['kind']; } );
+		?>
+		<details class="rapm-dc-how">
+			<summary><?php esc_html_e( 'How it works', 'rapm' ); ?></summary>
+			<ol>
+				<li><?php esc_html_e( 'Each panel is a promotion with its own dates: a color, one big word, a photo underneath, a short line and a link label. Up to four that are on and within their dates show side by side, in the order of the cards.', 'rapm' ); ?></li>
+				<li><?php esc_html_e( 'On computers a panel opens when someone points at it or tabs to it: the photo shows, the word moves aside, and the short line and link label appear. Phones stack the panels, and each opens as it reaches the middle of the screen.', 'rapm' ); ?></li>
+				<?php /* translators: 1: width, 2: height, 3: width, 4: height */ ?>
+				<li><?php echo esc_html( sprintf( __( 'Photos: %1$d by %2$d for computers and %3$d by %4$d for phones.', 'rapm' ), (int) RAPM_Slots::get( 'reveal_desktop' )['width'], (int) RAPM_Slots::get( 'reveal_desktop' )['height'], (int) RAPM_Slots::get( 'reveal_mobile' )['width'], (int) RAPM_Slots::get( 'reveal_mobile' )['height'] ) ); ?></li>
+				<li><?php esc_html_e( 'Put its code on a page (an Elementor Shortcode widget works). Add height="640" to make it taller on computers, or phone_height="360" on phones.', 'rapm' ); ?></li>
+			</ol>
+		</details>
+
+		<section class="rapm-spot rapm-dc-make">
+			<h2 class="rapm-spot-name"><?php esc_html_e( 'Make new reveal panels', 'rapm' ); ?></h2>
+			<form class="rapm-make-reveal">
+				<label for="rapm-make-reveal-name"><?php esc_html_e( 'Name', 'rapm' ); ?></label>
+				<input type="text" id="rapm-make-reveal-name" name="name" maxlength="60" placeholder="<?php esc_attr_e( 'For example: Home page reveal', 'rapm' ); ?>" />
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Make it', 'rapm' ); ?></button>
+			</form>
+			<p class="rapm-spot-status" aria-live="polite"></p>
+		</section>
+
+		<?php if ( ! $reveal ) : ?>
+			<p class="rapm-dc-none"><?php esc_html_e( 'No reveal panels yet.', 'rapm' ); ?></p>
+		<?php endif; ?>
+		<?php
+		foreach ( $reveal as $spot ) {
+			self::render_spot( $spot, null, 'design' );
+		}
+	}
+
+	/**
+	 * Reveal panels on the Promotions page (1.53.0): one short card that
+	 * links to the Design Center, like a split slider.
+	 */
+	private static function render_reveal_pointer( $spot ) {
+		$heading = 'rapm-spot-reveal-' . sanitize_html_class( $spot['placement'] );
+		$used_on = RAPM_Spot_Usage::for_spot( 'reveal', $spot['placement'] );
+		?>
+		<section class="rapm-spot rapm-split-pointer" aria-labelledby="<?php echo esc_attr( $heading ); ?>" data-kind="reveal" data-placement="<?php echo esc_attr( $spot['placement'] ); ?>">
+			<div class="rapm-spot-head">
+				<div class="rapm-spot-info">
+					<div class="rapm-spot-title">
+						<h2 id="<?php echo esc_attr( $heading ); ?>" class="rapm-spot-name"><?php echo esc_html( self::spot_name( 'reveal', $spot['placement'] ) ); ?></h2>
+						<span class="rapm-type-chip"><?php esc_html_e( 'Reveal panels', 'rapm' ); ?></span>
+					</div>
+					<p class="rapm-spot-on">
+						<?php if ( $used_on ) : ?>
+							<?php esc_html_e( 'Shows on:', 'rapm' ); ?>
+							<?php echo RAPM_Spot_Usage::links_html( $used_on ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in links_html(). ?>
+						<?php else : ?>
+							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet.', 'rapm' ); ?></span>
+						<?php endif; ?>
+					</p>
+					<p><?php echo esc_html( sprintf( /* translators: %s: e.g. "2 showing now" */ __( 'Panels: %s.', 'rapm' ), self::count_line( $spot['posts'] ) ) ); ?></p>
+				</div>
+				<a class="button button-primary" href="<?php echo esc_url( add_query_arg( 'tab', 'reveal', self::design_url() ) . '#' . $heading ); ?>"><?php esc_html_e( 'Open in the Design Center', 'rapm' ); ?></a>
+			</div>
+		</section>
 		<?php
 	}
 
@@ -1165,7 +1249,12 @@ class RAPM_Promotions_Screen {
 		<article class="rapm-card is-<?php echo esc_attr( $d['state'] ); ?><?php echo $color ? ' has-group' : ''; ?>"<?php echo $color ? ' style="' . esc_attr( '--rapm-group:' . $color ) . '"' : ''; ?> data-id="<?php echo esc_attr( $id ); ?>" data-title="<?php echo esc_attr( strtolower( $title . ( $tab ? ' ' . $tab : '' ) ) ); ?>"<?php echo $tab ? ' data-tab="' . esc_attr( $tab ) . '"' : ''; ?><?php echo $ended ? ' hidden' : ''; ?>>
 			<a class="rapm-card-pic" href="<?php echo esc_url( $edit_url ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: promotion name */ __( 'Edit %s', 'rapm' ), $title ) ); ?>" draggable="false">
 				<?php $design = 'promo_box' === get_post_meta( $id, '_rapm_kind', true ) ? RAPM_Split::card_preview( $id ) : ''; ?>
-				<?php if ( $design ) : // 1.44.1: a designed promotion box shows its design. ?>
+				<?php if ( 'reveal' === get_post_meta( $id, '_rapm_kind', true ) ) : // 1.53.0: the panel closed, and its photo. ?>
+					<span class="rapm-card-reveal">
+						<span class="rapm-card-reveal-word" style="<?php echo esc_attr( 'background:' . RAPM_Reveal::color_css( $id ) . ';color:' . ( get_post_meta( $id, '_rapm_text_color', true ) ?: '#ffffff' ) ); // phpcs:ignore ?>"><?php echo esc_html( get_post_meta( $id, '_rapm_headline', true ) ); ?></span>
+						<?php if ( $image ) : ?><img src="<?php echo esc_url( $image ); ?>" alt="" loading="lazy" draggable="false" /><?php else : ?><span class="rapm-card-nopic"><?php esc_html_e( 'No photo yet', 'rapm' ); ?></span><?php endif; ?>
+					</span>
+				<?php elseif ( $design ) : // 1.44.1: a designed promotion box shows its design. ?>
 					<?php echo $design; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in RAPM_Split::render_design(). ?>
 				<?php elseif ( $image ) : ?>
 					<img src="<?php echo esc_url( $image ); ?>" alt="" loading="lazy" draggable="false" />
@@ -1356,13 +1445,16 @@ class RAPM_Promotions_Screen {
 		}
 		$kind = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : '';
 		$name = isset( $_POST['name'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['name'] ) ), 0, 60 ) : '';
-		if ( ! in_array( $kind, self::KIND_ORDER, true ) ) {
+		if ( ! in_array( $kind, self::KIND_ORDER, true ) && 'reveal' !== $kind ) { // 1.53.0: made from the Design Center.
 			wp_send_json_error( array( 'message' => __( 'Pick what kind of spot it is.', 'rapm' ) ), 400 );
 		}
 		if ( '' === trim( $name ) ) {
 			wp_send_json_error( array( 'message' => __( 'Give the spot a name.', 'rapm' ) ), 400 );
 		}
 		$placement = RAPM_Spots::create( $kind, $name );
+		if ( 'reveal' === $kind ) {
+			wp_send_json_success( array( 'url' => add_query_arg( 'tab', 'reveal', self::design_url() ) . '#rapm-spot-reveal-' . $placement ) );
+		}
 		wp_send_json_success( array( 'url' => self::url( array( 'rapm_spot_created' => $kind . '|' . $placement ) ) ) );
 	}
 
