@@ -39,7 +39,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - These screens load with no errors and none of the old words: the form for a new slider, an edited reveal panel, a new look and a new promotion box; the Promotions page; both Design Center tabs; Help; and the Training Guide.
   - The form shows 11 or 12 (i) buttons per kind. A real click opens the detail under the line.
   - The empty-state markup renders. Spot names were checked for seven codes.
-- **Installed on staging (2026-10-20):** the split test room photo's form reads "Edit promotion", "Computer picture", "Code for the page", with one-line help and (i). The menu shows "New promotion". Known leftover: the browser tab title says "New promotion" while editing, because WordPress takes it from the menu label; to fix next. Not yet in production.
+- **Installed on staging (2026-10-20):** the split test room photo's form reads "Edit promotion", "Computer picture", "Code for the page", with one-line help and (i). The menu shows "New promotion". Known leftover: the browser tab title says "New promotion" while editing, because WordPress takes it from the menu label; to fix next.
+- **Pushed to the production repo (2026-10-20)** with Phil's OK: main and the tag `v1.55.0`.
 
 ---
 
