@@ -10,14 +10,14 @@ class RAPM_Post_Types {
 			'rapm_asset',
 			array(
 				'labels'          => array(
-					'name'          => __( 'Promotional Assets', 'rapm' ),
-					'singular_name' => __( 'Promotional Asset', 'rapm' ),
+					'name'          => __( 'Promotions', 'rapm' ),
+					'singular_name' => __( 'Promotion', 'rapm' ),
 					// The menu reads "Promotions" > "All promotions" (1.28.0).
 					// "All promotions" opens RAPM_Promotions_Screen.
 					'menu_name'     => __( 'Promotions', 'rapm' ),
 					'all_items'     => __( 'All promotions', 'rapm' ),
-					'search_items'  => __( 'Search Assets', 'rapm' ),
-					'not_found'     => __( 'No promotional assets found', 'rapm' ),
+					'search_items'  => __( 'Search promotions', 'rapm' ),
+					'not_found'     => __( 'No promotions found', 'rapm' ),
 				),
 				'public'          => false,
 				'show_ui'         => true,

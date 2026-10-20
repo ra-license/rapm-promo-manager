@@ -1,0 +1,30 @@
+/* One-line help with (i) for more (1.55.0, RAPM_Tip), and teaching empty states. */
+.rapm-tip-btn {
+	display: inline-grid;
+	place-items: center;
+	width: 18px;
+	height: 18px;
+	margin-left: 4px;
+	padding: 0;
+	border: 1.5px solid #2271b1;
+	border-radius: 50%;
+	background: #fff;
+	color: #2271b1;
+	font: 700 11px/1 Georgia, serif;
+	font-style: italic;
+	vertical-align: -3px;
+	cursor: pointer;
+}
+.rapm-tip-btn:hover, .rapm-tip-btn[aria-expanded="true"] { background: #2271b1; color: #fff; }
+.rapm-tip-btn:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+.rapm-tip { margin: 6px 0 8px; padding: 8px 12px; max-width: 640px; background: #f0f6fc; border-left: 3px solid #2271b1; border-radius: 0 4px 4px 0; font-size: 13px; line-height: 1.5; color: #1d2327; }
+.rapm-tip[hidden] { display: none; }
+.rapm-tip p { margin: 0 0 4px; }
+.rapm-tip p:last-child { margin-bottom: 0; }
+
+/* Empty states: a small picture, one sentence, one button. */
+.rapm-empty-state { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; background: #fff; border: 1px dashed #c3c4c7; border-radius: 8px; padding: 16px 18px; max-width: 720px; }
+@media (max-width: 600px) { .rapm-empty-state { grid-template-columns: minmax(0, 1fr); } }
+.rapm-empty-state svg { width: 96px; height: 64px; display: block; }
+.rapm-empty-state h3 { margin: 0 0 4px; font-size: 15px; }
+.rapm-empty-state p { margin: 0 0 10px; color: #50575e; }

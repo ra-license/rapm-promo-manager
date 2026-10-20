@@ -228,7 +228,7 @@ class RAPM_Training_Guide {
 							<li><span><strong><?php esc_html_e( 'Promotion', 'rapm' ); ?></strong> — <?php esc_html_e( 'one sale banner, coupon, or offer. Each one is its own entry in the tool.', 'rapm' ); ?></span></li>
 							<li><span><strong><?php esc_html_e( 'Type', 'rapm' ); ?></strong> — <?php esc_html_e( 'which kind of promotion it is: Slider, Shop the Look, Feature banner, Quick links, Coupon row or Tile row. Each type is a different shape and goes in a different spot on the page.', 'rapm' ); ?></span></li>
 							<li><span><strong><?php esc_html_e( 'Where it shows', 'rapm' ); ?></strong> — <?php esc_html_e( 'the spot on your website it goes in, like "Home page slider." Promotions in the same spot take turns. Pick it from the list.', 'rapm' ); ?></span></li>
-							<li><span><strong><?php esc_html_e( 'Desktop / Mobile picture', 'rapm' ); ?></strong> — <?php esc_html_e( 'every promotion needs two pictures, because a computer screen and a phone screen are different shapes. The tool shows the right one to each visitor automatically.', 'rapm' ); ?></span></li>
+							<li><span><strong><?php esc_html_e( 'Computer and phone pictures', 'rapm' ); ?></strong> — <?php esc_html_e( 'every promotion needs two pictures, because a computer screen and a phone screen are different shapes. The tool shows the right one to each visitor automatically.', 'rapm' ); ?></span></li>
 						</ul>
 
 						<div class="rapm-tg-callout rapm-tg-callout-tip">
@@ -297,7 +297,7 @@ class RAPM_Training_Guide {
 								<div class="rapm-tg-mockup">
 									<div class="mk-card">
 										<div class="mk-label"><span class="rapm-tg-chip" style="width:18px;height:18px;font-size:10px;">i</span><?php esc_html_e( 'Type of Promotion', 'rapm' ); ?></div>
-										<div class="mk-input" style="display:flex;align-items:center;padding:0 8px;color:#1D2327;">Slider &mdash; Desktop 1920x600, Mobile 1080x1920 &#9660;</div>
+										<div class="mk-input" style="display:flex;align-items:center;padding:0 8px;color:#1D2327;">Slider &mdash; computer 1920x600, phone 1080x1920 &#9660;</div>
 										<div class="mk-desc"><?php esc_html_e( 'Choose which one before uploading pictures below.', 'rapm' ); ?></div>
 									</div>
 								</div>
@@ -326,7 +326,7 @@ class RAPM_Training_Guide {
 										<div class="mk-desc"><?php esc_html_e( 'For your own records — visitors never see this.', 'rapm' ); ?></div>
 									</div>
 									<div class="mk-card">
-										<div class="mk-label"><span class="rapm-tg-chip" style="width:18px;height:18px;font-size:10px;">2</span><?php esc_html_e( 'Desktop Promotion', 'rapm' ); ?></div>
+										<div class="mk-label"><span class="rapm-tg-chip" style="width:18px;height:18px;font-size:10px;">2</span><?php esc_html_e( 'Computer picture', 'rapm' ); ?></div>
 										<div class="mk-btn mk-btn-ghost" style="margin-bottom:6px;"><?php esc_html_e( 'Choose File', 'rapm' ); ?></div>
 										<div class="mk-warn"><strong><?php esc_html_e( 'This picture is a different shape than needed.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick which part to keep.', 'rapm' ); ?>
 											<div class="mk-anchor-grid">
@@ -342,11 +342,11 @@ class RAPM_Training_Guide {
 							<div class="rapm-tg-callouts-col">
 								<ol>
 									<li><span class="rapm-tg-chip">1</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Internal Name', 'rapm' ); ?></strong><span><?php esc_html_e( 'Any name that helps you remember what this is, like "Fall Sale Slider."', 'rapm' ); ?></span></span></li>
-									<li><span class="rapm-tg-chip">2</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Desktop Promotion picture', 'rapm' ); ?></strong><span><?php esc_html_e( "Required. Upload the picture, or paste a link to one. If it's the wrong shape, a small grid of buttons appears — click the part of the picture you want kept, and the rest is trimmed automatically.", 'rapm' ); ?></span></span></li>
+									<li><span class="rapm-tg-chip">2</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Computer picture', 'rapm' ); ?></strong><span><?php esc_html_e( "Required. Upload the picture, or paste a link to one. If it's the wrong shape, a small grid of buttons appears — click the part of the picture you want kept, and the rest is trimmed automatically.", 'rapm' ); ?></span></span></li>
 								</ol>
 								<div class="rapm-tg-callout rapm-tg-callout-warn" style="margin-top:12px;">
 									<span class="rapm-tg-callout-title"><?php esc_html_e( "Can't click Next?", 'rapm' ); ?></span>
-									<p><?php esc_html_e( "You're missing the Internal Name or the desktop picture. A message tells you exactly which one.", 'rapm' ); ?></p>
+									<p><?php esc_html_e( "You're missing the Internal Name or the computer picture. A message tells you which one.", 'rapm' ); ?></p>
 								</div>
 							</div>
 						</div>
@@ -422,8 +422,8 @@ class RAPM_Training_Guide {
 										<div class="mk-step is-on">&#9315; <?php esc_html_e( 'Review & Schedule', 'rapm' ); ?></div>
 									</div>
 									<div class="mk-card">
-										<div class="mk-btn mk-btn-ghost" style="margin-right:6px;"><?php esc_html_e( 'Desktop', 'rapm' ); ?></div>
-										<div class="mk-btn mk-btn-ghost"><?php esc_html_e( 'Mobile', 'rapm' ); ?></div>
+										<div class="mk-btn mk-btn-ghost" style="margin-right:6px;"><?php esc_html_e( 'Computer', 'rapm' ); ?></div>
+										<div class="mk-btn mk-btn-ghost"><?php esc_html_e( 'Phone', 'rapm' ); ?></div>
 										<div class="mk-preview" style="margin-top:8px;"><span>FALL SALE &mdash; 30% OFF</span></div>
 									</div>
 									<div class="mk-card">
@@ -438,7 +438,7 @@ class RAPM_Training_Guide {
 							</div>
 							<div class="rapm-tg-callouts-col">
 								<ol>
-									<li><span class="rapm-tg-chip">&#10003;</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Check the preview.', 'rapm' ); ?></strong><span><?php esc_html_e( 'Click the Desktop / Mobile buttons to see exactly what each visitor will see. If text overlaps a picture, fix it before saving.', 'rapm' ); ?></span></span></li>
+									<li><span class="rapm-tg-chip">&#10003;</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Check the preview.', 'rapm' ); ?></strong><span><?php esc_html_e( 'Click Computer and Phone to see what each shopper will see. If words cover the picture, fix it before you save.', 'rapm' ); ?></span></span></li>
 									<li><span class="rapm-tg-chip">1</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Start and stop dates are optional.', 'rapm' ); ?></strong><span><?php esc_html_e( 'Leave blank to start right away and run until you turn it off yourself.', 'rapm' ); ?></span></span></li>
 									<li><span class="rapm-tg-chip">2</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Watch this note.', 'rapm' ); ?></strong><span><?php esc_html_e( "It tells you right away whether this promotion will show up on the Promotions Calendar (see §14) or not, based on whether you've filled in both dates. If you expect to see it there and this note says it won't, that's your sign a date is missing.", 'rapm' ); ?></span></span></li>
 								</ol>
@@ -485,7 +485,7 @@ class RAPM_Training_Guide {
 						<p class="rapm-tg-intro"><?php esc_html_e( 'Have your picture ready in one of these sizes before you start, and uploading goes faster.', 'rapm' ); ?></p>
 						<div class="rapm-tg-table-wrap">
 							<table class="rapm-tg-sizes">
-								<thead><tr><th><?php esc_html_e( 'Type', 'rapm' ); ?></th><th><?php esc_html_e( 'Desktop size', 'rapm' ); ?></th><th><?php esc_html_e( 'Mobile size', 'rapm' ); ?></th><th><?php esc_html_e( 'Max file size', 'rapm' ); ?></th></tr></thead>
+								<thead><tr><th><?php esc_html_e( 'Type', 'rapm' ); ?></th><th><?php esc_html_e( 'Computer size', 'rapm' ); ?></th><th><?php esc_html_e( 'Phone size', 'rapm' ); ?></th><th><?php esc_html_e( 'Max file size', 'rapm' ); ?></th></tr></thead>
 								<tbody>
 									<tr><td><?php esc_html_e( 'Slider', 'rapm' ); ?></td><td>1920 &times; 600 px</td><td>1080 &times; 1920 px</td><td>300 KB</td></tr>
 									<tr><td><?php esc_html_e( 'Shop the Look', 'rapm' ); ?></td><td><?php esc_html_e( 'Any shape, at least 800 px wide (2000+ is best)', 'rapm' ); ?></td><td><?php esc_html_e( 'Same photo', 'rapm' ); ?></td><td>450 KB</td></tr>
@@ -557,11 +557,11 @@ class RAPM_Training_Guide {
 						<ul class="rapm-tg-checklist">
 							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Picked the correct Type before uploading anything', 'rapm' ); ?></span></li>
 							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( "Typed an Internal Name I'll recognize later", 'rapm' ); ?></span></li>
-							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Uploaded a Desktop picture in the right size', 'rapm' ); ?></span></li>
-							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Uploaded a Mobile picture (or left it blank on purpose)', 'rapm' ); ?></span></li>
+							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Added a computer picture in the right size', 'rapm' ); ?></span></li>
+							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Added a phone picture (or left it out on purpose)', 'rapm' ); ?></span></li>
 							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Answered the sale-text question correctly', 'rapm' ); ?></span></li>
 							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Chosen where it links to', 'rapm' ); ?></span></li>
-							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Checked the Desktop and Mobile preview — no overlapping text', 'rapm' ); ?></span></li>
+							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Checked the computer and phone preview: no words cover the picture', 'rapm' ); ?></span></li>
 							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Set a start/end date, if this is time-limited', 'rapm' ); ?></span></li>
 							<li><span class="rapm-tg-box2"></span><span><?php esc_html_e( 'Clicked Save and saw the green confirmation', 'rapm' ); ?></span></li>
 						</ul>

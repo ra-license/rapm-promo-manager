@@ -103,9 +103,12 @@ class RAPM_Spots {
 		// plural counts as the same word.
 		$parts = explode( '-', str_replace( '_', '-', $placement ) );
 		$last  = strtolower( (string) end( $parts ) );
-		$word  = strtolower( $noun );
-		if ( $last === $word || $last . 's' === $word || $last === $word . 's' ) {
-			return $where;
+		// 1.55.0: against each word of a two-word type too ("home-reveal"
+		// read "Home Reveal reveal panels"; "split-box", "… box promotion box").
+		foreach ( explode( ' ', strtolower( $noun ) ) as $word ) {
+			if ( $last === $word || $last . 's' === $word || $last === $word . 's' ) {
+				return $where;
+			}
 		}
 		/* translators: 1: where on the site, e.g. "Home page"; 2: what it is, e.g. "slider" */
 		return sprintf( __( '%1$s %2$s', 'rapm' ), $where, $noun );

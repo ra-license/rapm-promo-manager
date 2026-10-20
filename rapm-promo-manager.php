@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.54.0
+ * Version: 1.55.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.54.0' );
+define( 'RAPM_VERSION', '1.55.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -42,6 +42,7 @@ require_once RAPM_DIR . 'includes/class-rapm-marquee.php';
 require_once RAPM_DIR . 'includes/class-rapm-quick-links.php';
 require_once RAPM_DIR . 'includes/class-rapm-reveal.php';
 require_once RAPM_DIR . 'includes/class-rapm-focal.php';
+require_once RAPM_DIR . 'includes/class-rapm-tip.php';
 require_once RAPM_DIR . 'includes/class-rapm-coupon-book.php';
 require_once RAPM_DIR . 'includes/class-rapm-looks.php';
 require_once RAPM_DIR . 'includes/class-rapm-calendar.php';
@@ -119,6 +120,7 @@ final class RAPM_Plugin {
 		add_action( 'admin_init', array( 'RAPM_Upload_Handler', 'maybe_redirect_native_add_new' ) );
 		add_action( 'admin_init', array( 'RAPM_Upload_Handler', 'maybe_redirect_native_edit' ) );
 		add_action( 'admin_enqueue_scripts', array( 'RAPM_Upload_Handler', 'enqueue_admin_assets' ) );
+		add_action( 'admin_enqueue_scripts', array( 'RAPM_Tip', 'enqueue' ) ); // 1.55.0
 		add_action( 'admin_enqueue_scripts', array( 'RAPM_Training_Guide', 'enqueue_admin_assets' ) );
 		add_action( 'admin_post_rapm_save_asset', array( 'RAPM_Upload_Handler', 'handle_save' ) );
 		add_action( 'admin_post_rapm_check_link_now', array( 'RAPM_Sync', 'handle_check_now' ) );

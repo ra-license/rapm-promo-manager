@@ -447,10 +447,7 @@ class RAPM_Promotions_Screen {
 			<?php self::render_notices(); ?>
 
 			<?php if ( ! $spots ) : ?>
-				<div class="rapm-spot rapm-empty">
-					<h2><?php esc_html_e( 'No promotions yet', 'rapm' ); ?></h2>
-					<p><?php esc_html_e( 'Promotions go in spots: places on your website, like a slider at the top of the home page. Click "+ New spot" at the top to add one. It then shows here with an "Add a picture" button and the code to put on a page.', 'rapm' ); ?></p>
-				</div>
+				<?php RAPM_Tip::empty_state( 'spots', __( 'No promotions yet', 'rapm' ), __( 'Promotions go in spots: places on your website, like a slider at the top of the home page. Make a spot, then add a picture to it.', 'rapm' ), '<button type="button" class="button button-primary rapm-new-spot-open">' . esc_html__( '+ New spot', 'rapm' ) . '</button>' ); ?>
 			<?php endif; ?>
 
 			<p class="rapm-no-results" hidden></p>
@@ -497,7 +494,7 @@ class RAPM_Promotions_Screen {
 
 			<div class="rapm-spot rapm-ra-panel">
 				<h2><?php esc_html_e( 'Setup', 'rapm' ); ?></h2>
-				<p><?php esc_html_e( 'Each section above shows its spot code and a box to rename it. A new spot shows here when you click "+ New spot", when its code is placed on a page, or when a promotion is added with a new spot name.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Each section above shows its code for the page and a box to rename it. A new spot shows here when you click "+ New spot", when its code is placed on a page, or when a promotion is added with a new spot name.', 'rapm' ); ?></p>
 				<ul>
 					<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset' ) ); ?>"><?php esc_html_e( 'Add a promotion to a new spot', 'rapm' ); ?></a></li>
 					<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&rapm_list=1' ) ); ?>"><?php esc_html_e( 'The old list of every promotion (bulk actions, filters)', 'rapm' ); ?></a></li>
@@ -693,7 +690,7 @@ class RAPM_Promotions_Screen {
 						<?php endif; ?>
 					</p>
 					<div class="rapm-spot-ra">
-						<p><?php esc_html_e( 'Spot code:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
+						<p><?php esc_html_e( 'Code for the page:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
 						<form class="rapm-rename">
 							<label for="<?php echo esc_attr( $heading ); ?>-name"><?php esc_html_e( 'Spot name', 'rapm' ); ?></label>
 							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
@@ -899,7 +896,7 @@ class RAPM_Promotions_Screen {
 			</section>
 
 			<?php if ( ! $split ) : ?>
-				<p class="rapm-dc-none"><?php esc_html_e( 'No split sliders yet.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::empty_state( 'split', __( 'No split sliders yet', 'rapm' ), __( 'A split slider shows room photos on one side and a sale on the other. Pick a slider above and click "Turn on split view" to make one.', 'rapm' ) ); ?>
 			<?php endif; ?>
 			<?php
 			foreach ( $split as $spot ) {
@@ -942,7 +939,7 @@ class RAPM_Promotions_Screen {
 		</section>
 
 		<?php if ( ! $reveal ) : ?>
-			<p class="rapm-dc-none"><?php esc_html_e( 'No reveal panels yet.', 'rapm' ); ?></p>
+			<?php RAPM_Tip::empty_state( 'reveal', __( 'No reveal panels yet', 'rapm' ), __( 'Reveal panels are big colors with one word each. When a shopper points at one, a room photo shows. Type a name above and click "Make it" to start.', 'rapm' ) ); ?>
 		<?php endif; ?>
 		<?php
 		foreach ( $reveal as $spot ) {

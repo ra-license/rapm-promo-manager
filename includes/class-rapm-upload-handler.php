@@ -18,8 +18,8 @@ class RAPM_Upload_Handler {
 	public static function add_menu() {
 		add_submenu_page(
 			'edit.php?post_type=rapm_asset',
-			__( 'Add New Asset', 'rapm' ),
-			__( 'Add New Asset', 'rapm' ),
+			__( 'New promotion', 'rapm' ),
+			__( 'New promotion', 'rapm' ),
 			'edit_posts',
 			'rapm-add-asset',
 			array( __CLASS__, 'render_page' )
@@ -216,7 +216,7 @@ class RAPM_Upload_Handler {
 				<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::url() ); ?>">&larr; <?php esc_html_e( 'All promotions', 'rapm' ); ?></a></p>
 			<?php endif; ?>
 			<h1>
-				<?php echo $is_edit ? esc_html__( 'Edit Promotional Asset', 'rapm' ) : esc_html__( 'Add New Promotional Asset', 'rapm' ); ?>
+				<?php echo $is_edit ? esc_html__( 'Edit promotion', 'rapm' ) : esc_html__( 'New promotion', 'rapm' ); ?>
 				<?php if ( ! $is_edit ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-training-guide' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Training Guide', 'rapm' ); ?></a>
 				<?php endif; ?>
@@ -274,7 +274,7 @@ class RAPM_Upload_Handler {
 										)
 										: sprintf(
 											/* translators: 1: kind label, 2: desktop width, 3: desktop height, 4: mobile width, 5: mobile height */
-											__( '%1$s — Desktop %2$dx%3$d, Mobile %4$dx%5$d', 'rapm' ),
+											__( '%1$s — computer %2$dx%3$d, phone %4$dx%5$d', 'rapm' ),
 											$info['label'],
 											$opt_desktop['width'],
 											$opt_desktop['height'],
@@ -288,7 +288,7 @@ class RAPM_Upload_Handler {
 								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $kind_key, $key ); ?>><?php echo esc_html( $opt_label ); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<p class="description"><?php esc_html_e( 'Choose which one before uploading pictures below — each type needs a different picture size, and picking this first tells you the right size to use.', 'rapm' ); ?></p>
+						<?php RAPM_Tip::hint( __( 'Pick this first. Each kind needs a different picture size.', 'rapm' ) ); ?>
 					</td>
 				</tr>
 			</table>
@@ -341,7 +341,7 @@ class RAPM_Upload_Handler {
 					<tr>
 						<th><label for="rapm_title"><?php esc_html_e( 'Internal Name', 'rapm' ); ?></label></th>
 						<td><input type="text" id="rapm_title" name="rapm_title" class="regular-text" value="<?php echo esc_attr( $title ); ?>" />
-							<p class="description"><?php esc_html_e( 'For your own reference in the admin list — not shown to site visitors.', 'rapm' ); ?></p>
+							<?php RAPM_Tip::hint( __( 'Only you see this name. Shoppers don\'t.', 'rapm' ) ); ?>
 						</td>
 					</tr>
 					<tr>
@@ -372,9 +372,9 @@ class RAPM_Upload_Handler {
 									<option value="<?php echo esc_attr( $choice['placement'] ); ?>" <?php selected( $placement, $choice['placement'] ); ?>><?php echo esc_html( $choice['name'] ); ?></option>
 								<?php endforeach; ?>
 							</select>
-							<p class="description"><?php esc_html_e( 'The spot on your website it shows in. Every spot is on the Promotions page with the pages it shows on. R&A Marketing adds new spots.', 'rapm' ); ?></p>
+							<?php RAPM_Tip::hint( __( 'The spot on your website where it shows.', 'rapm' ), __( 'Each spot is on the Promotions page, with the pages it is on. R&A Marketing adds new spots.', 'rapm' ) ); ?>
 							<p class="description" id="rapm-placement-summary"></p>
-							<p class="description"><?php esc_html_e( 'Spot code, for R&A Marketing:', 'rapm' ); ?> <code id="rapm-shortcode-preview"></code></p>
+							<p class="description"><?php esc_html_e( 'Code for the page (for R&A Marketing):', 'rapm' ); ?> <code id="rapm-shortcode-preview"></code></p>
 						</td>
 					</tr>
 					<?php if ( $is_look ) : ?>
@@ -382,7 +382,7 @@ class RAPM_Upload_Handler {
 						<th><label for="rapm_tab_label"><?php esc_html_e( 'Tab name', 'rapm' ); ?></label></th>
 						<td>
 							<input type="text" id="rapm_tab_label" name="rapm_tab_label" class="regular-text" maxlength="24" value="<?php echo esc_attr( $tab_label ); ?>" placeholder="<?php esc_attr_e( 'e.g. Living Room', 'rapm' ); ?>" />
-							<p class="description"><?php esc_html_e( 'The word shoppers click in the bar under the photo. Use a room, like "Living Room", or a collection, like "Stanton 338". Keep it short so all the tabs fit.', 'rapm' ); ?></p>
+							<?php RAPM_Tip::hint( __( 'The word shoppers click under the photo, like "Living Room".', 'rapm' ), __( 'Keep it short so all the tabs fit. A collection name works too, like "Stanton 338".', 'rapm' ) ); ?>
 						</td>
 					</tr>
 					<?php endif; ?>
@@ -413,7 +413,7 @@ class RAPM_Upload_Handler {
 									if ( ! res.success ) { return; }
 									var count = res.data.count;
 									if ( 0 === count ) {
-										summaryEl.textContent = <?php echo wp_json_encode( $is_look ? __( 'Nothing else is in this spot yet, so this will be its first tab.', 'rapm' ) : ( $is_box ? __( 'Nothing else is in this promotion box yet, so this is the one that will show.', 'rapm' ) : __( 'Nothing else is using this spot yet — this will be its own, separate carousel.', 'rapm' ) ) ); ?>;
+										summaryEl.textContent = <?php echo wp_json_encode( $is_look ? __( 'This spot is empty, so this will be its first tab.', 'rapm' ) : ( $is_box ? __( 'This box is empty, so this is the one that will show.', 'rapm' ) : __( 'This spot is empty, so this will be its first picture.', 'rapm' ) ) ); ?>;
 										return;
 									}
 									var names = res.data.titles.map( function ( t ) { return '"' + t + '"'; } ).join( ', ' );
@@ -423,7 +423,7 @@ class RAPM_Upload_Handler {
 									var lead = 1 === count
 										? <?php echo wp_json_encode( __( '1 other promotion already uses this spot', 'rapm' ) ); ?>
 										: count + <?php echo wp_json_encode( __( ' other promotions already use this spot', 'rapm' ) ); ?>;
-									summaryEl.textContent = lead + ' (' + names + <?php echo wp_json_encode( $is_look ? __( ') — each one is its own tab in the same bar.', 'rapm' ) : ( $is_box ? __( ') — the box shows one at a time: the first one on the Promotions screen that is on and within its dates.', 'rapm' ) : __( ') — they\'ll all take turns rotating together in the same carousel.', 'rapm' ) ) ); ?>;
+									summaryEl.textContent = lead + ' (' + names + <?php echo wp_json_encode( $is_look ? __( '). Each one is its own tab.', 'rapm' ) : ( $is_box ? __( '). The box shows one at a time.', 'rapm' ) : __( '). They all take turns.', 'rapm' ) ) ); ?>;
 								} );
 							}, 300 );
 						}
@@ -441,10 +441,10 @@ class RAPM_Upload_Handler {
 
 				<?php if ( $has_images && $is_look ) : ?>
 				<h2><?php esc_html_e( 'Room Photo', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'One photo of a whole room. Any shape works, and wide photos look best. Phones use this same photo, so there is no separate phone picture.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'One photo of a whole room. Wide photos look best.', 'rapm' ), __( 'Any shape works. Phones use this same photo, so you don\'t need a phone picture.', 'rapm' ) ); ?>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Images', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Upload whatever picture you have — any common format (JPG, PNG, whatever your phone or camera saves) is fine. This tool will automatically resize/convert it for you if needed, and will tell you clearly if it can\'t be used.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'Use any picture file you have, like a JPG or PNG.', 'rapm' ), __( 'We make it the right size and file type for you. If a picture can\'t be used, we tell you why.', 'rapm' ) ); ?>
 				<?php if ( $is_box ) : ?>
 				<table class="form-table">
 					<tr>
@@ -458,23 +458,23 @@ class RAPM_Upload_Handler {
 								<input type="radio" name="rapm_box_mode" value="graphic" <?php checked( 'graphic', $box_mode ); ?> />
 								<?php esc_html_e( 'A finished graphic, with its words already on it', 'rapm' ); ?>
 							</label>
-							<p class="description rapm-box-mode-note" data-mode="design"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'A picture is optional: use one as the background, or leave it out and pick a color in the next step.', 'rapm' ); ?></p>
-							<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'The whole graphic always shows, on every screen. Make it square (1200 by 1200).', 'rapm' ); ?></p>
+							<p class="description rapm-box-mode-note" data-mode="design"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'A picture is optional. You can pick a color in the next step instead.', 'rapm' ); ?></p>
+							<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'The whole picture always shows. Make it square: 1200 by 1200.', 'rapm' ); ?></p>
 						</td>
 					</tr>
 				</table>
 				<?php elseif ( $is_reveal ) : ?>
-				<p class="description"><?php esc_html_e( 'The photo under the panel, shown when it opens. Computers use a square photo (1600 by 1600); phones stack the panels, so their photo is wider than tall (1200 by 1000). Keep the subject near the middle: the edges are trimmed to the panel\'s shape.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'The photo that shows when the panel opens.', 'rapm' ), __( 'Computer photo: 1600 by 1600 (square). Phone photo: 1200 by 1000. The edges get trimmed to fit, so set "What stays in view" below each photo.', 'rapm' ) ); ?>
 				<?php elseif ( $is_quick ) : ?>
-				<p class="description"><?php esc_html_e( 'Quick links use one picture on every screen. Phones show it small, as a round thumbnail or a little card, so pick a picture whose subject is near the middle.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'One picture for every screen.', 'rapm' ), __( 'Phones show it small, as a round picture or a little card. Set "What stays in view" below it.', 'rapm' ) ); ?>
 				<?php else : ?>
-				<p class="description"><?php esc_html_e( 'Upload both below on every promotion — visitors on a computer automatically see the Desktop one, visitors on a phone automatically see the Mobile one. You never need to create a separate promotion for each device.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'Add a computer picture and a phone picture. Each screen shows the right one.', 'rapm' ), __( 'You never need two promotions for one sale. Computers show the computer picture, and phones show the phone picture.', 'rapm' ) ); ?>
 				<?php endif; ?>
 				<?php endif; ?>
 				<?php if ( $has_images ) : ?>
 				<table class="form-table">
 					<tr>
-						<th><label><?php echo $is_look ? esc_html__( 'Room photo', 'rapm' ) : ( $is_box ? esc_html__( 'Promotion picture', 'rapm' ) : esc_html__( 'Desktop Promotion', 'rapm' ) ); ?></label></th>
+						<th><label><?php echo $is_look ? esc_html__( 'Room photo', 'rapm' ) : ( $is_box ? esc_html__( 'Promotion picture', 'rapm' ) : esc_html__( 'Computer picture', 'rapm' ) ); ?></label></th>
 						<td>
 							<?php if ( $img_desktop ) : ?>
 								<?php echo wp_get_attachment_image( $img_desktop, array( 240, 75 ), false, array( 'style' => 'display:block;margin-bottom:8px;border-radius:6px;object-fit:cover;' ) ); ?>
@@ -487,7 +487,7 @@ class RAPM_Upload_Handler {
 								<input type="file" id="rapm_image_desktop" name="rapm_image_desktop" accept="image/*" />
 								<?php if ( ! $is_look ) : ?>
 								<div id="rapm-desktop-crop-picker" class="rapm-crop-picker" style="display:none;">
-									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape than needed.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick which part to keep, or upload a different picture instead.', 'rapm' ); ?></p>
+									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick the part to keep, or use a different picture.', 'rapm' ); ?></p>
 									<div class="rapm-crop-layout">
 										<div class="rapm-crop-preview"><img id="rapm-desktop-crop-preview-img" alt="" /></div>
 										<div class="rapm-crop-anchors" role="group" aria-label="<?php esc_attr_e( 'Which part of the picture to keep', 'rapm' ); ?>">
@@ -508,28 +508,28 @@ class RAPM_Upload_Handler {
 							</div>
 							<div id="rapm-desktop-link-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_desktop_url" name="rapm_image_desktop_url" class="regular-text" value="<?php echo esc_attr( $desktop_url ); ?>" placeholder="https://…" />
-								<p class="description"><?php esc_html_e( 'Paste a link to a Google Drive folder, a Google Drive link to one picture, or a direct link to a picture. Set its sharing to "Anyone with the link."', 'rapm' ); ?></p>
+								<?php RAPM_Tip::hint( __( 'Paste a Google Drive link, or a link to a picture. Set sharing to "Anyone with the link."', 'rapm' ), __( 'It can be a folder or one picture.', 'rapm' ) ); ?>
 								<?php if ( $is_look ) : ?>
-								<p class="description"><?php esc_html_e( 'With a folder, the newest picture in it is used. To change the photo, just add a new picture to the folder. It can have any file name. We check every hour, or use "Check link now" below.', 'rapm' ); ?></p>
+								<?php RAPM_Tip::hint( __( 'With a folder, the newest picture is used.', 'rapm' ), __( 'To change the photo, add a new picture to the folder. Any file name works. We check every hour, or click "Check link now".', 'rapm' ) ); ?>
 								<?php else : ?>
-								<p class="description"><?php esc_html_e( 'With a folder, the newest picture in it that is the right shape is used. To change the promotion, just add a new picture to the folder. It can have any file name. You can paste the same folder in both Desktop and Mobile: wide pictures go to Desktop and tall ones to Mobile. We check every hour, or use "Check link now" below.', 'rapm' ); ?></p>
+								<?php RAPM_Tip::hint( __( 'With a folder, the newest picture of the right shape is used.', 'rapm' ), __( 'To change it, add a new picture to the folder. Any file name works. You can use the same folder for both pictures: wide ones go to computers and tall ones to phones. We check every hour, or click "Check link now".', 'rapm' ) ); ?>
 								<?php endif; ?>
 								<p class="description rapm-link-status" id="rapm-desktop-link-status" aria-live="polite"></p>
 								<?php if ( $is_edit && 'link' === $desktop_source ) : ?>
 									<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=rapm_check_link_now&asset_id=' . $asset_id ), 'rapm_check_link_now_' . $asset_id ) ); ?>"><?php esc_html_e( 'Check link now', 'rapm' ); ?></a></p>
 								<?php endif; ?>
 								<?php if ( $desktop_error ) : ?>
-									<p class="description" style="color:#b32d2e;"><?php echo esc_html( sprintf( __( 'Couldn\'t update from this link: %s Still showing the last picture that worked — nothing is broken on the live site.', 'rapm' ), $desktop_error ) ); ?></p>
+									<p class="description" style="color:#b32d2e;"><?php echo esc_html( sprintf( __( 'Couldn\'t update from this link: %s The last picture that worked still shows, so nothing is broken.', 'rapm' ), $desktop_error ) ); ?></p>
 								<?php elseif ( $desktop_synced ) : ?>
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $desktop_synced ) ) ) ); ?></p>
 								<?php endif; ?>
 							</div>
 
 							<?php if ( $is_look ) : ?>
-							<p class="description"><?php echo esc_html( sprintf( __( 'Photos 2000 pixels wide or more look best across a big screen. Anything wider than %1$d is made smaller for you, and it must be at least %2$d pixels wide.', 'rapm' ), $desktop_slot['width'], isset( $desktop_slot['min_width'] ) ? (int) $desktop_slot['min_width'] : 0 ) ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'Photos 2000 pixels wide or more look best. Bigger ones are made smaller for you (up to %1$d). It must be at least %2$d pixels wide.', 'rapm' ), $desktop_slot['width'], isset( $desktop_slot['min_width'] ) ? (int) $desktop_slot['min_width'] : 0 ) ); ?></p>
 							<p class="description rapm-look-size-note" id="rapm-look-size-note" aria-live="polite"></p>
 							<?php else : ?>
-							<p class="description"><?php echo esc_html( sprintf( __( 'This picture should be %1$d by %2$d (width by height, in pixels). If it\'s the same shape at a different size (say, an export at twice the resolution), it\'s resized automatically — no need to fix that yourself. If it\'s a different shape entirely, you\'ll see exactly what you uploaded vs. what\'s needed so you know what to fix.', 'rapm' ), $desktop_slot['width'], $desktop_slot['height'] ) ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'Size: %1$d by %2$d pixels (width by height). A bigger picture with the same shape is made smaller for you. If the shape is different, we show you what to fix.', 'rapm' ), $desktop_slot['width'], $desktop_slot['height'] ) ); ?></p>
 							<?php endif; ?>
 							<?php if ( $focal ) : ?>
 								<?php RAPM_Focal::render_picker( $kind_key, 'desktop', $img_desktop ? (string) wp_get_attachment_image_url( $img_desktop, 'large' ) : '', $is_edit ? RAPM_Focal::get( $asset_id, 'desktop' ) : '' ); ?>
@@ -538,7 +538,7 @@ class RAPM_Upload_Handler {
 					</tr>
 					<?php if ( ! $is_look ) : ?>
 					<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; Quick links and the promotion box use one picture everywhere. ?>>
-						<th><label><?php esc_html_e( 'Mobile Promotion', 'rapm' ); ?></label></th>
+						<th><label><?php esc_html_e( 'Phone picture', 'rapm' ); ?></label></th>
 						<td>
 							<?php if ( $img_mobile ) : ?>
 								<?php echo wp_get_attachment_image( $img_mobile, array( 120, 213 ), false, array( 'style' => 'display:block;margin-bottom:8px;border-radius:6px;object-fit:cover;' ) ); ?>
@@ -550,7 +550,7 @@ class RAPM_Upload_Handler {
 							<div id="rapm-mobile-upload-row" style="margin-top:8px;<?php echo 'link' === $mobile_source ? 'display:none;' : ''; ?>">
 								<input type="file" id="rapm_image_mobile" name="rapm_image_mobile" accept="image/*" />
 								<div id="rapm-mobile-crop-picker" class="rapm-crop-picker" style="display:none;">
-									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape than needed.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick which part to keep, or upload a different picture instead.', 'rapm' ); ?></p>
+									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick the part to keep, or use a different picture.', 'rapm' ); ?></p>
 									<div class="rapm-crop-layout">
 										<div class="rapm-crop-preview"><img id="rapm-mobile-crop-preview-img" alt="" /></div>
 										<div class="rapm-crop-anchors" role="group" aria-label="<?php esc_attr_e( 'Which part of the picture to keep', 'rapm' ); ?>">
@@ -570,22 +570,22 @@ class RAPM_Upload_Handler {
 							</div>
 							<div id="rapm-mobile-link-row" style="margin-top:8px;<?php echo 'link' === $mobile_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_mobile_url" name="rapm_image_mobile_url" class="regular-text" value="<?php echo esc_attr( $mobile_url ); ?>" placeholder="https://…" />
-								<p class="description"><?php esc_html_e( 'Paste a link to a Google Drive folder (it can be the same folder as Desktop — the newest tall picture in it is used here), a Google Drive link to one picture, or a direct link to a picture. Set its sharing to "Anyone with the link." We check every hour.', 'rapm' ); ?></p>
+								<?php RAPM_Tip::hint( __( 'Paste a Google Drive link, or a link to a picture. Set sharing to "Anyone with the link."', 'rapm' ), __( 'It can be the same folder as the computer picture. The newest tall picture in it is used here. We check every hour.', 'rapm' ) ); ?>
 								<p class="description rapm-link-status" id="rapm-mobile-link-status" aria-live="polite"></p>
 								<?php if ( $is_edit && 'link' === $mobile_source && 'link' !== $desktop_source ) : ?>
 									<p><a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=rapm_check_link_now&asset_id=' . $asset_id ), 'rapm_check_link_now_' . $asset_id ) ); ?>"><?php esc_html_e( 'Check link now', 'rapm' ); ?></a></p>
 								<?php endif; ?>
 								<?php if ( $mobile_waiting && ! $mobile_error ) : ?>
-									<p class="description"><?php esc_html_e( 'There\'s no tall picture in this folder yet, so phones show the desktop picture. Add a tall picture to the folder any time and it\'s picked up automatically.', 'rapm' ); ?></p>
+									<p class="description"><?php esc_html_e( 'This folder has no tall picture yet, so phones show the computer picture. Add a tall picture to the folder and we\'ll use it.', 'rapm' ); ?></p>
 								<?php endif; ?>
 								<?php if ( $mobile_error ) : ?>
-									<p class="description" style="color:#b32d2e;"><?php echo esc_html( sprintf( __( 'Couldn\'t update from this link: %s Still showing the last picture that worked — nothing is broken on the live site.', 'rapm' ), $mobile_error ) ); ?></p>
+									<p class="description" style="color:#b32d2e;"><?php echo esc_html( sprintf( __( 'Couldn\'t update from this link: %s The last picture that worked still shows, so nothing is broken.', 'rapm' ), $mobile_error ) ); ?></p>
 								<?php elseif ( $mobile_synced ) : ?>
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $mobile_synced ) ) ) ); ?></p>
 								<?php endif; ?>
 							</div>
 
-							<p class="description"><?php echo esc_html( sprintf( __( 'The version shown on phones — needs to be exactly %1$d by %2$d.', 'rapm' ), $mobile_slot['width'], $mobile_slot['height'] ) ); ?></p>
+							<p class="description"><?php echo esc_html( sprintf( __( 'The picture for phones. Size: exactly %1$d by %2$d pixels.', 'rapm' ), $mobile_slot['width'], $mobile_slot['height'] ) ); ?></p>
 							<?php if ( $focal && RAPM_Focal::has_phone( $kind_key ) ) : ?>
 								<?php RAPM_Focal::render_picker( $kind_key, 'mobile', $img_mobile ? (string) wp_get_attachment_image_url( $img_mobile, 'large' ) : '', $is_edit ? RAPM_Focal::get( $asset_id, 'mobile' ) : '' ); ?>
 							<?php endif; ?>
@@ -595,7 +595,7 @@ class RAPM_Upload_Handler {
 					<tr>
 						<th><label for="rapm_alt_text"><?php esc_html_e( 'What\'s in the Picture', 'rapm' ); ?></label></th>
 						<td><input type="text" id="rapm_alt_text" name="rapm_alt_text" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_alt_text' ) ); ?>" placeholder="<?php esc_attr_e( 'e.g. Living room with cream sectional and walnut coffee table', 'rapm' ); ?>" />
-							<p class="description"><?php esc_html_e( 'A short, plain description of what the picture shows (not the sale/offer — that goes below). This helps people using a screen reader, and helps the picture show up in search results.', 'rapm' ); ?></p>
+							<?php RAPM_Tip::hint( __( 'Say what the picture shows, like "Gray sofa in a bright living room."', 'rapm' ), __( 'Don\'t put the sale here; that goes in the words. This helps people who use screen readers, and helps search engines find the picture.', 'rapm' ) ); ?>
 						</td>
 					</tr>
 				</table>
@@ -661,12 +661,12 @@ class RAPM_Upload_Handler {
 				<h2 class="rapm-step-heading"><?php echo (int) $step['message']; ?>. <?php esc_html_e( 'Your Message', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Words Under the Tabs', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'These show in your website\'s own fonts and colors, under the bar of tabs. If the page\'s Shop the Look spot puts the words on the photo, the headline and smaller line go on the photo and the button goes under it, beside the products. Nothing is printed into the picture file.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'These words show under the tabs, in your website\'s fonts and colors.', 'rapm' ), __( 'On some pages the headline and smaller line go on the photo, and the button goes under it. Nothing is added to the picture file.', 'rapm' ) ); ?>
 				<?php elseif ( $is_box ) : ?>
-				<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'This promotion is a finished graphic, so there\'s nothing to type: its own words show. To type words and place icons instead, choose "Design it here" in step 1.', 'rapm' ); ?></p>
+				<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'This is a finished graphic, so there\'s nothing to type. To type words and add icons, choose "Design it here" in step 1.', 'rapm' ); ?></p>
 				<?php elseif ( $is_reveal ) : ?>
 				<h2><?php esc_html_e( 'The Panel', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Before it opens, the panel is its color and the big word. When it opens (hover on computers, scrolling to it on phones), the photo shows, the word moves aside, and the short line and link label appear.', 'rapm' ); ?></p>
+				<?php RAPM_Tip::hint( __( 'Closed, the panel shows its color and big word. Open, it shows the photo, the short line and the link label.', 'rapm' ), __( 'It opens when someone points at it on a computer, or scrolls to it on a phone.', 'rapm' ) ); ?>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Sale Text', 'rapm' ); ?></h2>
 				<table class="form-table">
@@ -681,13 +681,13 @@ class RAPM_Upload_Handler {
 								<input type="radio" name="rapm_text_mode" id="rapm_text_mode_image" value="image" <?php checked( 'image', $text_mode ); ?> />
 								<?php esc_html_e( 'Yes — it\'s already printed on the picture, I don\'t need to type anything below', 'rapm' ); ?>
 							</label>
-							<p class="description"><?php esc_html_e( 'Pick whichever is true. Typing something below AND having it already on the picture means it would show up twice, on top of itself.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Pick the one that\'s true. If the words are on the picture and typed here, they show twice.', 'rapm' ); ?></p>
 						</td>
 					</tr>
 				</table>
 				<?php else : ?>
 				<h2><?php esc_html_e( 'Text', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'This type doesn\'t use a picture — just type the text below.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'This kind has no picture. Just type the words below.', 'rapm' ); ?></p>
 				<?php endif; ?>
 
 				<div id="rapm-text-fields" <?php echo ( $is_box ? 'graphic' === $box_mode : 'image' === $text_mode ) ? 'style="display:none;"' : ''; ?>>
@@ -695,7 +695,7 @@ class RAPM_Upload_Handler {
 						<tr>
 							<th><label for="rapm_headline"><?php echo $is_quick ? esc_html__( 'Name under the picture', 'rapm' ) : ( $is_reveal ? esc_html__( 'Big word', 'rapm' ) : esc_html__( 'Headline', 'rapm' ) ); ?></label></th>
 							<td><input type="text" id="rapm_headline" name="rapm_headline" class="regular-text" value="<?php echo esc_attr( $m( '_rapm_headline' ) ); ?>"<?php echo $is_reveal ? ' maxlength="14"' : ''; ?> placeholder="<?php echo $is_look ? esc_attr__( 'e.g. Stanton 338 Living Room', 'rapm' ) : ( $is_quick ? esc_attr__( 'e.g. Design Services', 'rapm' ) : ( $is_reveal ? esc_attr__( 'e.g. Living', 'rapm' ) : esc_attr__( 'e.g. Labor Day Sale', 'rapm' ) ) ); ?>" />
-							<?php if ( $is_reveal ) : ?><p class="description"><?php esc_html_e( 'One short word works best (up to 14 letters). It\'s shown in capitals, very large.', 'rapm' ); ?></p><?php endif; ?></td>
+							<?php if ( $is_reveal ) : ?><p class="description"><?php esc_html_e( 'One short word, up to 14 letters. It shows in big capitals.', 'rapm' ); ?></p><?php endif; ?></td>
 						</tr>
 						<tr>
 							<th><label for="rapm_subhead"><?php echo $is_reveal ? esc_html__( 'Short line (shows with the photo)', 'rapm' ) : esc_html__( 'Smaller line under the headline', 'rapm' ); ?></label></th>
@@ -710,7 +710,7 @@ class RAPM_Upload_Handler {
 							<th><label for="rapm_shelf_text"><?php esc_html_e( 'Words above the button (optional)', 'rapm' ); ?></label></th>
 							<td>
 								<textarea id="rapm_shelf_text" name="rapm_shelf_text" class="large-text" rows="2" maxlength="300" placeholder="<?php esc_attr_e( 'e.g. Every piece is in our Grants Pass showroom. Ask about free delivery.', 'rapm' ); ?>"><?php echo esc_textarea( $m( '_rapm_shelf_text' ) ); ?></textarea>
-								<p class="description"><?php esc_html_e( 'Shows under the photo, right above the button and beside the products, so it can add something the headline doesn\'t, like an offer, delivery or financing. Never on the photo. Leave it blank for just the button.', 'rapm' ); ?></p>
+								<?php RAPM_Tip::hint( __( 'Shows above the button, beside the products. Leave it blank for just the button.', 'rapm' ), __( 'Use it for something the headline doesn\'t say, like an offer, delivery or financing. It never goes on the photo.', 'rapm' ) ); ?>
 							</td>
 						</tr>
 						<?php endif; ?>
@@ -729,7 +729,7 @@ class RAPM_Upload_Handler {
 							<th><label for="rapm_text_color"><?php echo $is_reveal ? esc_html__( 'Word color', 'rapm' ) : esc_html__( 'Text Color', 'rapm' ); ?></label></th>
 							<td>
 								<input type="color" id="rapm_text_color" name="rapm_text_color" value="<?php echo esc_attr( $m( '_rapm_text_color', '#ffffff' ) ); ?>" style="height:32px;width:60px;padding:2px;vertical-align:middle;" />
-								<p class="description"><?php echo $is_reveal ? esc_html__( 'For the big word, the short line and the link label. White reads best on most colors and photos.', 'rapm' ) : esc_html__( 'Only changes the headline and smaller line — the button always stays white for readability.', 'rapm' ); ?></p>
+								<p class="description"><?php echo $is_reveal ? esc_html__( 'For the big word, short line and link label. White is easiest to read on most colors.', 'rapm' ) : esc_html__( 'For the headline and smaller line. The button stays white so it\'s easy to read.', 'rapm' ); ?></p>
 							</td>
 						</tr>
 						<?php if ( $is_reveal ) : // 1.53.0. ?>
@@ -754,7 +754,7 @@ class RAPM_Upload_Handler {
 										<?php endforeach; ?>
 										<input type="color" id="rapm_panel_color" name="rapm_panel_color" value="<?php echo esc_attr( $panel_color ); ?>" aria-label="<?php esc_attr_e( 'Any other color', 'rapm' ); ?>" style="height:32px;width:60px;padding:2px;" />
 									</p>
-									<p class="description"><?php esc_html_e( 'The website\'s colors come first and stay linked: change one in Elementor and the panel follows. Then the brand kit\'s saved colors, or pick any color.', 'rapm' ); ?></p>
+									<?php RAPM_Tip::hint( __( 'Website colors come first, and stay linked.', 'rapm' ), __( 'If you change a website color in Elementor, the panel changes too. Next come the brand kit\'s saved colors, or pick any color.', 'rapm' ) ); ?>
 									<script>
 										( function () {
 											var hex = document.getElementById( 'rapm_panel_color' );
@@ -774,7 +774,7 @@ class RAPM_Upload_Handler {
 								<td>
 									<label style="margin-right:14px;"><input type="radio" name="rapm_word_dir" value="across" <?php checked( 'side' !== $m( '_rapm_word_dir' ) ); ?> /> <?php esc_html_e( 'Across', 'rapm' ); ?></label>
 									<label><input type="radio" name="rapm_word_dir" value="side" <?php checked( 'side' === $m( '_rapm_word_dir' ) ); ?> /> <?php esc_html_e( 'Up the side', 'rapm' ); ?></label>
-									<p class="description"><?php esc_html_e( 'Up the side suits a longer word in a narrow panel. Phones always show it across.', 'rapm' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Up the side fits a longer word in a narrow panel. Phones always show it across.', 'rapm' ); ?></p>
 								</td>
 							</tr>
 						<?php endif; ?>
@@ -799,7 +799,7 @@ class RAPM_Upload_Handler {
 											<option value="<?php echo esc_attr( $font_id ); ?>" <?php selected( $m( '_rapm_text_font' ), $font_id ); ?>><?php echo esc_html( $font_title ); ?></option>
 										<?php endforeach; ?>
 									</select>
-									<p class="description"><?php esc_html_e( 'These are the same fonts already set up for this website in Elementor (Site Settings > Global Fonts). Picking one keeps the promotion\'s text matching the rest of the site — including automatically, if that font is ever changed later.', 'rapm' ); ?></p>
+									<?php RAPM_Tip::hint( __( 'These are your website\'s fonts from Elementor.', 'rapm' ), __( 'Picking one keeps the words matching the rest of the site, even if the font changes later. Find them in Elementor, under Site Settings, Global Fonts.', 'rapm' ) ); ?>
 								</td>
 							</tr>
 						<?php endif; ?>
@@ -833,7 +833,7 @@ class RAPM_Upload_Handler {
 				<h2 class="rapm-step-heading"><?php echo (int) $step['link']; ?>. <?php esc_html_e( 'Where It Links', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Where the Button Goes', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'The button under the headline. It usually goes to the whole room, like the Living Room category. Leave the button words blank in step 2 for no button.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Where the button goes, often a whole room, like the Living Room page. For no button, leave the button words blank in step 2.', 'rapm' ); ?></p>
 				<?php else : ?>
 				<h2><?php esc_html_e( 'Where It Goes When Clicked', 'rapm' ); ?></h2>
 				<?php endif; ?>
@@ -847,13 +847,13 @@ class RAPM_Upload_Handler {
 									<option value="<?php echo esc_attr( $type ); ?>" <?php selected( $dest_type, $type ); ?>><?php echo esc_html( $label ); ?></option>
 								<?php endforeach; ?>
 							</select>
-							<p class="description"><?php esc_html_e( 'If you\'re not sure which to pick, use "A specific link" — it\'s just a normal web address, like the ones in your browser\'s address bar.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Not sure? Pick "A specific link". It\'s a normal web address, like the one at the top of your browser.', 'rapm' ); ?></p>
 						</td>
 					</tr>
 					<tr class="rapm-dest-row" data-for="url">
 						<th><label for="rapm_dest_url"><?php esc_html_e( 'Web address', 'rapm' ); ?></label></th>
 						<td><input type="url" id="rapm_dest_url" class="regular-text rapm-dest-input" data-dest-type="url" value="<?php echo 'url' === $dest_type ? esc_attr( $dest_value ) : ''; ?>" placeholder="https://…" />
-							<p class="description"><?php esc_html_e( 'Paste the full web address, starting with https://', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Paste the whole address. It starts with https://', 'rapm' ); ?></p>
 						</td>
 					</tr>
 					<tr class="rapm-dest-row" data-for="post,wc_product,wc_category,wc_brand">
@@ -867,7 +867,7 @@ class RAPM_Upload_Handler {
 					<tr class="rapm-dest-row" data-for="search">
 						<th><label for="rapm_dest_search_words"><?php esc_html_e( 'Search words', 'rapm' ); ?></label></th>
 						<td><input type="text" id="rapm_dest_search_words" class="regular-text rapm-dest-input" data-dest-type="search" value="<?php echo 'search' === $dest_type ? esc_attr( $dest_value ) : ''; ?>" placeholder="<?php esc_attr_e( 'e.g. leather sectional', 'rapm' ); ?>" />
-							<p class="description"><?php esc_html_e( 'Whatever words a visitor would type into the site\'s search box.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'The words a shopper would type in your site\'s search box.', 'rapm' ); ?></p>
 						</td>
 					</tr>
 					<tr class="rapm-dest-row" data-for="curated">
@@ -875,11 +875,11 @@ class RAPM_Upload_Handler {
 						<td>
 							<input type="text" id="rapm_curated_picker" class="regular-text" autocomplete="off" placeholder="<?php esc_attr_e( 'Search by product name or SKU…', 'rapm' ); ?>" />
 							<div id="rapm-curated-picker-results" class="rapm-dest-picker-results"></div>
-							<p class="description"><?php esc_html_e( 'Click a result to add it. Add as many as you like — they\'ll show first, in the order you add them.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Click a result to add it. They show first, in the order you add them.', 'rapm' ); ?></p>
 							<ul id="rapm-curated-selected-list" style="list-style:none;margin:10px 0 0;padding:0;"></ul>
 							<textarea id="rapm_curated_skus" name="rapm_curated_skus" rows="3" class="large-text" style="display:none;"><?php echo esc_textarea( implode( "\n", $curated['skus'] ) ); ?></textarea>
 
-							<p class="description" style="margin-top:14px;"><?php esc_html_e( 'Have a lot of SKUs? Upload a spreadsheet (.csv or Excel .xlsx) instead of searching one at a time — it needs a column titled "SKU" containing the product SKUs. Tip: if any SKUs start with a zero, format that column as Text in Excel first, or Excel may quietly drop the leading zero.', 'rapm' ); ?></p>
+							<?php RAPM_Tip::hint( __( 'Lots of SKUs? Upload a spreadsheet (.csv or .xlsx) with a column named "SKU".', 'rapm' ), __( 'If some SKUs start with a zero, set that column to Text in Excel first. If not, Excel may drop the zero.', 'rapm' ) ); ?>
 							<input type="file" id="rapm_curated_csv" accept=".csv,.xlsx" />
 							<p class="description" id="rapm-curated-csv-status"></p>
 							<p style="margin-top:16px;">
@@ -1171,19 +1171,19 @@ class RAPM_Upload_Handler {
 				<?php elseif ( $has_images ) : ?>
 				<?php if ( $is_reveal ) : // 1.53.0: the slider preview doesn't show a reveal panel. ?>
 				<style>#rapm-live-preview-head, #rapm-preview-wrap, .rapm-preview-toggle-btn { display: none; }</style>
-				<p class="description"><?php esc_html_e( 'Reveal panels show side by side, up to four, in the order of their cards in the Design Center: the ones that are on and within their dates.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Up to four panels show side by side, in the order of their cards in the Design Center. Only panels that are on and in their dates show.', 'rapm' ); ?></p>
 				<?php endif; ?>
 				<?php if ( $is_box ) : // 1.44.0: the canvas in step 2 is the box's preview. ?>
 				<style>#rapm-live-preview-head, #rapm-preview-wrap { display: none; }</style>
-				<p class="description"><?php esc_html_e( 'The promotion box shows the first promotion that is on and within its dates. A design looks the way it does in step 2; a finished graphic always shows whole.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'The box shows the first promotion that is on and in its dates. A design looks like it does in step 2. A finished graphic always shows whole.', 'rapm' ); ?></p>
 				<?php endif; ?>
 				<div id="rapm-live-preview-head">
 				<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'This shows exactly what visitors will see, updating as you type or choose a picture. If something looks off — text overlapping, hard to read, etc. — fix it here before saving.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'This is what shoppers will see. It changes as you type. If something looks wrong, fix it before you save.', 'rapm' ); ?></p>
 				</div>
 				<p<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box has one picture. ?>>
-					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-desktop" aria-pressed="true"><?php esc_html_e( 'Desktop', 'rapm' ); ?></button>
-					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-mobile" aria-pressed="false"><?php esc_html_e( 'Mobile', 'rapm' ); ?></button>
+					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-desktop" aria-pressed="true"><?php esc_html_e( 'Computer', 'rapm' ); ?></button>
+					<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-preview-toggle-mobile" aria-pressed="false"><?php esc_html_e( 'Phone', 'rapm' ); ?></button>
 				</p>
 				<div id="rapm-preview-wrap" style="max-width:600px;margin-bottom:24px;transition:max-width .2s;">
 					<div id="rapm-preview" class="rapm-hero" style="aspect-ratio:<?php echo esc_attr( $desktop_slot['width'] . '/' . $desktop_slot['height'] ); ?>;background:#333;">
@@ -1200,8 +1200,8 @@ class RAPM_Upload_Handler {
 							</div>
 						</div>
 					</div>
-					<p class="description" id="rapm-preview-empty" style="<?php echo $img_desktop ? 'display:none;' : ''; ?>"><?php esc_html_e( 'Choose a desktop image above to preview it here.', 'rapm' ); ?></p>
-					<p class="description" id="rapm-preview-no-mobile" style="display:none;color:#b32d2e;"><?php esc_html_e( 'No mobile picture uploaded yet — phones will show the desktop picture instead, until you add one.', 'rapm' ); ?></p>
+					<p class="description" id="rapm-preview-empty" style="<?php echo $img_desktop ? 'display:none;' : ''; ?>"><?php esc_html_e( 'Choose a computer picture above to see it here.', 'rapm' ); ?></p>
+					<p class="description" id="rapm-preview-no-mobile" style="display:none;color:#b32d2e;"><?php esc_html_e( 'No phone picture yet. Phones show the computer picture until you add one.', 'rapm' ); ?></p>
 				</div>
 				<style>
 					.rapm-preview-toggle-btn[aria-pressed="true"] { background: #2271b1; border-color: #2271b1; color: #fff; }
@@ -1421,13 +1421,13 @@ class RAPM_Upload_Handler {
 					<tr>
 						<th><label for="rapm_starts_at"><?php esc_html_e( 'Start showing on', 'rapm' ); ?></label></th>
 						<td><input type="datetime-local" id="rapm_starts_at" name="rapm_starts_at" value="<?php echo esc_attr( $m( '_rapm_starts_at' ) ); ?>" />
-							<p class="description"><?php esc_html_e( 'Leave blank to start showing right away.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Leave blank to start right away.', 'rapm' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th><label for="rapm_ends_at"><?php esc_html_e( 'Stop showing on', 'rapm' ); ?></label></th>
 						<td><input type="datetime-local" id="rapm_ends_at" name="rapm_ends_at" value="<?php echo esc_attr( $m( '_rapm_ends_at' ) ); ?>" />
-							<p class="description"><?php esc_html_e( 'Leave blank to keep showing until you come back and change it. You can trust this date/time — it\'ll turn off exactly when it says, automatically, no matter what.', 'rapm' ); ?></p>
+							<?php RAPM_Tip::hint( __( 'Leave blank to keep it on until you change it.', 'rapm' ), __( 'If you set an end time, it turns off right on time, by itself.', 'rapm' ) ); ?>
 						</td>
 					</tr>
 				</table>
@@ -1473,7 +1473,7 @@ class RAPM_Upload_Handler {
 				<p class="rapm-wizard-nav">
 					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['link']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
 				</p>
-				<?php submit_button( $is_edit ? __( 'Save Asset', 'rapm' ) : __( 'Create Asset', 'rapm' ) ); ?>
+				<?php submit_button( $is_edit ? __( 'Save promotion', 'rapm' ) : __( 'Create promotion', 'rapm' ) ); ?>
 				</div><!-- .rapm-step: Review & Schedule -->
 
 				<script>
@@ -1562,10 +1562,10 @@ class RAPM_Upload_Handler {
 							var hasExistingDesktop    = <?php echo $img_desktop ? 'true' : 'false'; ?>;
 							if ( usingLink ) {
 								if ( ! hasExistingDesktop && ! ( desktopUrlField && desktopUrlField.value.trim() ) && ! boxDesign() ) {
-									messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please paste a link to the room photo before moving on.', 'rapm' ) : __( 'Please paste a link to a desktop picture before moving on.', 'rapm' ) ); ?> );
+									messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please paste a link to the room photo first.', 'rapm' ) : __( 'Please paste a link to the computer picture first.', 'rapm' ) ); ?> );
 								}
 							} else if ( ! hasExistingDesktop && ! ( desktopFileInput.files && desktopFileInput.files[0] ) && ! boxDesign() ) {
-								messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please upload the room photo before moving on.', 'rapm' ) : __( 'Please upload a desktop picture before moving on.', 'rapm' ) ); ?> );
+								messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please add the room photo first.', 'rapm' ) : __( 'Please add the computer picture first.', 'rapm' ) ); ?> );
 							}
 							<?php endif; ?>
 							if ( messages.length ) {
@@ -1729,8 +1729,8 @@ class RAPM_Upload_Handler {
 						: __( 'Please upload the room photo. A look needs one to show anywhere.', 'rapm' );
 				} else {
 					$desktop_required_msg = 'link' === $desktop_source
-						? __( 'Please paste a link to a desktop picture — it\'s required for this asset to actually display anywhere.', 'rapm' )
-						: __( 'Please upload a desktop image — it\'s required for this asset to actually display anywhere.', 'rapm' );
+						? __( 'Please paste a link to the computer picture. The promotion can\'t show without it.', 'rapm' )
+						: __( 'Please add the computer picture. The promotion can\'t show without it.', 'rapm' );
 				}
 				self::fail( $back, $desktop_required_msg );
 			}
@@ -2230,7 +2230,7 @@ class RAPM_Upload_Handler {
 		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-kit="<?php echo esc_attr( wp_json_encode( $kit ) ); ?>" data-kit-nonce="<?php echo esc_attr( wp_create_nonce( RAPM_Brand_Kit::NONCE ) ); ?>" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-kit-url="<?php echo esc_url( add_query_arg( 'tab', 'brand', RAPM_Promotions_Screen::design_url() ) ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
 			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
 			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'Drag anything on the square to move it; it snaps into line with the middle, the edges and the other pieces (hold Alt or Option to place it freely). Click it to change its size or color, and Shift-click to pick more than one. Arrow keys move what you picked a little at a time (hold Shift to move it more).', 'rapm' ); ?></p>
+			<?php RAPM_Tip::hint( __( 'Drag things on the square to move them. Click one to change it.', 'rapm' ), __( 'Things snap into line with the middle, the edges and each other. Hold Alt (Option on a Mac) to place freely. Shift-click to pick more than one. Arrow keys move what you picked a little; hold Shift to move it more.', 'rapm' ) ); ?>
 			<?php // 1.50.0: templates from the brand kit. ?>
 			<div class="rapm-cv-tplbar">
 				<button type="button" class="button" id="rapm-cv-tpltoggle" aria-expanded="false"><?php esc_html_e( 'Start from a template', 'rapm' ); ?></button>
@@ -2258,13 +2258,13 @@ class RAPM_Upload_Handler {
 							<span class="rapm-cv-guide h" hidden></span>
 						</div>
 					</div>
-					<p class="description"><?php esc_html_e( 'This square shows on every screen, in the middle of the promotion box. On wider boxes the background fills the rest.', 'rapm' ); ?></p>
+					<p class="description"><?php esc_html_e( 'This square shows on every screen, in the middle of the box. On wider boxes, the background fills the sides.', 'rapm' ); ?></p>
 				</div>
 				<div class="rapm-cv-side">
 					<?php // 1.51.1: what you use most first; Background (open on a new design) and Add an icon or picture fold away. ?>
 					<div class="rapm-cv-panel">
 						<h3><?php esc_html_e( 'On the design', 'rapm' ); ?></h3>
-						<p class="description"><?php esc_html_e( 'The top of the list is in front. Arrows move a piece forward or back (Ctrl+] and Ctrl+[, or ⌘ on a Mac).', 'rapm' ); ?></p>
+						<?php RAPM_Tip::hint( __( 'The top of the list is in front. Use the arrows to move a piece forward or back.', 'rapm' ), __( 'Shortcut: Ctrl+] and Ctrl+[ (⌘ on a Mac).', 'rapm' ) ); ?>
 						<div class="rapm-cv-layers"></div>
 						<div class="rapm-cv-arrange">
 							<p class="rapm-cv-swlabel"><?php esc_html_e( 'Arrange', 'rapm' ); ?></p>
@@ -2320,7 +2320,7 @@ class RAPM_Upload_Handler {
 						<p class="description rapm-cv-src-fa" hidden><?php esc_html_e( 'The Font Awesome icons that come with Elementor (Font Awesome Free, 1,616 icons, including social media logos). A picked icon is saved with this promotion.', 'rapm' ); ?></p>
 						<div class="rapm-cv-media" hidden>
 							<p><button type="button" class="button rapm-cv-pick"><?php esc_html_e( 'Choose from the Media Library', 'rapm' ); ?></button></p>
-							<p class="description"><?php esc_html_e( 'A logo, a brand badge or a "Made in USA" seal, for example. A PNG or SVG with a see-through background looks best. Drag it into place and set its size like an icon.', 'rapm' ); ?></p>
+							<p class="description"><?php esc_html_e( 'A logo or badge, like a "Made in USA" seal. A PNG or SVG with a see-through background looks best.', 'rapm' ); ?></p>
 						</div>
 					</details>
 				</div>
@@ -2348,7 +2348,7 @@ class RAPM_Upload_Handler {
 		?>
 		<?php if ( $banner ) : ?>
 			<h2><?php esc_html_e( 'Add product dots and a "Shop now" button (optional)', 'rapm' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'Shoppers tap a dot to see the product, its live price and stock. The same products also show as numbered cards in a bar under the slider, with this promotion\'s button. Place the dots on the desktop picture and on the phone picture: the phone spots start where you put them on the desktop one, so check both.', 'rapm' ); ?></p>
+			<?php RAPM_Tip::hint( __( 'Shoppers tap a dot to see the product, its price and stock.', 'rapm' ), __( 'The same products show as numbered cards under the slider. Put dots on the computer picture and the phone picture. Phone dots start where you put them on the computer picture, so check both.', 'rapm' ) ); ?>
 			<p class="rapm-pieces-views" role="group" aria-label="<?php esc_attr_e( 'Which picture to place them on', 'rapm' ); ?>">
 				<button type="button" class="button rapm-pieces-view is-selected" data-view="desktop" aria-pressed="true"><?php esc_html_e( 'Desktop picture', 'rapm' ); ?></button>
 				<button type="button" class="button rapm-pieces-view" data-view="mobile" aria-pressed="false"><?php esc_html_e( 'Phone picture', 'rapm' ); ?></button>
@@ -2363,7 +2363,7 @@ class RAPM_Upload_Handler {
 			<li><?php esc_html_e( 'Pick the product for each dot.', 'rapm' ); ?></li>
 		</ol>
 		<?php if ( ! class_exists( 'WooCommerce' ) ) : ?>
-			<p class="description rapm-pieces-nowoo"><?php esc_html_e( 'The products come from WooCommerce, which isn\'t active on this site, so dots can\'t be added yet.', 'rapm' ); ?></p>
+			<p class="description rapm-pieces-nowoo"><?php esc_html_e( 'Dots need WooCommerce, which isn\'t turned on here, so you can\'t add dots yet.', 'rapm' ); ?></p>
 		<?php endif; ?>
 		<div class="rapm-pieces" id="rapm-pieces">
 			<div class="rapm-pieces-photo">
@@ -2377,12 +2377,12 @@ class RAPM_Upload_Handler {
 					<?php // 1.39.0. The hidden "off" is sent when the box is unticked; a ticked box's "on" comes after it and wins. ?>
 					<input type="hidden" name="rapm_photo_words" value="off" />
 					<label><input type="checkbox" id="rapm-photo-words-on" name="rapm_photo_words" value="on" <?php checked( $photo_words ); ?> /> <?php esc_html_e( 'Show the headline and smaller line on the photo', 'rapm' ); ?></label>
-					<p class="description"><?php esc_html_e( 'Turn this off when the picture already has its own words on it, like an ad. It only matters where the page puts the words on the photo. Phones still show them under the photo.', 'rapm' ); ?></p>
+					<?php RAPM_Tip::hint( __( 'Turn this off if the picture already has words on it, like an ad.', 'rapm' ), __( 'It only matters where the page puts words on the photo. Phones still show the words under the photo.', 'rapm' ) ); ?>
 				</div>
 				<?php endif; ?>
 				<div class="rapm-pieces-btn-box">
 					<label><input type="checkbox" id="rapm-photo-btn-on" <?php checked( ! empty( $photo_btn ) ); ?> /> <?php esc_html_e( 'Show a "Shop now" button on the photo', 'rapm' ); ?></label>
-					<p class="description"><?php esc_html_e( 'Drag the button on the photo to where the design has room for it. It uses this look\'s Button Text (or "Shop now") and goes to the same place as its Link, step 4. Shoppers can use either button.', 'rapm' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Drag the button to a clear spot on the photo. It uses this look\'s button words (or "Shop now") and goes to its link from step 4.', 'rapm' ); ?></p>
 				</div>
 				<div class="rapm-pieces-head"><h3><?php esc_html_e( 'Dots and products', 'rapm' ); ?></h3><span class="rapm-pieces-count" id="rapm-pieces-count"></span></div>
 				<ol class="rapm-pieces-list" id="rapm-pieces-list"></ol>
@@ -2391,7 +2391,7 @@ class RAPM_Upload_Handler {
 		<?php if ( ! $banner ) : ?>
 		<div class="rapm-fit" id="rapm-fit">
 			<h3><?php esc_html_e( 'What each screen shows', 'rapm' ); ?></h3>
-			<p class="description"><?php esc_html_e( 'Computers show a wide strip of the photo, and phones show a squarer part. Drag the photo inside each box, the way you would in Canva. The faded part is what gets cut off.', 'rapm' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Drag the photo inside each box, like in Canva. The faded part gets cut off. Computers show a wide strip; phones show a squarer part.', 'rapm' ); ?></p>
 			<div class="rapm-fit-boxes">
 				<?php
 				$fit_boxes = array(
@@ -2532,7 +2532,7 @@ class RAPM_Upload_Handler {
 				'dotN'          => __( 'dot %d', 'rapm' ),
 				'needProduct'   => __( 'Pick a product for every dot, or remove the dots without one. Missing: dot %s.', 'rapm' ),
 				'tooMany'       => __( 'Up to %d dots can be added.', 'rapm' ),
-				'noMobile'      => __( 'No phone picture yet, so phones show the desktop picture with the desktop spots.', 'rapm' ),
+				'noMobile'      => __( 'No phone picture yet, so phones show the computer picture and its dots.', 'rapm' ),
 				'btnDefault'    => __( 'Shop now', 'rapm' ),
 				'btnLabel'      => __( 'The button on the photo. Drag it, or use the arrow keys to move it.', 'rapm' ),
 				'added'         => __( 'Dot %d added. Now pick its product.', 'rapm' ),
@@ -2552,10 +2552,10 @@ class RAPM_Upload_Handler {
 	private static function render_look_preview() {
 		?>
 		<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
-		<p class="description"><?php esc_html_e( 'This shows the photo, its dots, its tab and its words the way shoppers see them, updating as you work. Prices and stock come straight from your store. Your website\'s fonts show on the real page.', 'rapm' ); ?></p>
+		<p class="description"><?php esc_html_e( 'This is what shoppers see: the photo, dots, tab and words. Prices and stock come from your store. Your website\'s fonts show on the real page.', 'rapm' ); ?></p>
 		<p>
-			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-desktop" aria-pressed="true"><?php esc_html_e( 'Desktop', 'rapm' ); ?></button>
-			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-mobile" aria-pressed="false"><?php esc_html_e( 'Mobile', 'rapm' ); ?></button>
+			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-desktop" aria-pressed="true"><?php esc_html_e( 'Computer', 'rapm' ); ?></button>
+			<button type="button" class="button button-small rapm-preview-toggle-btn" id="rapm-look-pv-mobile" aria-pressed="false"><?php esc_html_e( 'Phone', 'rapm' ); ?></button>
 		</p>
 		<div class="rapm-look-pv" id="rapm-look-pv">
 			<div class="rapm-looks" style="--rapm-looks-accent:<?php echo esc_attr( RAPM_Elementor::resolve_accent_color_css( '#2271b1' ) ); ?>;">
@@ -2578,7 +2578,7 @@ class RAPM_Upload_Handler {
 					</div>
 				</div>
 			</div>
-			<p class="description" id="rapm-look-pv-empty"><?php esc_html_e( 'Choose a room photo in step 1 to preview it here.', 'rapm' ); ?></p>
+			<p class="description" id="rapm-look-pv-empty"><?php esc_html_e( 'Choose a room photo in step 1 to see it here.', 'rapm' ); ?></p>
 		</div>
 		<?php
 	}

@@ -19,7 +19,7 @@ class RAPM_Slots {
 	public static function defaults() {
 		return array(
 			'hero_desktop'        => array(
-				'label'                  => __( 'Slider — Desktop', 'rapm' ),
+				'label'                  => __( 'Slider — computer', 'rapm' ),
 				'width'                  => 1920,
 				'height'                 => 600,
 				'aspect_ratio_tolerance' => 0.02,
@@ -27,7 +27,7 @@ class RAPM_Slots {
 				'format'                 => 'webp',
 			),
 			'hero_mobile'         => array(
-				'label'                  => __( 'Slider — Mobile', 'rapm' ),
+				'label'                  => __( 'Slider — phone', 'rapm' ),
 				'width'                  => 1080,
 				'height'                 => 1920,
 				'aspect_ratio_tolerance' => 0.02,
@@ -42,7 +42,7 @@ class RAPM_Slots {
 			// otherwise. Kept far smaller than the hero's file-size budget
 			// since it's proportionally a much smaller image.
 			'fold_banner_desktop' => array(
-				'label'                  => __( 'Feature banner — Desktop', 'rapm' ),
+				'label'                  => __( 'Feature banner — computer', 'rapm' ),
 				'width'                  => 1920,
 				'height'                 => 300,
 				'aspect_ratio_tolerance' => 0.02,
@@ -53,7 +53,7 @@ class RAPM_Slots {
 			// give (1080x170) — kept taller for text legibility on a small
 			// screen, a deliberate judgment call given no standard exists.
 			'fold_banner_mobile'  => array(
-				'label'                  => __( 'Feature banner — Mobile', 'rapm' ),
+				'label'                  => __( 'Feature banner — phone', 'rapm' ),
 				'width'                  => 1080,
 				'height'                 => 400,
 				'aspect_ratio_tolerance' => 0.02,
@@ -110,7 +110,7 @@ class RAPM_Slots {
 			// shape instead of hero_desktop. 1600 wide covers the 60% column
 			// of a 1920px screen with room to spare. Phones keep hero_mobile.
 			'hero_split_desktop'  => array(
-				'label'                  => __( 'Slider in split view — Desktop', 'rapm' ),
+				'label'                  => __( 'Slider in split view — computer', 'rapm' ),
 				'width'                  => 1600,
 				'height'                 => 1200,
 				'aspect_ratio_tolerance' => 0.02,
@@ -138,7 +138,7 @@ class RAPM_Slots {
 			// four, so a square trims evenly either way. Phones stack the
 			// panels, each wider than tall.
 			'reveal_desktop'      => array(
-				'label'                  => __( 'Reveal panel — Desktop photo', 'rapm' ),
+				'label'                  => __( 'Reveal panel — computer photo', 'rapm' ),
 				'width'                  => 1600,
 				'height'                 => 1600,
 				'aspect_ratio_tolerance' => 0.02,
@@ -146,7 +146,7 @@ class RAPM_Slots {
 				'format'                 => 'webp',
 			),
 			'reveal_mobile'       => array(
-				'label'                  => __( 'Reveal panel — Mobile photo', 'rapm' ),
+				'label'                  => __( 'Reveal panel — phone photo', 'rapm' ),
 				'width'                  => 1200,
 				'height'                 => 1000,
 				'aspect_ratio_tolerance' => 0.02,

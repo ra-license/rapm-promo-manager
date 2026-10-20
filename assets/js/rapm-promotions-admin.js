@@ -398,7 +398,9 @@
 		nameInput.addEventListener( 'input', refresh );
 		refresh();
 
-		root.querySelector( '.rapm-new-spot-open' ).addEventListener( 'click', function () {
+		// 1.55.0: every "+ New spot" button (the header's and the empty page's).
+		root.addEventListener( 'click', function ( e ) {
+			if ( ! e.target.closest || ! e.target.closest( '.rapm-new-spot-open' ) ) { return; }
 			status.textContent = '';
 			status.classList.remove( 'is-error' );
 			if ( dialog.showModal ) { dialog.showModal(); } else { dialog.setAttribute( 'open', '' ); }

@@ -4,6 +4,44 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.55.0
+
+**Clarity pass: one set of words, short help with (i) for more, and empty screens that teach.** This is step 1 of the UX review Phil approved on 2026-10-20 (https://claude.ai/artifact/BpPqJ5XT1PkMbtsXb8P4mv). Phil asked for a low reading level, since we don't know who will use it. No layout changes.
+- **One set of words (the word list):**
+
+  | Before | Now |
+  |---|---|
+  | Promotional Asset / Asset | Promotion |
+  | Add New Promotional Asset / Add New Asset | New promotion |
+  | Edit Promotional Asset | Edit promotion |
+  | Save Asset / Create Asset | Save promotion / Create promotion |
+  | Desktop Promotion / desktop picture / Desktop | Computer picture / Computer |
+  | Mobile Promotion / mobile picture / Mobile | Phone picture / Phone |
+  | Spot code | Code for the page |
+
+  "Spot" stays: it's the place on the website a promotion goes. Picture sizes now read "Slider, computer 1920x600, phone 1080x1920". The changes cover the form, the menu, the Promotions page, the Design Center, Help and the Training Guide.
+- **Short help with (i) for more (new `RAPM_Tip`, `rapm-tips.css`, `rapm-tips.js`):**
+  - Each field on the promotion form keeps one short line. The rest opens under it from a small (i) button, following Adobe Spectrum's contextual help and NN/G's progressive disclosure.
+  - It opens in place, not floating, so it works with a mouse, a keyboard, a screen reader and on a phone. Esc closes it.
+  - 23 longer help texts moved behind (i); every other line was rewritten shorter.
+- **Measured (Flesch–Kincaid, sentences ending at . ! ?):**
+  - Visible help text on the form went from about 1,670 words to about 900, counting every kind's text together; each kind shows only its own.
+  - The reading level went from grade 5.2 to grade 2.5, and the average sentence from 13.3 words to 8.7.
+  - The text behind (i) reads at grade 3.2.
+  - Step warnings and the "this spot is empty / they all take turns" notes were shortened the same way.
+- **Empty screens that teach (NN/G):**
+  - **Design Center › Split sliders with none:** a small picture of a split slider, one sentence on what it is, and where to start.
+  - **Reveal panels with none:** the same, for reveal panels.
+  - **The Promotions page with no spots:** the same, with a "+ New spot" button. That button now works from anywhere on the page, not just the header.
+- **Fix, doubled words in made-up spot names:** a spot placed on a page but never named got a name built from its code. A code ending in one word of a two-word type read twice, for example "Home Reveal reveal panels" or "Split Box promotion box". It now reads "Home Reveal" and "Split Box".
+- **Not changed (Phil's call):** the older "All Assets (list)" and "Sliders" menu items stay where they are.
+- **Tested in WordPress Playground with Elementor:**
+  - These screens load with no errors and none of the old words: the form for a new slider, an edited reveal panel, a new look and a new promotion box; the Promotions page; both Design Center tabs; Help; and the Training Guide.
+  - The form shows 11 or 12 (i) buttons per kind. A real click opens the detail under the line.
+  - The empty-state markup renders. Spot names were checked for seven codes.
+
+---
+
 ## 1.54.0
 
 **New: focal points ("What stays in view").** Design Center roadmap step 6, built to the mockup Phil approved (https://claude.ai/artifact/ExuxeBqAPTtZQi63AMX4W8). New `RAPM_Focal` and `rapm-focal.js`.

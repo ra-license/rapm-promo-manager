@@ -57,7 +57,7 @@ class RAPM_Help {
 				<li><?php esc_html_e( 'On the left menu, click "Promotions." Find the section for the spot where it should show (for example "Home page slider") and click "Add a picture" at the end of it.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'The type of promotion is already picked for you, from the section you started in.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Type a name for your own records. Visitors will never see this name.', 'rapm' ); ?></li>
-				<li><?php esc_html_e( 'Upload your desktop picture and your phone picture. The page will tell you the exact size each one needs to be. (Shop the Look is different: it has one room photo and a tab name. See "Shop the Look" below.)', 'rapm' ); ?></li>
+				<li><?php esc_html_e( 'Add your computer picture and your phone picture. The page will tell you the exact size each one needs to be. (Shop the Look is different: it has one room photo and a tab name. See "Shop the Look" below.)', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Answer the question about sale text: does your picture already show the price or sale? Pick Yes or No.', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'If you picked No, type your headline, a smaller line under it, and your button words (like "Shop Now").', 'rapm' ); ?></li>
 				<li><?php esc_html_e( 'Look at the preview box. It shows exactly what visitors will see.', 'rapm' ); ?></li>
@@ -134,16 +134,16 @@ class RAPM_Help {
 			</details>
 
 			<details>
-				<summary><?php esc_html_e( 'Do I need both a desktop picture and a phone picture?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'The desktop picture is required — without it, your promotion will not show up anywhere. The phone picture is a good idea too, since it makes sure your promotion looks its best on phones, but you can add it later if you need to.', 'rapm' ); ?></p>
+				<summary><?php esc_html_e( 'Do I need both a computer picture and a phone picture?', 'rapm' ); ?></summary>
+				<p><?php esc_html_e( 'The computer picture is required — without it, your promotion will not show up anywhere. The phone picture is a good idea too, since it makes sure your promotion looks its best on phones, but you can add it later if you need to.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'Do I need to create a separate promotion for mobile and desktop?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'No. One promotion covers both — that\'s exactly what the Desktop Promotion and Mobile Promotion pictures are for. Upload both, and visitors on a computer automatically see the desktop one while visitors on a phone automatically see the mobile one. "Where it shows" further up the form is something different: which spot on your website it goes in.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'No. One promotion covers both. Add a computer picture and a phone picture, and each screen shows the right one. "Where it shows" on the form is different: it is the spot on your website where the promotion goes.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I check what the mobile version will actually look like?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Use the Desktop/Mobile buttons above the Live Preview box. Switching to Mobile shows your Mobile Promotion picture — or, if you haven\'t added one yet, it shows what phone visitors would see instead: your desktop picture, shrunk to fit the phone shape. Nothing gets cropped off, but you\'ll see empty space above and below it, which usually looks better with a dedicated mobile picture instead.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Use the Computer and Phone buttons above the Live Preview. Phone shows your phone picture. If you haven\'t added one, it shows the computer picture made smaller to fit, with empty space above and below. A phone picture looks better.', 'rapm' ); ?></p>
 			</details>
 
 			<details>
