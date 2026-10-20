@@ -916,7 +916,8 @@
 			'<button type="button" class="button-link" data-tplno="1">' + esc( T.cancel ) + '</button></span>';
 	}
 
-	function useTemplate( i ) {
+	// quiet (1.56.0): picked in the "New promotion" gallery, so the templates panel stays shut.
+	function useTemplate( i, quiet ) {
 		var tpl = kit.templates[ i ];
 		if ( ! tpl ) { return; }
 		pendingWords = currentWords(); // so Undo brings the words back too
@@ -928,7 +929,7 @@
 			if ( el && tpl.texts && tpl.texts[ fields[ id ] ] ) { el.value = tpl.texts[ fields[ id ] ]; }
 		} );
 		selected = -1;
-		toggleTemplates();
+		if ( ! quiet ) { toggleTemplates(); }
 		render();
 		save();
 	}
@@ -1152,6 +1153,14 @@
 				render();
 				save();
 			}
+		} );
+	}
+
+	// 1.56.0: a starter or template picked in the "New promotion" gallery.
+	var startTpl = root.getAttribute( 'data-start-tpl' );
+	if ( startTpl ) {
+		kit.templates.forEach( function ( tpl, i ) {
+			if ( tpl.id === startTpl ) { useTemplate( i, true ); }
 		} );
 	}
 

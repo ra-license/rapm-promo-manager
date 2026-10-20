@@ -290,21 +290,21 @@ class RAPM_Training_Guide {
 							<?php esc_html_e( 'The tool walks you through 4 steps, one at a time, with a bar at the top showing where you are. You cannot go to the next step until the current one is filled in correctly.', 'rapm' ); ?>
 						</p>
 
-						<h3><?php esc_html_e( 'Pick the Type first', 'rapm' ); ?></h3>
+						<h3><?php esc_html_e( 'Or start from New promotion', 'rapm' ); ?></h3>
 						<div class="rapm-tg-figure">
 							<div class="rapm-tg-mockup-col">
 								<p class="rapm-tg-mockup-tag"><?php esc_html_e( "What you'll see", 'rapm' ); ?></p>
 								<div class="rapm-tg-mockup">
 									<div class="mk-card">
-										<div class="mk-label"><span class="rapm-tg-chip" style="width:18px;height:18px;font-size:10px;">i</span><?php esc_html_e( 'Type of Promotion', 'rapm' ); ?></div>
-										<div class="mk-input" style="display:flex;align-items:center;padding:0 8px;color:#1D2327;">Slider &mdash; computer 1920x600, phone 1080x1920 &#9660;</div>
-										<div class="mk-desc"><?php esc_html_e( 'Choose which one before uploading pictures below.', 'rapm' ); ?></div>
+										<div class="mk-label"><span class="rapm-tg-chip" style="width:18px;height:18px;font-size:10px;">i</span><?php esc_html_e( 'What do you want to make?', 'rapm' ); ?></div>
+										<div style="max-width:220px;border:1px solid #c3c4c7;border-radius:6px;overflow:hidden;background:#fff;"><?php echo RAPM_Gallery::picture( 'hero', false ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?><div style="padding:8px 10px;"><strong><?php esc_html_e( 'Slider', 'rapm' ); ?></strong></div></div>
+										<div class="mk-desc"><?php esc_html_e( 'Then pick where it shows and how to start.', 'rapm' ); ?></div>
 									</div>
 								</div>
 							</div>
 							<div class="rapm-tg-callouts-col">
 								<ol>
-									<li><span class="rapm-tg-chip">i</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'One dropdown, at the very top.', 'rapm' ); ?></strong><span><?php esc_html_e( 'Changing it reloads the page so you always see the correct picture size for that type.', 'rapm' ); ?></span></span></li>
+									<li><span class="rapm-tg-chip">i</span><span class="rapm-tg-txt"><strong><?php esc_html_e( 'Pick a picture, not a word.', 'rapm' ); ?></strong><span><?php esc_html_e( 'Each card shows where that kind sits on a page. Start blank, from a template, or copy one you made before. A saved promotion keeps its kind.', 'rapm' ); ?></span></span></li>
 								</ol>
 							</div>
 						</div>

@@ -172,6 +172,10 @@ class RAPM_Promotions_Screen {
 		if ( '' === trim( (string) $title ) && $plugin_page && isset( $pages[ $plugin_page ] ) ) {
 			return esc_html( $pages[ $plugin_page ] ) . $admin_title;
 		}
+		// 1.56.0: WordPress names the tab after the menu item, "New promotion", even while editing one.
+		if ( 'rapm-add-asset' === $plugin_page && ! empty( $_GET['edit'] ) && ! get_post_meta( absint( $_GET['edit'] ), '_rapm_from_gallery', true ) && 0 === strpos( $admin_title, (string) $title ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return esc_html__( 'Edit promotion', 'rapm' ) . substr( $admin_title, strlen( (string) $title ) );
+		}
 		return $admin_title;
 	}
 

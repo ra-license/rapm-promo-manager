@@ -39,6 +39,8 @@ class RAPM_Upload_Handler {
 			return;
 		}
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
+		// 1.56.0: the "New promotion" gallery and the kind line on the form.
+		wp_enqueue_style( 'rapm-gallery-css', RAPM_URL . 'assets/css/rapm-gallery.css', array(), RAPM_VERSION );
 		// 1.35.0: dots and the button in a banner's Live Preview.
 		wp_enqueue_style( 'rapm-pins-css', RAPM_URL . 'assets/css/rapm-pins.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		// Shop the Look's preview (1.30.0) uses the live site's own styles too.
@@ -109,6 +111,11 @@ class RAPM_Upload_Handler {
 	}
 
 	public static function render_page() {
+		// 1.56.0: "New promotion" starts with the gallery (RAPM_Gallery).
+		if ( RAPM_Gallery::wanted() ) {
+			RAPM_Gallery::render();
+			return;
+		}
 		$asset_id = isset( $_GET['edit'] ) ? absint( $_GET['edit'] ) : 0;
 		$is_edit  = $asset_id && 'rapm_asset' === get_post_type( $asset_id );
 
@@ -151,7 +158,7 @@ class RAPM_Upload_Handler {
 		// The kind can come from the URL (switching it before any file is
 		// chosen, so the right dimensions show immediately) or from the
 		// asset being edited; defaults to 'hero'.
-		$kind_key = isset( $_GET['kind'] ) ? sanitize_key( wp_unslash( $_GET['kind'] ) ) : $m( '_rapm_kind', 'hero' );
+		$kind_key = ! $is_edit && isset( $_GET['kind'] ) ? sanitize_key( wp_unslash( $_GET['kind'] ) ) : $m( '_rapm_kind', 'hero' ); // 1.56.0: a saved one keeps its kind.
 		if ( ! isset( $kinds[ $kind_key ] ) ) {
 			$kind_key = 'hero';
 		}
@@ -216,7 +223,7 @@ class RAPM_Upload_Handler {
 				<p style="margin:8px 0 0;"><a href="<?php echo esc_url( RAPM_Promotions_Screen::url() ); ?>">&larr; <?php esc_html_e( 'All promotions', 'rapm' ); ?></a></p>
 			<?php endif; ?>
 			<h1>
-				<?php echo $is_edit ? esc_html__( 'Edit promotion', 'rapm' ) : esc_html__( 'New promotion', 'rapm' ); ?>
+				<?php echo $is_edit && ! get_post_meta( $asset_id, '_rapm_from_gallery', true ) ? esc_html__( 'Edit promotion', 'rapm' ) : esc_html__( 'New promotion', 'rapm' ); // 1.56.0: a gallery copy isn't saved yet. ?>
 				<?php if ( ! $is_edit ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-training-guide' ) ); ?>" class="page-title-action"><?php esc_html_e( 'Training Guide', 'rapm' ); ?></a>
 				<?php endif; ?>
@@ -248,57 +255,22 @@ class RAPM_Upload_Handler {
 				<div class="notice notice-success is-dismissible"><p><strong><?php esc_html_e( 'Saved.', 'rapm' ); ?></strong> <?php esc_html_e( 'This promotion is saved. If its start date has arrived, it\'s already live anywhere the shortcode below has been added.', 'rapm' ); ?></p></div>
 			<?php endif; ?>
 
-			<table class="form-table" style="max-width:700px;">
-				<tr>
-					<th><label for="rapm_kind_selector"><?php esc_html_e( 'Type of Promotion', 'rapm' ); ?></label></th>
-					<td>
-						<select id="rapm_kind_selector">
-							<?php
-							foreach ( $kinds as $key => $info ) :
-								if ( $info['desktop'] && RAPM_Slots::is_flexible( $slots[ $info['desktop'] ] ) ) {
-									$opt_label = sprintf(
-										/* translators: %s: kind label */
-										__( '%s — one room photo, any shape', 'rapm' ),
-										$info['label']
-									);
-								} elseif ( $info['desktop'] ) {
-									$opt_desktop = $slots[ $info['desktop'] ];
-									$opt_mobile  = $slots[ $info['mobile'] ];
-									$opt_label   = $info['desktop'] === $info['mobile']
-										? sprintf(
-											/* translators: 1: kind label, 2: card width, 3: card height */
-											__( '%1$s — %2$dx%3$d', 'rapm' ),
-											$info['label'],
-											$opt_desktop['width'],
-											$opt_desktop['height']
-										)
-										: sprintf(
-											/* translators: 1: kind label, 2: desktop width, 3: desktop height, 4: mobile width, 5: mobile height */
-											__( '%1$s — computer %2$dx%3$d, phone %4$dx%5$d', 'rapm' ),
-											$info['label'],
-											$opt_desktop['width'],
-											$opt_desktop['height'],
-											$opt_mobile['width'],
-											$opt_mobile['height']
-										);
-								} else {
-									$opt_label = $info['label'];
-								}
-								?>
-								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $kind_key, $key ); ?>><?php echo esc_html( $opt_label ); ?></option>
-							<?php endforeach; ?>
-						</select>
-						<?php RAPM_Tip::hint( __( 'Pick this first. Each kind needs a different picture size.', 'rapm' ) ); ?>
-					</td>
-				</tr>
-			</table>
-			<script>
-				document.getElementById( 'rapm_kind_selector' ).addEventListener( 'change', function () {
-					var url = new URL( window.location.href );
-					url.searchParams.set( 'kind', this.value );
-					window.location.href = url.toString();
-				} );
-			</script>
+			<?php
+			// 1.56.0: the kind is picked in the gallery; the old "Type of
+			// Promotion" dropdown is gone, and a saved promotion keeps its kind.
+			RAPM_Gallery::kind_line( $kind_key, $placement, $is_edit );
+			?>
+			<?php if ( $is_edit && isset( $_GET['rapm_copied'] ) && get_post_meta( $asset_id, '_rapm_from_gallery', true ) ) : ?>
+				<?php $copied_from = get_the_title( absint( $_GET['rapm_copied'] ) ); ?>
+				<div class="notice notice-info"><p>
+					<?php /* translators: %s: the promotion it was copied from */ ?>
+					<strong><?php echo esc_html( sprintf( __( 'This is a copy of "%s".', 'rapm' ), $copied_from ) ); ?></strong>
+					<?php esc_html_e( 'Change what you like. It goes on the website when you save it.', 'rapm' ); ?>
+					<?php if ( 'ended' === get_post_meta( $asset_id, '_rapm_from_gallery', true ) ) : ?>
+						<?php esc_html_e( 'Its old dates had ended, so set new ones in the last step.', 'rapm' ); ?>
+					<?php endif; ?>
+				</p></div>
+			<?php endif; ?>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
 				<input type="hidden" name="action" value="rapm_save_asset" />
@@ -1620,9 +1592,17 @@ class RAPM_Upload_Handler {
 		$asset_id = isset( $_POST['asset_id'] ) ? absint( $_POST['asset_id'] ) : 0;
 		$is_edit  = $asset_id && 'rapm_asset' === get_post_type( $asset_id );
 
+		// 1.56.0: a new one goes back to its own kind's form (without the
+		// kind, it would open the gallery; before 1.56.0, a Slider form).
 		$back = $is_edit
 			? admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $asset_id )
-			: admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset' );
+			: add_query_arg(
+				array(
+					'kind'      => isset( $_POST['rapm_kind'] ) ? sanitize_key( wp_unslash( $_POST['rapm_kind'] ) ) : 'hero',
+					'placement' => isset( $_POST['rapm_placement'] ) ? sanitize_title( wp_unslash( $_POST['rapm_placement'] ) ) : 'default',
+				),
+				admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset' )
+			);
 
 		$title = isset( $_POST['rapm_title'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_title'] ) ) : '';
 		if ( '' === $title ) {
@@ -1633,6 +1613,11 @@ class RAPM_Upload_Handler {
 		$kind_key = isset( $_POST['rapm_kind'] ) ? sanitize_key( wp_unslash( $_POST['rapm_kind'] ) ) : 'hero';
 		if ( ! isset( $kinds[ $kind_key ] ) ) {
 			$kind_key = 'hero';
+		}
+		// 1.56.0: a saved promotion keeps its kind (Phil's pick).
+		$saved_kind = $is_edit ? get_post_meta( $asset_id, '_rapm_kind', true ) : '';
+		if ( $saved_kind && isset( $kinds[ $saved_kind ] ) ) {
+			$kind_key = $saved_kind;
 		}
 		$kind       = RAPM_Slots::kind_for( $kind_key, isset( $_POST['rapm_placement'] ) ? sanitize_title( wp_unslash( $_POST['rapm_placement'] ) ) : 'default' );
 		$has_images = (bool) $kind['desktop'];
@@ -1745,7 +1730,13 @@ class RAPM_Upload_Handler {
 		}
 
 		if ( $is_edit ) {
-			wp_update_post( array( 'ID' => $asset_id, 'post_title' => $title ) );
+			$update = array( 'ID' => $asset_id, 'post_title' => $title );
+			// 1.56.0: a copy made in the gallery is a hidden draft until its first save.
+			if ( get_post_meta( $asset_id, '_rapm_from_gallery', true ) ) {
+				$update['post_status'] = 'publish';
+				delete_post_meta( $asset_id, '_rapm_from_gallery' );
+			}
+			wp_update_post( $update );
 		} else {
 			$asset_id = wp_insert_post(
 				array(
@@ -2134,6 +2125,8 @@ class RAPM_Upload_Handler {
 	}
 
 	private static function render_box_canvas( $box_mode, $image_id, $canvas ) {
+		// 1.56.0: a new promotion started from a gallery template (RAPM_Gallery::handle_start()).
+		$start_tpl = empty( $_GET['edit'] ) && isset( $_GET['rapm_tpl'] ) ? sanitize_key( wp_unslash( $_GET['rapm_tpl'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$canvas  = RAPM_Split::canvas_for_editor( $canvas );
 		$picture = $image_id ? wp_get_attachment_image_url( $image_id, 'large' ) : '';
 		// 1.45.0: Font Awesome from the site's own Elementor, when it has it.
@@ -2227,7 +2220,7 @@ class RAPM_Upload_Handler {
 		}
 		$bgs += array( '#f3ead8' => __( 'Cream', 'rapm' ), '#ffffff' => __( 'White', 'rapm' ), '#2f2f2f' => __( 'Charcoal', 'rapm' ) );
 		?>
-		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-kit="<?php echo esc_attr( wp_json_encode( $kit ) ); ?>" data-kit-nonce="<?php echo esc_attr( wp_create_nonce( RAPM_Brand_Kit::NONCE ) ); ?>" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-kit-url="<?php echo esc_url( add_query_arg( 'tab', 'brand', RAPM_Promotions_Screen::design_url() ) ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+		<div id="rapm-canvas" class="rapm-cv"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?> data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-picture="<?php echo esc_url( $picture ? $picture : '' ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-kit="<?php echo esc_attr( wp_json_encode( $kit ) ); ?>" data-kit-nonce="<?php echo esc_attr( wp_create_nonce( RAPM_Brand_Kit::NONCE ) ); ?>" data-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" data-kit-url="<?php echo esc_url( add_query_arg( 'tab', 'brand', RAPM_Promotions_Screen::design_url() ) ); ?>" data-brand="<?php echo esc_attr( wp_json_encode( self::brand_fonts() ) ); ?>" data-fonts="<?php echo esc_attr( wp_json_encode( RAPM_Elementor::font_family_map() ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>"<?php echo $start_tpl ? ' data-start-tpl="' . esc_attr( $start_tpl ) . '"' : ''; ?>>
 			<input type="hidden" id="rapm_canvas" name="rapm_canvas" value="<?php echo esc_attr( $canvas['items'] ? wp_json_encode( $canvas ) : '' ); ?>" />
 			<h2><?php esc_html_e( 'Place the Words and Icons', 'rapm' ); ?></h2>
 			<?php RAPM_Tip::hint( __( 'Drag things on the square to move them. Click one to change it.', 'rapm' ), __( 'Things snap into line with the middle, the edges and each other. Hold Alt (Option on a Mac) to place freely. Shift-click to pick more than one. Arrow keys move what you picked a little; hold Shift to move it more.', 'rapm' ) ); ?>

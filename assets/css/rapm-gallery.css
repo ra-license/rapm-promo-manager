@@ -1,0 +1,59 @@
+/* "New promotion" gallery (1.56.0, RAPM_Gallery) and the kind line on the
+   promotion form. WordPress admin colors. */
+.rapm-gal { max-width: 1100px; }
+.rapm-gal-back { margin: 8px 0 0; }
+.rapm-gal h1 { margin-bottom: 4px; }
+.rapm-gal-lead { margin: 0 0 20px; font-size: 15px; color: #50575e; }
+.rapm-gal-group { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #50575e; }
+.rapm-gal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; margin: 0 0 28px; padding: 0; list-style: none; }
+.rapm-gal-grid li { margin: 0; display: flex; }
+.rapm-gal-card { display: flex; flex-direction: column; width: 100%; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; overflow: hidden; color: #1d2327; text-decoration: none; }
+.rapm-gal-card:hover, .rapm-gal-card:focus { border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; color: #1d2327; }
+.rapm-gal-card:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+.rapm-gal-pic { display: block; background: #f6f7f7; border-bottom: 1px solid #dcdcde; }
+.rapm-gal-body { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; }
+.rapm-gal-name { font-size: 16px; font-weight: 600; }
+.rapm-gal-line { color: #3c434a; }
+.rapm-gal-on { margin-top: 4px; font-size: 13px; color: #50575e; }
+.rapm-gal-on.is-used { color: #1d6b2e; font-weight: 600; }
+.rapm-gal-fact { font-size: 13px; color: #50575e; }
+.rapm-gal-fact strong { color: #1d2327; }
+
+/* The start step. */
+.rapm-gal-start { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; margin-top: 16px; }
+.rapm-gal-about { flex: 1 1 260px; max-width: 340px; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; overflow: hidden; }
+.rapm-gal-steps { flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.rapm-gal-sec { margin: 0; padding: 14px 18px 18px; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; min-width: 0; }
+.rapm-gal-sec legend { float: left; width: 100%; padding: 0; margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+.rapm-gal-help { margin: 0 0 12px; color: #50575e; clear: both; }
+.rapm-gal-help.is-after { margin: 12px 0 0; font-size: 13px; }
+.rapm-gal-list { display: flex; flex-direction: column; gap: 8px; }
+.rapm-gal-opt { display: flex; gap: 10px; border: 2px solid #dcdcde; border-radius: 6px; background: #fff; cursor: pointer; }
+.rapm-gal-opt:hover { border-color: #2271b1; }
+.rapm-gal-opt:has(input:checked) { border-color: #2271b1; background: #f0f6fc; }
+.rapm-gal-opt:has(input:focus-visible) { outline: 2px solid #2271b1; outline-offset: 2px; }
+.rapm-gal-opt.is-row { align-items: flex-start; padding: 10px 12px; min-height: 44px; box-sizing: border-box; }
+.rapm-gal-opt.is-row input[type="radio"] { margin-top: 3px; }
+.rapm-gal-opt.is-row > span { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.rapm-gal-optname { font-weight: 600; }
+.rapm-gal-optsub { font-size: 12.5px; color: #50575e; }
+.rapm-gal-newname { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.rapm-gal-newname input { width: 260px; max-width: 100%; }
+.rapm-gal-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.rapm-gal-opt.is-tile { position: relative; flex-direction: column; gap: 2px; padding: 8px; }
+.rapm-gal-opt.is-tile input[type="radio"] { position: absolute; top: 12px; left: 12px; z-index: 2; margin: 0; }
+.rapm-gal-tilepic { display: block; position: relative; aspect-ratio: 1 / 1; margin-bottom: 6px; border-radius: 4px; overflow: hidden; background: #f6f7f7; container-type: size; }
+.rapm-gal-tilepic.is-blank { display: flex; align-items: center; justify-content: center; border: 2px dashed #a7aaad; background: #fff; color: #50575e; font-size: 30px; box-sizing: border-box; }
+.rapm-gal-tilepic > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rapm-gal-tilepic > .rapm-gal-svg { height: 100% !important; }
+.rapm-gal-tilepic .rapm-cv-mini { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; }
+.rapm-gal-go { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0; }
+.rapm-gal-go .rapm-gal-help { margin: 0; font-size: 13px; }
+
+/* The promotion form's top line, in place of the old dropdown. */
+.rapm-kind-line { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; max-width: 700px; margin: 16px 0 4px; padding: 10px 14px; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; box-sizing: border-box; }
+.rapm-kind-pic { width: 72px; flex: none; border: 1px solid #dcdcde; border-radius: 3px; overflow: hidden; }
+.rapm-kind-text { display: flex; flex-direction: column; flex: 1 1 240px; min-width: 0; }
+.rapm-kind-text strong { font-size: 15px; }
+.rapm-kind-size { font-size: 13px; color: #50575e; }
+.rapm-kind-line .rapm-hint { margin: 0; flex-basis: 100%; }

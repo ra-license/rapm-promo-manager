@@ -370,6 +370,27 @@ class RAPM_Split {
 		<?php if ( $use_pic ) : ?>
 			<img class="rapm-pb-img" src="<?php echo esc_url( $src ); ?>" alt="" <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> />
 		<?php endif; ?>
+		<?php echo self::board_html( $canvas, $texts, $style, $font ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in board_html(). ?>
+		<?php if ( $url ) : ?>
+			<a href="<?php echo esc_url( $url ); ?>" class="rapm-slide-link" aria-label="<?php echo esc_attr( $headline ? $headline : $alt ); ?>"></a>
+		<?php endif; ?>
+		<?php
+		return array( ob_get_clean(), $bg );
+	}
+
+	/**
+	 * The square design area of a canvas promotion: its words, icons and
+	 * pictures where they were placed. 1.56.0: shared with the "New
+	 * promotion" gallery's template previews.
+	 *
+	 * @param array  $canvas Sanitized canvas.
+	 * @param array  $texts  'headline', 'sub', 'btn'.
+	 * @param string $style  Text style (bold, elegant, minimal).
+	 * @param string $font   Elementor font ID, or ''.
+	 */
+	public static function board_html( $canvas, $texts, $style = 'bold', $font = '' ) {
+		ob_start();
+		?>
 		<div class="rapm-pb-board" data-style="<?php echo esc_attr( $style ); ?>" style="<?php echo esc_attr( RAPM_Elementor::font_family_css( $font ) ); ?>">
 			<?php
 			foreach ( $canvas['items'] as $it ) {
@@ -400,7 +421,7 @@ class RAPM_Split {
 					}
 					continue;
 				}
-				$text = $texts[ $it['k'] ];
+				$text = isset( $texts[ $it['k'] ] ) ? $texts[ $it['k'] ] : '';
 				if ( '' === (string) $text ) {
 					continue;
 				}
@@ -425,11 +446,8 @@ class RAPM_Split {
 			}
 			?>
 		</div>
-		<?php if ( $url ) : ?>
-			<a href="<?php echo esc_url( $url ); ?>" class="rapm-slide-link" aria-label="<?php echo esc_attr( $headline ? $headline : $alt ); ?>"></a>
-		<?php endif; ?>
 		<?php
-		return array( ob_get_clean(), $bg );
+		return (string) ob_get_clean();
 	}
 
 	/**

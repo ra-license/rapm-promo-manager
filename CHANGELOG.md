@@ -4,6 +4,31 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.56.0
+
+**"New promotion" starts with pictures.** This is step 2 of the UX review (recommendation 5, Canva's template-first start), built from the mockup Phil approved on 2026-10-20 (https://claude.ai/artifact/BnaNa1sN7k5vNofGG5c26J) with my three picks: kinds this website already uses come first, a saved promotion keeps its kind, and copies include ended promotions (up to 6, newest first).
+- **The gallery (new `RAPM_Gallery`, `rapm-gallery.css`):** "New promotion" opens "What do you want to make?" with one card per kind. Each card has a small drawing of where it sits on a page, the kind's one-line help, and where it's used now ("On: Home page slider") or "Not on a page yet". Kinds with a spot on this website come under "On this website now"; the rest under "More kinds you can add".
+- **Start step (one page per kind):** the kind's drawing, picture size and where it's made; then "1. Where will it show?" (its spots, each with how many pages it's on, or "A new spot" named for its job, made with `RAPM_Spots::create()`) and "2. Start from":
+  - **Blank.**
+  - **Promotion boxes:** the three R&A starters and the brand kit's own templates, drawn with the website's own promotion box styles (`RAPM_Split::board_html()`, now shared with the website's box). Start fills the canvas and the words with it, without opening the templates panel.
+  - **Copy one you made:** up to 6 of that kind, newest first, ended ones too. It's made with the existing Duplicate (every setting comes along) as a hidden draft in the chosen spot. Ended dates are cleared, and a "Goes with" link to a box in another spot is dropped. The form says "This is a copy of …", and its first save puts it on the website.
+  - **Promotion boxes need a split slider:** with none, the step says so and links to the Design Center instead of a Start button.
+- **The form:** the "Type of Promotion" dropdown is replaced by a line with the kind's drawing, name and picture size, and "Change" (back to the gallery) on a new one. A saved promotion keeps its kind: the form ignores `kind` in the address when editing and the save keeps the stored kind.
+- **Links that know the kind skip the gallery:** a spot's "+ Add" on the Promotions page, the Sliders screen, and anything else with `kind=` in the address.
+- **Fixes:**
+  - A new promotion that failed to save went back to a blank form without its kind, which opened as a Slider. It now goes back to its own kind and spot.
+  - The browser tab said "New promotion" while editing (left over from 1.55.0); it now says "Edit promotion". An unsaved gallery copy says "New promotion" in the tab and the heading.
+- **Help, Training Guide, Settings:** the old dropdown is no longer mentioned; the guide shows a gallery card.
+- **Tested in WordPress Playground (WordPress 7.1.3, PHP 8.3, Elementor), with real clicks:**
+  - The gallery at 1280 wide matches the mockup: Slider, Promotion box and Quick links under "On this website now", the other five under "More kinds".
+  - Promotion box → Sale starter → Start: the form opened with the kind line; step 2 had "Big Sale", "This weekend only", "Shop now" and the Sale design on the canvas, with the templates panel shut.
+  - Slider → typing a new spot name picked "A new spot" → Copy: Fall Sale slide (ended) → Start: a draft in the new "Living Room slider" spot, dates cleared, Goes with dropped, with the copy notice.
+  - Saving it (a real form post with test pictures) published it and cleared the copy mark. Posting `rapm_kind=coupon` to a saved Slider kept it a Slider. A failed new save went back to `kind=coupon&placement=deals`.
+  - All eight start steps, Promotions, Design Center, Help, Training Guide and Settings load with no PHP errors; the start step stacks at phone width.
+- **Not done:** a copy left without saving stays a hidden draft named "… (Copy)" in its spot, like Duplicate always made. Templates exist only for promotion boxes, as before.
+
+---
+
 ## 1.55.0
 
 **Clarity pass: one set of words, short help with (i) for more, and empty screens that teach.** This is step 1 of the UX review Phil approved on 2026-10-20 (https://claude.ai/artifact/BpPqJ5XT1PkMbtsXb8P4mv). Phil asked for a low reading level, since we don't know who will use it. No layout changes.
