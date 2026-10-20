@@ -112,7 +112,7 @@ class RAPM_Reveal {
 		$name     = $word . ( $go ? ': ' . $go : ( $line ? ': ' . $line : '' ) );
 		ob_start();
 		?>
-		<<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput -- 'a' or 'div'. ?> class="rapm-rv-panel<?php echo $side ? ' is-side' : ''; ?><?php echo $desk ? '' : ' no-photo'; ?>"<?php echo $url ? ' href="' . esc_url( $url ) . '"' : ' tabindex="0"'; ?> aria-label="<?php echo esc_attr( $name ); ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( get_post_meta( $asset_id, '_rapm_starts_at', true ) ); ?>" data-rapm-end="<?php echo esc_attr( get_post_meta( $asset_id, '_rapm_ends_at', true ) ); ?>" style="<?php echo esc_attr( '--rv-color:' . self::color_css( $asset_id ) . ';color:' . $color . ';' . $font ); ?>"<?php echo $is_live ? '' : ' hidden'; ?>>
+		<<?php echo $tag; // phpcs:ignore WordPress.Security.EscapeOutput -- 'a' or 'div'. ?> class="rapm-rv-panel<?php echo $side ? ' is-side' : ''; ?><?php echo $desk ? '' : ' no-photo'; ?><?php echo $phone ? ' has-phone' : ''; ?>"<?php echo $url ? ' href="' . esc_url( $url ) . '"' : ' tabindex="0"'; ?> aria-label="<?php echo esc_attr( $name ); ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( get_post_meta( $asset_id, '_rapm_starts_at', true ) ); ?>" data-rapm-end="<?php echo esc_attr( get_post_meta( $asset_id, '_rapm_ends_at', true ) ); ?>" style="<?php echo esc_attr( '--rv-color:' . self::color_css( $asset_id ) . ';color:' . $color . ';' . $font . RAPM_Focal::style_vars( $asset_id ) ); ?>"<?php echo $is_live ? '' : ' hidden'; ?>>
 			<span class="rapm-rv-color" aria-hidden="true"></span>
 			<?php if ( $desk ) : ?>
 				<picture class="rapm-rv-photo" aria-hidden="true">

@@ -477,13 +477,14 @@ class RAPM_Split {
 		$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
 		if ( $design ) {
 			list( $inner, $bg ) = self::render_design( $asset_id, $src, $url, $load_attrs );
-			return '<div class="rapm-pb-item is-design" data-rapm-key="' . (int) $asset_id . '" data-rapm-start="' . esc_attr( $starts_at ) . '" data-rapm-end="' . esc_attr( $ends_at ) . '" hidden style="' . esc_attr( 'background:' . $bg ) . '">' . $inner . '</div>';
+			return '<div class="rapm-pb-item is-design" data-rapm-key="' . (int) $asset_id . '" data-rapm-start="' . esc_attr( $starts_at ) . '" data-rapm-end="' . esc_attr( $ends_at ) . '" hidden style="' . esc_attr( 'background:' . $bg . ';' . RAPM_Focal::style_vars( $asset_id ) ) . '">' . $inner . '</div>';
 		}
 		// A finished graphic (no words over it) is shown whole, with a
 		// blurred copy of itself behind any gap, so its own words are never
 		// cut off whatever the box's shape. Words over a picture fill the
 		// box instead, like a slide.
-		$style = $has_words ? '' : ' style="--rapm-blur:url(&quot;' . esc_url( $src ) . '&quot;);"';
+		// 1.54.0: words over the picture fill the box, so its focal point applies.
+		$style = $has_words ? ( RAPM_Focal::style_vars( $asset_id ) ? ' style="' . esc_attr( RAPM_Focal::style_vars( $asset_id ) ) . '"' : '' ) : ' style="--rapm-blur:url(&quot;' . esc_url( $src ) . '&quot;);"';
 		ob_start();
 		?>
 		<div class="rapm-pb-item<?php echo $has_words ? '' : ' is-picture-only'; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>" hidden<?php echo $style; // phpcs:ignore WordPress.Security.EscapeOutput -- URL escaped above. ?>>

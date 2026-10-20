@@ -24,7 +24,7 @@
 .rapm-rv-color, .rapm-rv-photo { position: absolute; inset: 0; z-index: -1; }
 .rapm-rv-color { background: var(--rv-color, #1d3557); transition: opacity var(--rv-speed) ease; }
 .rapm-rv-photo { opacity: 0; transform: scale(1.04); transition: opacity var(--rv-speed) ease, transform calc(var(--rv-speed) * 2) ease; }
-.rapm-rv-photo img { width: 100%; height: 100%; max-width: none; object-fit: cover; display: block; }
+.rapm-rv-photo img { width: 100%; height: 100%; max-width: none; object-fit: cover; display: block; object-position: var(--rapm-fp, 50% 50%); }
 .rapm-rv-words {
 	position: absolute;
 	left: 50%;
@@ -77,6 +77,8 @@
 @media (max-width: 767px) {
 	.rapm-rv { grid-template-columns: minmax(0, 1fr); height: auto; }
 	.rapm-rv-panel { height: var(--rv-ph, 320px); }
+	/* 1.54.0: the phone photo's own focal point (without one, its middle). */
+	.rapm-rv-panel.has-phone .rapm-rv-photo img { object-position: var(--rapm-fp-m, 50% 50%); }
 	.rapm-rv-word { font-size: clamp(40px, 15vw, 72px); }
 	.rapm-rv-panel.is-side .rapm-rv-words { display: block; }
 	.rapm-rv-panel.is-side .rapm-rv-word { writing-mode: horizontal-tb; transform: none; }

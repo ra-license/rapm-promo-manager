@@ -143,6 +143,8 @@ class RAPM_Library {
 			'desk'     => $desk,
 			'phone'    => $phone,
 			'alt'      => $alt,
+			// 1.54.0: what stays in view when the website trims each picture ('' = the middle); null when it isn't trimmed.
+			'focus'    => RAPM_Focal::applies( $kind, $placement ) ? array( 'desk' => RAPM_Focal::get( $id, 'desktop' ), 'phone' => RAPM_Focal::has_phone( $kind ) ? RAPM_Focal::get( $id, 'mobile' ) : null ) : null,
 			'link'     => (string) $url,
 			'pages'    => $pages,
 			'checks'   => array(),
@@ -278,6 +280,12 @@ class RAPM_Library {
 					'needsLook'    => __( 'Needs a look', 'rapm' ),
 					'allGood'      => __( 'Nothing to look at. Full "Ready to go live" checks come in the next update.', 'rapm' ),
 					'whereShows'   => __( 'Where it shows', 'rapm' ),
+					// 1.54.0.
+					'inView'       => __( 'Stays in view', 'rapm' ),
+					'middle'       => __( 'The middle (no point set)', 'rapm' ),
+					/* translators: 1: percent across, 2: percent down */
+					'pointAt'      => __( '%1$s across, %2$s down', 'rapm' ),
+					'setPoint'     => __( 'Change it', 'rapm' ),
 					'editPage'     => __( 'Edit page', 'rapm' ),
 					'notPlaced'    => __( 'Not on any page yet.', 'rapm' ),
 					'linksTo'      => __( 'Links to', 'rapm' ),
@@ -453,6 +461,8 @@ class RAPM_Library {
 				}
 				update_post_meta( $id, '_rapm_image_' . $which . '_id', $new );
 				update_post_meta( $id, '_rapm_image_' . $which . '_source', 'upload' );
+				// 1.54.0: a new picture has its own subject, so its point goes back to the middle.
+				RAPM_Focal::save( $id, $which, '' );
 				foreach ( array( 'url', 'synced_at', 'sync_error', 'waiting' ) as $k ) {
 					delete_post_meta( $id, '_rapm_image_' . $which . '_' . $k );
 				}

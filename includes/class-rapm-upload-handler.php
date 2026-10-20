@@ -50,6 +50,21 @@ class RAPM_Upload_Handler {
 		// 1.44.0: the promotion box canvas. Does nothing on other types' forms.
 		wp_enqueue_style( 'rapm-box-canvas-css', RAPM_URL . 'assets/css/rapm-box-canvas.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-box-canvas-js', RAPM_URL . 'assets/js/rapm-box-canvas.js', array(), RAPM_VERSION, true );
+		// 1.54.0: "What stays in view" (focal points). Does nothing without a picker on the form.
+		wp_enqueue_script( 'rapm-focal-js', RAPM_URL . 'assets/js/rapm-focal.js', array(), RAPM_VERSION, true );
+		wp_localize_script(
+			'rapm-focal-js',
+			'RAPM_Focal_Text',
+			array(
+				'nothing' => __( 'Nothing trimmed', 'rapm' ),
+				/* translators: %d: percent */
+				'width'   => __( 'Keeps %d%% of the width', 'rapm' ),
+				/* translators: %d: percent */
+				'height'  => __( 'Keeps %d%% of the height', 'rapm' ),
+				/* translators: 1: percent across, 2: percent down */
+				'at'      => __( 'Kept in view: %1$s across, %2$s down', 'rapm' ),
+			)
+		);
 		// 1.45.0: "Your pictures" opens WordPress's own Media Library.
 		wp_enqueue_media();
 	}
@@ -161,6 +176,8 @@ class RAPM_Upload_Handler {
 		$is_box       = 'promo_box' === $kind_key;
 		// Reveal panels (1.53.0): a color, one big word, a photo underneath.
 		$is_reveal    = 'reveal' === $kind_key;
+		// 1.54.0: pictures the website trims get "What stays in view".
+		$focal        = RAPM_Focal::applies( $kind_key, $placement );
 		// 1.44.0: how a promotion box is made. 'design' is the canvas (words
 		// and icons placed by hand); 'graphic' is a finished picture. A new
 		// one starts as a design; one saved before 1.44.0 stays a graphic.
@@ -514,6 +531,9 @@ class RAPM_Upload_Handler {
 							<?php else : ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'This picture should be %1$d by %2$d (width by height, in pixels). If it\'s the same shape at a different size (say, an export at twice the resolution), it\'s resized automatically — no need to fix that yourself. If it\'s a different shape entirely, you\'ll see exactly what you uploaded vs. what\'s needed so you know what to fix.', 'rapm' ), $desktop_slot['width'], $desktop_slot['height'] ) ); ?></p>
 							<?php endif; ?>
+							<?php if ( $focal ) : ?>
+								<?php RAPM_Focal::render_picker( $kind_key, 'desktop', $img_desktop ? (string) wp_get_attachment_image_url( $img_desktop, 'large' ) : '', $is_edit ? RAPM_Focal::get( $asset_id, 'desktop' ) : '' ); ?>
+							<?php endif; ?>
 						</td>
 					</tr>
 					<?php if ( ! $is_look ) : ?>
@@ -566,6 +586,9 @@ class RAPM_Upload_Handler {
 							</div>
 
 							<p class="description"><?php echo esc_html( sprintf( __( 'The version shown on phones — needs to be exactly %1$d by %2$d.', 'rapm' ), $mobile_slot['width'], $mobile_slot['height'] ) ); ?></p>
+							<?php if ( $focal && RAPM_Focal::has_phone( $kind_key ) ) : ?>
+								<?php RAPM_Focal::render_picker( $kind_key, 'mobile', $img_mobile ? (string) wp_get_attachment_image_url( $img_mobile, 'large' ) : '', $is_edit ? RAPM_Focal::get( $asset_id, 'mobile' ) : '' ); ?>
+							<?php endif; ?>
 						</td>
 					</tr>
 					<?php endif; // ! $is_look ?>
@@ -586,6 +609,21 @@ class RAPM_Upload_Handler {
 					.rapm-crop-anchors button { width: 26px; height: 26px; padding: 0; border: 1px solid #c3c4c7; border-radius: 3px; background: #fff; cursor: pointer; }
 					.rapm-crop-anchors button:hover { border-color: #2271b1; }
 					.rapm-crop-anchors button.is-selected { background: #2271b1; border-color: #2271b1; }
+					/* 1.54.0: What stays in view. */
+					.rapm-focal { margin-top: 14px; padding: 12px; background: #f6f7f7; border: 1px solid #dcdcde; border-radius: 6px; max-width: 900px; }
+					.rapm-focal[hidden] { display: none; }
+					.rapm-focal-head { margin: 0 0 8px; }
+					.rapm-focal-row { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
+					@media (max-width: 900px) { .rapm-focal-row { grid-template-columns: minmax(0, 1fr); } }
+					.rapm-focal-photo { position: relative; cursor: crosshair; touch-action: none; user-select: none; line-height: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1px #c3c4c7; }
+					.rapm-focal-photo:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; }
+					.rapm-focal-photo img { width: 100%; height: auto; display: block; pointer-events: none; }
+					.rapm-focal-dot { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px #e0338a, 0 2px 8px rgba(0,0,0,.4); background: rgba(224,51,138,.35); pointer-events: none; }
+					.rapm-focal-pvs { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+					.rapm-focal-pv { margin: 0; display: grid; gap: 4px; font-size: 12px; color: #50575e; }
+					.rapm-focal-pv b { color: #1d2327; font-weight: 600; }
+					.rapm-focal-box { display: block; background-size: cover; background-repeat: no-repeat; border-radius: 3px; box-shadow: 0 0 0 1px #c3c4c7; }
+					.rapm-focal-box.is-round { border-radius: 50%; }
 				</style>
 				<script>
 					( function () {
@@ -1872,6 +1910,14 @@ class RAPM_Upload_Handler {
 			update_post_meta( $asset_id, '_rapm_tab_label', $tab_label );
 			update_post_meta( $asset_id, '_rapm_focus', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus'] ) ) : '' ) );
 			update_post_meta( $asset_id, '_rapm_focus_phone', RAPM_Looks::sanitize_focus( isset( $_POST['rapm_focus_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_focus_phone'] ) ) : '' ) );
+		}
+		// 1.54.0: what stays in view, for each picture the website trims.
+		if ( RAPM_Focal::applies( $kind_key, (string) get_post_meta( $asset_id, '_rapm_placement', true ) ) ) {
+			foreach ( array( 'desktop', 'mobile' ) as $which ) {
+				if ( isset( $_POST[ 'rapm_focus_' . $which ] ) ) {
+					RAPM_Focal::save( $asset_id, $which, sanitize_text_field( wp_unslash( $_POST[ 'rapm_focus_' . $which ] ) ) );
+				}
+			}
 		}
 		if ( 'reveal' === $kind_key ) {
 			// 1.53.0: the panel's color (a linked website color, or a fixed one) and the word's direction.

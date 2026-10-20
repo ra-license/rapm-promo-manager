@@ -31,6 +31,8 @@
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+	/* 1.54.0: the picture's focal point, when one is set (RAPM_Focal). */
+	object-position: var(--rapm-fp, 50% 50%);
 	display: block;
 }
 
@@ -282,6 +284,8 @@
 	object-fit: cover;
 	display: block;
 }
+/* 1.54.0: the picture's focal point (RAPM_Focal). */
+.rapm-pb .rapm-pb-item .rapm-pb-img { object-position: var(--rapm-fp, 50% 50%); }
 /* A finished graphic shows whole, with a blurred copy behind any gap. */
 .rapm-pb .rapm-pb-item.is-picture-only .rapm-pb-img { object-fit: contain; }
 .rapm-pb-item.is-picture-only::before {

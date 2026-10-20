@@ -260,3 +260,6 @@
 		font-size: 15px;
 	}
 }
+
+/* 1.54.0: the picture's focal point, when one is set (RAPM_Focal). */
+.rapm-quick-links .rapm-ql-img { object-position: var(--rapm-fp, 50% 50%); }

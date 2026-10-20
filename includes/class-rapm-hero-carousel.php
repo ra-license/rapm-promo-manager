@@ -229,8 +229,10 @@ class RAPM_Hero_Carousel {
 		$picture_only = $mobile_src && ! $headline && ! $subhead && ! $cta_text;
 		// 1.52.0: the promotion box promotion this room photo goes with (split sliders).
 		$goes = RAPM_Split::goes_with( $asset_id );
+		// 1.54.0: what stays in view when the picture is trimmed (split view).
+		$focus_vars = RAPM_Focal::style_vars( $asset_id );
 		?>
-		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?><?php echo $picture_only ? ' is-picture-only' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>"<?php echo $goes ? ' data-rapm-goes="' . (int) $goes . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- an integer. ?>>
+		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?><?php echo $picture_only ? ' is-picture-only' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>"<?php echo $goes ? ' data-rapm-goes="' . (int) $goes . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- an integer. ?><?php echo $focus_vars ? ' style="' . esc_attr( $focus_vars ) . '"' : ''; ?>>
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 768px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />

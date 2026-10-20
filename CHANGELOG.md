@@ -4,6 +4,45 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.54.0
+
+**New: focal points ("What stays in view").** Design Center roadmap step 6, built to the mockup Phil approved (https://claude.ai/artifact/ExuxeBqAPTtZQi63AMX4W8). New `RAPM_Focal` and `rapm-focal.js`.
+- **What it does:** when the website trims a picture to fit a space, the point set on it stays in view instead of the middle. The picture file is never re-cropped. The point only sets CSS `object-position` (through `--rapm-fp`, and `--rapm-fp-m` for a phone picture), so it can be moved any time and nothing is lost. A picture with no point keeps its middle, exactly as before.
+- **Where it applies (measured against the website's real sizes, in the mockup):**
+  - **Reveal panels:** computer and phone photo. Two panels on a 1920 screen keep only 58% of the height; on a 1440 laptop, 78%.
+  - **Quick links:** the round phone thumbnail keeps only 45% of the width.
+  - **Split slider room photos:** computer picture only. They lose up to about 13% of the height on a big screen with a tall header; phone pictures show whole.
+  - **Promotion boxes designed on the canvas with a picture background.** A finished graphic shows whole, so it has no point.
+  - **Shop the Look** keeps its own "What each screen shows".
+- **On the promotion form**, under each picture: "What stays in view".
+  - Drag the pink point (or use the arrow keys, with Shift for bigger steps).
+  - Live previews show every shape that picture is trimmed to, for example "2 panels, 1920 screen: Keeps 58% of the height", using the same rule as the website.
+  - "Back to the middle" clears it.
+  - Choosing a new file shows it with the point back in the middle.
+- **The point always stays inside the trimmed area,** near the same side, though not always dead center. That keeps it to plain CSS, with no script and no layout jumps.
+- **Asset library:** the details panel shows "Stays in view" for each picture (or "The middle"), with "Change it". "Replace everywhere" puts a replaced picture's point back in the middle, since a new picture has its own subject.
+- **Ready check:** a reveal panel or quick link with no focal point gets a "Good to know" note explaining how much its middle-only trim keeps.
+- **No automatic subject guessing:** that would mean sending photos to an outside service, or quiet wrong guesses.
+- **Also:** the Design Center subtitle now names all its tabs: split sliders, reveal panels, the asset library and the brand kit.
+- **Tested in WordPress Playground with Elementor:**
+  - **Form saves, one each:**
+    - A reveal panel (computer and phone point).
+    - A quick link.
+    - A split slider room photo.
+    - A designed promotion box.
+    - "The middle" (stored as no point).
+  - **On a regular page, the browser's computed `object-position`:**
+    - Reveal panel: 70% 80% on a computer, and 65.5% 75% at phone width.
+    - Quick link: 80% 60%.
+    - Split room photo: 50% 85%.
+    - Designed box: 30% 20%.
+    - Panels without a point: 50% 50%.
+  - **The form's picker:** it loads the saved points and shows how much each shape keeps. A real mouse drag updated the value, label and previews.
+  - **Asset library:** the details carry the points, and the Ready note appears for a panel with none.
+  - **Not exercised directly:** "Replace everywhere" resetting the point. It's one line, reviewed in code.
+
+---
+
 ## 1.53.0
 
 **New: Reveal panels**, a new kind of spot, worked on in the Design Center. It was modeled on the hero at hartandhill.com, which Phil asked about on 2026-10-20, and built to the mockup he approved (https://claude.ai/artifact/ChybrztYZZZJLc4Pr6rN7b) with the recommended choices: the words move aside, a short line and link label appear, and the reveal takes 0.8 seconds. New `RAPM_Reveal`, `[rapm_reveal placement="…"]` and `rapm-reveal.css`.

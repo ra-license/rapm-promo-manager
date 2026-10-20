@@ -104,6 +104,12 @@
 		$( 'rapm-lib-summary' ).innerHTML = '<b>' + items.length + '</b> ' + esc( T.promotions ) + ' · <b>' + Object.keys( spots ).length + '</b> ' + esc( T.spots ) + ' · <b>' + c.showing + '</b> ' + esc( T.showingNow ) + ' · <b>' + fails + '</b> ' + esc( T.fails.toLowerCase() ) + ' · <b>' + flags + '</b> ' + esc( T.needLook ) + ' · <b>' + ( kb / 1024 ).toFixed( 1 ) + ' MB</b> ' + esc( T.ofPictures );
 	}
 
+	// 1.54.0: a picture's focal point, with a link to change it on its form.
+	function focusRow( label, point, edit ) {
+		var v = point ? T.pointAt.replace( '%1$s', point.split( ' ' )[ 0 ] ).replace( '%2$s', point.split( ' ' )[ 1 ] ) : T.middle;
+		return '<dt>' + esc( T.inView + ' (' + label.toLowerCase() + ')' ) + '</dt><dd>' + esc( v ) + ' · <a href="' + esc( edit ) + '">' + esc( T.setPoint ) + '</a></dd>';
+	}
+
 	function pic( it ) {
 		if ( it.design && it.preview ) { return '<span class="rapm-lib-thumb is-design">' + it.preview + '</span>'; }
 		var src = it.desk && it.desk.thumb;
@@ -284,7 +290,9 @@
 			( it.design ? '<dt>' + esc( T.computer ) + '</dt><dd>' + esc( T.designed ) + '</dd>' : picRow( T.computer, it.desk, it.need ) ) +
 			( it.needPhone || it.phone ? picRow( T.phone, it.phone, it.needPhone ) : '' ) +
 			'<dt>' + esc( T.comesFrom ) + '</dt><dd>' + esc( src ) + ( it.check ? ' <a class="button button-small" href="' + esc( it.check ) + '">' + esc( T.checkNow ) + '</a>' : '' ) + '</dd>' +
-			'<dt>' + esc( T.altText ) + '</dt><dd>' + ( it.alt ? esc( it.alt ) : '<span class="rapm-lib-flagtext">' + esc( T.noneYet ) + '</span>' ) + '</dd></dl></section>';
+			'<dt>' + esc( T.altText ) + '</dt><dd>' + ( it.alt ? esc( it.alt ) : '<span class="rapm-lib-flagtext">' + esc( T.noneYet ) + '</span>' ) + '</dd>' +
+			( it.focus ? focusRow( T.computer, it.focus.desk, it.edit ) + ( null !== it.focus.phone && undefined !== it.focus.phone ? focusRow( T.phone, it.focus.phone, it.edit ) : '' ) : '' ) +
+			'</dl></section>';
 		// 1.49.0: Ready to go live, problems first, then things to know, then passes.
 		var order = { fail: 0, warn: 1, info: 2, pass: 3 };
 		var sorted = it.checks.slice().sort( function ( a, b ) { return order[ a.level ] - order[ b.level ]; } );

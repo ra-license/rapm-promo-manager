@@ -114,6 +114,10 @@ class RAPM_Ready {
 				$add( 'warn', __( 'Goes with a promotion that has ended, so it isn\'t playing. Link it to another promotion or "Any promotion" in the Design Center.', 'rapm' ) );
 			}
 		}
+		// 1.54.0: the places that trim a lot, with no focal point set.
+		if ( in_array( $kind, array( 'reveal', 'quick_links' ), true ) && ! $item['design'] && $item['desk'] && '' === RAPM_Focal::get( $id, 'desktop' ) ) {
+			$add( 'info', 'reveal' === $kind ? __( 'No focal point: two panels across keep only the middle 58% of the photo\'s height. Set what stays in view on its form.', 'rapm' ) : __( 'No focal point: the round thumbnail on phones keeps only the middle of the picture. Set what stays in view on its form.', 'rapm' ) );
+		}
 		// 1.53.0: a reveal panel's big word against its color (big words need 3 to 1).
 		if ( 'reveal' === $kind ) {
 			$panel = sanitize_hex_color( (string) get_post_meta( $id, '_rapm_panel_color', true ) );

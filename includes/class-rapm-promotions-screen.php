@@ -829,7 +829,7 @@ class RAPM_Promotions_Screen {
 			<div class="rapm-promos-head">
 				<div>
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Design Center', 'rapm' ); ?></h1>
-					<p class="rapm-promos-sub"><?php esc_html_e( 'Advanced tools: split sliders and the asset library. Kept here so the Promotions page stays simple.', 'rapm' ); ?></p>
+					<p class="rapm-promos-sub"><?php esc_html_e( 'Advanced tools: split sliders, reveal panels, the asset library and the brand kit. Kept here so the Promotions page stays simple.', 'rapm' ); ?></p>
 				</div>
 			</div>
 			<hr class="wp-header-end" />
