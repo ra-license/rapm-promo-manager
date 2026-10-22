@@ -267,3 +267,7 @@
 .rapm-card-reveal-word { display: grid; place-items: center; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; overflow: hidden; padding: 0 6px; }
 .rapm-make-reveal { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .rapm-make-reveal input { width: 280px; max-width: 100%; }
+
+/* 1.58.2: the "Saved" note sits in the spot it was saved to; the card is outlined. */
+.rapm-spot > .rapm-saved-notice { margin: 8px 0 12px; }
+.rapm-card.is-just-saved { outline: 3px solid #00a32a; outline-offset: 2px; }

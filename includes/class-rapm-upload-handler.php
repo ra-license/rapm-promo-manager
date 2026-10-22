@@ -53,13 +53,15 @@ class RAPM_Upload_Handler {
 				'done'       => __( '(done)', 'rapm' ),
 				'needed'     => __( '(needed to save)', 'rapm' ),
 				'notYet'     => __( '(not yet)', 'rapm' ),
-				'canSave'    => __( 'Nothing goes live before its start date.', 'rapm' ),
+				'canSaveNow'   => __( 'Ready to save. It shows as soon as you save.', 'rapm' ),
+				'canSaveLater' => __( 'Ready to save. It starts showing on its start date.', 'rapm' ),
 				/* translators: %s: what's missing, like "a name and a computer picture" */
 				'toSave'     => __( 'To save, add %s.', 'rapm' ),
 				'and'        => __( 'and', 'rapm' ),
 				'aName'      => __( 'a name', 'rapm' ),
 				'aPicture'   => __( 'a computer picture', 'rapm' ),
 				'aPhoto'     => __( 'a room photo', 'rapm' ),
+				'aWorkingPic' => __( 'a picture link that works (see the red note under it)', 'rapm' ),
 				'aTab'       => __( 'a tab name', 'rapm' ),
 				'aQuickName' => __( 'a name under the picture', 'rapm' ),
 				'more'       => __( 'More options: line-up, color, style, typeface', 'rapm' ),
@@ -586,26 +588,6 @@ class RAPM_Upload_Handler {
 
 							<div id="rapm-desktop-upload-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? 'display:none;' : ''; ?>">
 								<input type="file" id="rapm_image_desktop" name="rapm_image_desktop" accept="image/*" />
-								<?php if ( ! $is_look ) : ?>
-								<div id="rapm-desktop-crop-picker" class="rapm-crop-picker" style="display:none;">
-									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick the part to keep, or use a different picture.', 'rapm' ); ?></p>
-									<div class="rapm-crop-layout">
-										<div class="rapm-crop-preview"><img id="rapm-desktop-crop-preview-img" alt="" /></div>
-										<div class="rapm-crop-anchors" role="group" aria-label="<?php esc_attr_e( 'Which part of the picture to keep', 'rapm' ); ?>">
-											<button type="button" data-anchor="left top" aria-label="<?php esc_attr_e( 'Top left', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="center top" aria-label="<?php esc_attr_e( 'Top center', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="right top" aria-label="<?php esc_attr_e( 'Top right', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="left center" aria-label="<?php esc_attr_e( 'Middle left', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="center center" class="is-selected" aria-label="<?php esc_attr_e( 'Center', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="right center" aria-label="<?php esc_attr_e( 'Middle right', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="left bottom" aria-label="<?php esc_attr_e( 'Bottom left', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="center bottom" aria-label="<?php esc_attr_e( 'Bottom center', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="right bottom" aria-label="<?php esc_attr_e( 'Bottom right', 'rapm' ); ?>"></button>
-										</div>
-									</div>
-								</div>
-								<input type="hidden" id="rapm_image_desktop_crop_anchor" name="rapm_image_desktop_crop_anchor" value="" />
-								<?php endif; ?>
 							</div>
 							<div id="rapm-desktop-link-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_desktop_url" name="rapm_image_desktop_url" class="regular-text" value="<?php echo esc_attr( $desktop_url ); ?>" placeholder="https://…" />
@@ -625,6 +607,27 @@ class RAPM_Upload_Handler {
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $desktop_synced ) ) ) ); ?></p>
 								<?php endif; ?>
 							</div>
+							<?php // 1.58.2: shared by uploads and one-picture links. ?>
+							<?php if ( ! $is_look ) : ?>
+							<div id="rapm-desktop-crop-picker" class="rapm-crop-picker" style="display:none;">
+								<p class="description"><strong><?php esc_html_e( 'This picture is a different shape.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick the part to keep, or use a different picture.', 'rapm' ); ?></p>
+								<div class="rapm-crop-layout">
+									<div class="rapm-crop-preview"><img id="rapm-desktop-crop-preview-img" alt="" /></div>
+									<div class="rapm-crop-anchors" role="group" aria-label="<?php esc_attr_e( 'Which part of the picture to keep', 'rapm' ); ?>">
+										<button type="button" data-anchor="left top" aria-label="<?php esc_attr_e( 'Top left', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="center top" aria-label="<?php esc_attr_e( 'Top center', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="right top" aria-label="<?php esc_attr_e( 'Top right', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="left center" aria-label="<?php esc_attr_e( 'Middle left', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="center center" class="is-selected" aria-label="<?php esc_attr_e( 'Center', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="right center" aria-label="<?php esc_attr_e( 'Middle right', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="left bottom" aria-label="<?php esc_attr_e( 'Bottom left', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="center bottom" aria-label="<?php esc_attr_e( 'Bottom center', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="right bottom" aria-label="<?php esc_attr_e( 'Bottom right', 'rapm' ); ?>"></button>
+									</div>
+								</div>
+							</div>
+							<input type="hidden" id="rapm_image_desktop_crop_anchor" name="rapm_image_desktop_crop_anchor" value="<?php echo esc_attr( 'link' === $desktop_source ? $m( '_rapm_image_desktop_crop_anchor' ) : '' ); ?>" />
+							<?php endif; ?>
 
 							<?php if ( $is_look ) : ?>
 							<p class="description"><?php echo esc_html( sprintf( __( 'Photos 2000 pixels wide or more look best. Bigger ones are made smaller for you (up to %1$d). It must be at least %2$d pixels wide.', 'rapm' ), $desktop_slot['width'], isset( $desktop_slot['min_width'] ) ? (int) $desktop_slot['min_width'] : 0 ) ); ?></p>
@@ -650,24 +653,6 @@ class RAPM_Upload_Handler {
 
 							<div id="rapm-mobile-upload-row" style="margin-top:8px;<?php echo 'link' === $mobile_source ? 'display:none;' : ''; ?>">
 								<input type="file" id="rapm_image_mobile" name="rapm_image_mobile" accept="image/*" />
-								<div id="rapm-mobile-crop-picker" class="rapm-crop-picker" style="display:none;">
-									<p class="description"><strong><?php esc_html_e( 'This picture is a different shape.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick the part to keep, or use a different picture.', 'rapm' ); ?></p>
-									<div class="rapm-crop-layout">
-										<div class="rapm-crop-preview"><img id="rapm-mobile-crop-preview-img" alt="" /></div>
-										<div class="rapm-crop-anchors" role="group" aria-label="<?php esc_attr_e( 'Which part of the picture to keep', 'rapm' ); ?>">
-											<button type="button" data-anchor="left top" aria-label="<?php esc_attr_e( 'Top left', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="center top" aria-label="<?php esc_attr_e( 'Top center', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="right top" aria-label="<?php esc_attr_e( 'Top right', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="left center" aria-label="<?php esc_attr_e( 'Middle left', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="center center" class="is-selected" aria-label="<?php esc_attr_e( 'Center', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="right center" aria-label="<?php esc_attr_e( 'Middle right', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="left bottom" aria-label="<?php esc_attr_e( 'Bottom left', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="center bottom" aria-label="<?php esc_attr_e( 'Bottom center', 'rapm' ); ?>"></button>
-											<button type="button" data-anchor="right bottom" aria-label="<?php esc_attr_e( 'Bottom right', 'rapm' ); ?>"></button>
-										</div>
-									</div>
-								</div>
-								<input type="hidden" id="rapm_image_mobile_crop_anchor" name="rapm_image_mobile_crop_anchor" value="" />
 							</div>
 							<div id="rapm-mobile-link-row" style="margin-top:8px;<?php echo 'link' === $mobile_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_mobile_url" name="rapm_image_mobile_url" class="regular-text" value="<?php echo esc_attr( $mobile_url ); ?>" placeholder="https://…" />
@@ -685,6 +670,25 @@ class RAPM_Upload_Handler {
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $mobile_synced ) ) ) ); ?></p>
 								<?php endif; ?>
 							</div>
+							<?php // 1.58.2: shared by uploads and one-picture links. ?>
+							<div id="rapm-mobile-crop-picker" class="rapm-crop-picker" style="display:none;">
+								<p class="description"><strong><?php esc_html_e( 'This picture is a different shape.', 'rapm' ); ?></strong> <?php esc_html_e( 'Pick the part to keep, or use a different picture.', 'rapm' ); ?></p>
+								<div class="rapm-crop-layout">
+									<div class="rapm-crop-preview"><img id="rapm-mobile-crop-preview-img" alt="" /></div>
+									<div class="rapm-crop-anchors" role="group" aria-label="<?php esc_attr_e( 'Which part of the picture to keep', 'rapm' ); ?>">
+										<button type="button" data-anchor="left top" aria-label="<?php esc_attr_e( 'Top left', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="center top" aria-label="<?php esc_attr_e( 'Top center', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="right top" aria-label="<?php esc_attr_e( 'Top right', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="left center" aria-label="<?php esc_attr_e( 'Middle left', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="center center" class="is-selected" aria-label="<?php esc_attr_e( 'Center', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="right center" aria-label="<?php esc_attr_e( 'Middle right', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="left bottom" aria-label="<?php esc_attr_e( 'Bottom left', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="center bottom" aria-label="<?php esc_attr_e( 'Bottom center', 'rapm' ); ?>"></button>
+										<button type="button" data-anchor="right bottom" aria-label="<?php esc_attr_e( 'Bottom right', 'rapm' ); ?>"></button>
+									</div>
+								</div>
+							</div>
+							<input type="hidden" id="rapm_image_mobile_crop_anchor" name="rapm_image_mobile_crop_anchor" value="<?php echo esc_attr( 'link' === $mobile_source ? $m( '_rapm_image_mobile_crop_anchor' ) : '' ); ?>" />
 
 							<p class="description"><?php echo esc_html( sprintf( __( 'The picture for phones. Size: exactly %1$d by %2$d pixels.', 'rapm' ), $mobile_slot['width'], $mobile_slot['height'] ) ); ?></p>
 							<?php if ( $focal && RAPM_Focal::has_phone( $kind_key ) ) : ?>
@@ -735,7 +739,15 @@ class RAPM_Upload_Handler {
 							document.getElementById( 'rapm-' + target + '-link-row' ).style.display = 'link' === val ? '' : 'none';
 						}
 						document.querySelectorAll( '.rapm-source-radio' ).forEach( function ( radio ) {
-							radio.addEventListener( 'change', function () { syncImageSource( this.getAttribute( 'data-target' ) ); } );
+							radio.addEventListener( 'change', function () {
+								var target = this.getAttribute( 'data-target' );
+								syncImageSource( target );
+								// 1.58.2: the crop choice belongs to the picture it was made for.
+								var picker = document.getElementById( 'rapm-' + target + '-crop-picker' );
+								var anchor = document.getElementById( 'rapm_image_' + target + '_crop_anchor' );
+								if ( picker ) { picker.style.display = 'none'; }
+								if ( anchor ) { anchor.value = ''; }
+							} );
 						} );
 					} )();
 				</script>
@@ -1369,6 +1381,9 @@ class RAPM_Upload_Handler {
 							// picture used as a fallback shrinks to fit instead,
 							// so it's never cropped down to just its center.
 							previewImg.style.objectFit = isFallback ? 'contain' : 'cover';
+							// 1.58.2: shows the part picked in the crop picker.
+							var anchorEl = document.getElementById( 'rapm_image_' + ( 'mobile' === mode && mobileSrc ? 'mobile' : 'desktop' ) + '_crop_anchor' );
+							previewImg.style.objectPosition = anchorEl && anchorEl.value ? anchorEl.value : '';
 							previewEmpty.style.display = showingSrc ? 'none' : '';
 							previewNoMobile.style.display = isFallback ? '' : 'none';
 						}
@@ -1391,6 +1406,10 @@ class RAPM_Upload_Handler {
 						// appears, so submitting without touching it still
 						// works — picking a different anchor is optional
 						// fine-tuning, not a requirement.
+						// 1.58.2: a one-picture link of a different shape gets the
+						// same picker (cropPickers[ which ].show( src )), instead
+						// of only a "will be turned down" note.
+						var cropPickers = {};
 						function setupCropPicker( target, slotWidth, slotHeight, tolerance ) {
 							var fileInput  = document.getElementById( 'rapm_image_' + target );
 							var picker     = document.getElementById( 'rapm-' + target + '-crop-picker' );
@@ -1402,6 +1421,7 @@ class RAPM_Upload_Handler {
 							function selectAnchor( anchor ) {
 								anchorField.value = anchor;
 								previewImg.style.objectPosition = anchor;
+								updateImageDisplay();
 								Array.prototype.forEach.call( buttons, function ( btn ) {
 									btn.classList.toggle( 'is-selected', btn.getAttribute( 'data-anchor' ) === anchor );
 								} );
@@ -1409,6 +1429,18 @@ class RAPM_Upload_Handler {
 							Array.prototype.forEach.call( buttons, function ( btn ) {
 								btn.addEventListener( 'click', function () { selectAnchor( btn.getAttribute( 'data-anchor' ) ); } );
 							} );
+							cropPickers[ target ] = {
+								show: function ( src ) {
+									previewImg.src = src;
+									selectAnchor( anchorField.value || 'center center' );
+									picker.style.display = '';
+								},
+								hide: function () {
+									picker.style.display = 'none';
+									anchorField.value = '';
+									updateImageDisplay();
+								}
+							};
 
 							fileInput.addEventListener( 'change', function () {
 								picker.style.display = 'none';
@@ -1457,13 +1489,17 @@ class RAPM_Upload_Handler {
 							var status = document.getElementById( 'rapm-' + which + '-link-status' );
 							var timer = null, seq = 0;
 							function show( text, isError ) {
+								// 1.58.2: the top bar's checklist reads this, so a link
+								// that would be turned down isn't marked done.
+								input.setAttribute( 'data-rapm-bad', isError ? '1' : '' );
 								if ( ! status ) { return; }
 								status.textContent = text;
 								status.style.color = isError ? '#b32d2e' : '';
 							}
-							function check() {
+							function check( keepCrop ) {
 								var url = input.value.trim();
 								var mine = ++seq;
+								if ( ! keepCrop && cropPickers[ which ] ) { cropPickers[ which ].hide(); }
 								if ( ! /^https?:\/\/\S+$/i.test( url ) ) { show( '', false ); return; }
 								show( <?php echo wp_json_encode( __( 'Checking the link…', 'rapm' ) ); ?>, false );
 								var body = new FormData();
@@ -1489,10 +1525,14 @@ class RAPM_Upload_Handler {
 										var msg = d.is_folder
 											? <?php echo wp_json_encode( __( 'Using the newest picture in the folder that fits: %s', 'rapm' ) ); ?>.replace( '%s', d.name )
 											: <?php echo wp_json_encode( __( 'Found the picture: %s', 'rapm' ) ); ?>.replace( '%s', d.name || url );
-										if ( ! d.fits ) {
+										var canCrop = ! d.fits && ! d.is_folder && cropPickers[ which ];
+										if ( canCrop ) {
+											cropPickers[ which ].show( d.src );
+											msg += ' ' + <?php echo wp_json_encode( __( 'It is a different shape, so pick the part to keep below.', 'rapm' ) ); ?>;
+										} else if ( ! d.fits ) {
 											msg += ' ' + <?php echo wp_json_encode( __( '(This picture is a different shape than needed, so it will be turned down when you save.)', 'rapm' ) ); ?>;
 										}
-										show( msg, ! d.fits );
+										show( msg, ! d.fits && ! canCrop );
 									} )
 									.catch( function () {
 										if ( mine === seq ) { show( <?php echo wp_json_encode( __( 'Couldn\'t check that link.', 'rapm' ) ); ?>, true ); }
@@ -1500,8 +1540,11 @@ class RAPM_Upload_Handler {
 							}
 							input.addEventListener( 'input', function () {
 								clearTimeout( timer );
-								timer = setTimeout( check, 700 );
+								timer = setTimeout( function () { check( false ); }, 700 );
 							} );
+							// 1.58.2: a saved link with a crop choice shows that choice again.
+							var savedAnchor = document.getElementById( 'rapm_image_' + which + '_crop_anchor' );
+							if ( savedAnchor && savedAnchor.value && input.value.trim() ) { check( true ); }
 						}
 						setupLinkPreview( desktopUrlInput, 'desktop' );
 						setupLinkPreview( mobileUrlInput, 'mobile' );
@@ -1694,7 +1737,8 @@ class RAPM_Upload_Handler {
 			if ( 'link' === $desktop_source ) {
 				$desktop_url = isset( $_POST['rapm_image_desktop_url'] ) ? esc_url_raw( wp_unslash( $_POST['rapm_image_desktop_url'] ) ) : '';
 				if ( $desktop_url ) {
-					$result = RAPM_Link_Source::fetch_and_validate( $desktop_url, $slots[ $kind['desktop'] ], $asset_id ?: 0, 'desktop' );
+					$desktop_crop_anchor = isset( $_POST['rapm_image_desktop_crop_anchor'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_image_desktop_crop_anchor'] ) ) : '';
+					$result              = RAPM_Link_Source::fetch_and_validate( $desktop_url, $slots[ $kind['desktop'] ], $asset_id ?: 0, 'desktop', $desktop_crop_anchor );
 					if ( is_wp_error( $result ) ) {
 						self::fail( $back, $result->get_error_message() );
 					}
@@ -1712,7 +1756,8 @@ class RAPM_Upload_Handler {
 			if ( 'link' === $mobile_source ) {
 				$mobile_url = isset( $_POST['rapm_image_mobile_url'] ) ? esc_url_raw( wp_unslash( $_POST['rapm_image_mobile_url'] ) ) : '';
 				if ( $mobile_url ) {
-					$result = RAPM_Link_Source::fetch_and_validate( $mobile_url, $slots[ $kind['mobile'] ], $asset_id ?: 0, 'mobile' );
+					$mobile_crop_anchor = isset( $_POST['rapm_image_mobile_crop_anchor'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_image_mobile_crop_anchor'] ) ) : '';
+					$result             = RAPM_Link_Source::fetch_and_validate( $mobile_url, $slots[ $kind['mobile'] ], $asset_id ?: 0, 'mobile', $mobile_crop_anchor );
 					if ( RAPM_Link_Source::is_folder_url( $mobile_url ) && RAPM_Link_Source::is_waiting_for_picture( $result ) ) {
 						// No tall picture in the folder yet — fine, the mobile
 						// picture is optional (see is_waiting_for_picture()).
@@ -1805,10 +1850,12 @@ class RAPM_Upload_Handler {
 		update_post_meta( $asset_id, '_rapm_image_desktop_source', $desktop_source );
 		if ( 'link' === $desktop_source && null !== $new_desktop_id ) {
 			update_post_meta( $asset_id, '_rapm_image_desktop_url', $desktop_url );
+			self::remember_crop( $asset_id, 'desktop', $desktop_url, isset( $desktop_crop_anchor ) ? $desktop_crop_anchor : '' );
 			update_post_meta( $asset_id, '_rapm_image_desktop_synced_at', current_time( 'mysql' ) );
 			delete_post_meta( $asset_id, '_rapm_image_desktop_sync_error' );
 		} elseif ( 'upload' === $desktop_source ) {
 			delete_post_meta( $asset_id, '_rapm_image_desktop_url' );
+			delete_post_meta( $asset_id, '_rapm_image_desktop_crop_anchor' );
 			delete_post_meta( $asset_id, '_rapm_image_desktop_synced_at' );
 			delete_post_meta( $asset_id, '_rapm_image_desktop_sync_error' );
 		}
@@ -1816,6 +1863,7 @@ class RAPM_Upload_Handler {
 		update_post_meta( $asset_id, '_rapm_image_mobile_source', $mobile_source );
 		if ( 'link' === $mobile_source && ( null !== $new_mobile_id || $mobile_waiting ) ) {
 			update_post_meta( $asset_id, '_rapm_image_mobile_url', $mobile_url );
+			self::remember_crop( $asset_id, 'mobile', $mobile_url, isset( $mobile_crop_anchor ) ? $mobile_crop_anchor : '' );
 			update_post_meta( $asset_id, '_rapm_image_mobile_synced_at', current_time( 'mysql' ) );
 			delete_post_meta( $asset_id, '_rapm_image_mobile_sync_error' );
 			if ( $mobile_waiting ) {
@@ -1826,6 +1874,7 @@ class RAPM_Upload_Handler {
 		} elseif ( 'upload' === $mobile_source ) {
 			delete_post_meta( $asset_id, '_rapm_image_mobile_waiting' );
 			delete_post_meta( $asset_id, '_rapm_image_mobile_url' );
+			delete_post_meta( $asset_id, '_rapm_image_mobile_crop_anchor' );
 			delete_post_meta( $asset_id, '_rapm_image_mobile_synced_at' );
 			delete_post_meta( $asset_id, '_rapm_image_mobile_sync_error' );
 		}
@@ -1993,6 +2042,19 @@ class RAPM_Upload_Handler {
 	 * message stating the slot's requirement against what was actually
 	 * uploaded.
 	 */
+	/**
+	 * 1.58.2: keeps the crop choice for a one-picture link, so the hourly
+	 * check trims a changed picture the same way. Folders and pictures of
+	 * the right shape keep none.
+	 */
+	private static function remember_crop( $asset_id, $which, $url, $anchor ) {
+		if ( $anchor && ! RAPM_Link_Source::is_folder_url( $url ) ) {
+			update_post_meta( $asset_id, '_rapm_image_' . $which . '_crop_anchor', $anchor );
+		} else {
+			delete_post_meta( $asset_id, '_rapm_image_' . $which . '_crop_anchor' );
+		}
+	}
+
 	private static function process_upload( $file, $slot, $parent_id, $crop_anchor = '' ) {
 		if ( ! empty( $file['error'] ) && UPLOAD_ERR_OK !== $file['error'] ) {
 			return new WP_Error( 'rapm_upload_error', __( 'The file failed to upload — please try again.', 'rapm' ) );

@@ -108,8 +108,13 @@ class RAPM_Link_Source {
 	 *
 	 * $which ('desktop'/'mobile') is only needed for folder links, to
 	 * remember which folder files this slot has already seen.
+	 *
+	 * $crop_anchor (1.58.2): which part to keep when a one-picture link is a
+	 * different shape, picked by the person in the same crop picker an
+	 * upload gets. Folder links ignore it: a folder always picks a picture
+	 * of the right shape.
 	 */
-	public static function fetch_and_validate( $url, $slot, $parent_id, $which = 'desktop' ) {
+	public static function fetch_and_validate( $url, $slot, $parent_id, $which = 'desktop', $crop_anchor = '' ) {
 		$url = esc_url_raw( $url );
 		if ( ! $url ) {
 			return new WP_Error( 'rapm_bad_url', __( 'That doesn\'t look like a valid web address.', 'rapm' ) );
@@ -122,7 +127,7 @@ class RAPM_Link_Source {
 		$tmp_path      = $picked['tmp_path'];
 		$filename_hint = $picked['name'];
 
-		$result = RAPM_Upload_Handler::validate_convert_sideload( $tmp_path, $filename_hint ?: 'linked-image', $slot, $parent_id );
+		$result = RAPM_Upload_Handler::validate_convert_sideload( $tmp_path, $filename_hint ?: 'linked-image', $slot, $parent_id, self::is_folder_url( $url ) ? '' : $crop_anchor );
 
 		if ( file_exists( $tmp_path ) ) {
 			wp_delete_file( $tmp_path );

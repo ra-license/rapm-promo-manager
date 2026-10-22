@@ -851,7 +851,7 @@ class RAPM_Promotions_Screen {
 			$saved_id = isset( $_GET['rapm_saved_asset'] ) ? absint( $_GET['rapm_saved_asset'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( $saved_id && 'rapm_asset' === get_post_type( $saved_id ) ) :
 				?>
-				<div class="notice notice-success is-dismissible"><p>
+				<div class="notice notice-success is-dismissible inline rapm-saved-notice" data-id="<?php echo esc_attr( $saved_id ); ?>"><p>
 					<?php /* translators: %s: the promotion's name */ ?>
 					<strong><?php echo esc_html( sprintf( __( 'Saved "%s".', 'rapm' ), get_the_title( $saved_id ) ) ); ?></strong>
 					<?php esc_html_e( 'If its start date has arrived, it is already on the website.', 'rapm' ); ?>

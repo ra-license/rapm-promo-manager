@@ -55,6 +55,11 @@
 	function viaLink( which ) {
 		return 'link' === radio( 'rapm_image_' + which + '_source' );
 	}
+	// 1.58.2: set by the form's link check when a linked picture would be turned down.
+	function linkIsBad( which ) {
+		var el = $( 'rapm_image_' + which + '_url' );
+		return viaLink( which ) && !! el && '1' === el.getAttribute( 'data-rapm-bad' );
+	}
 	function chosenFile( which ) {
 		var el = $( 'rapm_image_' + which );
 		return el && el.files && el.files[ 0 ] ? el.files[ 0 ] : null;
@@ -105,6 +110,9 @@
 		}
 		if ( cfg.images && ! hasPicture( 'desktop' ) ) {
 			out.push( cfg.look ? T.aPhoto : T.aPicture );
+		}
+		if ( cfg.images && ( ( hasPicture( 'desktop' ) && linkIsBad( 'desktop' ) ) || linkIsBad( 'mobile' ) ) ) {
+			out.push( T.aWorkingPic ); // 1.58.2: the link check found a problem.
 		}
 		if ( cfg.quick && ! val( 'rapm_headline' ) ) {
 			out.push( T.aQuickName );
@@ -277,6 +285,13 @@
 		return items.slice( 0, -1 ).join( ', ' ) + ' ' + T.and + ' ' + items[ items.length - 1 ];
 	}
 
+	// 1.58.2: says when it will show, from its start date, instead of a
+	// general rule that read as if nothing would show yet.
+	function readyLine() {
+		var start = val( 'rapm_starts_at' );
+		return start && new Date( start ) > new Date() ? T.canSaveLater : T.canSaveNow;
+	}
+
 	function update() {
 		var need = missing();
 		var pictureNeeds = need.filter( function ( m ) {
@@ -287,7 +302,7 @@
 		setChip( 'words', cfg.quick && ! val( 'rapm_headline' ) ? 'needed' : ( wordsDone() ? 'done' : 'not-yet' ) );
 		setChip( 'link', linkDone() ? 'done' : 'not-yet' );
 		setChip( 'dates', val( 'rapm_starts_at' ) ? 'done' : 'not-yet' );
-		note.textContent = need.length ? fmt( T.toSave, joinList( need ) ) : T.canSave;
+		note.textContent = need.length ? fmt( T.toSave, joinList( need ) ) : readyLine();
 		note.classList.toggle( 'is-error', tried && need.length > 0 );
 		bar.classList.toggle( 'is-blocked', need.length > 0 );
 		drawChecks();

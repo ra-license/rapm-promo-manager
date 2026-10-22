@@ -487,6 +487,20 @@
 		if ( ! t.closest( '.rapm-card-menu' ) ) { closeMenus(); }
 	} );
 
+	// 1.58.2: after a save the page opens at the spot, so the "Saved" note
+	// moves there (it was out of sight at the top) and the card is outlined.
+	( function () {
+		var saved = document.querySelector( '.rapm-saved-notice' );
+		var spot  = saved && window.location.hash ? document.getElementById( window.location.hash.slice( 1 ) ) : null;
+		if ( ! spot ) { return; }
+		spot = spot.closest( 'section.rapm-spot' ) || spot;
+		// Under the spot's heading, where the browser's jump to the spot shows it.
+		var head = spot.querySelector( '.rapm-spot-head' );
+		spot.insertBefore( saved, head ? head.nextSibling : spot.firstChild );
+		var card = spot.querySelector( '.rapm-card[data-id="' + saved.getAttribute( 'data-id' ) + '"]' );
+		if ( card ) { card.classList.add( 'is-just-saved' ); }
+	}() );
+
 	document.addEventListener( 'keydown', function ( e ) {
 		if ( 'Escape' !== e.key ) { return; }
 		var open = root.querySelector( '.rapm-card-menu:not([hidden])' );

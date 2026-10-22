@@ -101,7 +101,8 @@ class RAPM_Sync {
 		$slot     = $slots[ $kind[ $which ] ];
 		$old_id   = (int) get_post_meta( $asset_id, '_rapm_image_' . $which . '_id', true );
 
-		$result = RAPM_Link_Source::fetch_and_validate( $url, $slot, $asset_id, $which );
+		// 1.58.2: a one-picture link of a different shape is trimmed the way the person picked.
+		$result = RAPM_Link_Source::fetch_and_validate( $url, $slot, $asset_id, $which, (string) get_post_meta( $asset_id, '_rapm_image_' . $which . '_crop_anchor', true ) );
 
 		if ( 'mobile' === $which && RAPM_Link_Source::is_folder_url( $url ) && RAPM_Link_Source::is_waiting_for_picture( $result ) ) {
 			// No tall picture in the folder (yet) — not a failure; phones

@@ -73,10 +73,11 @@ class RAPM_Gallery {
 	}
 
 	/** The picture sizes in plain words, from the slots (what the old dropdown showed). */
-	public static function size_text( $kind_key ) {
+	public static function size_text( $kind_key, $placement = '' ) {
 		$kinds = RAPM_Slots::kinds();
 		$slots = RAPM_Slots::all();
-		$info  = $kinds[ $kind_key ];
+		// 1.58.2: on the form, the sizes of this spot (a split slider's rooms are 4 by 3).
+		$info  = $placement ? RAPM_Slots::kind_for( $kind_key, $placement ) : $kinds[ $kind_key ];
 		if ( ! $info['desktop'] ) {
 			return __( 'No picture needed', 'rapm' );
 		}
@@ -93,7 +94,7 @@ class RAPM_Gallery {
 			/* translators: 1: computer width, 2: computer height, 3: phone width, 4: phone height */
 			$text = sprintf( __( 'Computer %1$d × %2$d, phone %3$d × %4$d', 'rapm' ), $d['width'], $d['height'], $p['width'], $p['height'] );
 		}
-		if ( 'hero' === $kind_key && isset( $slots['hero_split_desktop'] ) ) {
+		if ( 'hero' === $kind_key && ! $placement && isset( $slots['hero_split_desktop'] ) ) {
 			/* translators: 1: width, 2: height */
 			$text .= ' ' . sprintf( __( '(beside a promotion box: %1$d × %2$d)', 'rapm' ), $slots['hero_split_desktop']['width'], $slots['hero_split_desktop']['height'] );
 		}
@@ -560,7 +561,7 @@ class RAPM_Gallery {
 			<span class="rapm-kind-pic"><?php echo self::picture( $kind, false ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></span>
 			<span class="rapm-kind-text">
 				<strong><?php echo esc_html( $label ); ?></strong>
-				<span class="rapm-kind-size"><?php echo esc_html( self::size_text( $kind ) ); ?></span>
+				<span class="rapm-kind-size"><?php echo esc_html( self::size_text( $kind, $placement ) ); ?></span>
 				<?php if ( $is_edit || $in_spot ) : ?>
 					<?php /* translators: 1: spot name, 2: kind, like "Reveal panels" */ ?>
 					<span class="rapm-kind-why"><?php echo esc_html( sprintf( __( 'It goes in "%1$s", a %2$s spot.', 'rapm' ), $spot_name, $label ) ); ?></span>

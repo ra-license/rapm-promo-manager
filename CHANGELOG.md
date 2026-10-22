@@ -4,6 +4,27 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.58.2
+
+**Fixes from walking the main jobs on staging as a web manager would (Oct 22),** after installing 1.58.1. The walk: a new Slider spot from "+ New spot", a new split slider from the Design Center with a real room photo saved, Shop the Look with a room photo link, and Reveal panels. New spots opened their editors, as 1.58.1 meant them to. These are what got in the way:
+- **A picture link of a different shape can be trimmed, like an upload.** Pasting a link to a 1600×1200 room photo into a Slider (1920×600) said "it will be turned down when you save", and there was no way past it except making a new picture. An uploaded file of the same shape already got "Pick the part to keep". The link path never passed a choice to the same trimming code. Now a one-picture link gets the same picker. The choice is kept with the link, so the hourly check trims a changed picture the same way. Folder links still pick a picture of the right shape and are never trimmed.
+- **The Live Preview shows the part picked** in that picker, for uploads and links.
+- **A link that won't save isn't marked done.** The Picture chip was a green check, and the top bar said nothing was missing, while the note under the link said it would be turned down. Now the chip stays red and the bar says "To save, add a picture link that works (see the red note under it)." That covers a computer or phone picture link.
+- **The top bar says when it will show.** "Nothing goes live before its start date" sat beside "No start date, so it shows as soon as you save" and read as the opposite. It now says "Ready to save. It shows as soon as you save." or "Ready to save. It starts showing on its start date."
+- **"Saved" shows where you land.** Saving a room photo, promotion box or reveal panel opens the Design Center at its spot, but the "Saved" note was at the top of the page, 2,600px up, out of sight. It now sits in the spot, above the pictures, and the saved card is outlined in green.
+- **The kind line gives this spot's sizes.** A split slider's form said "Computer 1920 × 600 … (beside a promotion box: 1600 × 1200)". It now says "Computer 1600 × 1200" there, and plain sliders no longer mention the split size. The gallery still shows both.
+- **Not in this release: the preview on narrow windows.** Below 1,100px wide (a browser window on half a laptop screen, like the one used for this walk), the Live Preview sits under the whole form, about 2,800px down. That needs a mockup first and is part of the 1.59 Hero studio.
+- **Tested in WordPress Playground (PHP 8.3), with real clicks:**
+  - A Slider with a link to a 1600×1200 picture showed the picker and "pick the part to keep below". Choosing Top center moved the Live Preview to the top, and saving made a 1920×600 picture.
+  - The choice was stored ("center top"). The hourly sync swapped in a changed picture, trimmed the same way, with no error.
+  - Reopening and re-saving with the link unchanged worked, and the picker showed the saved choice.
+  - A link to a missing picture turned the Picture chip red, with the new bar line.
+  - The "Saved" note and green outline showed at a split slider's room photos.
+  - Without a choice, a different-shape link is still turned down, as before.
+  - Downloads went through WordPress's own pre_http_request filter, since Playground can't reach outside sites.
+
+---
+
 ## 1.58.1
 
 **Fixes for the dead ends Phil hit on staging, and the first step of the Promo Studio Plan** (https://claude.ai/artifact/BfP2BxZZKYuCRx3LhW4eCZ). On Oct 22, Phil made a new Reveal panels spot on staging and found that it reloaded the Design Center instead of opening the editor, the form had no live preview, and the kind was set with no explanation: "I feel like you've been building this as an AI would use it rather than a client or web manager." A code walk-through of the three main jobs (hero banners, split promos, Shop the Look) found the rest. Phil's picks: keep a Save button, R&A's details move to one panel, sticky ads after the Split studio.
