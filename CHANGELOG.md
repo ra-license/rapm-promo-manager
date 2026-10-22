@@ -25,6 +25,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Slider → typing a new spot name picked "A new spot" → Copy: Fall Sale slide (ended) → Start: a draft in the new "Living Room slider" spot, dates cleared, Goes with dropped, with the copy notice.
   - Saving it (a real form post with test pictures) published it and cleared the copy mark. Posting `rapm_kind=coupon` to a saved Slider kept it a Slider. A failed new save went back to `kind=coupon&placement=deals`.
   - All eight start steps, Promotions, Design Center, Help, Training Guide and Settings load with no PHP errors; the start step stacks at phone width.
+- **Installed on staging (found already updated on 2026-10-22):** the Plugins screen shows 1.56.0. The real "New promotion" screen shows all eight cards under "On this website now" (staging has a spot of every kind), with each spot's name. Slider's start step lists "Home page slider (On 3 pages)", "Split test slider (On 2 pages)" and "A new spot", and the copies show the store's real photos. Editing a saved promotion box shows the kind line with "A saved promotion keeps its kind" and the browser tab reads "Edit promotion". Nothing was created or saved there. Not yet in production.
 - **Not done:** a copy left without saving stays a hidden draft named "… (Copy)" in its spot, like Duplicate always made. Templates exist only for promotion boxes, as before.
 
 ---
