@@ -4,6 +4,58 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.59.0
+
+**Promotion views and clicks in Google Analytics.** This is step 1 of the order Phil set on Oct 22, which merges the tracking and audience plan, the Promo Studio Plan and the Approved Art Pipeline. It comes first so the later "Who sees it" test has a before-and-after. It started from a Guynn Furniture proposal: keep what sells and move what doesn't, so first measure which promotions sell. **Off until R&A turns it on per site.** Phil's picks: GA4 shows the Internal Name, and the items are the real products a promotion points to.
+- **Promo Manager › Settings › Google Analytics:**
+  - "Send promotion views and clicks to Google Analytics" (off by default).
+  - "How this site loads Google Analytics": Find it automatically, Google tag (gtag.js) or Google Tag Manager.
+  - "Product ID sent": SKU, or the product number when there's no SKU; or always the product number.
+- **Events sent (GA4's own names):** `view_promotion` and `select_promotion`. Each has:
+  - `promotion_id` (`rapm-<id>`)
+  - `promotion_name` (the Internal Name)
+  - `creative_slot` (the spot's name, e.g. "Main slider")
+  - `creative_name` (the kind, e.g. "Slider")
+  - `items`
+- **Items are the products the promotion points to:** its dots, a product link, or a hand-picked list. Each item is item_id = SKU, item_name = the product's name. A promotion with no products sends one item, `rapm-<id>` named after the promotion. GA4 needs at least one, and its "Item promotion name" report reads it from items. Up to 25 products per event.
+  - A click on one product (a dot's "View product", a shop bar card, a look card) sends just that product.
+- **When a view counts:** at least half of the promotion on screen for one second without a break, once per promotion per page view. That's the ad industry's display rule; GA4 has none.
+  - In a slider, only the slide showing counts. In Shop the Look, only the look showing counts.
+  - Promotions that appear later (a popup, a new tab) are picked up too.
+  - A browser tab in the background doesn't count.
+- **When a click counts:** a link inside a promotion, or a part of a slider or Shop the Look outside any one promotion (the dot pop-up), which counts for the one showing. Links outside promotions send nothing.
+  - The click is caught before the dots script stops it, and the page still changes as normal: GA4 sends as the page leaves.
+- **Sent one way only, never both:**
+  - Google tag: the same queue as gtag(), so it works even before gtag.js loads.
+  - Tag Manager: `{ecommerce: null}`, then `{event, ecommerce}`.
+  - "Find it automatically": uses the Google tag when the page has gtag() or a gtag.js (G- or GT-) script, including one held back by WP Rocket; otherwise Tag Manager when gtm.js is there; otherwise nothing.
+  - Microsoft Clarity, if the site has it, also gets a `rapm_promotion_click` event on clicks.
+- **How:** each promotion's details go to the browser once per page, in the footer, keyed by `data-rapm-key`. Nothing new is printed when tracking is off. Every renderer reports what it prints (Slider, Feature banner, split room photos and promotion box, Shop the Look, Quick links, Reveal panels, Coupon row, Tile row).
+  - New `RAPM_Track` and `assets/js/rapm-track.js`, kept out of WP Rocket's "Delay JavaScript".
+  - The WordPress admin, the Customizer and Elementor's editor preview send nothing.
+- **Coupon cards and tiles now carry `data-rapm-key`.** This also fixes an old blind spot: when one coupon or tile ended as another started, the count stayed the same and the row wasn't rebuilt until the page was reloaded.
+- **Help & FAQ:** "How do I see which promotions get clicked?" gives the report path: Reports › Monetization › Promotions. The calendar answer no longer points to "the last step of the form (Review & Schedule)", which went away in 1.57.0.
+- **Setup notes for R&A:**
+  - Tag Manager sites need a GA4 Event tag for `view_promotion` and `select_promotion` with "Send Ecommerce data" from the Data Layer.
+  - Results show in GA4 under Reports › Monetization › Promotions (Item promotion name, Item promotion creative slot).
+  - Before promising clients reports by area, confirm in GA4 that Region and the item promotion fields can share one report, and that small counts aren't withheld.
+- **Not in this release:**
+  - Any report inside WordPress.
+  - View and click counts on promotion cards (those come with the Ad studio and "Popular near you").
+  - A promotion printed after the page's footer scripts (rare) doesn't load the tracking script by itself. If another promotion on the page loaded it, it sends with its number as its name.
+- **Tested in WordPress Playground (PHP 8.3, Elementor):**
+  - All 83 PHP files parse; no PHP errors on the test page, Settings or Help.
+  - A test page with two slides, a coupon card, a tile and a quick link, rebuilt in a frame that could be inspected, with a stand-in Google tag:
+    - Nothing was sent while the slider was below the fold. After scrolling to it, nothing at 0.6s and one view_promotion for "Fall Sale" (Main slider, Slider) after one second. The next slide, "Mattress Week", wasn't counted until it was moved to; going back didn't count "Fall Sale" again.
+    - Scrolling down gave one view each for "Ten Off Coupon" (Main coupons), "Sofas Tile" (Main tiles) and "Visit Us Link" (Main quick links).
+    - Clicking the coupon, the slide and the quick link sent select_promotion for each. A link outside any promotion sent nothing.
+    - With only Tag Manager on the page, events went as `{ecommerce:null}` then `{event, ecommerce}`. With neither tag, nothing was sent.
+    - With tracking off, the page had no tracking script or list.
+  - Settings saved the three new choices; bad values fell back to "auto" and "SKU".
+  - Products need WooCommerce, which Playground didn't have: tested on staging.
+
+---
+
 ## 1.58.2
 
 **Fixes from walking the main jobs on staging as a web manager would (Oct 22),** after installing 1.58.1. The walk: a new Slider spot from "+ New spot", a new split slider from the Design Center with a real room photo saved, Shop the Look with a room photo link, and Reveal panels. New spots opened their editors, as 1.58.1 meant them to. These are what got in the way:

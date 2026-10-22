@@ -95,6 +95,7 @@ class RAPM_Coupon_Book {
 	}
 
 	private static function render_card( $asset_id ) {
+		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$headline    = get_post_meta( $asset_id, '_rapm_headline', true );
 		$subhead     = get_post_meta( $asset_id, '_rapm_subhead', true );
 		$cta_text    = get_post_meta( $asset_id, '_rapm_cta_text', true );
@@ -119,7 +120,7 @@ class RAPM_Coupon_Book {
 
 		$tag = $url ? 'a' : 'div';
 		?>
-		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-coupon-card" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
+		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-coupon-card" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 480px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />

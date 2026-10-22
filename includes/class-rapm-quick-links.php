@@ -150,6 +150,7 @@ class RAPM_Quick_Links {
 	 * 'live' => whether its dates include right now ).
 	 */
 	private static function render_item( $asset_id ) {
+		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$headline   = get_post_meta( $asset_id, '_rapm_headline', true );
 		$subhead    = get_post_meta( $asset_id, '_rapm_subhead', true );
 		$alt        = get_post_meta( $asset_id, '_rapm_alt_text', true );

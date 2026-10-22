@@ -94,6 +94,7 @@ class RAPM_Reveal {
 	}
 
 	private static function render_panel( $asset_id, $is_live ) {
+		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$word = (string) get_post_meta( $asset_id, '_rapm_headline', true );
 		if ( '' === trim( $word ) ) {
 			return ''; // A panel is its word; without one there's nothing to show.

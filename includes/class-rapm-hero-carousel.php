@@ -202,6 +202,7 @@ class RAPM_Hero_Carousel {
 	 * take the first load.
 	 */
 	private static function render_slide( $asset_id, $heading_tag = 'h2', &$eager = false ) {
+		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$headline     = get_post_meta( $asset_id, '_rapm_headline', true );
 		$subhead      = get_post_meta( $asset_id, '_rapm_subhead', true );
 		$cta_text     = get_post_meta( $asset_id, '_rapm_cta_text', true );

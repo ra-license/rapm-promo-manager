@@ -466,6 +466,7 @@ class RAPM_Split {
 	}
 
 	private static function render_item( $asset_id, &$eager ) {
+		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$image_id = (int) get_post_meta( $asset_id, '_rapm_image_desktop_id', true );
 		$src      = $image_id ? wp_get_attachment_image_url( $image_id, 'full' ) : '';
 		$design   = 'design' === self::box_mode( $asset_id );

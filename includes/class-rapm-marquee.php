@@ -151,6 +151,7 @@ class RAPM_Marquee {
 	}
 
 	private static function render_tile( $asset_id ) {
+		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$headline    = get_post_meta( $asset_id, '_rapm_headline', true );
 		$subhead     = get_post_meta( $asset_id, '_rapm_subhead', true );
 		$alt         = get_post_meta( $asset_id, '_rapm_alt_text', true );
@@ -169,7 +170,7 @@ class RAPM_Marquee {
 
 		$tag = $url ? 'a' : 'div';
 		?>
-		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-marquee-tile" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
+		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-marquee-tile" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
 			<span class="rapm-marquee-tile-image">
 				<img src="<?php echo esc_url( $desktop_src ); ?>" alt="<?php echo esc_attr( $alt ); ?>" loading="lazy" />
 			</span>

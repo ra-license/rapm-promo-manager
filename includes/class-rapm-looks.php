@@ -436,6 +436,7 @@ class RAPM_Looks {
 	/** One look's fields, or null if it has no photo (nothing to show). */
 	private static function look_data( $post ) {
 		$id       = $post->ID;
+		RAPM_Track::remember( $id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$image_id = (int) get_post_meta( $id, '_rapm_image_desktop_id', true );
 		if ( ! $image_id || ! wp_get_attachment_image_url( $image_id, 'full' ) ) {
 			return null;

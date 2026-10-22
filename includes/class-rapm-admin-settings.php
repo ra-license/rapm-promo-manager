@@ -42,6 +42,14 @@ class RAPM_Admin_Settings {
 			// 1.34.0: an Elementor global color picked by name (its _id),
 			// used live. Empty = automatic (Primary, Accent, Secondary).
 			'accent_global'           => '',
+			// 1.59.0: promotion views and clicks in Google Analytics (RAPM_Track).
+			// Off until R&A turns it on for a site.
+			'ga_enabled'              => 0,
+			// How this site loads Google Analytics: 'auto' finds it, 'gtag'
+			// (the Google tag) or 'gtm' (Tag Manager). Events go one way only.
+			'ga_mode'                 => 'auto',
+			// What item_id holds: 'sku' (product number if there's no SKU) or 'id'.
+			'ga_item_id'              => 'sku',
 		);
 	}
 
@@ -97,6 +105,10 @@ class RAPM_Admin_Settings {
 		$accent = isset( $input['accent_color'] ) ? trim( $input['accent_color'] ) : '';
 		$out['accent_color'] = ( $accent && preg_match( '/^#[0-9a-fA-F]{6}$/', $accent ) ) ? $accent : '';
 		$out['accent_global'] = isset( $input['accent_global'] ) ? sanitize_html_class( $input['accent_global'] ) : '';
+
+		$out['ga_enabled'] = isset( $input['ga_enabled'] ) ? 1 : 0;
+		$out['ga_mode']    = isset( $input['ga_mode'] ) && in_array( $input['ga_mode'], array( 'auto', 'gtag', 'gtm' ), true ) ? $input['ga_mode'] : 'auto';
+		$out['ga_item_id'] = isset( $input['ga_item_id'] ) && 'id' === $input['ga_item_id'] ? 'id' : 'sku';
 
 		$overrides = array();
 		if ( isset( $input['slot_overrides'] ) && is_array( $input['slot_overrides'] ) ) {
@@ -303,6 +315,39 @@ class RAPM_Admin_Settings {
 						</tr>
 					</table>
 				<?php endif; ?>
+
+				<?php // 1.59.0: promotion views and clicks in Google Analytics (RAPM_Track). ?>
+				<h2 id="rapm-ga"><?php esc_html_e( 'Google Analytics', 'rapm' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Sends which promotions people see and click to this site\'s Google Analytics 4. Results show in Google Analytics under Reports › Monetization › Promotions. Nothing is sent until this is turned on.', 'rapm' ); ?></p>
+				<table class="form-table">
+					<tr>
+						<th><?php esc_html_e( 'Promotion views and clicks', 'rapm' ); ?></th>
+						<td><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[ga_enabled]" value="1" <?php checked( $opts['ga_enabled'], 1 ); ?> /> <?php esc_html_e( 'Send promotion views and clicks to Google Analytics', 'rapm' ); ?></label>
+							<p class="description"><?php esc_html_e( 'A view counts when at least half of a promotion is on screen for one second, once per page. A click counts when someone clicks its link or one of its products.', 'rapm' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="rapm_ga_mode"><?php esc_html_e( 'How this site loads Google Analytics', 'rapm' ); ?></label></th>
+						<td>
+							<select id="rapm_ga_mode" name="<?php echo esc_attr( self::OPTION ); ?>[ga_mode]">
+								<option value="auto" <?php selected( $opts['ga_mode'], 'auto' ); ?>><?php esc_html_e( 'Find it automatically', 'rapm' ); ?></option>
+								<option value="gtag" <?php selected( $opts['ga_mode'], 'gtag' ); ?>><?php esc_html_e( 'Google tag (gtag.js)', 'rapm' ); ?></option>
+								<option value="gtm" <?php selected( $opts['ga_mode'], 'gtm' ); ?>><?php esc_html_e( 'Google Tag Manager', 'rapm' ); ?></option>
+							</select>
+							<p class="description"><?php esc_html_e( 'Events go one way only, never both. "Find it automatically" uses the Google tag if the page has one, otherwise Tag Manager, otherwise sends nothing. With Tag Manager, add a GA4 Event tag for view_promotion and select_promotion that sends the ecommerce data.', 'rapm' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="rapm_ga_item_id"><?php esc_html_e( 'Product ID sent', 'rapm' ); ?></label></th>
+						<td>
+							<select id="rapm_ga_item_id" name="<?php echo esc_attr( self::OPTION ); ?>[ga_item_id]">
+								<option value="sku" <?php selected( $opts['ga_item_id'], 'sku' ); ?>><?php esc_html_e( 'SKU (the product number if there is no SKU)', 'rapm' ); ?></option>
+								<option value="id" <?php selected( $opts['ga_item_id'], 'id' ); ?>><?php esc_html_e( 'Product number', 'rapm' ); ?></option>
+							</select>
+							<p class="description"><?php esc_html_e( 'Match what this site\'s other Google Analytics shop events use, so a product\'s numbers line up in reports. A promotion with no products sends one item named after the promotion.', 'rapm' ); ?></p>
+						</td>
+					</tr>
+				</table>
 
 				<h2><?php esc_html_e( 'Auto-Update Settings', 'rapm' ); ?></h2>
 				<?php

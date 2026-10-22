@@ -67,6 +67,8 @@ class RAPM_Assets {
 		// schedule's watch() for which looks are live.
 		wp_register_script( 'rapm-looks-js', RAPM_URL . 'assets/js/rapm-looks.js', array( 'rapm-schedule-js' ), RAPM_VERSION, true );
 		wp_register_script( 'rapm-pins-js', RAPM_URL . 'assets/js/rapm-pins.js', array(), RAPM_VERSION, true );
+		// 1.59.0: promotion views and clicks in Google Analytics (RAPM_Track).
+		wp_register_script( 'rapm-track-js', RAPM_URL . 'assets/js/rapm-track.js', array(), RAPM_VERSION, true );
 	}
 
 	/**
@@ -88,6 +90,8 @@ class RAPM_Assets {
 				return array( array( 'rapm-quick-links-css' ), array( 'rapm-schedule-js' ) );
 			case 'reveal':
 				return array( array( 'rapm-reveal-css' ), array( 'rapm-schedule-js' ) );
+			case 'track': // 1.59.0, asked for by RAPM_Track::remember() only when it's on.
+				return array( array(), array( 'rapm-track-js' ) );
 		}
 		return array( array(), array() );
 	}
@@ -151,6 +155,8 @@ class RAPM_Assets {
 		$exclusions[] = 'rapm-looks';
 		$exclusions[] = 'RAPM_Looks';
 		$exclusions[] = 'rapm-pins'; // 1.35.0: banner dots and button.
+		$exclusions[] = 'rapm-track'; // 1.59.0: promotion views and clicks.
+		$exclusions[] = 'RAPM_Track';
 		return $exclusions;
 	}
 }
