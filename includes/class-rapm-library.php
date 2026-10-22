@@ -39,6 +39,9 @@ class RAPM_Library {
 		);
 		$out = array();
 		foreach ( $posts as $post ) {
+			if ( get_post_meta( $post->ID, '_rapm_from_gallery', true ) ) {
+				continue; // 1.58.1: a gallery copy that hasn't been saved yet.
+			}
 			$out[] = self::item( $post );
 		}
 		return $out;

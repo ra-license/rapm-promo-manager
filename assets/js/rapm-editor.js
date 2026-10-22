@@ -148,7 +148,7 @@
 			return;
 		}
 		chip.setAttribute( 'data-state', state );
-		chip.querySelector( '.rapm-ed-sr' ).textContent = ' ' + ( 'done' === state ? T.done : ( 'needed' === state ? T.needed : T.notYet ) );
+		chip.querySelector( '.rapm-ed-sr' ).textContent = ' ' + ( 'done' === state ? T.done : ( 'needed' === state ? T.needed : ( 'optional' === state ? T.optional : T.notYet ) ) );
 	}
 
 	/* ---- Ready to go live (one-screen kinds) ----------------------------- */
@@ -189,7 +189,9 @@
 		}
 		var words = bar.querySelector( '[data-chip="words"]' );
 		var wordsHref = words ? words.getAttribute( 'href' ) : '';
-		if ( cfg.quick && ! val( 'rapm_headline' ) ) {
+		if ( 'reveal' === cfg.kind && ! val( 'rapm_headline' ) ) {
+			add( 'fail', T.noWord, T.addOne, wordsHref );
+		} else if ( cfg.quick && ! val( 'rapm_headline' ) ) {
 			add( 'fail', T.noQuick, T.addOne, wordsHref );
 		} else if ( ! wordsDone() ) {
 			add( 'info', T.noHead, T.addOne, wordsHref );
@@ -281,7 +283,7 @@
 			return m !== T.aQuickName;
 		} );
 		setChip( 'picture', pictureNeeds.length ? 'needed' : 'done' );
-		setChip( 'pieces', piecesDone() ? 'done' : 'not-yet' );
+		setChip( 'pieces', piecesDone() ? 'done' : 'optional' ); // 1.58.1: dots are optional.
 		setChip( 'words', cfg.quick && ! val( 'rapm_headline' ) ? 'needed' : ( wordsDone() ? 'done' : 'not-yet' ) );
 		setChip( 'link', linkDone() ? 'done' : 'not-yet' );
 		setChip( 'dates', val( 'rapm_starts_at' ) ? 'done' : 'not-yet' );
@@ -316,14 +318,120 @@
 		}
 	} );
 
-	/* ---- One-screen kinds: preview beside the form, "More options" ------ */
+	/* ---- The live preview beside the form (1.58.1: every kind) ---------- */
 
-	if ( cfg.simple ) {
+	var card = $( 'rapm-ed-preview-card' );
+	function heading( text, note ) {
+		var h = document.createElement( 'h2' );
+		h.textContent = text;
+		card.appendChild( h );
+		var p = document.createElement( 'p' );
+		p.className = 'description';
+		p.textContent = note;
+		card.appendChild( p );
+		return p;
+	}
+	function toggles( pairs, onPick ) {
+		var row = document.createElement( 'p' );
+		row.className = 'rapm-ed-toggles';
+		pairs.forEach( function ( pair, i ) {
+			var b = document.createElement( 'button' );
+			b.type = 'button';
+			b.className = 'button button-small rapm-preview-toggle-btn';
+			b.textContent = pair[ 1 ];
+			b.setAttribute( 'aria-pressed', 0 === i ? 'true' : 'false' );
+			b.addEventListener( 'click', function () {
+				row.querySelectorAll( 'button' ).forEach( function ( o ) { o.setAttribute( 'aria-pressed', o === b ? 'true' : 'false' ); } );
+				onPick( pair[ 0 ] );
+			} );
+			row.appendChild( b );
+		} );
+		card.appendChild( row );
+	}
+
+	if ( card && 'promo_box' === cfg.kind ) {
+		// The box: a live copy of the design square, with the website's styles.
+		var pvNote = heading( T.pvTitle, T.pvBox );
+		var mirror = document.createElement( 'div' );
+		mirror.className = 'rapm-pb-item is-design rapm-cv-mini rapm-ed-boxmirror';
+		mirror.setAttribute( 'aria-hidden', 'true' );
+		card.appendChild( mirror );
+		var stage = document.querySelector( '#rapm-canvas .rapm-cv-stage' );
+		var copy = function () {
+			var design = 'design' === radio( 'rapm_box_mode' );
+			mirror.hidden = ! design || ! stage;
+			pvNote.textContent = design ? T.pvBox : T.pvGraphic;
+			if ( ! design || ! stage ) { return; }
+			mirror.innerHTML = stage.innerHTML;
+			mirror.style.background = stage.style.background;
+			mirror.querySelectorAll( '.rapm-cv-guide' ).forEach( function ( g ) { g.remove(); } );
+			mirror.querySelectorAll( '[tabindex]' ).forEach( function ( n ) { n.removeAttribute( 'tabindex' ); } );
+			mirror.querySelectorAll( '.is-sel, .is-picked' ).forEach( function ( n ) { n.classList.remove( 'is-sel', 'is-picked' ); } );
+		};
+		var timer = 0;
+		if ( stage && window.MutationObserver ) {
+			new MutationObserver( function () {
+				window.clearTimeout( timer );
+				timer = window.setTimeout( copy, 60 );
+			} ).observe( stage, { subtree: true, childList: true, attributes: true, characterData: true } );
+		}
+		form.addEventListener( 'change', copy );
+		copy();
+	} else if ( card && 'reveal' === cfg.kind ) {
+		// A Reveal panel, drawn with the website's own styles (rapm-reveal.css).
+		heading( T.pvTitle, T.pvReveal );
+		var state = { open: false, phone: false };
+		var urls = { desktop: cfg.src ? cfg.src.desktop : '', mobile: cfg.src ? cfg.src.mobile : '' };
+		var wrap = document.createElement( 'div' );
+		wrap.className = 'rapm-ed-rvwrap';
+		wrap.innerHTML = '<div class="rapm-rv rapm-ed-rv" style="--rv-n:1"><div class="rapm-rv-panel"><span class="rapm-rv-color"></span><span class="rapm-rv-photo"><img alt=""></span><span class="rapm-rv-words"><span class="rapm-rv-word"></span><span class="rapm-rv-more"><span class="rapm-rv-line"></span><span class="rapm-rv-go"></span></span></span></div></div>';
+		var panel = wrap.querySelector( '.rapm-rv-panel' );
+		var img = wrap.querySelector( 'img' );
+		toggles( [ [ 'closed', T.closed ], [ 'open', T.open ] ], function ( v ) { state.open = 'open' === v; draw(); } );
+		toggles( [ [ 'computer', T.computer ], [ 'phone', T.phone ] ], function ( v ) { state.phone = 'phone' === v; draw(); } );
+		card.appendChild( wrap );
+		[ 'desktop', 'mobile' ].forEach( function ( which ) {
+			var input = $( 'rapm_image_' + which );
+			if ( input ) {
+				input.addEventListener( 'change', function () {
+					var f = chosenFile( which );
+					urls[ which ] = f ? URL.createObjectURL( f ) : ( cfg.src ? cfg.src[ which ] : '' );
+					draw();
+				} );
+			}
+		} );
+		var draw = function () {
+			var src = state.phone && urls.mobile ? urls.mobile : urls.desktop;
+			panel.style.setProperty( '--rv-color', val( 'rapm_panel_color' ) || '#1d3557' );
+			panel.style.color = val( 'rapm_text_color' ) || '#ffffff';
+			panel.classList.toggle( 'is-on', state.open );
+			panel.classList.toggle( 'is-side', 'side' === radio( 'rapm_word_dir' ) && ! state.phone );
+			panel.classList.toggle( 'no-photo', ! src );
+			wrap.classList.toggle( 'is-phone', state.phone );
+			img.hidden = ! src;
+			if ( src && img.getAttribute( 'src' ) !== src ) { img.src = src; }
+			var focus = val( state.phone ? 'rapm_focus_mobile' : 'rapm_focus_desktop' );
+			img.style.objectPosition = focus || '50% 50%';
+			wrap.querySelector( '.rapm-rv-word' ).textContent = val( 'rapm_headline' ) || '…';
+			wrap.querySelector( '.rapm-rv-line' ).textContent = val( 'rapm_subhead' );
+			var go = wrap.querySelector( '.rapm-rv-go' );
+			go.textContent = val( 'rapm_cta_text' ) ? val( 'rapm_cta_text' ) + ' →' : '';
+			go.hidden = ! val( 'rapm_cta_text' );
+		};
+		form.addEventListener( 'input', draw );
+		form.addEventListener( 'change', draw );
+		window.setInterval( draw, 1500 ); // The focal point and linked colors change without events.
+		draw();
+	} else if ( card ) {
 		var preview = $( 'rapm-ed-preview' );
-		var card    = $( 'rapm-ed-preview-card' );
-		if ( preview && card ) {
+		if ( preview ) {
 			card.appendChild( preview );
 		}
+	}
+
+	/* ---- One-screen kinds: "More options" -------------------------------- */
+
+	if ( cfg.simple ) {
 
 		var rows = Array.prototype.slice.call( form.querySelectorAll( 'tr.rapm-more' ) );
 		if ( rows.length ) {

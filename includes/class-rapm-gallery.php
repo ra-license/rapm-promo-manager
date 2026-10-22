@@ -57,7 +57,7 @@ class RAPM_Gallery {
 	}
 
 	/** The promotion form for a new promotion of this kind. */
-	private static function form_url( $kind, $placement, $args = array() ) {
+	public static function form_url( $kind, $placement, $args = array() ) {
 		return add_query_arg(
 			array_merge(
 				array(
@@ -183,7 +183,7 @@ class RAPM_Gallery {
 	private static function made_in( $kind ) {
 		return in_array( $kind, array( 'promo_box', 'reveal' ), true )
 			? __( 'The Design Center opens it after you save.', 'rapm' )
-			: __( 'The promotion form, in four short steps.', 'rapm' );
+			: __( 'The promotion form, on one screen.', 'rapm' );
 	}
 
 	/** "Home page slider, Sofas page slider +2 more". */
@@ -435,6 +435,32 @@ class RAPM_Gallery {
 		return self::picture( $kind, false );
 	}
 
+	/**
+	 * 1.58.1: a gallery copy that was never saved (still a hidden draft
+	 * marked _rapm_from_gallery a day later) goes to the trash, where it can
+	 * still be restored. Runs at most once an hour, on Promo Manager screens.
+	 */
+	public static function tidy_abandoned() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 0 !== strpos( $page, 'rapm-' ) || get_transient( 'rapm_gallery_tidied' ) || ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		set_transient( 'rapm_gallery_tidied', 1, HOUR_IN_SECONDS );
+		$old = get_posts(
+			array(
+				'post_type'      => 'rapm_asset',
+				'post_status'    => 'draft',
+				'posts_per_page' => 50,
+				'fields'         => 'ids',
+				'date_query'     => array( array( 'before' => '1 day ago' ) ),
+				'meta_query'     => array( array( 'key' => '_rapm_from_gallery', 'compare' => 'EXISTS' ) ), // phpcs:ignore WordPress.DB.SlowDBQuery
+			)
+		);
+		foreach ( $old as $id ) {
+			wp_trash_post( $id );
+		}
+	}
+
 	/** Start: makes the spot or the copy if asked, then opens the form. */
 	public static function handle_start() {
 		if ( ! current_user_can( 'edit_posts' ) ) {
@@ -450,6 +476,7 @@ class RAPM_Gallery {
 		$spot  = isset( $_POST['spot'] ) ? sanitize_title( wp_unslash( $_POST['spot'] ) ) : '';
 		$start = isset( $_POST['start'] ) ? sanitize_text_field( wp_unslash( $_POST['start'] ) ) : 'blank';
 		$spots = self::spots_for( $kind );
+		$new_spot = array();
 		$fail  = function ( $message ) use ( $kind, $spot ) {
 			wp_safe_redirect( self::url( $kind, array( 'placement' => $spot, 'rapm_error' => rawurlencode( $message ) ) ) );
 			exit;
@@ -460,7 +487,10 @@ class RAPM_Gallery {
 			if ( '' === trim( $name ) ) {
 				$fail( __( 'Give the new spot a name, like "Living Room slider".', 'rapm' ) );
 			}
-			$placement = RAPM_Spots::create( $kind, $name );
+			// 1.58.1: named when its first promotion is saved, so an
+			// abandoned start leaves no empty spot behind.
+			$placement = RAPM_Spots::free_code( $kind, $name );
+			$new_spot  = array( 'rapm_new_spot_name' => rawurlencode( $name ) );
 		} elseif ( isset( $spots[ $spot ] ) ) {
 			$placement = $spot;
 		} else {
@@ -488,11 +518,11 @@ class RAPM_Gallery {
 				delete_post_meta( $new_id, '_rapm_ends_at' );
 			}
 			update_post_meta( $new_id, '_rapm_from_gallery', $ended ? 'ended' : '1' );
-			wp_safe_redirect( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $new_id . '&rapm_copied=' . $source ) );
+			wp_safe_redirect( add_query_arg( $new_spot, admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $new_id . '&rapm_copied=' . $source ) ) );
 			exit;
 		}
 
-		$args = array();
+		$args = $new_spot;
 		if ( 'promo_box' === $kind && 0 === strpos( $start, 'tpl:' ) && preg_match( '/^[a-z0-9-]{6,30}$/', substr( $start, 4 ) ) ) {
 			$args['rapm_tpl'] = substr( $start, 4 );
 		}
@@ -507,17 +537,39 @@ class RAPM_Gallery {
 	 */
 	public static function kind_line( $kind, $placement, $is_edit ) {
 		$kinds = RAPM_Slots::kinds();
+		$label = $kinds[ $kind ]['label'];
+		// 1.58.1 (Phil): say why the kind is set. A spot holds one kind, so
+		// "Change" is only offered while the spot has nothing in it yet.
+		$in_spot = get_posts(
+			array(
+				'post_type'      => 'rapm_asset',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private' ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery
+					'relation' => 'AND',
+					array( 'key' => '_rapm_kind', 'value' => $kind ),
+					array( 'key' => '_rapm_placement', 'value' => $placement ),
+					array( 'key' => '_rapm_from_gallery', 'compare' => 'NOT EXISTS' ),
+				),
+			)
+		);
+		$spot_name = RAPM_Spots::name( $kind, $placement );
 		?>
 		<div class="rapm-kind-line">
 			<span class="rapm-kind-pic"><?php echo self::picture( $kind, false ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></span>
 			<span class="rapm-kind-text">
-				<strong><?php echo esc_html( $kinds[ $kind ]['label'] ); ?></strong>
+				<strong><?php echo esc_html( $label ); ?></strong>
 				<span class="rapm-kind-size"><?php echo esc_html( self::size_text( $kind ) ); ?></span>
+				<?php if ( $is_edit || $in_spot ) : ?>
+					<?php /* translators: 1: spot name, 2: kind, like "Reveal panels" */ ?>
+					<span class="rapm-kind-why"><?php echo esc_html( sprintf( __( 'It goes in "%1$s", a %2$s spot.', 'rapm' ), $spot_name, $label ) ); ?></span>
+				<?php endif; ?>
 			</span>
 			<?php if ( $is_edit ) : ?>
 				<?php RAPM_Tip::hint( __( 'A saved promotion keeps its kind.', 'rapm' ), __( 'Each kind needs different picture sizes. To make another kind, start a New promotion.', 'rapm' ) ); ?>
-			<?php else : ?>
-				<a class="rapm-kind-change" href="<?php echo esc_url( self::url( $kind, array( 'placement' => $placement ) ) ); ?>"><?php esc_html_e( 'Change', 'rapm' ); ?></a>
+			<?php elseif ( ! $in_spot ) : ?>
+				<a class="rapm-kind-change" href="<?php echo esc_url( self::url( $kind, array( 'placement' => $placement ) ) ); ?>"><?php esc_html_e( 'Pick a different kind', 'rapm' ); ?></a>
 			<?php endif; ?>
 		</div>
 		<?php

@@ -43,6 +43,8 @@ class RAPM_Upload_Handler {
 		wp_enqueue_style( 'rapm-gallery-css', RAPM_URL . 'assets/css/rapm-gallery.css', array(), RAPM_VERSION );
 		// 1.57.0: the one-screen editor (top bar, pinned preview, Ready checks).
 		wp_enqueue_style( 'rapm-editor-css', RAPM_URL . 'assets/css/rapm-editor.css', array(), RAPM_VERSION );
+		// 1.58.1: the Reveal panel preview uses the website's own styles.
+		wp_enqueue_style( 'rapm-reveal-css', RAPM_URL . 'assets/css/rapm-reveal.css', array(), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-editor-js', RAPM_URL . 'assets/js/rapm-editor.js', array(), RAPM_VERSION, true );
 		wp_localize_script(
 			'rapm-editor-js',
@@ -93,6 +95,16 @@ class RAPM_Upload_Handler {
 				'setDates'   => __( 'Set dates', 'rapm' ),
 				'noEnd'      => __( 'No end date, so it keeps showing until you turn it off.', 'rapm' ),
 				'datesOk'    => __( 'Has a start and an end date.', 'rapm' ),
+				'optional'   => __( '(optional)', 'rapm' ),
+				'noWord'     => __( 'No big word, so the panel doesn\'t show.', 'rapm' ),
+				'pvTitle'    => __( 'Live preview', 'rapm' ),
+				'pvBox'      => __( 'The box as shoppers see it. It changes as you work on the design.', 'rapm' ),
+				'pvGraphic'  => __( 'A finished graphic shows whole, as you chose it above.', 'rapm' ),
+				'pvReveal'   => __( 'The panel as shoppers see it. Your website\'s fonts show on the real page.', 'rapm' ),
+				'closed'     => __( 'Closed', 'rapm' ),
+				'open'       => __( 'Open', 'rapm' ),
+				'computer'   => __( 'Computer', 'rapm' ),
+				'phone'      => __( 'Phone', 'rapm' ),
 			)
 		);
 		// 1.35.0: dots and the button in a banner's Live Preview.
@@ -173,7 +185,26 @@ class RAPM_Upload_Handler {
 		$asset_id = isset( $_GET['edit'] ) ? absint( $_GET['edit'] ) : 0;
 		$is_edit  = $asset_id && 'rapm_asset' === get_post_type( $asset_id );
 
-		$m = function ( $key, $default = '' ) use ( $asset_id, $is_edit ) {
+		// 1.58.1: what was typed before a save the server turned down, so it
+		// isn't lost (self::fail()). Pictures have to be chosen again.
+		$restore = array();
+		if ( isset( $_GET['rapm_restore'] ) ) {
+			$restore = get_transient( 'rapm_restore_' . get_current_user_id() );
+			$restore = is_array( $restore ) ? $restore : array();
+			delete_transient( 'rapm_restore_' . get_current_user_id() );
+		}
+		$m = function ( $key, $default = '' ) use ( $asset_id, $is_edit, $restore ) {
+			$field = 'rapm_' . preg_replace( '/^_rapm_/', '', $key );
+			$alias = array( 'rapm_destination_type' => 'rapm_dest_type', 'rapm_destination_value' => 'rapm_dest_value' );
+			$field = isset( $alias[ $field ] ) ? $alias[ $field ] : $field;
+			if ( isset( $restore[ $field ] ) && is_scalar( $restore[ $field ] ) ) {
+				$value = (string) $restore[ $field ];
+				if ( in_array( $field, array( 'rapm_canvas', 'rapm_dots', 'rapm_photo_btn' ), true ) ) {
+					$json = json_decode( $value, true );
+					return is_array( $json ) ? $json : $default;
+				}
+				return $value;
+			}
 			if ( ! $is_edit ) {
 				return $default;
 			}
@@ -181,11 +212,13 @@ class RAPM_Upload_Handler {
 			return '' === $val ? $default : $val;
 		};
 
-		$title       = $is_edit ? get_the_title( $asset_id ) : '';
+		$title       = isset( $restore['rapm_title'] ) ? (string) $restore['rapm_title'] : ( $is_edit ? get_the_title( $asset_id ) : '' );
 		// A new asset's placement can arrive pre-filled via the URL (the
 		// "Add Slide" link from the Sliders dashboard), same idea as the
 		// existing ?kind= pre-fill just below.
 		$placement_default = ( ! $is_edit && isset( $_GET['placement'] ) ) ? sanitize_title( wp_unslash( $_GET['placement'] ) ) : 'default';
+		// 1.58.1: a new spot from the gallery, named when this is first saved.
+		$new_spot_name = isset( $_GET['rapm_new_spot_name'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_GET['rapm_new_spot_name'] ) ), 0, 60 ) : '';
 		$placement   = $m( '_rapm_placement', $placement_default ?: 'default' );
 		$dest_type   = $m( '_rapm_destination_type', 'url' );
 		$dest_value  = $m( '_rapm_destination_value' );
@@ -297,7 +330,24 @@ class RAPM_Upload_Handler {
 			</style>
 
 			<?php if ( $error_message ) : ?>
-				<div class="notice notice-error"><p><?php echo esc_html( $error_message ); ?></p></div>
+				<div class="notice notice-error"><p><?php echo esc_html( $error_message ); ?><?php if ( $restore ) : ?> <?php esc_html_e( 'What you typed is still here. Pictures need to be chosen again.', 'rapm' ); ?><?php endif; ?></p></div>
+			<?php endif; ?>
+
+			<?php if ( isset( $_GET['rapm_new_spot'] ) ) : ?>
+				<?php
+				$first = array(
+					'reveal'      => __( 'Add its first panel.', 'rapm' ),
+					'look'        => __( 'Add its first look.', 'rapm' ),
+					'hero'        => RAPM_Split::is_split( $placement ) ? __( 'Add its first room photo.', 'rapm' ) : __( 'Add its first picture.', 'rapm' ),
+					'quick_links' => __( 'Add its first link.', 'rapm' ),
+				);
+				?>
+				<div class="notice notice-success"><p>
+					<?php /* translators: %s: the new spot's name */ ?>
+					<strong><?php echo esc_html( sprintf( __( '"%s" is ready.', 'rapm' ), RAPM_Spots::name( $kind_key, $placement ) ) ); ?></strong>
+					<?php echo esc_html( isset( $first[ $kind_key ] ) ? $first[ $kind_key ] : __( 'Add its first promotion.', 'rapm' ) ); ?>
+					<?php esc_html_e( 'It shows on the website once R&A puts its code on a page (see Setup for R&A at the bottom).', 'rapm' ); ?>
+				</p></div>
 			<?php endif; ?>
 
 			<?php if ( isset( $_GET['rapm_checked'] ) && ! $desktop_error && ! $mobile_error ) : ?>
@@ -311,7 +361,7 @@ class RAPM_Upload_Handler {
 			<?php endif; ?>
 
 			<?php if ( isset( $_GET['rapm_saved'] ) ) : ?>
-				<div class="notice notice-success is-dismissible"><p><strong><?php esc_html_e( 'Saved.', 'rapm' ); ?></strong> <?php esc_html_e( 'This promotion is saved. If its start date has arrived, it\'s already live anywhere the shortcode below has been added.', 'rapm' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><strong><?php esc_html_e( 'Saved.', 'rapm' ); ?></strong> <?php esc_html_e( 'If its start date has arrived, it\'s already on every page this spot is on.', 'rapm' ); ?></p></div>
 			<?php endif; ?>
 
 			<?php
@@ -354,6 +404,11 @@ class RAPM_Upload_Handler {
 					$is_edit && ! get_post_meta( $asset_id, '_rapm_from_gallery', true ),
 					array(
 						'simple' => $simple,
+						'kind'   => $kind_key,
+						'src'    => array(
+							'desktop' => $img_desktop ? (string) wp_get_attachment_image_url( $img_desktop, 'large' ) : '',
+							'mobile'  => $img_mobile ? (string) wp_get_attachment_image_url( $img_mobile, 'large' ) : '',
+						),
 						'images' => $has_images,
 						'look'   => $is_look,
 						'quick'  => $is_quick,
@@ -367,7 +422,7 @@ class RAPM_Upload_Handler {
 					)
 				);
 				?>
-				<div class="rapm-ed-layout<?php echo $simple ? ' has-side' : ''; ?>"><div class="rapm-ed-main">
+				<div class="rapm-ed-layout has-side"><div class="rapm-ed-main">
 				<style>
 					.rapm-step-heading { color: #8c8f94; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px; }
 				</style>
@@ -376,7 +431,7 @@ class RAPM_Upload_Handler {
 				<h2 class="rapm-step-heading">1. <?php esc_html_e( 'Name and picture', 'rapm' ); ?></h2>
 				<table class="form-table">
 					<tr>
-						<th><label for="rapm_title"><?php esc_html_e( 'Internal Name', 'rapm' ); ?></label></th>
+						<th><label for="rapm_title"><?php esc_html_e( 'Name', 'rapm' ); ?></label></th>
 						<td><input type="text" id="rapm_title" name="rapm_title" class="regular-text" value="<?php echo esc_attr( $title ); ?>" />
 							<?php RAPM_Tip::hint( __( 'Only you see this name. Shoppers don\'t.', 'rapm' ) ); ?>
 						</td>
@@ -389,9 +444,15 @@ class RAPM_Upload_Handler {
 							// can't quietly start a new spot nobody placed on a page.
 							$spot_choices = RAPM_Spots::known( $kind_key );
 							$in_list      = false;
-							foreach ( $spot_choices as $choice ) {
+							// 1.58.1: a new spot from the gallery has no saved name yet.
+							$spot_saved   = RAPM_Spots::get( $kind_key, $placement );
+							$pending_name = $new_spot_name && empty( $spot_saved['name'] ) ? $new_spot_name : '';
+							foreach ( $spot_choices as $i => $choice ) {
 								if ( $choice['placement'] === $placement ) {
 									$in_list = true;
+									if ( $pending_name ) {
+										$spot_choices[ $i ]['name'] = $pending_name;
+									}
 								}
 							}
 							if ( ! $in_list ) {
@@ -399,7 +460,7 @@ class RAPM_Upload_Handler {
 									$spot_choices,
 									array(
 										'placement' => $placement,
-										'name'      => RAPM_Spots::name( $kind_key, $placement ),
+										'name'      => $new_spot_name ? $new_spot_name : RAPM_Spots::name( $kind_key, $placement ),
 									)
 								);
 							}
@@ -409,9 +470,12 @@ class RAPM_Upload_Handler {
 									<option value="<?php echo esc_attr( $choice['placement'] ); ?>" <?php selected( $placement, $choice['placement'] ); ?>><?php echo esc_html( $choice['name'] ); ?></option>
 								<?php endforeach; ?>
 							</select>
-							<?php RAPM_Tip::hint( __( 'The spot on your website where it shows.', 'rapm' ), __( 'Each spot is on the Promotions page, with the pages it is on. R&A Marketing adds new spots.', 'rapm' ) ); ?>
+							<?php if ( $pending_name ) : ?>
+								<input type="hidden" name="rapm_new_spot_name" value="<?php echo esc_attr( $new_spot_name ); ?>" />
+								<input type="hidden" name="rapm_new_spot_code" value="<?php echo esc_attr( $placement ); ?>" />
+							<?php endif; ?>
+							<?php RAPM_Tip::hint( __( 'The spot on your website where it shows.', 'rapm' ), __( 'Each spot is on the Promotions page, with the pages it is on. To make a new one, use "+ New spot" there.', 'rapm' ) ); ?>
 							<p class="description" id="rapm-placement-summary"></p>
-							<p class="description"><?php esc_html_e( 'Code for the page (for R&A Marketing):', 'rapm' ); ?> <code id="rapm-shortcode-preview"></code></p>
 						</td>
 					</tr>
 					<?php if ( $is_look ) : ?>
@@ -857,7 +921,7 @@ class RAPM_Upload_Handler {
 				<h2 class="rapm-step-heading"><?php echo (int) $step['link']; ?>. <?php esc_html_e( 'Link', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Where the Button Goes', 'rapm' ); ?></h2>
-				<p class="description"><?php esc_html_e( 'Where the button goes, often a whole room, like the Living Room page. For no button, leave the button words blank in step 2.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'Where the button goes, often a whole room, like the Living Room page. For no button, leave the button words blank under Words.', 'rapm' ); ?></p>
 				<?php else : ?>
 				<h2><?php esc_html_e( 'Where It Goes When Clicked', 'rapm' ); ?></h2>
 				<?php endif; ?>
@@ -1191,10 +1255,10 @@ class RAPM_Upload_Handler {
 				</div><!-- .rapm-step: Where It Links -->
 
 				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['review']; ?>" data-step="<?php echo (int) $step['review']; ?>">
-				<h2 class="rapm-step-heading"><?php echo (int) $step['review']; ?>. <?php echo $simple ? esc_html__( 'Dates', 'rapm' ) : esc_html__( 'Preview and dates', 'rapm' ); ?></h2>
+				<h2 class="rapm-step-heading"><?php echo (int) $step['review']; ?>. <?php esc_html_e( 'Dates', 'rapm' ); ?></h2>
 
 				<?php if ( $is_look ) : ?>
-					<?php self::render_look_preview(); ?>
+					<div id="rapm-ed-preview"><?php self::render_look_preview(); ?></div>
 				<?php elseif ( $has_images ) : ?>
 				<?php if ( $is_reveal ) : // 1.53.0: the slider preview doesn't show a reveal panel. ?>
 				<style>#rapm-live-preview-head, #rapm-preview-wrap, .rapm-preview-toggle-btn { display: none; }</style>
@@ -1202,7 +1266,7 @@ class RAPM_Upload_Handler {
 				<?php endif; ?>
 				<?php if ( $is_box ) : // 1.44.0: the canvas in step 2 is the box's preview. ?>
 				<style>#rapm-live-preview-head, #rapm-preview-wrap { display: none; }</style>
-				<p class="description"><?php esc_html_e( 'The box shows the first promotion that is on and in its dates. A design looks like it does in step 2. A finished graphic always shows whole.', 'rapm' ); ?></p>
+				<p class="description"><?php esc_html_e( 'The box shows the first promotion that is on and in its dates. A finished graphic always shows whole.', 'rapm' ); ?></p>
 				<?php endif; ?>
 				<div id="rapm-ed-preview"><?php // 1.57.0: moved beside the form for one-screen kinds (rapm-editor.js). ?>
 				<div id="rapm-live-preview-head">
@@ -1467,7 +1531,7 @@ class RAPM_Upload_Handler {
 				<div class="rapm-calendar-indicator <?php echo $rapm_on_calendar ? 'is-on' : 'is-off'; ?>" id="rapm-calendar-indicator">
 					<p id="rapm-calendar-indicator-text">
 						<?php if ( $rapm_on_calendar ) : ?>
-							<?php esc_html_e( 'This will show up on the Promotions Calendar, on any page with the [rapm_promotions_calendar] code on it.', 'rapm' ); ?>
+							<?php esc_html_e( 'This will show up on your Promotions Calendar.', 'rapm' ); ?>
 						<?php else : ?>
 							<?php esc_html_e( "This will NOT show up on the Promotions Calendar — it needs both a start date and an end date above. That's fine if you don't use the calendar.", 'rapm' ); ?>
 						<?php endif; ?>
@@ -1485,7 +1549,7 @@ class RAPM_Upload_Handler {
 						var endInput   = document.getElementById( 'rapm_ends_at' );
 						var box        = document.getElementById( 'rapm-calendar-indicator' );
 						var text       = document.getElementById( 'rapm-calendar-indicator-text' );
-						var ON_TEXT    = <?php echo wp_json_encode( __( 'This will show up on the Promotions Calendar, on any page with the [rapm_promotions_calendar] code on it.', 'rapm' ) ); ?>;
+						var ON_TEXT    = <?php echo wp_json_encode( __( 'This will show up on your Promotions Calendar.', 'rapm' ) ); ?>;
 						var OFF_TEXT   = <?php echo wp_json_encode( __( "This will NOT show up on the Promotions Calendar — it needs both a start date and an end date above. That's fine if you don't use the calendar.", 'rapm' ) ); ?>;
 
 						function update() {
@@ -1499,20 +1563,22 @@ class RAPM_Upload_Handler {
 					} )();
 				</script>
 
+				<div class="rapm-ed-setup">
+					<h3><?php esc_html_e( 'Setup for R&A', 'rapm' ); ?></h3>
+					<p><?php esc_html_e( 'Code for the page:', 'rapm' ); ?> <code id="rapm-shortcode-preview"></code></p>
+				</div>
 				<?php submit_button( $is_edit ? __( 'Save promotion', 'rapm' ) : __( 'Create promotion', 'rapm' ) ); ?>
 				</div><!-- .rapm-step: Review & Schedule -->
 				</div><!-- .rapm-ed-main -->
-				<?php if ( $simple ) : ?>
 				<aside class="rapm-ed-side" id="rapm-ed-side" aria-label="<?php esc_attr_e( 'Preview and checks', 'rapm' ); ?>">
 					<div class="rapm-ed-card" id="rapm-ed-preview-card"></div>
 					<div class="rapm-ed-card" id="rapm-ed-ready">
 						<h2><?php esc_html_e( 'Ready to go live', 'rapm' ); ?></h2>
 						<p class="rapm-ed-ready-sum" id="rapm-ed-ready-sum"></p>
 						<ul class="rapm-ed-checks" id="rapm-ed-checks"></ul>
-						<p class="description"><?php esc_html_e( 'Links are checked after you save, in the Design Center.', 'rapm' ); ?></p>
+						<p class="description"><?php esc_html_e( 'To check that links work, open Design Center › Asset library and click "Check links".', 'rapm' ); ?></p>
 					</div>
 				</aside>
-				<?php endif; ?>
 				</div><!-- .rapm-ed-layout -->
 
 			</form>
@@ -1811,6 +1877,16 @@ class RAPM_Upload_Handler {
 				update_post_meta( $asset_id, '_' . $field, call_user_func( $sanitizer, wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
+		// 1.58.1: a new spot started in the gallery gets its name now.
+		$new_spot_name = isset( $_POST['rapm_new_spot_name'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['rapm_new_spot_name'] ) ), 0, 60 ) : '';
+		$new_spot_code = isset( $_POST['rapm_new_spot_code'] ) ? sanitize_title( wp_unslash( $_POST['rapm_new_spot_code'] ) ) : '';
+		$placed_in     = (string) get_post_meta( $asset_id, '_rapm_placement', true );
+		if ( '' !== trim( $new_spot_name ) && $new_spot_code === $placed_in ) {
+			$existing = RAPM_Spots::get( $kind_key, $placed_in );
+			if ( empty( $existing['name'] ) ) {
+				RAPM_Spots::update( $kind_key, $placed_in, array( 'name' => $new_spot_name ) );
+			}
+		}
 		$dest_type = isset( $_POST['rapm_dest_type'] ) ? sanitize_key( wp_unslash( $_POST['rapm_dest_type'] ) ) : 'url';
 		update_post_meta( $asset_id, '_rapm_destination_type', $dest_type );
 
@@ -1893,6 +1969,18 @@ class RAPM_Upload_Handler {
 			update_post_meta( $asset_id, '_rapm_placement', 'default' );
 		}
 
+		// 1.58.1: room photos of a split slider, promotion boxes and reveal
+		// panels are worked on in the Design Center, so saving goes back there.
+		$saved_place = (string) get_post_meta( $asset_id, '_rapm_placement', true );
+		if ( 'promo_box' === $kind_key || 'reveal' === $kind_key || ( 'hero' === $kind_key && RAPM_Split::is_split( $saved_place ) ) ) {
+			$dc = RAPM_Promotions_Screen::design_url();
+			if ( 'reveal' === $kind_key ) {
+				$dc = add_query_arg( 'tab', 'reveal', $dc );
+			}
+			$dc = add_query_arg( 'rapm_saved_asset', $asset_id, $dc );
+			wp_safe_redirect( $dc . '#rapm-spot-' . ( 'reveal' === $kind_key ? 'reveal' : 'hero' ) . '-' . sanitize_html_class( $saved_place ) );
+			exit;
+		}
 		wp_safe_redirect( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $asset_id . '&rapm_saved=1' ) );
 		exit;
 	}
@@ -2310,7 +2398,7 @@ class RAPM_Upload_Handler {
 			<h2><?php esc_html_e( 'Add product dots and a "Shop now" button (optional)', 'rapm' ); ?></h2>
 			<?php RAPM_Tip::hint( __( 'Shoppers tap a dot to see the product, its price and stock.', 'rapm' ), __( 'The same products show as numbered cards under the slider. Put dots on the computer picture and the phone picture. Phone dots start where you put them on the computer picture, so check both.', 'rapm' ) ); ?>
 			<p class="rapm-pieces-views" role="group" aria-label="<?php esc_attr_e( 'Which picture to place them on', 'rapm' ); ?>">
-				<button type="button" class="button rapm-pieces-view is-selected" data-view="desktop" aria-pressed="true"><?php esc_html_e( 'Desktop picture', 'rapm' ); ?></button>
+				<button type="button" class="button rapm-pieces-view is-selected" data-view="desktop" aria-pressed="true"><?php esc_html_e( 'Computer picture', 'rapm' ); ?></button>
 				<button type="button" class="button rapm-pieces-view" data-view="mobile" aria-pressed="false"><?php esc_html_e( 'Phone picture', 'rapm' ); ?></button>
 				<span class="rapm-pieces-view-note" id="rapm-pieces-view-note"></span>
 			</p>
@@ -2328,7 +2416,7 @@ class RAPM_Upload_Handler {
 		<div class="rapm-pieces" id="rapm-pieces">
 			<div class="rapm-pieces-photo">
 				<div class="rapm-pieces-stage" id="rapm-pieces-stage" hidden><img alt="" draggable="false" /></div>
-				<div class="rapm-pieces-empty" id="rapm-pieces-empty"><?php echo $banner ? esc_html__( 'Add the picture in step 1, then come back here to place the dots.', 'rapm' ) : esc_html__( 'Add a room photo in step 1, then come back here to place the dots.', 'rapm' ); ?></div>
+				<div class="rapm-pieces-empty" id="rapm-pieces-empty"><?php echo $banner ? esc_html__( 'Choose the computer picture above, and it shows here for placing dots.', 'rapm' ) : esc_html__( 'Choose the room photo above, and it shows here for placing dots.', 'rapm' ); ?></div>
 				<p class="description"><?php esc_html_e( 'Each dot\'s number matches its row in "Dots and products." Shoppers see the same numbers on the product cards.', 'rapm' ); ?> <button type="button" class="button-link" id="rapm-pieces-add"><?php esc_html_e( 'Add a dot in the middle', 'rapm' ); ?></button> <?php esc_html_e( 'and move it with the arrow keys.', 'rapm' ); ?></p>
 			</div>
 			<div class="rapm-pieces-side">
@@ -2538,7 +2626,7 @@ class RAPM_Upload_Handler {
 					</div>
 				</div>
 			</div>
-			<p class="description" id="rapm-look-pv-empty"><?php esc_html_e( 'Choose a room photo in step 1 to see it here.', 'rapm' ); ?></p>
+			<p class="description" id="rapm-look-pv-empty"><?php esc_html_e( 'Choose a room photo above to see it here.', 'rapm' ); ?></p>
 		</div>
 		<?php
 	}
@@ -2671,6 +2759,15 @@ class RAPM_Upload_Handler {
 	}
 
 	private static function fail( $back_url, $message ) {
+		// 1.58.1: keep what was typed for 10 minutes, for this person only.
+		$keep = array();
+		foreach ( wp_unslash( $_POST ) as $key => $value ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in handle_save().
+			if ( 0 === strpos( $key, 'rapm_' ) && 'rapm_nonce' !== $key && is_scalar( $value ) ) {
+				$keep[ $key ] = $value;
+			}
+		}
+		set_transient( 'rapm_restore_' . get_current_user_id(), $keep, 10 * MINUTE_IN_SECONDS );
+		$back_url = add_query_arg( 'rapm_restore', 1, $back_url );
 		wp_safe_redirect( add_query_arg( 'rapm_error', rawurlencode( $message ), $back_url ) );
 		exit;
 	}

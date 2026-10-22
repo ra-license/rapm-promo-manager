@@ -4,6 +4,50 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.58.1
+
+**Fixes for the dead ends Phil hit on staging, and the first step of the Promo Studio Plan** (https://claude.ai/artifact/BfP2BxZZKYuCRx3LhW4eCZ). On Oct 22, Phil made a new Reveal panels spot on staging and found that it reloaded the Design Center instead of opening the editor, the form had no live preview, and the kind was set with no explanation: "I feel like you've been building this as an AI would use it rather than a client or web manager." A code walk-through of the three main jobs (hero banners, split promos, Shop the Look) found the rest. Phil's picks: keep a Save button, R&A's details move to one panel, sticky ads after the Split studio.
+- **A new spot opens its editor.** "+ New spot" on the Promotions page and "Make it" in Design Center › Reveal panels now open the form for the spot's first promotion, with "\"Homepage Spot\" is ready. Add its first panel." The Reveal "Make it" used to set the address and then reload, so it stayed on the Design Center.
+- **Design Center › Split sliders can make a new split slider** ("New split slider: … Make it"). It opens its first room photo. Before, with no plain slider left it said to go to the Promotions page.
+- **"+ New promotion" on the Promotions page,** beside "+ New spot".
+- **Saving a room photo, promotion box or reveal panel goes back to the Design Center,** with "Saved \"Living\". … Keep editing it." It used to stay on the form, and getting back took another click and page load.
+- **The live preview sits beside the form for every kind:**
+  - **Reveal panels:** a real panel in the website's own styles, with Closed / Open and Computer / Phone, updating as you type and choose pictures. There was no preview before.
+  - **Promotion box:** a live copy of the design square that follows every change on the canvas, or a note for a finished graphic.
+  - **Shop the Look:** its preview moved from the bottom of the page to the side.
+- **The kind is explained.** The line under the heading says "It goes in \"Home Reveal\", a Reveal panels spot." "Pick a different kind" is offered only while the spot has nothing in it.
+- **A save the server turns down keeps what was typed** (name, words, link, dates, design, dots) for 10 minutes, with "What you typed is still here. Pictures need to be chosen again." Before, the form came back empty.
+- **R&A's details are in one "Setup for R&A" panel** at the bottom of each spot (code for the page, spot name, H1 note, Remove this spot) and at the bottom of the form (code for the page). Still shown to everyone.
+- **No more leftovers from abandoned starts:**
+  - "A new spot" in the gallery is named when its first promotion is saved, so leaving the form leaves no empty spot.
+  - Gallery copies that were never saved no longer show as Hidden cards or in the Asset library, and go to the trash after a day (restorable).
+- **"Pieces" is optional:** its chip shows a plain dot, not "not yet".
+- **Wording:**
+  - "Internal Name" is now "Name".
+  - "R&A Marketing adds new spots" now points to "+ New spot".
+  - "four short steps" now reads "on one screen".
+  - Old step numbers are removed ("in step 2", "step 1, then come back here").
+  - "Desktop picture" is now "Computer picture".
+  - "the shortcode below" now reads "every page this spot is on".
+  - The calendar note no longer shows a shortcode.
+  - The link-check note says where to go.
+  - The New spot dialog says "It will show as" (was "Clients will see").
+- **Tested in WordPress Playground (PHP 8.3, Elementor):**
+  - No PHP errors on the Promotions page, both Design Center tabs, the gallery, and new and saved forms for Slider, Promotion box, Reveal panels and Shop the Look.
+  - **With real clicks:** Design Center › Reveal panels › "Homepage Spot" › Make it opened the form with the "is ready" note. The Reveal preview showed the panel, then Open, then Phone. The box preview copied the "Anniversary Sale" design. Shop the Look's preview is on the side. The Promotions page shows "+ New promotion" and Setup for R&A.
+  - **Form posts:**
+    - A new Slider turned down for a missing picture came back with its name, words, link and start date.
+    - Re-saving a reveal panel returned to Design Center › Reveal panels with "Saved \"Living\"".
+    - A gallery new spot wasn't created on Start, and a copied slide saved into "Bedroom slider" named the spot then.
+    - The Design Center's new split slider was made already split and opened "Add its first room photo".
+    - A three-day-old unsaved copy went to the trash while a saved one stayed.
+  - **Found and fixed while testing:**
+    - The box preview's note took over the top bar's "To save, add …" line (a shared variable name).
+    - Copies didn't carry the new spot's name.
+    - An empty link label showed as a blank outline in the Reveal preview.
+
+---
+
 ## 1.58.0
 
 **One-time tips: a short tip the first time someone reaches a part.** Step 4 of the UX review (help in the moment, not a tour), built from the mockup Phil approved on 2026-10-22 (https://claude.ai/artifact/6v3FWRnQcgyAYP6Tuy4Mw1) with my picks: remembered per login, on for everyone at first, and short with no "Learn more" (the longer help stays behind the (i) buttons).

@@ -324,8 +324,23 @@
 		say( section, T.saving );
 		post( { action: 'rapm_create_spot', nonce: cfg.nonce, kind: 'reveal', name: name.value.trim() } ).then( function ( res ) {
 			if ( ! res || ! res.success ) { throw new Error( res && res.data && res.data.message ? res.data.message : '' ); }
-			window.location.href = res.data.url;
-			window.location.reload();
+			window.location.href = res.data.url; // 1.58.1: opens the new spot's first panel.
+		} ).catch( function ( err ) { say( section, err.message || T.saveFailed ); } );
+	} );
+
+	/* ---- Design Center: a new split slider (1.58.1) ------------------------- */
+
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-make-new-split' ) : null;
+		if ( ! form ) { return; }
+		e.preventDefault();
+		var section = form.closest( '.rapm-spot' );
+		var name    = form.querySelector( 'input[name="name"]' );
+		if ( ! name.value.trim() ) { name.focus(); return; }
+		say( section, T.saving );
+		post( { action: 'rapm_create_spot', nonce: cfg.nonce, kind: 'hero', split: '1', name: name.value.trim() } ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( res && res.data && res.data.message ? res.data.message : '' ); }
+			window.location.href = res.data.url; // Opens its first room photo.
 		} ).catch( function ( err ) { say( section, err.message || T.saveFailed ); } );
 	} );
 

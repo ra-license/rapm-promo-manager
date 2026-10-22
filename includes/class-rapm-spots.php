@@ -233,6 +233,17 @@ class RAPM_Spots {
 	 * @return string The new placement code.
 	 */
 	public static function create( $kind, $name ) {
+		$code = self::free_code( $kind, $name );
+		self::update( $kind, $code, array( 'name' => $name ) );
+		return $code;
+	}
+
+	/**
+	 * The code a new spot with this name would get (1.58.1: the gallery
+	 * names a new spot only when its first promotion is saved, so an
+	 * abandoned start leaves no empty spot behind).
+	 */
+	public static function free_code( $kind, $name ) {
 		$base = sanitize_title( $name );
 		$base = '' !== $base ? $base : 'spot';
 		$code = $base;
@@ -241,7 +252,6 @@ class RAPM_Spots {
 			$code = $base . '-' . $i;
 			++$i;
 		}
-		self::update( $kind, $code, array( 'name' => $name ) );
 		return $code;
 	}
 }

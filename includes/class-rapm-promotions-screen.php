@@ -276,6 +276,9 @@ class RAPM_Promotions_Screen {
 
 		$spots = array();
 		foreach ( $posts as $post ) {
+			if ( get_post_meta( $post->ID, '_rapm_from_gallery', true ) ) {
+				continue; // 1.58.1: a gallery copy that hasn't been saved yet.
+			}
 			$kind      = get_post_meta( $post->ID, '_rapm_kind', true ) ?: 'hero'; // phpcs:ignore
 			$placement = get_post_meta( $post->ID, '_rapm_placement', true ) ?: 'default'; // phpcs:ignore
 			$key       = $kind . '|' . $placement;
@@ -438,7 +441,10 @@ class RAPM_Promotions_Screen {
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Promotions', 'rapm' ); ?></h1>
 					<p class="rapm-promos-sub"><?php esc_html_e( 'The pictures on your website, grouped by where they show.', 'rapm' ); ?></p>
 				</div>
-				<button type="button" class="button button-primary rapm-new-spot-open"><?php esc_html_e( '+ New spot', 'rapm' ); ?></button>
+				<p class="rapm-promos-actions">
+					<a class="button button-primary" href="<?php echo esc_url( RAPM_Gallery::url() ); ?>"><?php esc_html_e( '+ New promotion', 'rapm' ); ?></a>
+					<button type="button" class="button rapm-new-spot-open"><?php esc_html_e( '+ New spot', 'rapm' ); ?></button>
+				</p>
 				<?php if ( $spots ) : ?>
 					<div class="rapm-promos-search">
 						<label for="rapm-promo-search"><?php esc_html_e( 'Find a promotion', 'rapm' ); ?></label>
@@ -570,7 +576,7 @@ class RAPM_Promotions_Screen {
 					<span class="rapm-ns-help"><?php esc_html_e( 'A spot can go on more than one page, so a page name stops being true. Good names: "Main slider", "Seasonal feature banner", "Living Room slider".', 'rapm' ); ?></span>
 				</p>
 				<p class="rapm-ns-preview">
-					<span><?php esc_html_e( 'Clients will see', 'rapm' ); ?></span>
+					<span><?php esc_html_e( 'It will show as', 'rapm' ); ?></span>
 					<strong class="rapm-ns-preview-name"></strong> <span class="rapm-type-chip rapm-ns-preview-type"><?php echo esc_html( RAPM_Slots::kind( 'hero' )['label'] ); ?></span>
 				</p>
 				<p class="rapm-ns-status" aria-live="polite"></p>
@@ -687,46 +693,32 @@ class RAPM_Promotions_Screen {
 							<?php esc_html_e( 'Shows on:', 'rapm' ); ?>
 							<?php echo RAPM_Spot_Usage::links_html( $used_on ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in links_html(). ?>
 						<?php else : ?>
-							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. Put its spot code (below) on a page to show it.', 'rapm' ); ?></span>
+							<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet. R&A puts its code on a page (see Setup for R&A below).', 'rapm' ); ?></span>
 						<?php endif; ?>
 						<?php if ( count( $spot['posts'] ) > 1 && ! $box ) : ?>
 							<span class="rapm-spot-hint"> · <?php echo 'look' === $kind ? esc_html__( 'Drag to change the order of the tabs', 'rapm' ) : ( in_array( $kind, array( 'quick_links', 'reveal' ), true ) ? esc_html__( 'Drag to change the order they show in', 'rapm' ) : esc_html__( 'Drag to change the order they play in', 'rapm' ) ); ?></span>
 						<?php endif; ?>
 					</p>
-					<div class="rapm-spot-ra">
-						<p><?php esc_html_e( 'Code for the page:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
-						<form class="rapm-rename">
-							<label for="<?php echo esc_attr( $heading ); ?>-name"><?php esc_html_e( 'Spot name', 'rapm' ); ?></label>
-							<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
-							<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
-						</form>
-						<?php if ( 'hero' === $kind && 'design' === $where ) : ?>
-							<?php self::render_layout_form( $placement, $heading ); ?>
-						<?php elseif ( 'hero' === $kind ) : ?>
-							<p>
-								<?php esc_html_e( 'Rooms beside a promotion that stays put:', 'rapm' ); ?>
-								<a href="<?php echo esc_url( self::design_url() ); ?>"><?php esc_html_e( 'make it a split slider in the Design Center', 'rapm' ); ?></a>.
-							</p>
-						<?php elseif ( 'promo_box' === $kind ) : ?>
-							<p>
-								<?php
-								echo esc_html(
-									$box_split
-										/* translators: %s: the slider's name */
-										? sprintf( __( 'Shows beside "%s", which is set to split view. The first promotion here that is on and within its dates shows; when none is, the slider goes back to full width.', 'rapm' ), self::spot_name( 'hero', $placement ) )
-										/* translators: %s: the slider's name */
-										: sprintf( __( 'Shows beside "%s" only when that slider\'s layout is set to Split.', 'rapm' ), self::spot_name( 'hero', $placement ) )
-								);
-								?>
-							</p>
-						<?php endif; ?>
-						<?php if ( RAPM_Spots::is_carousel( $kind ) ) : ?>
-							<p><?php esc_html_e( 'Main heading (H1) for search engines: set it where the spot is placed, only on pages with no other H1. In Elementor, turn on "Main heading (H1)" in its Promo Carousel widget, or add heading="h1" to its code on that page.', 'rapm' ); ?></p>
-						<?php endif; ?>
-						<?php if ( RAPM_Spots::removable( $kind, $placement ) ) : ?>
-							<button type="button" class="button-link rapm-remove-spot"><?php esc_html_e( 'Remove this spot', 'rapm' ); ?></button>
-						<?php endif; ?>
-					</div>
+					<?php if ( 'hero' === $kind && 'design' === $where ) : ?>
+						<div class="rapm-spot-settings"><?php self::render_layout_form( $placement, $heading ); ?></div>
+					<?php elseif ( 'hero' === $kind ) : ?>
+						<p class="rapm-spot-note">
+							<?php esc_html_e( 'Rooms beside a promotion that stays put:', 'rapm' ); ?>
+							<a href="<?php echo esc_url( self::design_url() ); ?>"><?php esc_html_e( 'make it a split slider in the Design Center', 'rapm' ); ?></a>.
+						</p>
+					<?php elseif ( 'promo_box' === $kind ) : ?>
+						<p class="rapm-spot-note">
+							<?php
+							echo esc_html(
+								$box_split
+									/* translators: %s: the slider's name */
+									? sprintf( __( 'Shows beside "%s", which is set to split view. The first promotion here that is on and within its dates shows; when none is, the slider goes back to full width.', 'rapm' ), self::spot_name( 'hero', $placement ) )
+									/* translators: %s: the slider's name */
+									: sprintf( __( 'Shows beside "%s" only when that slider\'s layout is set to Split.', 'rapm' ), self::spot_name( 'hero', $placement ) )
+							);
+							?>
+						</p>
+					<?php endif; ?>
 				</div>
 				<?php if ( ! $box ) : ?>
 					<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
@@ -767,6 +759,25 @@ class RAPM_Promotions_Screen {
 				</p>
 			<?php endif; ?>
 			<?php endif; // $box ?>
+			<?php
+			// 1.58.1 (Phil): R&A's setup details in one panel at the bottom
+			// of each spot, still shown to everyone.
+			?>
+			<div class="rapm-spot-ra">
+				<h3><?php esc_html_e( 'Setup for R&A', 'rapm' ); ?></h3>
+				<p><?php esc_html_e( 'Code for the page:', 'rapm' ); ?> <code><?php echo esc_html( RAPM_Spots::shortcode( $kind, $placement ) ); ?></code></p>
+				<form class="rapm-rename">
+					<label for="<?php echo esc_attr( $heading ); ?>-name"><?php esc_html_e( 'Spot name', 'rapm' ); ?></label>
+					<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
+					<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
+				</form>
+				<?php if ( RAPM_Spots::is_carousel( $kind ) ) : ?>
+					<p><?php esc_html_e( 'Main heading (H1) for search engines: set it where the spot is placed, only on pages with no other H1. In Elementor, turn on "Main heading (H1)" in its Promo Carousel widget, or add heading="h1" to its code on that page.', 'rapm' ); ?></p>
+				<?php endif; ?>
+				<?php if ( RAPM_Spots::removable( $kind, $placement ) ) : ?>
+					<button type="button" class="button-link rapm-remove-spot"><?php esc_html_e( 'Remove this spot', 'rapm' ); ?></button>
+				<?php endif; ?>
+			</div>
 			<p class="rapm-spot-status" aria-live="polite"></p>
 		</section>
 		<?php
@@ -835,6 +846,19 @@ class RAPM_Promotions_Screen {
 			</div>
 			<hr class="wp-header-end" />
 
+			<?php
+			// 1.58.1: saving a room photo, promotion box or reveal panel comes back here.
+			$saved_id = isset( $_GET['rapm_saved_asset'] ) ? absint( $_GET['rapm_saved_asset'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( $saved_id && 'rapm_asset' === get_post_type( $saved_id ) ) :
+				?>
+				<div class="notice notice-success is-dismissible"><p>
+					<?php /* translators: %s: the promotion's name */ ?>
+					<strong><?php echo esc_html( sprintf( __( 'Saved "%s".', 'rapm' ), get_the_title( $saved_id ) ) ); ?></strong>
+					<?php esc_html_e( 'If its start date has arrived, it is already on the website.', 'rapm' ); ?>
+					<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $saved_id ) ); ?>"><?php esc_html_e( 'Keep editing it', 'rapm' ); ?></a>
+				</p></div>
+			<?php endif; ?>
+
 			<?php // 1.48.0: tabs, as plain links (1.50.0 adds the Brand kit). ?>
 			<nav class="nav-tab-wrapper rapm-dc-tabs" aria-label="<?php esc_attr_e( 'Design Center', 'rapm' ); ?>">
 				<a href="<?php echo esc_url( self::design_url() ); ?>" class="nav-tab<?php echo 'split' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'split' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Split sliders', 'rapm' ); ?></a>
@@ -893,9 +917,13 @@ class RAPM_Promotions_Screen {
 						<button type="submit" class="button button-primary"><?php esc_html_e( 'Turn on split view', 'rapm' ); ?></button>
 					</form>
 					<p class="description"><?php esc_html_e( 'Its pictures on computers then need to be 4 by 3; pictures already in it are trimmed to that shape until they\'re replaced. You can turn split view off again in its Layout.', 'rapm' ); ?></p>
-				<?php else : ?>
-					<p class="description"><?php esc_html_e( 'Every slider is already split. Add a new slider with "+ New spot" on the Promotions page.', 'rapm' ); ?></p>
 				<?php endif; ?>
+				<?php // 1.58.1: a new split slider, made right here, opens its first room photo. ?>
+				<form class="rapm-make-new-split">
+					<label for="rapm-make-new-split-name"><?php echo $plain ? esc_html__( 'Or make a new split slider:', 'rapm' ) : esc_html__( 'New split slider:', 'rapm' ); ?></label>
+					<input type="text" id="rapm-make-new-split-name" name="name" maxlength="60" placeholder="<?php esc_attr_e( 'For example: Home page slider', 'rapm' ); ?>" />
+					<button type="submit" class="button<?php echo $plain ? '' : ' button-primary'; ?>"><?php esc_html_e( 'Make it', 'rapm' ); ?></button>
+				</form>
 				<p class="rapm-spot-status" aria-live="polite"></p>
 			</section>
 
@@ -1453,10 +1481,13 @@ class RAPM_Promotions_Screen {
 			wp_send_json_error( array( 'message' => __( 'Give the spot a name.', 'rapm' ) ), 400 );
 		}
 		$placement = RAPM_Spots::create( $kind, $name );
-		if ( 'reveal' === $kind ) {
-			wp_send_json_success( array( 'url' => add_query_arg( 'tab', 'reveal', self::design_url() ) . '#rapm-spot-reveal-' . $placement ) );
+		// 1.58.1: a split slider made from the Design Center.
+		if ( 'hero' === $kind && ! empty( $_POST['split'] ) ) {
+			RAPM_Spots::update( 'hero', $placement, array( 'split' => 1 ) );
 		}
-		wp_send_json_success( array( 'url' => self::url( array( 'rapm_spot_created' => $kind . '|' . $placement ) ) ) );
+		// 1.58.1 (Phil, on staging): a new spot opens the form for its first
+		// promotion, instead of reloading the page it was made on.
+		wp_send_json_success( array( 'url' => RAPM_Gallery::form_url( $kind, $placement, array( 'rapm_new_spot' => 1 ) ) ) );
 	}
 
 	/** "Remove this spot" (R&A, 1.29.1): only a spot with no promotions that isn't on any page. */
