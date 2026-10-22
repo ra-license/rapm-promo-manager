@@ -53,6 +53,19 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - With tracking off, the page had no tracking script or list.
   - Settings saved the three new choices; bad values fell back to "auto" and "SKU".
   - Products need WooCommerce, which Playground didn't have: tested on staging.
+- **Installed on staging (2026-10-22)** with Check for updates › update now. The Plugins screen shows 1.59.0. Tracking was turned on with "Google tag" to test, then turned off again. Staging has no Google Analytics, so no data left the site.
+  - **While it was off,** pages had no tracking script or list.
+  - **While it was on, each promotion's details were on the page:**
+    - The three Shop the Look looks listed their real products: SKU as item_id and the product's name. They matched the dots on the page exactly, for example "MHAN-421P3Z-APCI, Hancock – Apple Cider Power Zero Gravity Sofa Group".
+    - Sliders without dots listed one item named after the promotion.
+  - **Views (on the home page, real page cache and optimizer):** "Hancock living room" and then "Americana Modern dining room" each sent one view_promotion with their products as the look tour moved on.
+    - Your Chrome window was in the background, and the page counted nothing, as intended.
+    - A slider placed in a section the site hides counted nothing either.
+    - Slider views on staging weren't measured. The test browser stopped drawing the page partway through, so the browser couldn't tell what was on screen. The same code counted slider views in Playground.
+  - **Clicks:**
+    - The /home-2/ slider's link sent select_promotion for "Dining Days" (Home page slider), with the single item rapm-136014.
+    - A Shop the Look card and that dot's "View product" each sent select_promotion for "Hancock living room" with just that product (MHAN-421P3Z-APCI). The dot's pop-up sits outside the look, so this also proves the "showing look" rule.
+  - Not yet in production.
 
 ---
 
