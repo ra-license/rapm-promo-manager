@@ -22,7 +22,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The "Saved" note and green outline showed at a split slider's room photos.
   - Without a choice, a different-shape link is still turned down, as before.
   - Downloads went through WordPress's own pre_http_request filter, since Playground can't reach outside sites.
-- **Installed on staging (2026-10-22)** with Check for updates › update now: the Plugins screen shows 1.58.2. On staging, a Slider link to a 1600×1200 room photo showed the picker, saved as 1920×600 with "center center" kept for the hourly check. The split room's form said "Computer 1600 × 1200". Re-saving it opened Design Center › Walkthrough split with "Saved \"Walkthrough Living\"" above the room photos. Test spots "Walkthrough slider" and "Walkthrough split" were left for Phil to look at. Not yet in production.
+- **Installed on staging (2026-10-22)** with Check for updates › update now: the Plugins screen shows 1.58.2. On staging, a Slider link to a 1600×1200 room photo showed the picker, saved as 1920×600 with "center center" kept for the hourly check. The split room's form said "Computer 1600 × 1200". Re-saving it opened Design Center › Walkthrough split with "Saved \"Walkthrough Living\"" above the room photos. Test spots "Walkthrough slider" and "Walkthrough split" were left for Phil to look at. 
+- **Pushed to the production repo (2026-10-22)** with Phil's OK: main and the tag `v1.58.2` (Phil ran the push himself).
 
 ---
 
@@ -72,7 +73,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Design Center › Split sliders › "Walkthrough split" › Make it opened "Add its first room photo"; a room photo saved by link went back to the Design Center at that slider.
   - Shop the Look showed a linked room photo on the dots stage.
   - Design Center › Reveal panels loaded with no errors and Setup for R&A.
-  - What the walk found became 1.58.2. Not yet in production.
+  - What the walk found became 1.58.2. 
+- **Pushed to the production repo (2026-10-22)** with Phil's OK: main and the tag `v1.58.1` (Phil ran the push himself).
 
 ---
 
