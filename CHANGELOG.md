@@ -4,6 +4,18 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.58.0
+
+**One-time tips: a short tip the first time someone reaches a part.** Step 4 of the UX review (help in the moment, not a tour), built from the mockup Phil approved on 2026-10-22 (https://claude.ai/artifact/6v3FWRnQcgyAYP6Tuy4Mw1) with my picks: remembered per login, on for everyone at first, and short with no "Learn more" (the longer help stays behind the (i) buttons).
+- **New `RAPM_First_Tips`, `rapm-first-tips.js`, `rapm-first-tips.css`.** Six tips, one short line each: the "New promotion" gallery, the editor's top bar ("Check marks show what is done"), Place the pieces, What stays in view, the promotion box canvas, and the Promotions page.
+- **At most one tip per page view**, the first unseen one whose part is on screen (it waits until a part appears or is scrolled to, like the dots after a picture is chosen). It points at that part with a small arrow and outlines it. It never takes focus from what someone is typing; it is announced politely, and Esc closes it when focus is inside it. A tip for the editor's top bar sits inside the bar, so it stays with it while the page scrolls.
+- **"Got it"** closes that tip for good; **"Don't show tips"** turns them all off. Both are saved per person (user meta `rapm_tips_seen`, `rapm_tips_off`), so a new staff member still sees them.
+- **Help & FAQ › Tips** lists every tip and whether you've seen it, with "Show all tips again" and "Turn tips off/on".
+- **Tested in WordPress Playground (PHP 8.3, Elementor), with real clicks:** no PHP errors on the gallery, the form, Help and the Promotions page. The gallery tip pointed at the first card, and "Got it" saved `gallery` as seen; the editor tip showed on the next page and stayed with the top bar while scrolling (found and fixed during testing: at first it stayed put on screen while the bar moved); "Don't show tips" turned them off, the Promotions page then loaded no tips, and Help showed "Tips are off for you" with Gallery seen; "Show all tips again" cleared both; the Promotions page tip then pointed at the first spot's name (moved there from the bottom of the spot during testing).
+- **Not exercised directly:** the dots, focal point and canvas tips (their parts appear only after a picture is chosen, which Playground's file picker can't do); they use the same code as the three tested.
+
+---
+
 ## 1.57.0
 
 **One screen for making a promotion, with the preview always in view.** Step 3 of the UX review (recommendation 6), built from the mockup Phil approved on 2026-10-22 (https://claude.ai/artifact/EL93dNCBz3ip4BvrMDAFgc) with my picks: no wizard for anyone, Save needs only what the server needs, live checks are only what the browser can know, and Shop the Look / Promotion box / Reveal panels keep their own previews.

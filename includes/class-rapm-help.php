@@ -316,6 +316,7 @@ class RAPM_Help {
 
 			<h2><?php esc_html_e( 'Still Stuck?', 'rapm' ); ?></h2>
 			<p><?php esc_html_e( 'If something still isn\'t working the way you expect, reach out to whoever manages the website for your company. Let them know what you were trying to do and what happened instead — that helps them fix it faster.', 'rapm' ); ?></p>
+			<?php RAPM_First_Tips::render_help_section(); // 1.58.0 ?>
 		</div>
 		<?php
 	}

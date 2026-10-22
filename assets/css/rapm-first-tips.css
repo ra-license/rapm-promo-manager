@@ -1,0 +1,11 @@
+/* One-time tips (1.58.0, RAPM_First_Tips, rapm-first-tips.js). */
+.rapm-ft { position: absolute; z-index: 100000; width: 320px; max-width: calc(100vw - 24px); box-sizing: border-box; padding: 14px 16px 10px; background: #1d2327; color: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); font-size: 13px; line-height: 1.5; }
+.rapm-ft-arrow { position: absolute; top: -8px; width: 16px; height: 16px; background: #1d2327; transform: rotate(45deg); }
+.rapm-ft p { margin: 0 0 8px; }
+.rapm-ft-title { font-size: 15px; font-weight: 700; }
+.rapm-ft-text { color: #dcdcde; }
+.rapm-ft-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 4px !important; }
+.rapm-ft-ok { min-height: 36px; padding: 6px 16px; border: 0; border-radius: 4px; background: #fff; color: #1d2327; font-weight: 600; cursor: pointer; }
+.rapm-ft-off { min-height: 36px; padding: 6px 0; border: 0; background: none; color: #c5d9ed; text-decoration: underline; cursor: pointer; }
+.rapm-ft button:focus-visible { outline: 2px solid #72aee6; outline-offset: 2px; }
+.rapm-ft-target { outline: 2px solid #2271b1; outline-offset: 3px; border-radius: 4px; }
