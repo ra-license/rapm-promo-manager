@@ -65,7 +65,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Clicks:**
     - The /home-2/ slider's link sent select_promotion for "Dining Days" (Home page slider), with the single item rapm-136014.
     - A Shop the Look card and that dot's "View product" each sent select_promotion for "Hancock living room" with just that product (MHAN-421P3Z-APCI). The dot's pop-up sits outside the look, so this also proves the "showing look" rule.
-  - Not yet in production.
+- **Pushed to the production repo (2026-10-22)** with Phil's OK: main and the tag `v1.59.0` (Phil ran the push). Tracking stays off on every site until R&A turns it on in Settings.
 
 ---
 
