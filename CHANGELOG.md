@@ -20,7 +20,8 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - New Slider: Create with nothing filled in is stopped, the note turns red ("To save, add a name and a computer picture.") and the page scrolls to the top part; typing a name leaves "add a computer picture"; the Words chip jumps to Words; typing a headline and a web address turns Words and Link ✓ and the preview shows the headline; More options opens.
   - Saved Slider with a 1920×600 picture: "Computer picture is the right size (1920 × 600)", missing phone picture and alt text flagged; Save from the bar saved it.
   - The link fix: a re-save with the link untouched kept `https://example.com/sale` (before the fix it came back empty).
-- **Installed on staging (2026-10-22)** with Check for updates › update now: the Plugins screen shows 1.57.0. The real New Slider form shows the bar (Picture ! needed, the others · not yet, "To save, add a name and a computer picture."), the preview and Ready checks on the right, and More options folded; scrolling down keeps the bar and the preview in view. Nothing was saved there. Not yet in production.
+- **Installed on staging (2026-10-22)** with Check for updates › update now: the Plugins screen shows 1.57.0. The real New Slider form shows the bar (Picture ! needed, the others · not yet, "To save, add a name and a computer picture."), the preview and Ready checks on the right, and More options folded; scrolling down keeps the bar and the preview in view. Nothing was saved there.
+- **Pushed to the production repo (2026-10-22)** with Phil's OK: main and the tag `v1.57.0`.
 - **Not exercised directly:** choosing a wrong-shape file (the native file picker can't be driven in Playground's frame); the check uses the same shape tolerance as the form's crop picker.
 
 ---
