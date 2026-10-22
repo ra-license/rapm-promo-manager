@@ -287,7 +287,7 @@ class RAPM_Training_Guide {
 						<h2><?php esc_html_e( 'Adding a New Promotion', 'rapm' ); ?></h2>
 						<p class="rapm-tg-intro">
 							<?php esc_html_e( 'Go to', 'rapm' ); ?> <strong><?php esc_html_e( 'Promotions', 'rapm' ); ?></strong> <?php esc_html_e( 'and click', 'rapm' ); ?> <strong><?php esc_html_e( 'Add a picture', 'rapm' ); ?></strong> <?php esc_html_e( 'in the section where it should show.', 'rapm' ); ?>
-							<?php esc_html_e( 'The tool walks you through 4 steps, one at a time, with a bar at the top showing where you are. You cannot go to the next step until the current one is filled in correctly.', 'rapm' ); ?>
+							<?php esc_html_e( 'Everything is on one screen: Picture, Words, Link and Dates. The bar at the top shows a check mark for each part that is done, and Save tells you what is still needed. The preview on the right changes as you type.', 'rapm' ); ?>
 						</p>
 
 						<h3><?php esc_html_e( 'Or start from New promotion', 'rapm' ); ?></h3>

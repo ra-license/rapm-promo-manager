@@ -1,0 +1,53 @@
+/* The one-screen promotion editor (1.57.0, RAPM_Upload_Handler::render_editor_bar(),
+   rapm-editor.js). WordPress admin colors. */
+
+/* The bar that stays at the top. */
+.rapm-ed-bar { position: sticky; top: 32px; z-index: 20; margin: 14px -20px 18px -20px; padding: 10px 20px; background: #f0f0f1; border-bottom: 1px solid #dcdcde; }
+@media (max-width: 782px) { .rapm-ed-bar { top: 46px; margin-left: -10px; margin-right: -10px; padding: 10px; } }
+@media (max-width: 600px) { .rapm-ed-bar { top: 0; } }
+.rapm-ed-bar-in { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rapm-ed-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rapm-ed-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; box-sizing: border-box; padding: 4px 12px 4px 6px; border: 1px solid #c3c4c7; border-radius: 999px; background: #fff; color: #1d2327; font-weight: 600; font-size: 13px; text-decoration: none; }
+.rapm-ed-chip:hover, .rapm-ed-chip:focus { border-color: #2271b1; color: #1d2327; }
+.rapm-ed-chip:focus-visible { outline: 2px solid #2271b1; outline-offset: 2px; box-shadow: none; }
+.rapm-ed-dot { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #a7aaad; color: #fff; font-size: 12px; line-height: 1; }
+.rapm-ed-dot::before { content: "·"; font-weight: 700; }
+.rapm-ed-chip[data-state="done"] { border-color: #68de7c; }
+.rapm-ed-chip[data-state="done"] .rapm-ed-dot { background: #00a32a; }
+.rapm-ed-chip[data-state="done"] .rapm-ed-dot::before { content: "✓"; }
+.rapm-ed-chip[data-state="needed"] .rapm-ed-dot { background: #d63638; }
+.rapm-ed-chip[data-state="needed"] .rapm-ed-dot::before { content: "!"; }
+.rapm-ed-note { flex: 1 1 200px; text-align: right; font-size: 13px; color: #50575e; }
+.rapm-ed-note.is-error { color: #b32d2e; font-weight: 600; }
+.rapm-ed-save { min-height: 36px; }
+
+/* Every part shows at once, as cards. The old wizard buttons stay hidden. */
+.rapm-ed-main .rapm-step { display: block; background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; padding: 4px 20px 12px; margin: 0 0 18px; scroll-margin-top: 110px; }
+.rapm-ed-main .rapm-step[hidden] { display: block; }
+.rapm-ed-main .rapm-step-heading { margin: 14px 0 4px; font-size: 16px; font-weight: 600; color: #1d2327; text-transform: none; letter-spacing: 0; }
+.rapm-wizard-nav, .rapm-wizard-next-warning { display: none !important; }
+.rapm-ed-main .form-table { margin-top: 0; }
+
+/* Preview and checks beside the form (one-screen kinds). */
+.rapm-ed-layout.has-side { display: grid; grid-template-columns: minmax(0, 1fr) clamp(340px, 45%, 600px); gap: 24px; align-items: start; }
+.rapm-ed-side { position: sticky; top: 112px; display: flex; flex-direction: column; gap: 14px; max-height: calc(100vh - 124px); overflow: auto; }
+.rapm-ed-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 6px; padding: 12px 16px; }
+.rapm-ed-card h2 { margin: 4px 0 6px; font-size: 15px; }
+.rapm-ed-card #rapm-preview-wrap { max-width: none !important; margin-bottom: 4px !important; }
+.rapm-ed-card #rapm-live-preview-head .description { margin-top: 0; }
+.rapm-ed-ready-sum { margin: 0 0 10px; font-size: 13px; color: #50575e; }
+.rapm-ed-checks { margin: 0 0 8px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.rapm-ed-checks li { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 13px; }
+.rapm-ed-badge { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 700; }
+.rapm-ed-checks .is-fail .rapm-ed-badge { background: #d63638; }
+.rapm-ed-checks .is-warn .rapm-ed-badge { background: #996800; }
+.rapm-ed-checks .is-info .rapm-ed-badge { background: #2271b1; }
+.rapm-ed-checks .is-pass .rapm-ed-badge { background: #00a32a; }
+@media (max-width: 1100px) {
+	.rapm-ed-layout.has-side { grid-template-columns: minmax(0, 1fr); }
+	.rapm-ed-side { position: static; max-height: none; overflow: visible; }
+}
+
+/* "More options". */
+tr.rapm-more-hidden { display: none; }
+.rapm-ed-more { margin: 4px 0 10px; padding: 8px 0; min-height: 36px; font-weight: 600; text-decoration: none; }

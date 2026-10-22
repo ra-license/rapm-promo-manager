@@ -4,6 +4,26 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.57.0
+
+**One screen for making a promotion, with the preview always in view.** Step 3 of the UX review (recommendation 6), built from the mockup Phil approved on 2026-10-22 (https://claude.ai/artifact/EL93dNCBz3ip4BvrMDAFgc) with my picks: no wizard for anyone, Save needs only what the server needs, live checks are only what the browser can know, and Shop the Look / Promotion box / Reveal panels keep their own previews.
+- **No more step-by-step wizard.** New and saved promotions show every part at once, as cards: "Name and picture", "Place the pieces" (Sliders, Feature banners, Shop the Look), "Words", "Link" and "Dates" ("Preview and dates" for kinds that keep their own preview). The Back/Next buttons and locked steps are gone.
+- **A bar that stays at the top** (new `RAPM_Upload_Handler::render_editor_bar()`, `rapm-editor.js`, `rapm-editor.css`): one chip per part that jumps to it, marked ✓ done, ! needed to save, or · not yet (with words for screen readers); a line saying what's still needed ("To save, add a name and a computer picture."); and Save.
+- **Save checks first.** It sends nothing until the name, the picture (a room photo and tab name for Shop the Look; the name under the picture for Quick links) and every product dot are there, the same things the server rejects, so a picture chosen on the form is never lost to a rejected save. The note turns red and the page scrolls to what's missing.
+- **The preview stays beside the form** for Sliders, Feature banners, Coupon rows, Tile rows and Quick links: the same Computer/Phone preview as before, now pinned on the right and updating as you type. Under 1100px wide it moves below the form.
+- **"Ready to go live" checks in the editor**, under the preview: picture size and shape (read from the chosen file in the browser, or the saved picture), a missing phone picture, missing "What's in the picture" words, no headline, no link, and no dates, each with a link to fix it, problems first. Links themselves are checked after saving, in the Design Center, as before.
+- **"More options"** folds away "Does your picture already show the price…?", line-up, word color, text style and typeface. It starts open when one of them was changed from the default.
+- **Fix (since 1.3.0): saving a promotion erased its link** when the link was a web address or search words and wasn't retyped. The saved field started empty for those two kinds of link and was only filled while typing. Found in Playground while testing this release: a saved Slider linking to a web address lost it on Save. The field now starts with the saved link.
+- **Help and Training Guide** describe the one screen instead of "4 steps, one at a time".
+- **Tested in WordPress Playground (PHP 8.3, Elementor), with real clicks:**
+  - Every kind's form loads with no PHP errors; one-screen kinds get the side preview, Shop the Look / box / reveal get the bar only.
+  - New Slider: Create with nothing filled in is stopped, the note turns red ("To save, add a name and a computer picture.") and the page scrolls to the top part; typing a name leaves "add a computer picture"; the Words chip jumps to Words; typing a headline and a web address turns Words and Link ✓ and the preview shows the headline; More options opens.
+  - Saved Slider with a 1920×600 picture: "Computer picture is the right size (1920 × 600)", missing phone picture and alt text flagged; Save from the bar saved it.
+  - The link fix: a re-save with the link untouched kept `https://example.com/sale` (before the fix it came back empty).
+- **Not exercised directly:** choosing a wrong-shape file (the native file picker can't be driven in Playground's frame); the check uses the same shape tolerance as the form's crop picker.
+
+---
+
 ## 1.56.0
 
 **"New promotion" starts with pictures.** This is step 2 of the UX review (recommendation 5, Canva's template-first start), built from the mockup Phil approved on 2026-10-20 (https://claude.ai/artifact/BnaNa1sN7k5vNofGG5c26J) with my three picks: kinds this website already uses come first, a saved promotion keeps its kind, and copies include ended promotions (up to 6, newest first).

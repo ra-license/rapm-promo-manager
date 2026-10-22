@@ -41,6 +41,60 @@ class RAPM_Upload_Handler {
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
 		// 1.56.0: the "New promotion" gallery and the kind line on the form.
 		wp_enqueue_style( 'rapm-gallery-css', RAPM_URL . 'assets/css/rapm-gallery.css', array(), RAPM_VERSION );
+		// 1.57.0: the one-screen editor (top bar, pinned preview, Ready checks).
+		wp_enqueue_style( 'rapm-editor-css', RAPM_URL . 'assets/css/rapm-editor.css', array(), RAPM_VERSION );
+		wp_enqueue_script( 'rapm-editor-js', RAPM_URL . 'assets/js/rapm-editor.js', array(), RAPM_VERSION, true );
+		wp_localize_script(
+			'rapm-editor-js',
+			'RAPM_Editor_Text',
+			array(
+				'done'       => __( '(done)', 'rapm' ),
+				'needed'     => __( '(needed to save)', 'rapm' ),
+				'notYet'     => __( '(not yet)', 'rapm' ),
+				'canSave'    => __( 'Nothing goes live before its start date.', 'rapm' ),
+				/* translators: %s: what's missing, like "a name and a computer picture" */
+				'toSave'     => __( 'To save, add %s.', 'rapm' ),
+				'and'        => __( 'and', 'rapm' ),
+				'aName'      => __( 'a name', 'rapm' ),
+				'aPicture'   => __( 'a computer picture', 'rapm' ),
+				'aPhoto'     => __( 'a room photo', 'rapm' ),
+				'aTab'       => __( 'a tab name', 'rapm' ),
+				'aQuickName' => __( 'a name under the picture', 'rapm' ),
+				'more'       => __( 'More options: line-up, color, style, typeface', 'rapm' ),
+				'fewer'      => __( 'Fewer options', 'rapm' ),
+				'sumFail'    => __( 'Something stops it from showing.', 'rapm' ),
+				'sumWarn'    => __( 'It can go live. A few things could be better.', 'rapm' ),
+				'sumPass'    => __( 'Looks ready.', 'rapm' ),
+				'lvlFail'    => __( 'Problem:', 'rapm' ),
+				'lvlWarn'    => __( 'Needs a look:', 'rapm' ),
+				'lvlInfo'    => __( 'Note:', 'rapm' ),
+				'lvlPass'    => __( 'Ready:', 'rapm' ),
+				'noPic'      => __( 'No picture yet, so it can\'t show anywhere.', 'rapm' ),
+				'addOne'     => __( 'Add one', 'rapm' ),
+				/* translators: %s: a size like 1920 × 600 */
+				'picRight'   => __( 'Computer picture is the right size (%s).', 'rapm' ),
+				/* translators: 1: the picture's size, 2: the size needed */
+				'picSmall'   => __( 'Computer picture is %1$s, smaller than the %2$s needed, so it may look soft.', 'rapm' ),
+				/* translators: 1: the picture's size, 2: the size needed */
+				'picShape'   => __( 'Computer picture is %1$s, a different shape from %2$s. Pick which part to keep under the picture.', 'rapm' ),
+				'picLink'    => __( 'The picture comes from a link. It is checked when you save.', 'rapm' ),
+				/* translators: 1: the picture's size, 2: the size needed */
+				'phoneShape' => __( 'Phone picture is %1$s, a different shape from %2$s. Pick which part to keep under the picture.', 'rapm' ),
+				'noPhone'    => __( 'No phone picture: phones show the computer picture fitted inside a tall box.', 'rapm' ),
+				'noAlt'      => __( 'No "What\'s in the picture" words, so screen readers say nothing.', 'rapm' ),
+				'addThem'    => __( 'Add them', 'rapm' ),
+				'noHead'     => __( 'No headline: shoppers see only the picture.', 'rapm' ),
+				'noQuick'    => __( 'No name under the picture. It is needed to save.', 'rapm' ),
+				'headOk'     => __( 'Has words for shoppers.', 'rapm' ),
+				'noLink'     => __( 'No link yet, so clicking it does nothing.', 'rapm' ),
+				'pickOne'    => __( 'Pick one', 'rapm' ),
+				'linkOk'     => __( 'Link is set.', 'rapm' ),
+				'noStart'    => __( 'No start date, so it shows as soon as you save.', 'rapm' ),
+				'setDates'   => __( 'Set dates', 'rapm' ),
+				'noEnd'      => __( 'No end date, so it keeps showing until you turn it off.', 'rapm' ),
+				'datesOk'    => __( 'Has a start and an end date.', 'rapm' ),
+			)
+		);
 		// 1.35.0: dots and the button in a banner's Live Preview.
 		wp_enqueue_style( 'rapm-pins-css', RAPM_URL . 'assets/css/rapm-pins.css', array( 'rapm-hero-css' ), RAPM_VERSION );
 		// Shop the Look's preview (1.30.0) uses the live site's own styles too.
@@ -185,6 +239,11 @@ class RAPM_Upload_Handler {
 		$is_reveal    = 'reveal' === $kind_key;
 		// 1.54.0: pictures the website trims get "What stays in view".
 		$focal        = RAPM_Focal::applies( $kind_key, $placement );
+		// 1.57.0: kinds edited on one screen with the preview and Ready
+		// checks pinned beside the form. Shop the Look, the promotion box and
+		// Reveal panels keep their own previews (dragging on the picture),
+		// and get the top bar only.
+		$simple       = in_array( $kind_key, array( 'hero', 'fold_banner', 'coupon', 'marquee', 'quick_links' ), true );
 		// 1.44.0: how a promotion box is made. 'design' is the canvas (words
 		// and icons placed by hand); 'graphic' is a finished picture. A new
 		// one starts as a design; one saved before 1.44.0 stays a graphic.
@@ -278,37 +337,43 @@ class RAPM_Upload_Handler {
 				<input type="hidden" name="rapm_kind" value="<?php echo esc_attr( $kind_key ); ?>" />
 				<?php wp_nonce_field( self::NONCE_ACTION, 'rapm_nonce' ); ?>
 
-				<div class="rapm-wizard-steps" id="rapm-wizard-steps" role="tablist" aria-label="<?php esc_attr_e( 'Steps for adding this promotion', 'rapm' ); ?>">
-					<?php
-					$step_labels = array(
-						'basics'  => __( 'The Basics', 'rapm' ),
-						'pieces'  => __( 'Place the Pieces', 'rapm' ),
-						'message' => __( 'Your Message', 'rapm' ),
-						'link'    => __( 'Where It Links', 'rapm' ),
-						'review'  => __( 'Review & Schedule', 'rapm' ),
-					);
-					foreach ( $step as $step_key => $step_number ) :
-						?>
-						<button type="button" class="rapm-wizard-step<?php echo 1 === $step_number ? ' is-current' : ''; ?>" data-step="<?php echo (int) $step_number; ?>"><span class="rapm-wizard-step-num"><?php echo (int) $step_number; ?></span><span class="rapm-wizard-step-label"><?php echo esc_html( $step_labels[ $step_key ] ); ?></span></button>
-					<?php endforeach; ?>
-				</div>
+				<?php
+				// 1.57.0 (mockup Phil approved on 2026-10-22,
+				// https://claude.ai/artifact/EL93dNCBz3ip4BvrMDAFgc): one screen
+				// instead of the step-by-step wizard, with a bar that stays at the
+				// top: a checklist that jumps to each part, and Save.
+				$ed_dims = function ( $id ) {
+					$meta = $id ? wp_get_attachment_metadata( $id ) : array();
+					return ! empty( $meta['width'] ) ? array( 'w' => (int) $meta['width'], 'h' => (int) $meta['height'] ) : null;
+				};
+				$ed_slot = function ( $slot ) {
+					return $slot ? array( 'w' => (int) $slot['width'], 'h' => (int) $slot['height'], 'tol' => (float) ( isset( $slot['aspect_ratio_tolerance'] ) ? $slot['aspect_ratio_tolerance'] : 0.02 ), 'flex' => RAPM_Slots::is_flexible( $slot ) ) : null;
+				};
+				self::render_editor_bar(
+					$step,
+					$is_edit && ! get_post_meta( $asset_id, '_rapm_from_gallery', true ),
+					array(
+						'simple' => $simple,
+						'images' => $has_images,
+						'look'   => $is_look,
+						'quick'  => $is_quick,
+						'box'    => $is_box,
+						'phone'  => $has_images && ! $is_box && $kind['desktop'] !== $kind['mobile'],
+						'slots'  => array( 'desktop' => $ed_slot( $desktop_slot ), 'mobile' => $ed_slot( $mobile_slot ) ),
+						'has'    => array( 'desktop' => (bool) $img_desktop, 'mobile' => (bool) $img_mobile ),
+						'dims'   => array( 'desktop' => $ed_dims( $img_desktop ), 'mobile' => $ed_dims( $img_mobile ) ),
+						// "More options" starts open when one of them was changed.
+						'more'   => 'image' === $text_mode || 'left' !== $m( '_rapm_text_align', 'left' ) || '#ffffff' !== strtolower( (string) $m( '_rapm_text_color', '#ffffff' ) ) || 'bold' !== $m( '_rapm_text_style', 'bold' ) || '' !== (string) $m( '_rapm_text_font' ),
+					)
+				);
+				?>
+				<div class="rapm-ed-layout<?php echo $simple ? ' has-side' : ''; ?>"><div class="rapm-ed-main">
 				<style>
-					.rapm-wizard-steps { display: flex; flex-wrap: wrap; gap: 4px; margin: 20px 0 28px; max-width: 700px; }
-					.rapm-wizard-step { flex: 1; min-width: 130px; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #dcdcde; border-radius: 4px; padding: 10px 12px; cursor: pointer; text-align: left; }
-					.rapm-wizard-step:disabled { cursor: not-allowed; opacity: .55; }
-					.rapm-wizard-step-num { flex: none; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #dcdcde; color: #50575e; font-size: 12px; font-weight: 600; }
-					.rapm-wizard-step-label { font-size: 12.5px; font-weight: 600; color: #50575e; }
-					.rapm-wizard-step.is-current { border-color: #2271b1; background: #f0f6fc; }
-					.rapm-wizard-step.is-current .rapm-wizard-step-num { background: #2271b1; color: #fff; }
-					.rapm-wizard-step.is-current .rapm-wizard-step-label { color: #1d2327; }
-					.rapm-wizard-step.is-done .rapm-wizard-step-num { background: #00a32a; color: #fff; }
-					.rapm-wizard-nav { max-width: 700px; margin: 20px 0; display: flex; gap: 10px; }
-					.rapm-wizard-next-warning { max-width: 700px; background: #fcf0f1; border-left: 4px solid #d63638; padding: 10px 14px; margin: 0 0 16px; display: none; }
 					.rapm-step-heading { color: #8c8f94; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px; }
 				</style>
 
 				<div class="rapm-step" id="rapm-step-1" data-step="1">
-				<h2 class="rapm-step-heading">1. <?php esc_html_e( 'The Basics', 'rapm' ); ?></h2>
+				<h2 class="rapm-step-heading">1. <?php esc_html_e( 'Name and picture', 'rapm' ); ?></h2>
 				<table class="form-table">
 					<tr>
 						<th><label for="rapm_title"><?php esc_html_e( 'Internal Name', 'rapm' ); ?></label></th>
@@ -424,13 +489,13 @@ class RAPM_Upload_Handler {
 						<td>
 							<label style="display:block;margin-bottom:8px;">
 								<input type="radio" name="rapm_box_mode" value="design" <?php checked( 'design', $box_mode ); ?> />
-								<?php esc_html_e( 'Design it here: place the words and icons yourself in the next step, on a color or a picture', 'rapm' ); ?>
+								<?php esc_html_e( 'Design it here: place the words and icons yourself under Words below, on a color or a picture', 'rapm' ); ?>
 							</label>
 							<label style="display:block;">
 								<input type="radio" name="rapm_box_mode" value="graphic" <?php checked( 'graphic', $box_mode ); ?> />
 								<?php esc_html_e( 'A finished graphic, with its words already on it', 'rapm' ); ?>
 							</label>
-							<p class="description rapm-box-mode-note" data-mode="design"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'A picture is optional. You can pick a color in the next step instead.', 'rapm' ); ?></p>
+							<p class="description rapm-box-mode-note" data-mode="design"<?php echo 'design' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'A picture is optional. You can pick a color under Words instead.', 'rapm' ); ?></p>
 							<p class="description rapm-box-mode-note" data-mode="graphic"<?php echo 'graphic' === $box_mode ? '' : ' hidden'; ?>><?php esc_html_e( 'The whole picture always shows. Make it square: 1200 by 1200.', 'rapm' ); ?></p>
 						</td>
 					</tr>
@@ -611,26 +676,17 @@ class RAPM_Upload_Handler {
 					} )();
 				</script>
 				<?php endif; // $has_images ?>
-				<p class="rapm-wizard-next-warning" id="rapm-step-1-warning"></p>
-				<p class="rapm-wizard-nav">
-					<button type="button" class="button button-primary rapm-wizard-next" data-goto="2"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
-				</p>
 				</div><!-- .rapm-step[data-step="1"] -->
 
 				<?php if ( $is_look || $has_pins ) : ?>
-				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['pieces']; ?>" data-step="<?php echo (int) $step['pieces']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading"><?php echo (int) $step['pieces']; ?>. <?php esc_html_e( 'Place the Pieces', 'rapm' ); ?></h2>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['pieces']; ?>" data-step="<?php echo (int) $step['pieces']; ?>">
+				<h2 class="rapm-step-heading"><?php echo (int) $step['pieces']; ?>. <?php esc_html_e( 'Place the pieces', 'rapm' ); ?></h2>
 				<?php self::render_look_pieces( $img_desktop, $dots, $focus, $photo_btn, $has_pins ? $img_mobile : 0, $has_pins, $focus_phone, $photo_words ); ?>
-				<p class="rapm-wizard-next-warning" id="rapm-step-<?php echo (int) $step['pieces']; ?>-warning"></p>
-				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['basics']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
-					<button type="button" class="button button-primary rapm-wizard-next" data-goto="<?php echo (int) $step['message']; ?>"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
-				</p>
 				</div><!-- .rapm-step: Place the Pieces -->
 				<?php endif; ?>
 
-				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['message']; ?>" data-step="<?php echo (int) $step['message']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading"><?php echo (int) $step['message']; ?>. <?php esc_html_e( 'Your Message', 'rapm' ); ?></h2>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['message']; ?>" data-step="<?php echo (int) $step['message']; ?>">
+				<h2 class="rapm-step-heading"><?php echo (int) $step['message']; ?>. <?php esc_html_e( 'Words', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Words Under the Tabs', 'rapm' ); ?></h2>
 				<?php RAPM_Tip::hint( __( 'These words show under the tabs, in your website\'s fonts and colors.', 'rapm' ), __( 'On some pages the headline and smaller line go on the photo, and the button goes under it. Nothing is added to the picture file.', 'rapm' ) ); ?>
@@ -642,7 +698,7 @@ class RAPM_Upload_Handler {
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Sale Text', 'rapm' ); ?></h2>
 				<table class="form-table">
-					<tr>
+					<tr class="rapm-more">
 						<th><?php esc_html_e( 'Does your picture already show the price, sale, or date on it?', 'rapm' ); ?></th>
 						<td>
 							<label style="display:block;margin-bottom:8px;">
@@ -687,7 +743,7 @@ class RAPM_Upload_Handler {
 						</tr>
 						<?php endif; ?>
 						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
-						<tr<?php echo ( $is_quick || $is_box || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box places and colors each piece on its canvas. ?>>
+						<tr class="rapm-more"<?php echo ( $is_quick || $is_box || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box places and colors each piece on its canvas. ?>>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_align" name="rapm_text_align">
@@ -697,7 +753,7 @@ class RAPM_Upload_Handler {
 								</select>
 							</td>
 						</tr>
-						<tr<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
+						<tr class="rapm-more"<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_color"><?php echo $is_reveal ? esc_html__( 'Word color', 'rapm' ) : esc_html__( 'Text Color', 'rapm' ); ?></label></th>
 							<td>
 								<input type="color" id="rapm_text_color" name="rapm_text_color" value="<?php echo esc_attr( $m( '_rapm_text_color', '#ffffff' ) ); ?>" style="height:32px;width:60px;padding:2px;vertical-align:middle;" />
@@ -750,7 +806,7 @@ class RAPM_Upload_Handler {
 								</td>
 							</tr>
 						<?php endif; ?>
-						<tr<?php echo ( $is_quick || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
+						<tr class="rapm-more"<?php echo ( $is_quick || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_style"><?php esc_html_e( 'Text Style', 'rapm' ); ?></label></th>
 							<td>
 								<select id="rapm_text_style" name="rapm_text_style">
@@ -762,7 +818,7 @@ class RAPM_Upload_Handler {
 						</tr>
 						<?php $site_fonts = RAPM_Elementor::global_fonts(); ?>
 						<?php if ( $site_fonts ) : ?>
-							<tr<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; 1.47.0: the promotion box picks a font per piece on its canvas. ?>>
+							<tr class="rapm-more"<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; 1.47.0: the promotion box picks a font per piece on its canvas. ?>>
 								<th><label for="rapm_text_font"><?php esc_html_e( 'Typeface', 'rapm' ); ?></label></th>
 								<td>
 									<select id="rapm_text_font" name="rapm_text_font">
@@ -795,14 +851,10 @@ class RAPM_Upload_Handler {
 					} )();
 				</script>
 				<?php endif; ?>
-				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) ( $step['message'] - 1 ); ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
-					<button type="button" class="button button-primary rapm-wizard-next" data-goto="<?php echo (int) $step['link']; ?>"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
-				</p>
 				</div><!-- .rapm-step: Your Message -->
 
-				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['link']; ?>" data-step="<?php echo (int) $step['link']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading"><?php echo (int) $step['link']; ?>. <?php esc_html_e( 'Where It Links', 'rapm' ); ?></h2>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['link']; ?>" data-step="<?php echo (int) $step['link']; ?>">
+				<h2 class="rapm-step-heading"><?php echo (int) $step['link']; ?>. <?php esc_html_e( 'Link', 'rapm' ); ?></h2>
 				<?php if ( $is_look ) : ?>
 				<h2><?php esc_html_e( 'Where the Button Goes', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'Where the button goes, often a whole room, like the Living Room page. For no button, leave the button words blank in step 2.', 'rapm' ); ?></p>
@@ -869,7 +921,14 @@ class RAPM_Upload_Handler {
 						</td>
 					</tr>
 				</table>
-				<input type="hidden" id="rapm_dest_value" name="rapm_dest_value" value="<?php echo in_array( $dest_type, array( 'post', 'wc_product', 'wc_category', 'wc_brand' ), true ) ? esc_attr( $dest_value ) : ''; ?>" />
+				<?php
+				// 1.57.0 fix: this is the field that's saved. Since 1.3.0 it
+				// started empty for a web address or search words, and was only
+				// filled when the link was typed, so saving a promotion without
+				// retyping its link erased it. A hand-picked list saves its own
+				// fields instead.
+				?>
+				<input type="hidden" id="rapm_dest_value" name="rapm_dest_value" value="<?php echo 'curated' === $dest_type ? '' : esc_attr( $dest_value ); ?>" />
 				<script>
 					( function () {
 						var destType     = document.getElementById( 'rapm_dest_type' );
@@ -1129,14 +1188,10 @@ class RAPM_Upload_Handler {
 					} )();
 				</script>
 
-				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['message']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
-					<button type="button" class="button button-primary rapm-wizard-next" data-goto="<?php echo (int) $step['review']; ?>"><?php esc_html_e( 'Next', 'rapm' ); ?></button>
-				</p>
 				</div><!-- .rapm-step: Where It Links -->
 
-				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['review']; ?>" data-step="<?php echo (int) $step['review']; ?>" <?php echo $is_edit ? '' : 'hidden'; ?>>
-				<h2 class="rapm-step-heading"><?php echo (int) $step['review']; ?>. <?php esc_html_e( 'Review & Schedule', 'rapm' ); ?></h2>
+				<div class="rapm-step" id="rapm-step-<?php echo (int) $step['review']; ?>" data-step="<?php echo (int) $step['review']; ?>">
+				<h2 class="rapm-step-heading"><?php echo (int) $step['review']; ?>. <?php echo $simple ? esc_html__( 'Dates', 'rapm' ) : esc_html__( 'Preview and dates', 'rapm' ); ?></h2>
 
 				<?php if ( $is_look ) : ?>
 					<?php self::render_look_preview(); ?>
@@ -1149,6 +1204,7 @@ class RAPM_Upload_Handler {
 				<style>#rapm-live-preview-head, #rapm-preview-wrap { display: none; }</style>
 				<p class="description"><?php esc_html_e( 'The box shows the first promotion that is on and in its dates. A design looks like it does in step 2. A finished graphic always shows whole.', 'rapm' ); ?></p>
 				<?php endif; ?>
+				<div id="rapm-ed-preview"><?php // 1.57.0: moved beside the form for one-screen kinds (rapm-editor.js). ?>
 				<div id="rapm-live-preview-head">
 				<h2><?php esc_html_e( 'Live Preview', 'rapm' ); ?></h2>
 				<p class="description"><?php esc_html_e( 'This is what shoppers will see. It changes as you type. If something looks wrong, fix it before you save.', 'rapm' ); ?></p>
@@ -1175,6 +1231,7 @@ class RAPM_Upload_Handler {
 					<p class="description" id="rapm-preview-empty" style="<?php echo $img_desktop ? 'display:none;' : ''; ?>"><?php esc_html_e( 'Choose a computer picture above to see it here.', 'rapm' ); ?></p>
 					<p class="description" id="rapm-preview-no-mobile" style="display:none;color:#b32d2e;"><?php esc_html_e( 'No phone picture yet. Phones show the computer picture until you add one.', 'rapm' ); ?></p>
 				</div>
+				</div><!-- #rapm-ed-preview -->
 				<style>
 					.rapm-preview-toggle-btn[aria-pressed="true"] { background: #2271b1; border-color: #2271b1; color: #fff; }
 				</style>
@@ -1442,143 +1499,53 @@ class RAPM_Upload_Handler {
 					} )();
 				</script>
 
-				<p class="rapm-wizard-nav">
-					<button type="button" class="button rapm-wizard-back" data-goto="<?php echo (int) $step['link']; ?>"><?php esc_html_e( '← Back', 'rapm' ); ?></button>
-				</p>
 				<?php submit_button( $is_edit ? __( 'Save promotion', 'rapm' ) : __( 'Create promotion', 'rapm' ) ); ?>
 				</div><!-- .rapm-step: Review & Schedule -->
+				</div><!-- .rapm-ed-main -->
+				<?php if ( $simple ) : ?>
+				<aside class="rapm-ed-side" id="rapm-ed-side" aria-label="<?php esc_attr_e( 'Preview and checks', 'rapm' ); ?>">
+					<div class="rapm-ed-card" id="rapm-ed-preview-card"></div>
+					<div class="rapm-ed-card" id="rapm-ed-ready">
+						<h2><?php esc_html_e( 'Ready to go live', 'rapm' ); ?></h2>
+						<p class="rapm-ed-ready-sum" id="rapm-ed-ready-sum"></p>
+						<ul class="rapm-ed-checks" id="rapm-ed-checks"></ul>
+						<p class="description"><?php esc_html_e( 'Links are checked after you save, in the Design Center.', 'rapm' ); ?></p>
+					</div>
+				</aside>
+				<?php endif; ?>
+				</div><!-- .rapm-ed-layout -->
 
-				<script>
-					( function () {
-						var isEditMode  = <?php echo $is_edit ? 'true' : 'false'; ?>;
-						var steps       = Array.prototype.slice.call( document.querySelectorAll( '.rapm-step' ) );
-						var stepPills   = Array.prototype.slice.call( document.querySelectorAll( '.rapm-wizard-step' ) );
-						var navBars     = document.querySelectorAll( '.rapm-wizard-nav' );
-						var currentStep = 1;
-						var highestReached = 1;
-
-						function stepEl( n ) {
-							return document.getElementById( 'rapm-step-' + n );
-						}
-
-						// Editing an existing promotion should never require
-						// walking back through the whole setup guide again —
-						// every section is shown at once, and the step pills
-						// above just jump-scroll to the matching section
-						// instead of hiding/showing panels.
-						if ( isEditMode ) {
-							navBars.forEach( function ( el ) {
-								el.style.display = 'none';
-							} );
-							stepPills.forEach( function ( btn ) {
-								btn.classList.remove( 'is-current' );
-								btn.addEventListener( 'click', function () {
-									var target = stepEl( btn.getAttribute( 'data-step' ) );
-									if ( target ) {
-										target.scrollIntoView( { behavior: 'smooth', block: 'start' } );
-									}
-								} );
-							} );
-							return;
-						}
-
-						function updatePills() {
-							stepPills.forEach( function ( btn ) {
-								var n = parseInt( btn.getAttribute( 'data-step' ), 10 );
-								btn.classList.toggle( 'is-current', n === currentStep );
-								btn.classList.toggle( 'is-done', n < currentStep );
-								btn.disabled = n > highestReached;
-							} );
-						}
-
-						function showStep( n ) {
-							steps.forEach( function ( el ) {
-								el.hidden = parseInt( el.getAttribute( 'data-step' ), 10 ) !== n;
-							} );
-							currentStep     = n;
-							highestReached  = Math.max( highestReached, n );
-							updatePills();
-							window.scrollTo( { top: 0, behavior: 'smooth' } );
-						}
-
-						// Only the two things that would otherwise let someone
-						// reach the end and get a confusing rejection are
-						// gated here — everything else is still fully
-						// enforced server-side (see RAPM_Upload_Handler::
-						// handle_save()), this is just a friendlier, earlier
-						// heads-up for a non-technical audience.
-						// 1.44.0: a promotion box designed here doesn't need a picture.
-						function boxDesign() {
-							var picked = document.querySelector( 'input[name="rapm_box_mode"]:checked' );
-							return !! picked && 'design' === picked.value;
-						}
-
-						function validateStep1() {
-							var warning = document.getElementById( 'rapm-step-1-warning' );
-							var title   = document.getElementById( 'rapm_title' );
-							var messages = [];
-							if ( ! title.value.trim() ) {
-								messages.push( <?php echo wp_json_encode( __( 'Please type an internal name for this promotion before moving on.', 'rapm' ) ); ?> );
-							}
-							<?php if ( $is_look ) : ?>
-							var tabField = document.getElementById( 'rapm_tab_label' );
-							if ( tabField && ! tabField.value.trim() ) {
-								messages.push( <?php echo wp_json_encode( __( 'Please type a tab name, like "Living Room" or "Stanton 338", before moving on.', 'rapm' ) ); ?> );
-							}
-							<?php endif; ?>
-							<?php if ( $has_images ) : ?>
-							var desktopSourceChecked = document.querySelector( 'input[name="rapm_image_desktop_source"]:checked' );
-							var usingLink             = desktopSourceChecked && 'link' === desktopSourceChecked.value;
-							var desktopFileInput      = document.getElementById( 'rapm_image_desktop' );
-							var desktopUrlField       = document.getElementById( 'rapm_image_desktop_url' );
-							var hasExistingDesktop    = <?php echo $img_desktop ? 'true' : 'false'; ?>;
-							if ( usingLink ) {
-								if ( ! hasExistingDesktop && ! ( desktopUrlField && desktopUrlField.value.trim() ) && ! boxDesign() ) {
-									messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please paste a link to the room photo first.', 'rapm' ) : __( 'Please paste a link to the computer picture first.', 'rapm' ) ); ?> );
-								}
-							} else if ( ! hasExistingDesktop && ! ( desktopFileInput.files && desktopFileInput.files[0] ) && ! boxDesign() ) {
-								messages.push( <?php echo wp_json_encode( $is_look ? __( 'Please add the room photo first.', 'rapm' ) : __( 'Please add the computer picture first.', 'rapm' ) ); ?> );
-							}
-							<?php endif; ?>
-							if ( messages.length ) {
-								warning.textContent   = messages.join( ' ' );
-								warning.style.display = 'block';
-								return false;
-							}
-							warning.style.display = 'none';
-							return true;
-						}
-
-						Array.prototype.forEach.call( document.querySelectorAll( '.rapm-wizard-next' ), function ( btn ) {
-							btn.addEventListener( 'click', function () {
-								if ( 1 === currentStep && ! validateStep1() ) {
-									return;
-								}
-								// Shop the Look's Place the Pieces (1.31.0): every dot needs a product.
-								if ( <?php echo isset( $step['pieces'] ) ? (int) $step['pieces'] : 0; ?> === currentStep && window.RAPM_LookEditor && ! window.RAPM_LookEditor.validate() ) {
-									return;
-								}
-								showStep( parseInt( btn.getAttribute( 'data-goto' ), 10 ) );
-							} );
-						} );
-						Array.prototype.forEach.call( document.querySelectorAll( '.rapm-wizard-back' ), function ( btn ) {
-							btn.addEventListener( 'click', function () {
-								showStep( parseInt( btn.getAttribute( 'data-goto' ), 10 ) );
-							} );
-						} );
-						stepPills.forEach( function ( btn ) {
-							btn.addEventListener( 'click', function () {
-								var n = parseInt( btn.getAttribute( 'data-step' ), 10 );
-								if ( n <= highestReached ) {
-									showStep( n );
-								}
-							} );
-						} );
-
-						updatePills();
-					} )();
-				</script>
 			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * The bar at the top of the promotion form (1.57.0): a checklist that
+	 * jumps to each part, what's still needed, and Save. rapm-editor.js
+	 * fills in the checks; $cfg tells it the kind's needs.
+	 */
+	private static function render_editor_bar( $step, $is_edit, $cfg ) {
+		$chips = array(
+			'picture' => array( $step['basics'], __( 'Picture', 'rapm' ) ),
+		);
+		if ( isset( $step['pieces'] ) ) {
+			$chips['pieces'] = array( $step['pieces'], __( 'Pieces', 'rapm' ) );
+		}
+		$chips['words'] = array( $step['message'], __( 'Words', 'rapm' ) );
+		$chips['link']  = array( $step['link'], __( 'Link', 'rapm' ) );
+		$chips['dates'] = array( $step['review'], __( 'Dates', 'rapm' ) );
+		?>
+		<div class="rapm-ed-bar" id="rapm-ed-bar" data-cfg="<?php echo esc_attr( wp_json_encode( $cfg ) ); ?>">
+			<div class="rapm-ed-bar-in">
+				<nav class="rapm-ed-chips" aria-label="<?php esc_attr_e( 'Parts of this promotion', 'rapm' ); ?>">
+					<?php foreach ( $chips as $key => $chip ) : ?>
+						<a class="rapm-ed-chip" href="#rapm-step-<?php echo (int) $chip[0]; ?>" data-chip="<?php echo esc_attr( $key ); ?>"><span class="rapm-ed-dot" aria-hidden="true"></span><?php echo esc_html( $chip[1] ); ?><span class="screen-reader-text rapm-ed-sr"></span></a>
+					<?php endforeach; ?>
+				</nav>
+				<span class="rapm-ed-note" id="rapm-ed-note" aria-live="polite"></span>
+				<button type="submit" class="button button-primary rapm-ed-save"><?php echo $is_edit ? esc_html__( 'Save promotion', 'rapm' ) : esc_html__( 'Create promotion', 'rapm' ); ?></button>
+			</div>
 		</div>
 		<?php
 	}

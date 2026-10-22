@@ -52,7 +52,7 @@ class RAPM_Help {
 			</style>
 
 			<h2><?php esc_html_e( 'Adding a New Promotion — Step by Step', 'rapm' ); ?></h2>
-			<p class="description"><?php esc_html_e( 'The form for a new promotion walks you through this in order, one screen at a time, with Back and Next buttons — you can\'t get lost or skip something by accident.', 'rapm' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Everything is on one screen. The bar at the top shows what is done and what is still needed, and the preview on the right changes as you type.', 'rapm' ); ?></p>
 			<p class="rapm-help-note"><?php esc_html_e( 'You can also click "New promotion" on the left menu. Pick what you want to make from the pictures. Then pick where it shows and how to start: blank, from a template, or a copy of one you made before.', 'rapm' ); ?></p>
 			<ol>
 				<li><?php esc_html_e( 'On the left menu, click "Promotions." Find the section for the spot where it should show (for example "Home page slider") and click "Add a picture" at the end of it.', 'rapm' ); ?></li>
