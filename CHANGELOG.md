@@ -4,6 +4,38 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.59.3
+
+**Pictures are made ready in the browser before they're sent.** Approved by Phil on Oct 23. Kemper and StarFine only accept uploads up to 1 MB (PHP's upload_max_filesize), which was the cause of the silent refusals behind 1.59.1. Phil asked: "Is there a way to change an uploaded photo to a webp format under 1mb?"
+
+- **When a JPG, PNG or WebP picture is chosen,** the browser resizes it and saves it as WebP if it is either:
+  - over the website's upload limit, or
+  - bigger than the spot needs.
+
+  It starts at quality 0.86 and steps down to 0.8, 0.72 and 0.64 only as far as needed to get under the limit. That copy is what's sent. The original on the person's computer isn't touched. A green note says what happened: "Made smaller for this website: sale-banner.png, 4 MB → 27 KB WebP, 1920 × 600. Nothing was cut off."
+- **It only scales down, never crops.** Pictures shaped for the spot become exactly the spot's size. A picture of a different shape keeps enough to cover the spot, so "Pick the part to keep" still decides what's trimmed. For example, a 4800 × 3600 photo for a 1920 × 600 spot becomes 1920 × 1440. Any-shape spots (Shop the Look) fit the width. This follows the existing rule: a same-shape resize is automatic, and a crop needs a person.
+- **Safari can't make WebP files** (caniuse; MDN). It asks for WebP, gets a PNG back, and so makes a JPG instead. The website turns that into WebP on save, as it does every picture. A JPG has no see-through parts, so they become white.
+- **A type the website can't use but this browser can open** is changed too, with the note "Changed for this website: …". This should cover iPhone HEIC photos in Safari, which can open them; that still needs a check on a real Safari. Chrome can't open HEIC, so it keeps the "save it as a JPG" note.
+- **GIFs are left alone,** because redrawing them would stop their animation. A GIF that's too big gets the size note.
+- **If a picture still can't get under the limit at the lowest quality,** it isn't swapped. The note says "…is still 1.2 MB after making it smaller, so it would look poor. Use a smaller or simpler picture."
+- **While a picture is being made ready,** the note says "Getting sale-banner.png ready for this website…" and Save waits.
+- **The limit line now adds:** "· bigger JPG, PNG and WebP pictures are made smaller for you".
+- **Tested in the browser** against the real editor script, a 1 MB limit and a 1920 × 600 spot, with no script errors:
+
+  | Picked | Result |
+  |---|---|
+  | 4000 × 1250 PNG, 4 MB | 27 KB WebP, 1920 × 600 |
+  | 2400 × 750 random-noise PNG, 5.9 MB (worst case) | 739 KB WebP |
+  | 1920 × 600 PNG, 810 KB | Left alone |
+  | 4800 × 3600 photo, 12.8 MB | 1920 × 1440 WebP, not cropped |
+  | HEIC in Chrome | The iPhone note |
+  | 3 MB GIF | Left alone, with the size note |
+  | With WebP refused, as in Safari | 1920 × 600 JPG |
+
+  The changed PHP files parse in PHP 8.3 (php-wasm).
+
+---
+
 ## 1.59.2
 
 - **The picture hint matches the limits.** "Use any picture file you have, like a JPG or PNG" now reads "Use a JPG, PNG, WebP or GIF picture." Its (i) says: "We make it the right size and turn it into a fast web picture for you. If a picture can't be used, we say why as soon as you choose it." The staging check of 1.59.1 found the contradiction.

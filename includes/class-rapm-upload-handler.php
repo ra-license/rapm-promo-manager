@@ -72,6 +72,16 @@ class RAPM_Upload_Handler {
 				'fileType'     => __( '%1$s is a %2$s file. Use a JPG, PNG, WebP or GIF picture.', 'rapm' ),
 				/* translators: 1: both pictures' size together, 2: the most this website takes at once */
 				'fileBoth'     => __( 'Together the pictures are %1$s. This website can take %2$s at once. Choose smaller pictures.', 'rapm' ),
+				// 1.59.3: a picture made ready in the browser before it's sent.
+				/* translators: 1: file name, 2: its size before, 3: size after, 4: "WebP" or "JPG", 5: width × height */
+				'fileShrunk'    => __( 'Made smaller for this website: %1$s, %2$s → %3$s %4$s, %5$s. Nothing was cut off.', 'rapm' ),
+				/* translators: same as above, for a picture changed from a type the website can't use */
+				'fileConverted' => __( 'Changed for this website: %1$s (%2$s) → %3$s %4$s, %5$s. Nothing was cut off.', 'rapm' ),
+				/* translators: 1: file name, 2: its size after shrinking, 3: the most this website takes */
+				'fileStillBig'  => __( '%1$s is still %2$s after making it smaller, so it would look poor. Use a smaller or simpler picture. This website takes up to %3$s.', 'rapm' ),
+				/* translators: %s: file name */
+				'fileWorking'   => __( 'Getting %s ready for this website…', 'rapm' ),
+				'aPicReady'     => __( 'a moment while the picture gets ready', 'rapm' ),
 				'aTab'       => __( 'a tab name', 'rapm' ),
 				'aQuickName' => __( 'a name under the picture', 'rapm' ),
 				'more'       => __( 'More options: line-up, color, style, typeface', 'rapm' ),
@@ -2849,7 +2859,7 @@ class RAPM_Upload_Handler {
 	 */
 	public static function file_limit_text() {
 		/* translators: %s: the most this website takes, like "8 MB" */
-		return sprintf( __( 'JPG, PNG, WebP or GIF · up to %s on this website', 'rapm' ), size_format( wp_max_upload_size() ) );
+		return sprintf( __( 'JPG, PNG, WebP or GIF · up to %s on this website · bigger JPG, PNG and WebP pictures are made smaller for you', 'rapm' ), size_format( wp_max_upload_size() ) );
 	}
 
 	/**

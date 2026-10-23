@@ -79,13 +79,22 @@
 	// (a file over the server's limit used to arrive empty, or blank the page).
 	var fileBad = { desktop: false, mobile: false };
 	var OK_TYPES = [ 'jpg', 'jpeg', 'png', 'webp', 'gif' ];
+	// 1.59.3: a picture made ready in the browser (smaller, or changed from
+	// a type the website can't use) before it's sent.
+	var made = { desktop: '', mobile: '' };      // the green note
+	var busy = { desktop: false, mobile: false }; // still working on it
+	var stillBig = { desktop: 0, mobile: 0 };     // couldn't get it small enough
 	function mb( bytes ) {
 		return bytes < 1048576 ? Math.max( 1, Math.round( bytes / 1024 ) ) + ' KB' : ( bytes / 1048576 ).toFixed( 1 ).replace( /\.0$/, '' ) + ' MB';
 	}
 	function fileProblem( which ) {
 		var file = chosenFile( which );
-		if ( ! file ) {
+		if ( ! file || busy[ which ] ) {
 			return '';
+		}
+		var up0 = cfg.upload || {};
+		if ( stillBig[ which ] ) {
+			return fmt( T.fileStillBig, file.name, mb( stillBig[ which ] ), up0.maxText );
 		}
 		var ext = ( /\.([a-z0-9]+)$/i.exec( file.name ) || [ '', '' ] )[ 1 ].toLowerCase();
 		var type = String( file.type || '' ).toLowerCase();
@@ -114,11 +123,110 @@
 			return;
 		}
 		box.hidden = ! file;
-		box.className = 'rapm-file-check' + ( problem ? ' is-bad' : ' is-ok' );
-		box.textContent = problem || ( file ? file.name + ' · ' + mb( file.size ) : '' );
+		box.className = 'rapm-file-check' + ( problem ? ' is-bad' : ( busy[ which ] ? ' is-busy' : ' is-ok' ) );
+		box.textContent = problem || ( busy[ which ] && file ? fmt( T.fileWorking, file.name ) : ( made[ which ] || ( file ? file.name + ' · ' + mb( file.size ) : '' ) ) );
 	}
 	function fileIsBad( which ) {
 		return ! viaLink( which ) && fileBad[ which ];
+	}
+
+	// 1.59.3: shrink a picture to the spot's size and save it as WebP (a JPG
+	// in Safari, which can't make WebP; the website makes it WebP on save),
+	// when it's over this website's upload limit, bigger than the spot needs,
+	// or a type the website can't use but this browser can open (like an
+	// iPhone HEIC in Safari). It only scales down, never crops: a picture of
+	// a different shape keeps its shape, so "Pick the part to keep" still
+	// decides what's trimmed. GIFs are left alone (it would stop animation).
+	function prepare( which, input ) {
+		var file = chosenFile( which );
+		if ( ! file || ! window.DataTransfer || ! document.createElement( 'canvas' ).toBlob ) {
+			return;
+		}
+		var ext = ( /\.([a-z0-9]+)$/i.exec( file.name ) || [ '', '' ] )[ 1 ].toLowerCase();
+		var type = String( file.type || '' ).toLowerCase();
+		if ( 'image/gif' === type || 'gif' === ext ) {
+			return;
+		}
+		var okType = /^image\/(jpeg|png|webp)$/.test( type ) || ( ! type && [ 'jpg', 'jpeg', 'png', 'webp' ].indexOf( ext ) !== -1 );
+		var slot = ( cfg.slots || {} )[ which ];
+		var up = cfg.upload || {};
+		var limit = up.max ? up.max * 0.95 : 0;
+		busy[ which ] = true;
+		showFileCheck( which );
+		update();
+		var url = URL.createObjectURL( file );
+		var img = new Image();
+		function finish() {
+			busy[ which ] = false;
+			showFileCheck( which );
+			update();
+		}
+		img.onerror = function () {
+			URL.revokeObjectURL( url );
+			finish(); // the browser can't open it: the type note explains.
+		};
+		img.onload = function () {
+			URL.revokeObjectURL( url );
+			var w = img.naturalWidth, h = img.naturalHeight, scale = 1;
+			if ( slot && slot.w && w && h ) {
+				// Any-shape spots (Shop the Look) fit the width; the others keep
+				// enough to cover the spot, so a trim choice still has room.
+				scale = slot.flex ? Math.min( 1, slot.w / w ) : Math.min( 1, Math.max( slot.w / w, slot.h / h ) );
+			}
+			if ( okType && scale >= 1 && ! ( limit && file.size > limit ) ) {
+				finish();
+				return;
+			}
+			var cw = Math.max( 1, Math.round( w * scale ) ), ch = Math.max( 1, Math.round( h * scale ) );
+			var canvas = document.createElement( 'canvas' );
+			canvas.width = cw;
+			canvas.height = ch;
+			var ctx = canvas.getContext( '2d' );
+			var qualities = [ 0.86, 0.8, 0.72, 0.64 ];
+			function attempt( i, as ) {
+				ctx.clearRect( 0, 0, cw, ch );
+				if ( 'image/jpeg' === as ) {
+					ctx.fillStyle = '#ffffff'; // JPG has no see-through parts.
+					ctx.fillRect( 0, 0, cw, ch );
+				}
+				ctx.drawImage( img, 0, 0, cw, ch );
+				canvas.toBlob( function ( blob ) {
+					if ( blob && 'image/webp' === as && 'image/webp' !== blob.type ) {
+						attempt( i, 'image/jpeg' ); // Safari makes a PNG when asked for WebP.
+						return;
+					}
+					if ( blob && limit && blob.size > limit && i < qualities.length - 1 ) {
+						attempt( i + 1, as );
+						return;
+					}
+					done( blob, as );
+				}, as, qualities[ i ] );
+			}
+			function done( blob, as ) {
+				if ( ! blob || ( limit && blob.size > limit ) ) {
+					stillBig[ which ] = blob ? blob.size : file.size;
+					finish();
+					return;
+				}
+				var label = 'image/webp' === as ? 'WebP' : 'JPG';
+				var made1 = fmt( okType ? T.fileShrunk : T.fileConverted, file.name, mb( file.size ), mb( blob.size ), label, cw + ' × ' + ch );
+				try {
+					var dt = new DataTransfer();
+					dt.items.add( new File( [ blob ], file.name.replace( /\.[^.]+$/, '' ) + ( 'image/webp' === as ? '.webp' : '.jpg' ), { type: as } ) );
+					input.rapmMade = true;
+					input.files = dt.files;
+				} catch ( e ) {
+					finish(); // can't swap the file in this browser: the size note explains.
+					return;
+				}
+				busy[ which ] = false;
+				made[ which ] = made1;
+				// Let the preview, size checks and trim picker use the new picture.
+				input.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			}
+			attempt( 0, 'image/webp' );
+		};
+		img.src = url;
 	}
 
 	// A chosen file's size, read in the browser, for the checks.
@@ -128,6 +236,13 @@
 			return;
 		}
 		input.addEventListener( 'change', function () {
+			if ( input.rapmMade ) {
+				input.rapmMade = false; // our own swap (1.59.3): keep its note.
+			} else {
+				made[ which ] = '';
+				stillBig[ which ] = 0;
+				prepare( which, input );
+			}
 			showFileCheck( 'desktop' );
 			showFileCheck( 'mobile' );
 			var file = chosenFile( which );
@@ -165,6 +280,9 @@
 		}
 		if ( cfg.images && ( fileIsBad( 'desktop' ) || fileIsBad( 'mobile' ) ) ) {
 			out.push( T.aWorkingFile ); // 1.59.1: a chosen picture this website can't take.
+		}
+		if ( cfg.images && ( busy.desktop || busy.mobile ) ) {
+			out.push( T.aPicReady ); // 1.59.3: still being made ready.
 		}
 		if ( cfg.quick && ! val( 'rapm_headline' ) ) {
 			out.push( T.aQuickName );

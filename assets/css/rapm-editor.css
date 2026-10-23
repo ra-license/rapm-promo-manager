@@ -76,3 +76,4 @@ tr.rapm-more-hidden { display: none; }
 .rapm-file-check { margin: 6px 0 0; padding: 8px 10px; border-radius: 4px; font-size: 13px; line-height: 1.45; max-width: 520px; }
 .rapm-file-check.is-bad { background: #fcf0f1; color: #8a2424; border: 1px solid #f0c3c4; }
 .rapm-file-check.is-ok { background: #edfaef; color: #00661d; }
+.rapm-file-check.is-busy { background: #f0f6fc; color: #135e96; } /* 1.59.3: getting a picture ready */
