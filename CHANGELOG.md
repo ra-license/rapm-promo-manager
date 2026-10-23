@@ -8,6 +8,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 - **The picture hint matches the limits.** "Use any picture file you have, like a JPG or PNG" now reads "Use a JPG, PNG, WebP or GIF picture." Its (i) says: "We make it the right size and turn it into a fast web picture for you. If a picture can't be used, we say why as soon as you choose it." The staging check of 1.59.1 found the contradiction.
 - Tested: the changed file parses in PHP 8.3 (php-wasm).
+- **Installed on staging (2026-10-23)** with Check for updates › update now: the Plugins screen shows 1.59.2, and the new Slider form's hint reads "Use a JPG, PNG, WebP or GIF picture." above the two "up to 100 MB on this website" lines. Not yet in production.
 
 ---
 
