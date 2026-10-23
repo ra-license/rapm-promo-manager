@@ -4,6 +4,55 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.60.0
+
+**A change log starts recording, and "Update now" no longer fails on a hidden update.** Step 1 of the integration plan (brief MwkVL7…), split into small releases. This part changes nothing anyone can see.
+
+- **The change log (asked for by Phil on Oct 23):** "a log of changes ... that documents who made the changes".
+  - **What's recorded:** each change to a promotion, a spot (its name and settings, or a drag that reorders it), the brand kit or Promo Manager's settings. Each entry has:
+    - when it happened;
+    - who made it (their name and login, kept even if the login is removed later);
+    - what changed, field by field, from → to;
+    - how it arrived: Promo Manager's own screens, the WordPress editor, the automatic schedule (for example a linked picture swapped by the hourly check), or later the help desk form, "Manage promotions" and ZiFlow approvals.
+  - **One entry per save, not per field.** A save that writes twenty fields, or the same field twice, is one entry with each field's first "from" and last "to". A save that changes nothing records nothing.
+  - **A drag counts once.** Dragging promotions into a new order is one "reordered" entry for the spot, listing each promotion's old and new place.
+  - **Gallery copies:** an unsaved copy from the gallery isn't recorded. Its first save is recorded as "created". A copy that is tidied away without being saved isn't recorded at all.
+  - **Trash and delete:** trash, restore and delete-for-good are each recorded.
+  - **Pictures** are recorded by number and file name ("#4 sale-banner.webp"), so the entry still makes sense if the file is removed later.
+  - **Never recorded:** the GitHub update key, link-check times, sync errors and edit locks.
+  - **Kept 2 years** (Phil's decision). A daily job removes older entries.
+  - **Where it lives:** a table of its own (`wp_rapm_changes`). It's made when the update arrives, because updates from GitHub skip the activation step.
+  - **Viewing it:** the screens (administrators only on the website, R&A only on the help desk) and the CSV download come next, after a mockup.
+  - **For later releases:** `RAPM_Changes::set_route()` lets the help desk form, "Manage promotions" and ZiFlow approvals mark their own changes.
+- **"Update now" (RA Monitor Updates 1.0.2).**
+  - **What happened:** on Oct 23 StarFine failed with "1.59.2 is on GitHub, but WordPress didn't list it as an update". Its own Plugins screen then listed the same update and installed it.
+  - **Why:** the update checker had found the update, but something on the site took it off WordPress's update list during the scheduled run. WordPress's updater reads that list again before it installs, so it stopped.
+  - **What's not known yet:** which filter it was on StarFine. The website's connection to Claude was refused that day, so it couldn't be checked.
+  - **The fix:** the update the checker just got from GitHub (the same release, on the site's own channel) is put back on the list for that one install. The names of any filters that could hide it are saved with the result. For example: "It wasn't on WordPress's update list, so it was added for this update (filtered by …)". The next time this happens, the monitor shows which plugin did it.
+  - **Still respected:** the website's own "no automatic updates" settings, and WordPress's own check that rolls an update back if it breaks the site.
+  - **Note:** the copy that loads first on a site is the one that runs. Promo Manager loads before Universal Room Planner and Woo Native Dimensions, because WordPress loads plugins in alphabetical order by folder name.
+- **Tested** on a real WordPress 7.1.3 with the official SQLite database plugin, running in the browser (php-wasm 3.1.60, PHP 8.3), with this build of Promo Manager turned on:
+  - **Every change was recorded with the right action and route:**
+    - making a promotion, editing it, turning it off;
+    - a reorder of two promotions (one "reordered" entry);
+    - a gallery copy (nothing recorded until its first save, then "created"), and a gallery copy tidied away (nothing recorded);
+    - trash, restore and delete;
+    - a linked picture swapped by the schedule ("automatic", by nobody);
+    - a new spot, then renaming it;
+    - turning on Google Analytics in Settings.
+  - **Not recorded:** a save with no change, link-check bookkeeping, and the GitHub key (0 matches).
+  - **The real save form** (`RAPM_Upload_Handler::handle_save`) still saves and redirects to "Saved". The edit is one "Promo Manager" entry.
+  - **The cleanup** removed an entry from 3 years ago and kept one from 700 days ago.
+  - **"Update now" with a filter hiding the update, as on StarFine:**
+    - with 1.0.1 it failed with StarFine's exact message;
+    - with 1.0.2 it installed (1.0 → 1.1) and named the filter;
+    - without the filter, it worked as before;
+    - the temporary filter is gone afterward.
+    - In the browser, WordPress's after-update check of the home page can't run, so that one request was answered "OK" in the test.
+  - **PHP versions:** both changed files parse in PHP 7.4 and 8.3.
+
+---
+
 ## 1.59.3
 
 **Pictures are made ready in the browser before they're sent.** Approved by Phil on Oct 23. Kemper and StarFine only accept uploads up to 1 MB (PHP's upload_max_filesize), which was the cause of the silent refusals behind 1.59.1. Phil asked: "Is there a way to change an uploaded photo to a webp format under 1mb?"

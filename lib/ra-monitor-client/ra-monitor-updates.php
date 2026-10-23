@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Updates 1.0.1
+ * RA Monitor Updates 1.0.2
  *
  * Lets R&A's Plugin Monitor (help.ramarketing.com) ask this site to update
  * an R&A plugin right away, instead of waiting for WordPress's twice-daily
@@ -47,7 +47,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 	class RA_Monitor_Updates {
 
-		const VERSION = '1.0.1';
+		const VERSION = '1.0.2';
 
 		// The check-in address; polls go to /poll next to it, so the
 		// monitor's "Receive this site's own check-ins here" testing switch
@@ -375,20 +375,53 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			// checker just added to WordPress's list of available updates.
 			$available = get_site_transient( 'update_plugins' );
 			$item      = is_object( $available ) && isset( $available->response[ $basename ] ) ? $available->response[ $basename ] : null;
+			$add       = null;
+			$hiders    = '';
 			if ( ! $item ) {
-				return $result + array( 'status' => 'failed', 'message' => 'Version ' . $update->version . ' is on GitHub, but WordPress didn’t list it as an update.' );
+				// 1.0.2: StarFine (2026-10-23) got "didn't list it" here while
+				// its Plugins screen listed and installed the same update, so
+				// something on the site hid it from the list in this context
+				// only. WordPress's updater reads the list again before
+				// installing, so the update the checker just got from GitHub
+				// is put back on the list for this one install. The names of
+				// any filters that could hide it are kept with the result.
+				$hiders = self::list_filters();
+				$item   = method_exists( $update, 'toWpFormat' ) ? $update->toWpFormat() : null;
+				if ( ! $item || empty( $item->package ) || empty( $item->plugin ) ) {
+					return $result + array( 'status' => 'failed', 'message' => substr( 'Version ' . $update->version . ' is on GitHub, but WordPress didn’t list it as an update' . ( $hiders ? ' (' . $hiders . ')' : '' ), 0, 199 ) . '.' );
+				}
+				$item->autoupdate = false; // As the checker does, unless a plugin allows it.
+				$add = function ( $list ) use ( $basename, $item ) {
+					if ( is_object( $list ) ) {
+						if ( ! isset( $list->response ) || ! is_array( $list->response ) ) {
+							$list->response = array();
+						}
+						$list->response[ $basename ] = $item;
+					}
+					return $list;
+				};
+				add_filter( 'pre_site_transient_update_plugins', $add, PHP_INT_MAX );
+				add_filter( 'site_transient_update_plugins', $add, PHP_INT_MAX );
 			}
 
 			$updater = new WP_Automatic_Updater();
-			$outcome = $updater->update( 'plugin', $item );
-			$after   = self::installed_version( $args );
+			try {
+				$outcome = $updater->update( 'plugin', $item );
+			} finally {
+				if ( $add ) {
+					remove_filter( 'pre_site_transient_update_plugins', $add, PHP_INT_MAX );
+					remove_filter( 'site_transient_update_plugins', $add, PHP_INT_MAX );
+				}
+			}
+			$after = self::installed_version( $args );
 			$result['version'] = $after;
 
 			if ( is_wp_error( $outcome ) ) {
 				return $result + array( 'status' => 'failed', 'message' => substr( wp_strip_all_tags( $outcome->get_error_message() ), 0, 200 ) );
 			}
 			if ( $after && version_compare( $after, $before, '>' ) ) {
-				return $result + array( 'status' => 'done', 'message' => '' );
+				$note = $add ? substr( 'It wasn’t on WordPress’s update list, so it was added for this update' . ( $hiders ? ' (' . $hiders . ')' : '' ), 0, 199 ) . '.' : '';
+				return $result + array( 'status' => 'done', 'message' => $note );
 			}
 			if ( false === $outcome ) {
 				return $result + array( 'status' => 'failed', 'message' => 'WordPress skipped the update. Automatic updates may not be allowed for this plugin here.' );
@@ -400,6 +433,38 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				return $result + array( 'status' => 'failed', 'message' => 'The new version couldn’t be downloaded or unpacked' . ( $why ? ': ' . $why : '.' ) );
 			}
 			return $result + array( 'status' => 'failed', 'message' => 'The update didn’t take. WordPress kept version ' . $after . ', possibly because the new version caused an error.' );
+		}
+
+		/**
+		 * 1.0.2: the filters that can take an update off WordPress's list:
+		 * anything on "pre_site_transient_update_plugins", and anything on
+		 * "site_transient_update_plugins" that runs after the update checker
+		 * (priority 10). Names only, e.g. "Some_Class::method".
+		 */
+		private static function list_filters() {
+			global $wp_filter;
+			$names = array();
+			foreach ( array( 'pre_site_transient_update_plugins' => -PHP_INT_MAX, 'site_transient_update_plugins' => 10 ) as $hook => $after ) {
+				if ( empty( $wp_filter[ $hook ] ) || ! is_object( $wp_filter[ $hook ] ) ) {
+					continue;
+				}
+				foreach ( $wp_filter[ $hook ]->callbacks as $priority => $callbacks ) {
+					if ( $priority <= $after ) {
+						continue;
+					}
+					foreach ( $callbacks as $callback ) {
+						$function = $callback['function'];
+						if ( is_string( $function ) ) {
+							$names[] = $function;
+						} elseif ( is_array( $function ) && isset( $function[0], $function[1] ) ) {
+							$names[] = ( is_object( $function[0] ) ? get_class( $function[0] ) : (string) $function[0] ) . '::' . $function[1];
+						} else {
+							$names[] = 'a closure';
+						}
+					}
+				}
+			}
+			return $names ? 'filtered by ' . implode( ', ', array_unique( $names ) ) : '';
 		}
 
 		/**

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.59.3
+ * Version: 1.60.0
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.59.3' );
+define( 'RAPM_VERSION', '1.60.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -19,6 +19,7 @@ require_once RAPM_DIR . 'includes/class-rapm-post-types.php';
 require_once RAPM_DIR . 'includes/class-rapm-slots.php';
 require_once RAPM_DIR . 'includes/class-rapm-assets.php';
 require_once RAPM_DIR . 'includes/class-rapm-track.php';
+require_once RAPM_DIR . 'includes/class-rapm-changes.php';
 require_once RAPM_DIR . 'includes/class-rapm-webp-converter.php';
 require_once RAPM_DIR . 'includes/class-rapm-destination.php';
 require_once RAPM_DIR . 'includes/class-rapm-admin-settings.php';
@@ -55,6 +56,9 @@ require_once RAPM_DIR . 'includes/class-rapm-updater.php';
 
 // Self-update from private GitHub repos — see class-rapm-updater.php.
 RAPM_Updater::init( __FILE__ );
+
+// 1.60.0: the change log starts recording (screens come in a later release).
+RAPM_Changes::init();
 
 final class RAPM_Plugin {
 
@@ -177,6 +181,7 @@ final class RAPM_Plugin {
 
 	public function deactivate() {
 		RAPM_Sync::unschedule();
+		RAPM_Changes::unschedule();
 		flush_rewrite_rules();
 	}
 }
