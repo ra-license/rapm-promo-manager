@@ -33,6 +33,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   | With WebP refused, as in Safari | 1920 × 600 JPG |
 
   The changed PHP files parse in PHP 8.3 (php-wasm).
+- **Installed on staging (2026-10-23)** with Check for updates › update now. The Plugins screen shows 1.59.3.
+  - **New Slider form:** the limit line adds "· bigger JPG, PNG and WebP pictures are made smaller for you".
+  - **End to end:** a real 2800 × 875 PNG of 7 MB, chosen through the file field, became big-sale-banner.webp, 743 KB, 1920 × 600. The green note showed and the preview used it.
+  - **Saved:** as a test promotion in the Test spot, it saved ("Saved"), and the Ready list said "Computer picture is the right size (1920 × 600)". So the server takes the browser-made WebP.
+  - **Cleaned up:** the test promotion (#137430) went to the trash.
+  - Not yet in production.
 
 ---
 
