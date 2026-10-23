@@ -38,7 +38,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **End to end:** a real 2800 × 875 PNG of 7 MB, chosen through the file field, became big-sale-banner.webp, 743 KB, 1920 × 600. The green note showed and the preview used it.
   - **Saved:** as a test promotion in the Test spot, it saved ("Saved"), and the Ready list said "Computer picture is the right size (1920 × 600)". So the server takes the browser-made WebP.
   - **Cleaned up:** the test promotion (#137430) went to the trash.
-  - Not yet in production.
+- **Pushed to the production repo (2026-10-23)** with Phil's OK: main and the tag `v1.59.3` (Phil ran the push).
 
 ---
 
