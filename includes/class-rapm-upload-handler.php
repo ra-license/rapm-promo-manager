@@ -559,7 +559,7 @@ class RAPM_Upload_Handler {
 				<?php RAPM_Tip::hint( __( 'One photo of a whole room. Wide photos look best.', 'rapm' ), __( 'Any shape works. Phones use this same photo, so you don\'t need a phone picture.', 'rapm' ) ); ?>
 				<?php elseif ( $has_images ) : ?>
 				<h2><?php esc_html_e( 'Images', 'rapm' ); ?></h2>
-				<?php RAPM_Tip::hint( __( 'Use any picture file you have, like a JPG or PNG.', 'rapm' ), __( 'We make it the right size and file type for you. If a picture can\'t be used, we tell you why.', 'rapm' ) ); ?>
+				<?php RAPM_Tip::hint( __( 'Use a JPG, PNG, WebP or GIF picture.', 'rapm' ), __( 'We make it the right size and turn it into a fast web picture for you. If a picture can\'t be used, we say why as soon as you choose it.', 'rapm' ) ); // 1.59.2: "any picture file" contradicted the limits shown under each field. ?>
 				<?php if ( $is_box ) : ?>
 				<table class="form-table">
 					<tr>

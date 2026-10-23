@@ -4,6 +4,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.59.2
+
+- **The picture hint matches the limits.** "Use any picture file you have, like a JPG or PNG" now reads "Use a JPG, PNG, WebP or GIF picture." Its (i) says: "We make it the right size and turn it into a fast web picture for you. If a picture can't be used, we say why as soon as you choose it." The staging check of 1.59.1 found the contradiction.
+- Tested: the changed file parses in PHP 8.3 (php-wasm).
+
+---
+
 ## 1.59.1
 
 **Pictures that were refused with no message, and the two "new" buttons.** Approved by Phil on Oct 23 from an inline mockup. He reported: "the promo manager refuses to accept photos either of a specific size or file type. There was no message to indicate there was an issue or what it was. Also, at the top there's two buttons one is 'new promotion' and one is 'new spot' and that gets confusing."
@@ -39,6 +46,14 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - HEIC and TIFF: their notes, Save blocked.
     - 2.1 MB JPG: green, Save goes through.
     - Adding a 6.5 MB phone JPG: the "together" note, Save blocked.
+- **Installed on staging (2026-10-23)** with Check for updates › update now. The Plugins screen shows 1.59.1.
+  - **Promotions page:** the top shows only "+ New promotion". "Setup for R&A" at the bottom has "Add a spot", which opens the dialog titled "Add a spot" (cancelled, nothing made).
+  - **New Slider form:** both picture fields say "JPG, PNG, WebP or GIF · up to 100 MB on this website". That is staging's real limit.
+  - **Real files chosen through the file field:**
+    - IMG_4021.HEIC got the iPhone note. The Picture chip turned red and the bar said "To save, add a name and a picture this website can take…".
+    - art.tif got "art.tif is a TIF file…".
+    - A 1920×600 fall-banner.jpg showed green, "fall-banner.jpg · 19 KB".
+  - **Found while checking:** the hint above still said "Use any picture file you have, like a JPG or PNG", which contradicted the new limit. Fixed in 1.59.2.
 
 ---
 
