@@ -50,6 +50,9 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - the temporary filter is gone afterward.
     - In the browser, WordPress's after-update check of the home page can't run, so that one request was answered "OK" in the test.
   - **PHP versions:** both changed files parse in PHP 7.4 and 8.3.
+- **Installed on staging (2026-10-23)** with Check for updates › update now. The Plugins screen shows "Version 1.60.0" and "Updated!".
+  - **What was checked:** the Promotions page loads. The Dining Days editor opens, and saving it says "Saved." with every check still green.
+  - **Not checked on staging:** the log entries themselves, because there is no screen for them yet. They were checked on the test WordPress above.
 
 ---
 
