@@ -74,6 +74,53 @@
 		return !! chosenFile( which ) || !! ( cfg.has && cfg.has[ which ] );
 	}
 
+	// 1.59.1: a picture this website can't take is caught when it's chosen,
+	// with what to do, instead of failing with no message after Save
+	// (a file over the server's limit used to arrive empty, or blank the page).
+	var fileBad = { desktop: false, mobile: false };
+	var OK_TYPES = [ 'jpg', 'jpeg', 'png', 'webp', 'gif' ];
+	function mb( bytes ) {
+		return bytes < 1048576 ? Math.max( 1, Math.round( bytes / 1024 ) ) + ' KB' : ( bytes / 1048576 ).toFixed( 1 ).replace( /\.0$/, '' ) + ' MB';
+	}
+	function fileProblem( which ) {
+		var file = chosenFile( which );
+		if ( ! file ) {
+			return '';
+		}
+		var ext = ( /\.([a-z0-9]+)$/i.exec( file.name ) || [ '', '' ] )[ 1 ].toLowerCase();
+		var type = String( file.type || '' ).toLowerCase();
+		if ( /heic|heif/.test( type ) || 'heic' === ext || 'heif' === ext ) {
+			return fmt( T.fileHeic, file.name );
+		}
+		if ( ! ( /^image\/(jpeg|png|webp|gif)$/.test( type ) || ( ! type && OK_TYPES.indexOf( ext ) !== -1 ) ) ) {
+			return fmt( T.fileType, file.name, ext ? ext.toUpperCase() : ( type || '?' ) );
+		}
+		var up = cfg.upload || {};
+		if ( up.max && file.size > up.max ) {
+			return fmt( T.fileBig, file.name, mb( file.size ), up.maxText );
+		}
+		var other = chosenFile( 'desktop' === which ? 'mobile' : 'desktop' );
+		if ( up.post && other && file.size + other.size > up.post * 0.95 ) {
+			return fmt( T.fileBoth, mb( file.size + other.size ), mb( up.post ) );
+		}
+		return '';
+	}
+	function showFileCheck( which ) {
+		var box = $( 'rapm-' + which + '-file-check' );
+		var file = chosenFile( which );
+		var problem = fileProblem( which );
+		fileBad[ which ] = !! problem;
+		if ( ! box ) {
+			return;
+		}
+		box.hidden = ! file;
+		box.className = 'rapm-file-check' + ( problem ? ' is-bad' : ' is-ok' );
+		box.textContent = problem || ( file ? file.name + ' · ' + mb( file.size ) : '' );
+	}
+	function fileIsBad( which ) {
+		return ! viaLink( which ) && fileBad[ which ];
+	}
+
 	// A chosen file's size, read in the browser, for the checks.
 	[ 'desktop', 'mobile' ].forEach( function ( which ) {
 		var input = $( 'rapm_image_' + which );
@@ -81,6 +128,8 @@
 			return;
 		}
 		input.addEventListener( 'change', function () {
+			showFileCheck( 'desktop' );
+			showFileCheck( 'mobile' );
 			var file = chosenFile( which );
 			if ( ! file ) {
 				dims[ which ] = cfg.dims ? cfg.dims[ which ] : null;
@@ -113,6 +162,9 @@
 		}
 		if ( cfg.images && ( ( hasPicture( 'desktop' ) && linkIsBad( 'desktop' ) ) || linkIsBad( 'mobile' ) ) ) {
 			out.push( T.aWorkingPic ); // 1.58.2: the link check found a problem.
+		}
+		if ( cfg.images && ( fileIsBad( 'desktop' ) || fileIsBad( 'mobile' ) ) ) {
+			out.push( T.aWorkingFile ); // 1.59.1: a chosen picture this website can't take.
 		}
 		if ( cfg.quick && ! val( 'rapm_headline' ) ) {
 			out.push( T.aQuickName );

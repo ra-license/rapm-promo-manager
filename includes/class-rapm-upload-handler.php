@@ -62,6 +62,16 @@ class RAPM_Upload_Handler {
 				'aPicture'   => __( 'a computer picture', 'rapm' ),
 				'aPhoto'     => __( 'a room photo', 'rapm' ),
 				'aWorkingPic' => __( 'a picture link that works (see the red note under it)', 'rapm' ),
+				// 1.59.1: a chosen picture this website can't take.
+				'aWorkingFile' => __( 'a picture this website can take (see the red note under it)', 'rapm' ),
+				/* translators: 1: file name, 2: its size, 3: the most this website takes, like "8 MB" */
+				'fileBig'      => __( '%1$s is %2$s. This website takes pictures up to %3$s. Save it as a JPG (most programs: Export › JPG, quality 80) and choose it again.', 'rapm' ),
+				/* translators: %s: file name */
+				'fileHeic'     => __( '%s is an iPhone photo format websites can\'t show. Save it as a JPG first. On an iPhone: Settings › Camera › Formats › Most Compatible.', 'rapm' ),
+				/* translators: 1: file name, 2: its type, like "TIFF" */
+				'fileType'     => __( '%1$s is a %2$s file. Use a JPG, PNG, WebP or GIF picture.', 'rapm' ),
+				/* translators: 1: both pictures' size together, 2: the most this website takes at once */
+				'fileBoth'     => __( 'Together the pictures are %1$s. This website can take %2$s at once. Choose smaller pictures.', 'rapm' ),
 				'aTab'       => __( 'a tab name', 'rapm' ),
 				'aQuickName' => __( 'a name under the picture', 'rapm' ),
 				'more'       => __( 'More options: line-up, color, style, typeface', 'rapm' ),
@@ -419,6 +429,8 @@ class RAPM_Upload_Handler {
 						'slots'  => array( 'desktop' => $ed_slot( $desktop_slot ), 'mobile' => $ed_slot( $mobile_slot ) ),
 						'has'    => array( 'desktop' => (bool) $img_desktop, 'mobile' => (bool) $img_mobile ),
 						'dims'   => array( 'desktop' => $ed_dims( $img_desktop ), 'mobile' => $ed_dims( $img_mobile ) ),
+						// 1.59.1: what this server takes, so a picture that's too big is caught when it's chosen.
+						'upload' => array( 'max' => (int) wp_max_upload_size(), 'post' => (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) ), 'maxText' => size_format( wp_max_upload_size() ) ),
 						// "More options" starts open when one of them was changed.
 						'more'   => 'image' === $text_mode || 'left' !== $m( '_rapm_text_align', 'left' ) || '#ffffff' !== strtolower( (string) $m( '_rapm_text_color', '#ffffff' ) ) || 'bold' !== $m( '_rapm_text_style', 'bold' ) || '' !== (string) $m( '_rapm_text_font' ),
 					)
@@ -476,7 +488,7 @@ class RAPM_Upload_Handler {
 								<input type="hidden" name="rapm_new_spot_name" value="<?php echo esc_attr( $new_spot_name ); ?>" />
 								<input type="hidden" name="rapm_new_spot_code" value="<?php echo esc_attr( $placement ); ?>" />
 							<?php endif; ?>
-							<?php RAPM_Tip::hint( __( 'The spot on your website where it shows.', 'rapm' ), __( 'Each spot is on the Promotions page, with the pages it is on. To make a new one, use "+ New spot" there.', 'rapm' ) ); ?>
+							<?php RAPM_Tip::hint( __( 'The spot on your website where it shows.', 'rapm' ), __( 'Each spot is on the Promotions page, with the pages it is on. To make a new one, use "Add a spot" at the bottom of that page.', 'rapm' ) ); ?>
 							<p class="description" id="rapm-placement-summary"></p>
 						</td>
 					</tr>
@@ -588,6 +600,9 @@ class RAPM_Upload_Handler {
 
 							<div id="rapm-desktop-upload-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? 'display:none;' : ''; ?>">
 								<input type="file" id="rapm_image_desktop" name="rapm_image_desktop" accept="image/*" />
+								<?php // 1.59.1: the limit up front, and what the browser finds when a picture is chosen (rapm-editor.js). ?>
+								<p class="description rapm-file-limit"><?php echo esc_html( self::file_limit_text() ); ?></p>
+								<p class="rapm-file-check" id="rapm-desktop-file-check" aria-live="polite" hidden></p>
 							</div>
 							<div id="rapm-desktop-link-row" style="margin-top:8px;<?php echo 'link' === $desktop_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_desktop_url" name="rapm_image_desktop_url" class="regular-text" value="<?php echo esc_attr( $desktop_url ); ?>" placeholder="https://…" />
@@ -653,6 +668,9 @@ class RAPM_Upload_Handler {
 
 							<div id="rapm-mobile-upload-row" style="margin-top:8px;<?php echo 'link' === $mobile_source ? 'display:none;' : ''; ?>">
 								<input type="file" id="rapm_image_mobile" name="rapm_image_mobile" accept="image/*" />
+								<?php // 1.59.1: the limit up front, and what the browser finds when a picture is chosen (rapm-editor.js). ?>
+								<p class="description rapm-file-limit"><?php echo esc_html( self::file_limit_text() ); ?></p>
+								<p class="rapm-file-check" id="rapm-mobile-file-check" aria-live="polite" hidden></p>
 							</div>
 							<div id="rapm-mobile-link-row" style="margin-top:8px;<?php echo 'link' === $mobile_source ? '' : 'display:none;'; ?>">
 								<input type="url" id="rapm_image_mobile_url" name="rapm_image_mobile_url" class="regular-text" value="<?php echo esc_attr( $mobile_url ); ?>" placeholder="https://…" />
@@ -1744,6 +1762,8 @@ class RAPM_Upload_Handler {
 					}
 					$new_desktop_id = $result;
 				}
+			} elseif ( self::upload_problem( 'rapm_image_desktop' ) ) {
+				self::fail( $back, self::upload_problem( 'rapm_image_desktop' ) ); // 1.59.1: it never arrived; say why.
 			} elseif ( ! empty( $_FILES['rapm_image_desktop']['tmp_name'] ) ) {
 				$desktop_crop_anchor = isset( $_POST['rapm_image_desktop_crop_anchor'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_image_desktop_crop_anchor'] ) ) : '';
 				$result               = self::process_upload( $_FILES['rapm_image_desktop'], $slots[ $kind['desktop'] ], $asset_id ?: 0, $desktop_crop_anchor );
@@ -1768,6 +1788,8 @@ class RAPM_Upload_Handler {
 						$new_mobile_id = $result;
 					}
 				}
+			} elseif ( self::upload_problem( 'rapm_image_mobile' ) ) {
+				self::fail( $back, self::upload_problem( 'rapm_image_mobile' ) ); // 1.59.1: it never arrived; say why.
 			} elseif ( ! empty( $_FILES['rapm_image_mobile']['tmp_name'] ) ) {
 				$mobile_crop_anchor = isset( $_POST['rapm_image_mobile_crop_anchor'] ) ? sanitize_text_field( wp_unslash( $_POST['rapm_image_mobile_crop_anchor'] ) ) : '';
 				$result              = self::process_upload( $_FILES['rapm_image_mobile'], $slots[ $kind['mobile'] ], $asset_id ?: 0, $mobile_crop_anchor );
@@ -2078,13 +2100,13 @@ class RAPM_Upload_Handler {
 	public static function validate_convert_sideload( $tmp_path, $original_filename, $slot, $parent_id, $crop_anchor = '' ) {
 		$dims = getimagesize( $tmp_path );
 		if ( ! $dims ) {
-			return new WP_Error( 'rapm_unreadable', __( 'Could not read that image file.', 'rapm' ) );
+			return new WP_Error( 'rapm_unreadable', self::type_message( $original_filename, __( 'Could not read that image file.', 'rapm' ) ) );
 		}
 		list( $width, $height ) = $dims;
 		$mime = isset( $dims['mime'] ) ? $dims['mime'] : '';
 
 		if ( ! in_array( $mime, array( 'image/jpeg', 'image/png', 'image/webp', 'image/gif' ), true ) ) {
-			return new WP_Error( 'rapm_not_image', __( 'That file doesn\'t look like an image.', 'rapm' ) );
+			return new WP_Error( 'rapm_not_image', self::type_message( $original_filename, __( 'That file doesn\'t look like an image.', 'rapm' ) ) );
 		}
 
 		$was_resized = false;
@@ -2818,6 +2840,78 @@ class RAPM_Upload_Handler {
 				'titles' => array_values( $titles ),
 			)
 		);
+	}
+
+	/**
+	 * 1.59.1: "JPG, PNG, WebP or GIF · up to 8 MB on this website", under
+	 * each picture field. The limit is this server's own (the smaller of
+	 * PHP's upload_max_filesize and post_max_size).
+	 */
+	public static function file_limit_text() {
+		/* translators: %s: the most this website takes, like "8 MB" */
+		return sprintf( __( 'JPG, PNG, WebP or GIF · up to %s on this website', 'rapm' ), size_format( wp_max_upload_size() ) );
+	}
+
+	/**
+	 * 1.59.1: why a chosen picture never arrived, or ''. A picture over the
+	 * server's limit reaches PHP with an error and no file, and until now
+	 * that read as "no picture chosen": a new promotion asked for a picture
+	 * it had been given, and an edit kept the old picture and said Saved.
+	 */
+	private static function upload_problem( $field ) {
+		$error = isset( $_FILES[ $field ]['error'] ) ? (int) $_FILES[ $field ]['error'] : UPLOAD_ERR_NO_FILE; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked in handle_save().
+		$name  = isset( $_FILES[ $field ]['name'] ) ? sanitize_file_name( wp_unslash( $_FILES[ $field ]['name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		switch ( $error ) {
+			case UPLOAD_ERR_OK:
+			case UPLOAD_ERR_NO_FILE:
+				return '';
+			case UPLOAD_ERR_INI_SIZE:
+			case UPLOAD_ERR_FORM_SIZE:
+				/* translators: 1: file name, 2: the most this website takes */
+				return sprintf( __( '%1$s is bigger than this website takes (%2$s), so it wasn\'t saved. Save it as a JPG (most programs: Export › JPG, quality 80) and choose it again.', 'rapm' ), $name, size_format( wp_max_upload_size() ) );
+			case UPLOAD_ERR_PARTIAL:
+				/* translators: %s: file name */
+				return sprintf( __( '%s didn\'t finish uploading. Please try again.', 'rapm' ), $name );
+			default:
+				return __( 'This website couldn\'t store the picture because of a server setting. Please let R&A Marketing know.', 'rapm' );
+		}
+	}
+
+	/** 1.59.1: names a file type we can't use, with what to do, or gives $fallback. */
+	private static function type_message( $filename, $fallback ) {
+		$name = sanitize_file_name( wp_basename( (string) $filename ) );
+		$ext  = strtolower( (string) pathinfo( $name, PATHINFO_EXTENSION ) );
+		if ( in_array( $ext, array( 'heic', 'heif' ), true ) ) {
+			/* translators: %s: file name */
+			return sprintf( __( '%s is an iPhone photo format websites can\'t show. Save it as a JPG first. On an iPhone: Settings › Camera › Formats › Most Compatible.', 'rapm' ), $name );
+		}
+		if ( $ext && ! in_array( $ext, array( 'jpg', 'jpeg', 'png', 'webp', 'gif' ), true ) ) {
+			/* translators: 1: file name, 2: its type, like "TIFF" */
+			return sprintf( __( '%1$s is a %2$s file. Use a JPG, PNG, WebP or GIF picture.', 'rapm' ), $name, strtoupper( $ext ) );
+		}
+		return $fallback;
+	}
+
+	/**
+	 * 1.59.1: a promotion form bigger than the server takes as a whole
+	 * (post_max_size) reaches WordPress with nothing in it, so it used to
+	 * end on a blank page. Send it back to the form with what happened.
+	 * PHP has already thrown the typed fields away, so they can't be kept.
+	 */
+	public static function catch_oversized_post() {
+		if ( 'admin-post.php' !== basename( isset( $_SERVER['SCRIPT_NAME'] ) ? (string) $_SERVER['SCRIPT_NAME'] : '' ) || 'POST' !== ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) || ! empty( $_POST ) || ! empty( $_FILES ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput
+			return;
+		}
+		$sent  = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+		$limit = (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) );
+		$back  = (string) wp_get_referer();
+		if ( ! $limit || $sent <= $limit || false === strpos( $back, 'page=rapm-add-asset' ) || ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		/* translators: 1: the most this website takes at once, like "8 MB" */
+		$message = sprintf( __( 'The pictures were too big for this website to receive (more than %s together), so nothing was saved, and what you typed couldn\'t be kept. Choose smaller pictures and fill it in again.', 'rapm' ), size_format( $limit ) );
+		wp_safe_redirect( add_query_arg( 'rapm_error', rawurlencode( $message ), remove_query_arg( array( 'rapm_error', 'rapm_restore' ), $back ) ) );
+		exit;
 	}
 
 	private static function fail( $back_url, $message ) {

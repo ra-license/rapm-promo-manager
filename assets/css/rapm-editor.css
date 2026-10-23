@@ -70,3 +70,9 @@ tr.rapm-more-hidden { display: none; }
 .rapm-ed-setup h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #50575e; }
 .rapm-ed-setup p { margin: 0; font-size: 13px; color: #50575e; }
 .rapm-ed-rv [hidden] { display: none !important; }
+
+/* 1.59.1: the picture size limit, and what the browser found in a chosen picture. */
+.rapm-file-limit { margin: 6px 0 0 !important; }
+.rapm-file-check { margin: 6px 0 0; padding: 8px 10px; border-radius: 4px; font-size: 13px; line-height: 1.45; max-width: 520px; }
+.rapm-file-check.is-bad { background: #fcf0f1; color: #8a2424; border: 1px solid #f0c3c4; }
+.rapm-file-check.is-ok { background: #edfaef; color: #00661d; }

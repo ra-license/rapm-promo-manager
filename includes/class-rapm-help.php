@@ -166,7 +166,7 @@ class RAPM_Help {
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I add a new spot?', 'rapm' ); ?></summary>
-				<p><?php esc_html_e( 'Click "+ New spot" at the top of the Promotions page. Pick its type, like Slider or Shop the Look, and give it a name for its job, like "Main slider." The new spot shows as its own section with its code. To show it on your website, paste that code on a page. In Elementor, use a Shortcode widget, or for a slider or feature banner, the Promo Carousel widget.', 'rapm' ); ?></p>
+				<p><?php esc_html_e( 'Click "Add a spot" in Setup for R&A at the bottom of the Promotions page. Pick its type, like Slider or Shop the Look, and give it a name for its job, like "Main slider." The new spot shows as its own section with its code. To show it on your website, paste that code on a page. In Elementor, use a Shortcode widget, or for a slider or feature banner, the Promo Carousel widget.', 'rapm' ); ?></p>
 			</details>
 			<details>
 				<summary><?php esc_html_e( 'How do I take a promotion off the website without deleting it?', 'rapm' ); ?></summary>

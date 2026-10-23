@@ -441,9 +441,9 @@ class RAPM_Promotions_Screen {
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Promotions', 'rapm' ); ?></h1>
 					<p class="rapm-promos-sub"><?php esc_html_e( 'The pictures on your website, grouped by where they show.', 'rapm' ); ?></p>
 				</div>
+				<?php // 1.59.1 (Phil): one button here. Adding a spot is R&A setup, at the bottom. ?>
 				<p class="rapm-promos-actions">
 					<a class="button button-primary" href="<?php echo esc_url( RAPM_Gallery::url() ); ?>"><?php esc_html_e( '+ New promotion', 'rapm' ); ?></a>
-					<button type="button" class="button rapm-new-spot-open"><?php esc_html_e( '+ New spot', 'rapm' ); ?></button>
 				</p>
 				<?php if ( $spots ) : ?>
 					<div class="rapm-promos-search">
@@ -457,7 +457,7 @@ class RAPM_Promotions_Screen {
 			<?php self::render_notices(); ?>
 
 			<?php if ( ! $spots ) : ?>
-				<?php RAPM_Tip::empty_state( 'spots', __( 'No promotions yet', 'rapm' ), __( 'Promotions go in spots: places on your website, like a slider at the top of the home page. Make a spot, then add a picture to it.', 'rapm' ), '<button type="button" class="button button-primary rapm-new-spot-open">' . esc_html__( '+ New spot', 'rapm' ) . '</button>' ); ?>
+				<?php RAPM_Tip::empty_state( 'spots', __( 'No promotions yet', 'rapm' ), __( 'Promotions go in spots: places on your website, like a slider at the top of the home page. Make a spot, then add a picture to it.', 'rapm' ), '<button type="button" class="button button-primary rapm-new-spot-open">' . esc_html__( 'Add a spot', 'rapm' ) . '</button>' ); ?>
 			<?php endif; ?>
 
 			<p class="rapm-no-results" hidden></p>
@@ -503,8 +503,10 @@ class RAPM_Promotions_Screen {
 			</div>
 
 			<div class="rapm-spot rapm-ra-panel">
-				<h2><?php esc_html_e( 'Setup', 'rapm' ); ?></h2>
-				<p><?php esc_html_e( 'Each section above shows its code for the page and a box to rename it. A new spot shows here when you click "+ New spot", when its code is placed on a page, or when a promotion is added with a new spot name.', 'rapm' ); ?></p>
+				<h2><?php esc_html_e( 'Setup for R&A', 'rapm' ); ?></h2>
+				<p><?php esc_html_e( 'Add a new place on the website for promotions. R&A then puts its code on the page.', 'rapm' ); ?></p>
+				<p><button type="button" class="button rapm-new-spot-open"><?php esc_html_e( 'Add a spot', 'rapm' ); ?></button></p>
+				<p><?php esc_html_e( 'Each section above shows its code for the page and a box to rename it. A new spot also shows here when its code is placed on a page, or when a promotion is added with a new spot name.', 'rapm' ); ?></p>
 				<ul>
 					<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset' ) ); ?>"><?php esc_html_e( 'Add a promotion to a new spot', 'rapm' ); ?></a></li>
 					<li><a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rapm_asset&rapm_list=1' ) ); ?>"><?php esc_html_e( 'The old list of every promotion (bulk actions, filters)', 'rapm' ); ?></a></li>
@@ -557,7 +559,7 @@ class RAPM_Promotions_Screen {
 		?>
 		<dialog class="rapm-new-spot" aria-labelledby="rapm-ns-title">
 			<form class="rapm-ns-form">
-				<h2 id="rapm-ns-title"><?php esc_html_e( 'New spot', 'rapm' ); ?></h2>
+				<h2 id="rapm-ns-title"><?php esc_html_e( 'Add a spot', 'rapm' ); ?></h2>
 				<fieldset class="rapm-ns-types">
 					<legend><?php esc_html_e( 'What kind is it?', 'rapm' ); ?></legend>
 					<?php foreach ( self::KIND_ORDER as $i => $kind ) : ?>

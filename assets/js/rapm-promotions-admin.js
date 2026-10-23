@@ -413,7 +413,7 @@
 		nameInput.addEventListener( 'input', refresh );
 		refresh();
 
-		// 1.55.0: every "+ New spot" button (the header's and the empty page's).
+		// 1.55.0: every "Add a spot" button (1.59.1: Setup for R&A's and the empty page's).
 		root.addEventListener( 'click', function ( e ) {
 			if ( ! e.target.closest || ! e.target.closest( '.rapm-new-spot-open' ) ) { return; }
 			status.textContent = '';

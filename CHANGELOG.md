@@ -4,6 +4,44 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.59.1
+
+**Pictures that were refused with no message, and the two "new" buttons.** Approved by Phil on Oct 23 from an inline mockup. He reported: "the promo manager refuses to accept photos either of a specific size or file type. There was no message to indicate there was an issue or what it was. Also, at the top there's two buttons one is 'new promotion' and one is 'new spot' and that gets confusing."
+
+- **Why pictures were refused silently.** A picture bigger than the web server takes (PHP's upload_max_filesize, in MB) arrives with an error and no file. Promo Manager treated that as "no picture chosen":
+  - On a new promotion, it asked for a picture it had just been given.
+  - When editing, it kept the old picture and said "Saved".
+  - A form bigger than the server takes as a whole (post_max_size) arrives completely empty, so it ended on a blank page.
+  - Only JPG, PNG, WebP and GIF can be used. An iPhone HEIC photo, or AVIF, TIFF or PDF, got "That file doesn't look like an image".
+- **Caught the moment a picture is chosen.** In the browser, under the picture field:
+  - "sale-banner.png is 14.2 MB. This website takes pictures up to 8 MB. Save it as a JPG (most programs: Export › JPG, quality 80) and choose it again."
+  - A HEIC gets "…an iPhone photo format websites can't show. Save it as a JPG first. On an iPhone: Settings › Camera › Formats › Most Compatible."
+  - Any other type gets "art.tif is a TIF file. Use a JPG, PNG, WebP or GIF picture."
+  - Two pictures that are too big together get "Together the pictures are 8.6 MB…".
+  - A good picture shows "fall-banner.jpg · 2.1 MB" in green.
+  - While a picture can't be used, the Picture chip is red and Save says "To save, add a picture this website can take (see the red note under it)." This works for computer and phone pictures.
+- **The limit is shown up front.** Under each picture field: "JPG, PNG, WebP or GIF · up to 8 MB on this website". It shows this server's own limit, the smaller of upload_max_filesize and post_max_size.
+- **If a picture still gets past the browser:**
+  - The server now says why: "…is bigger than this website takes (8 MB), so it wasn't saved…", "…didn't finish uploading. Please try again.", or a server-setting note. It goes back to the form with what was typed kept, as with any refused save.
+  - A form too big as a whole goes back to the form instead of a blank page: "The pictures were too big for this website to receive (more than 8 MB together), so nothing was saved, and what you typed couldn't be kept…".
+  - Typed fields can't be kept in that one case, because PHP throws them away before WordPress runs. The mockup said they would be; the browser check now stops this case first.
+  - A wrong file type sent through a picture link (Drive) gets the same clearer type messages.
+- **One button at the top of the Promotions page: "+ New promotion".** "+ New spot" moved down to **Setup for R&A** at the bottom of the page, as "Add a spot", with "Add a new place on the website for promotions. R&A then puts its code on the page." It's still there for everyone, just not beside New promotion.
+  - The empty page's button and the dialog title also say "Add a spot".
+  - The "Where it shows" help and Help & FAQ point to it.
+  - People can still pick "a new spot" when starting a New promotion.
+- **Tested without Playground.** Playground's site showed a browser check that morning, and staging had signed out behind its security check.
+  - All changed PHP files parse in PHP 8.3, run in the browser (php-wasm 3.1.60). Both changed JS files parse.
+  - **Server messages:** the real methods were run with each PHP upload error code. A good upload, no file, and a missing field carry on untouched. Too big, partial and server-setting errors each give their message. HEIC, TIF and PDF names get the type messages.
+  - **Too big as a whole:** a too-big empty POST from the form is sent back with the message. The same from another page, a normal save, and ordinary admin pages are left alone.
+  - **The browser check:** run against a minimal form with real File objects, with no script errors:
+    - 14.2 MB PNG: size note, chip red, Save blocked.
+    - HEIC and TIFF: their notes, Save blocked.
+    - 2.1 MB JPG: green, Save goes through.
+    - Adding a 6.5 MB phone JPG: the "together" note, Save blocked.
+
+---
+
 ## 1.59.0
 
 **Promotion views and clicks in Google Analytics.** This is step 1 of the order Phil set on Oct 22, which merges the tracking and audience plan, the Promo Studio Plan and the Approved Art Pipeline. It comes first so the later "Who sees it" test has a before-and-after. It started from a Guynn Furniture proposal: keep what sells and move what doesn't, so first measure which promotions sell. **Off until R&A turns it on per site.** Phil's picks: GA4 shows the Internal Name, and the items are the real products a promotion points to.
