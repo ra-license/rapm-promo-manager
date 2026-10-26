@@ -4,6 +4,32 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.61.0
+
+**Design Center › All kinds.** Phil, Oct 26: "in the Design Center currently I only have these options but I need to make sure we have access to all the options." The plugin already had all 8 kinds, but the Design Center (since 1.46.0) held only the advanced tools. The other kinds could only be reached from the Promotions page and New promotion. Mockup approved the same day: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr (board 1).
+
+- **A new first tab, All kinds.** The Design Center menu item now opens on it. It shows a card for each of the 8 kinds, the same cards as New promotion, with where each one is on this website ("On: Outlet Banner") or "Not on a page yet".
+- **The picked kind** (a plain link, so it works without scripts) shows three things:
+  - **Its sizes.**
+  - **"+ New [kind]".** This opens New promotion's start step for that kind.
+  - **On this website.** Each spot is listed with how many promotions are showing and the pages it's on, plus two buttons:
+    - **Open** goes to the Promotions page. Split sliders and their promotion boxes go to Split sliders instead, and reveal panels to Reveal panels.
+    - **Add a promotion** opens the form already set to that spot.
+  - **Design tools for this kind.** Only tools that exist today are listed, with links to the tab that holds them (Split sliders, Brand kit, Reveal panels, Asset library).
+- **Unchanged:** the Split sliders, Reveal panels, Asset library and Brand kit tabs. Every link that went to the Design Center before still goes to the same tab, because they now name Split sliders. Nothing moves off the Promotions page.
+- **Tested** on a real WordPress 7.1.3 with SQLite in php-wasm (PHP 8.3), set up like Gates:
+  - **Spots:** a Slider spot "Test" with one live and one ended promotion, a Feature banner "Outlet Banner", and a Shop the Look "Homepage Spot" with 2 looks.
+  - **What showed:**
+    - All kinds opens first, with no PHP notices.
+    - The Slider is picked at first.
+    - Shop the Look lists "Homepage Spot, 2 showing now" with Open and Add a promotion.
+    - Quick links says it isn't on this website yet.
+    - The Split sliders tab still holds "Make a slider split".
+  - **Screenshot:** checked with WordPress's own admin styles.
+  - **PHP versions:** the changed file parses in PHP 7.4 and 8.3.
+
+---
+
 ## 1.60.0
 
 **A change log starts recording, and "Update now" no longer fails on a hidden update.** Step 1 of the integration plan (brief MwkVL7…), split into small releases. This part changes nothing anyone can see.

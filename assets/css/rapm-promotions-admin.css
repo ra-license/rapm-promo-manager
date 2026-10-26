@@ -271,3 +271,26 @@
 /* 1.58.2: the "Saved" note sits in the spot it was saved to; the card is outlined. */
 .rapm-spot > .rapm-saved-notice { margin: 8px 0 12px; }
 .rapm-card.is-just-saved { outline: 3px solid #00a32a; outline-offset: 2px; }
+
+/* 1.61.0: Design Center › All kinds. The cards are New promotion's (rapm-gallery.css). */
+.rapm-design-center .rapm-gal-lead { margin: 16px 0 14px; }
+.rapm-dc-kinds { margin-bottom: 20px; }
+.rapm-gal-card.is-picked { border-color: #2271b1; box-shadow: 0 0 0 2px #2271b1; }
+.rapm-dc-kind-head { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-start; justify-content: space-between; }
+.rapm-dc-kind-head .rapm-spot-name { margin: 0; font-size: 20px; }
+.rapm-dc-kind-help { margin: 4px 0 0; color: #3c434a; }
+.rapm-dc-kind-size { color: #50575e; font-size: 13px; }
+.rapm-dc-kind-cols { display: flex; flex-wrap: wrap; gap: 20px 32px; margin-top: 18px; }
+.rapm-dc-kind-col { flex: 1 1 360px; min-width: 0; }
+.rapm-dc-kind-col h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #50575e; }
+.rapm-dc-kind-spots { margin: 0; padding: 0; list-style: none; border: 1px solid #dcdcde; border-radius: 4px; }
+.rapm-dc-kind-spots li { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin: 0; padding: 12px 14px; border-bottom: 1px solid #f0f0f1; }
+.rapm-dc-kind-spots li:last-child { border-bottom: 0; }
+.rapm-dc-kind-spots li > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rapm-dc-kind-spots li > div:first-child span { color: #3c434a; font-size: 13px; }
+.rapm-dc-kind-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.rapm-dc-kind-none { margin: 0; padding: 14px; border: 1px dashed #c3c4c7; border-radius: 4px; color: #3c434a; }
+.rapm-dc-kind-tools { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.rapm-dc-kind-tools li { margin: 0; padding-left: 24px; position: relative; color: #3c434a; }
+.rapm-dc-kind-tools li::before { content: ""; position: absolute; left: 4px; top: 5px; width: 6px; height: 11px; border: solid #00a32a; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.rapm-dc-kind-tools strong { color: #1d2327; }

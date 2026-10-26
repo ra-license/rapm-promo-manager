@@ -201,15 +201,28 @@ class RAPM_Promotions_Screen {
 		return add_query_arg( array_merge( array( 'page' => self::PAGE ), $args ), admin_url( self::PARENT ) );
 	}
 
-	/** The Design Center's open tab: 'split' (Split sliders), 'library' (Asset library, 1.48.0) or 'brand' (Brand kit, 1.50.0). */
+	/**
+	 * The Design Center's open tab: 'all' (All kinds, 1.61.0, the first
+	 * tab and what the menu opens), 'split' (Split sliders), 'reveal'
+	 * (Reveal panels, 1.53.0), 'library' (Asset library, 1.48.0) or
+	 * 'brand' (Brand kit, 1.50.0).
+	 */
 	public static function design_tab() {
 		$tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		return in_array( $tab, array( 'library', 'brand', 'reveal' ), true ) ? $tab : 'split'; // 1.53.0: Reveal panels.
+		return in_array( $tab, array( 'split', 'library', 'brand', 'reveal' ), true ) ? $tab : 'all';
 	}
 
-	/** The Design Center's address (1.46.0), optionally at one slider's section. */
-	public static function design_url( $placement = '' ) {
-		$url = add_query_arg( array( 'page' => self::DESIGN_PAGE ), admin_url( self::PARENT ) );
+	/**
+	 * The Design Center's address (1.46.0), optionally at one slider's
+	 * section. Since 1.61.0 the page opens on All kinds, so this names the
+	 * Split sliders tab unless asked for another ('all' for All kinds).
+	 */
+	public static function design_url( $placement = '', $tab = 'split' ) {
+		$args = array( 'page' => self::DESIGN_PAGE );
+		if ( 'all' !== $tab ) {
+			$args['tab'] = $tab;
+		}
+		$url = add_query_arg( $args, admin_url( self::PARENT ) );
 		return $placement ? $url . '#rapm-spot-hero-' . sanitize_html_class( $placement ) : $url;
 	}
 
@@ -223,6 +236,10 @@ class RAPM_Promotions_Screen {
 		}
 		if ( self::DESIGN_PAGE === $page && self::design_tab() === 'brand' ) {
 			RAPM_Brand_Kit::enqueue();
+		}
+		if ( self::DESIGN_PAGE === $page && self::design_tab() === 'all' ) {
+			// 1.61.0: All kinds uses the New promotion gallery's cards.
+			wp_enqueue_style( 'rapm-gallery-css', RAPM_URL . 'assets/css/rapm-gallery.css', array(), RAPM_VERSION );
 		}
 		// 1.44.1: the live site's styles, for designed promotion box cards.
 		wp_enqueue_style( 'rapm-hero-css', RAPM_URL . 'assets/css/rapm-hero.css', array(), RAPM_VERSION );
@@ -843,7 +860,7 @@ class RAPM_Promotions_Screen {
 			<div class="rapm-promos-head">
 				<div>
 					<h1 class="rapm-promos-title"><?php esc_html_e( 'Design Center', 'rapm' ); ?></h1>
-					<p class="rapm-promos-sub"><?php esc_html_e( 'Advanced tools: split sliders, reveal panels, the asset library and the brand kit. Kept here so the Promotions page stays simple.', 'rapm' ); ?></p>
+					<p class="rapm-promos-sub"><?php esc_html_e( 'Every kind of promotion and the tools to design it, in one place. The Promotions page stays simple.', 'rapm' ); ?></p>
 				</div>
 			</div>
 			<hr class="wp-header-end" />
@@ -861,8 +878,9 @@ class RAPM_Promotions_Screen {
 				</p></div>
 			<?php endif; ?>
 
-			<?php // 1.48.0: tabs, as plain links (1.50.0 adds the Brand kit). ?>
+			<?php // 1.48.0: tabs, as plain links (1.50.0 adds the Brand kit, 1.61.0 All kinds). ?>
 			<nav class="nav-tab-wrapper rapm-dc-tabs" aria-label="<?php esc_attr_e( 'Design Center', 'rapm' ); ?>">
+				<a href="<?php echo esc_url( self::design_url( '', 'all' ) ); ?>" class="nav-tab<?php echo 'all' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'all' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'All kinds', 'rapm' ); ?></a>
 				<a href="<?php echo esc_url( self::design_url() ); ?>" class="nav-tab<?php echo 'split' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'split' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Split sliders', 'rapm' ); ?></a>
 				<a href="<?php echo esc_url( add_query_arg( 'tab', 'reveal', self::design_url() ) ); ?>" class="nav-tab<?php echo 'reveal' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'reveal' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Reveal panels', 'rapm' ); ?></a>
 				<a href="<?php echo esc_url( add_query_arg( 'tab', 'library', self::design_url() ) ); ?>" class="nav-tab<?php echo 'library' === self::design_tab() ? ' nav-tab-active' : ''; ?>"<?php echo 'library' === self::design_tab() ? ' aria-current="page"' : ''; ?>><?php esc_html_e( 'Asset library', 'rapm' ); ?></a>
@@ -887,6 +905,14 @@ class RAPM_Promotions_Screen {
 
 			<?php if ( 'reveal' === self::design_tab() ) : ?>
 				<?php self::render_reveal_tab( $spots ); ?>
+			</div>
+			<?php
+			return;
+			endif;
+			?>
+
+			<?php if ( 'all' === self::design_tab() ) : ?>
+				<?php self::render_all_tab( $spots ); ?>
 			</div>
 			<?php
 			return;
@@ -941,6 +967,179 @@ class RAPM_Promotions_Screen {
 			?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Design Center › All kinds (1.61.0, from the mockup Phil approved on
+	 * 2026-10-26, https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr): every
+	 * kind of promotion as a card, the same as New promotion's. The picked
+	 * kind shows where it is on this website (each spot with Open and Add a
+	 * promotion), a button to make a new one, and the design tools it has.
+	 * Picking a card is a plain link (?kind=), so it works without scripts.
+	 */
+	private static function render_all_tab( $spots ) {
+		$kinds = RAPM_Slots::kinds();
+		$order = array_values( array_filter( RAPM_Gallery::ORDER, function ( $k ) use ( $kinds ) { return isset( $kinds[ $k ] ); } ) );
+		$by    = array();
+		foreach ( $spots as $spot ) {
+			$by[ $spot['kind'] ][] = $spot;
+		}
+		$picked = isset( $_GET['kind'] ) ? sanitize_key( wp_unslash( $_GET['kind'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! in_array( $picked, $order, true ) ) {
+			$picked = 'hero';
+			foreach ( $order as $k ) {
+				if ( ! empty( $by[ $k ] ) ) {
+					$picked = $k;
+					break;
+				}
+			}
+		}
+		$info  = $kinds[ $picked ];
+		$mine  = isset( $by[ $picked ] ) ? $by[ $picked ] : array();
+		?>
+		<p class="rapm-gal-lead"><?php esc_html_e( 'Pick a kind to see where it is on this website, make a new one, or open its design tools.', 'rapm' ); ?></p>
+		<ul class="rapm-gal-grid rapm-dc-kinds">
+			<?php foreach ( $order as $k ) : ?>
+				<?php
+				$names = array();
+				foreach ( isset( $by[ $k ] ) ? $by[ $k ] : array() as $spot ) {
+					$names[] = self::spot_name( $k, $spot['placement'] );
+				}
+				$on = $k === $picked;
+				?>
+				<li>
+					<a class="rapm-gal-card<?php echo $on ? ' is-picked' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'kind', $k, self::design_url( '', 'all' ) ) . '#rapm-dc-kind' ); ?>"<?php echo $on ? ' aria-current="true"' : ''; ?>>
+						<span class="rapm-gal-pic"><?php echo RAPM_Gallery::picture( $k, false ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></span>
+						<span class="rapm-gal-body">
+							<span class="rapm-gal-name"><?php echo esc_html( $kinds[ $k ]['label'] ); ?></span>
+							<span class="rapm-gal-line"><?php echo esc_html( $kinds[ $k ]['help'] ); ?></span>
+							<?php if ( $names ) : ?>
+								<?php /* translators: %s: spot names */ ?>
+								<span class="rapm-gal-on is-used"><?php echo esc_html( sprintf( __( 'On: %s', 'rapm' ), implode( ', ', array_slice( $names, 0, 2 ) ) . ( count( $names ) > 2 ? ' ' . sprintf( __( '+%d more', 'rapm' ), count( $names ) - 2 ) : '' ) ) ); ?></span>
+							<?php else : ?>
+								<span class="rapm-gal-on"><?php esc_html_e( 'Not on a page yet', 'rapm' ); ?></span>
+							<?php endif; ?>
+						</span>
+					</a>
+				</li>
+			<?php endforeach; ?>
+		</ul>
+
+		<section class="rapm-spot rapm-dc-kind" id="rapm-dc-kind" aria-labelledby="rapm-dc-kind-title">
+			<div class="rapm-dc-kind-head">
+				<div>
+					<h2 id="rapm-dc-kind-title" class="rapm-spot-name"><?php echo esc_html( $info['label'] ); ?></h2>
+					<p class="rapm-dc-kind-help"><?php echo esc_html( $info['help'] ); ?> <span class="rapm-dc-kind-size"><?php echo esc_html( RAPM_Gallery::size_text( $picked ) ); ?></span></p>
+				</div>
+				<?php /* translators: %s: kind of promotion, like "Slider" */ ?>
+				<a class="button button-primary" href="<?php echo esc_url( RAPM_Gallery::url( $picked ) ); ?>"><?php echo esc_html( sprintf( __( '+ New %s', 'rapm' ), $info['label'] ) ); ?></a>
+			</div>
+			<div class="rapm-dc-kind-cols">
+				<div class="rapm-dc-kind-col">
+					<h3><?php esc_html_e( 'On this website', 'rapm' ); ?></h3>
+					<?php if ( $mine ) : ?>
+						<ul class="rapm-dc-kind-spots">
+							<?php foreach ( $mine as $spot ) : ?>
+								<?php $used_on = RAPM_Spot_Usage::for_spot( $picked, $spot['placement'] ); ?>
+								<li>
+									<div>
+										<strong><?php echo esc_html( self::spot_name( $picked, $spot['placement'] ) ); ?></strong>
+										<span><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></span>
+										<?php if ( $used_on ) : ?>
+											<span><?php esc_html_e( 'Shows on:', 'rapm' ); ?> <?php echo RAPM_Spot_Usage::links_html( $used_on ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in links_html(). ?></span>
+										<?php elseif ( 'promo_box' !== $picked ) : ?>
+											<span class="rapm-spot-unplaced"><?php esc_html_e( 'Not on any page yet.', 'rapm' ); ?></span>
+										<?php endif; ?>
+									</div>
+									<div class="rapm-dc-kind-acts">
+										<a class="button" href="<?php echo esc_url( self::spot_open_url( $picked, $spot['placement'] ) ); ?>"><?php esc_html_e( 'Open', 'rapm' ); ?></a>
+										<a class="button" href="<?php echo esc_url( RAPM_Gallery::form_url( $picked, $spot['placement'] ) ); ?>"><?php esc_html_e( 'Add a promotion', 'rapm' ); ?></a>
+									</div>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					<?php else : ?>
+						<?php /* translators: %s: the New button's words, like "+ New slider" */ ?>
+						<p class="rapm-dc-kind-none"><?php echo esc_html( sprintf( __( 'Not on this website yet. "%s" makes a spot for it, and R&A then puts its code on the page.', 'rapm' ), sprintf( __( '+ New %s', 'rapm' ), $info['label'] ) ) ); ?></p>
+					<?php endif; ?>
+				</div>
+				<div class="rapm-dc-kind-col">
+					<h3><?php esc_html_e( 'Design tools for this kind', 'rapm' ); ?></h3>
+					<ul class="rapm-dc-kind-tools">
+						<?php foreach ( self::kind_tools( $picked ) as $tool ) : ?>
+							<li><strong><?php echo esc_html( $tool[0] ); ?></strong> <?php echo esc_html( $tool[1] ); ?><?php if ( ! empty( $tool[2] ) ) : ?> <a href="<?php echo esc_url( $tool[2] ); ?>"><?php echo esc_html( $tool[3] ); ?></a><?php endif; ?></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			</div>
+		</section>
+		<?php
+	}
+
+	/** Where a spot is worked on: the Promotions page, or the Design Center for split sliders, their boxes and reveal panels. */
+	private static function spot_open_url( $kind, $placement ) {
+		if ( 'promo_box' === $kind || ( 'hero' === $kind && RAPM_Split::is_split( $placement ) ) ) {
+			return self::design_url( $placement );
+		}
+		if ( 'reveal' === $kind ) {
+			return self::design_url( '', 'reveal' ) . '#rapm-spot-reveal-' . sanitize_html_class( $placement );
+		}
+		return self::url() . '#rapm-spot-' . sanitize_html_class( $kind . '-' . $placement );
+	}
+
+	/**
+	 * The design tools each kind has, in plain words: [ name, what it does,
+	 * optional link, link words ]. Only tools that exist; kept in step with
+	 * the form (1.61.0).
+	 */
+	private static function kind_tools( $kind ) {
+		$library = array( __( 'Ready checks', 'rapm' ), __( 'for picture size, links and more, with every promotion in one list:', 'rapm' ), self::design_url( '', 'library' ), __( 'Asset library', 'rapm' ) );
+		$keep    = array( __( 'Pick the part to keep', 'rapm' ), __( 'when a picture is a different shape from the spot.', 'rapm' ) );
+		$tools   = array(
+			'hero'        => array(
+				array( __( 'Words on the picture', 'rapm' ), __( 'big words, a smaller line and a button, with color, style and typeface.', 'rapm' ) ),
+				array( __( 'Product dots and Shop button', 'rapm' ), __( 'placed on the computer and phone pictures (Place the pieces), with a shop bar under the slide.', 'rapm' ) ),
+				array( __( 'Split view', 'rapm' ), __( 'room photos on one side and a promotion box on the other.', 'rapm' ), self::design_url(), __( 'Split sliders', 'rapm' ) ),
+				$keep,
+			),
+			'promo_box'   => array(
+				array( __( 'Design it here', 'rapm' ), __( 'words, Google Fonts, Google and Font Awesome icons and your own pictures on a square, with layers and Undo.', 'rapm' ) ),
+				array( __( 'Templates', 'rapm' ), __( 'start from a saved design or an R&A starter.', 'rapm' ), self::design_url( '', 'brand' ), __( 'Brand kit', 'rapm' ) ),
+				array( __( 'Goes with room photos', 'rapm' ), __( 'changes with the room photos beside it.', 'rapm' ), self::design_url(), __( 'Split sliders', 'rapm' ) ),
+				array( __( 'What stays in view', 'rapm' ), __( 'for a picture behind the design.', 'rapm' ) ),
+			),
+			'fold_banner' => array(
+				array( __( 'Words on the picture', 'rapm' ), __( 'big words, a smaller line and a button, with color, style and typeface.', 'rapm' ) ),
+				array( __( 'Product dots and Shop button', 'rapm' ), __( 'placed on the computer and phone pictures.', 'rapm' ) ),
+				$keep,
+			),
+			'look'        => array(
+				array( __( 'Numbered product dots', 'rapm' ), __( 'each with the product\'s picture, live price and stock.', 'rapm' ) ),
+				array( __( 'Words and a button on the photo', 'rapm' ), __( 'placed where you want them.', 'rapm' ) ),
+				array( __( 'Drag to frame', 'rapm' ), __( 'move the room photo inside its space.', 'rapm' ) ),
+				array( __( 'Tabs', 'rapm' ), __( 'one room or collection per tab.', 'rapm' ) ),
+			),
+			'quick_links' => array(
+				array( __( 'A short name under each picture', 'rapm' ), __( 'and a shorter look on phones.', 'rapm' ) ),
+				array( __( 'What stays in view', 'rapm' ), __( 'when the picture is trimmed.', 'rapm' ) ),
+			),
+			'reveal'      => array(
+				array( __( 'Panel colors', 'rapm' ), __( 'linked to the website\'s colors.', 'rapm' ) ),
+				array( __( 'One big word per panel', 'rapm' ), __( 'with a short line and a link label.', 'rapm' ) ),
+				array( __( 'What stays in view', 'rapm' ), __( 'for each room photo.', 'rapm' ) ),
+				array( __( 'Every panel card', 'rapm' ), __( 'in its own tab:', 'rapm' ), self::design_url( '', 'reveal' ), __( 'Reveal panels', 'rapm' ) ),
+			),
+			'coupon'      => array(
+				array( __( 'Words on each coupon', 'rapm' ), __( 'big words, a smaller line and a button.', 'rapm' ) ),
+				array( __( 'Dates on every coupon', 'rapm' ), __( 'each one comes and goes on its own.', 'rapm' ) ),
+			),
+			'marquee'     => array(
+				array( __( 'Square tiles', 'rapm' ), __( 'each with its own link and dates, and words under it.', 'rapm' ) ),
+			),
+		);
+		$list   = isset( $tools[ $kind ] ) ? $tools[ $kind ] : array();
+		$list[] = $library;
+		return $list;
 	}
 
 	/**
