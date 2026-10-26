@@ -159,4 +159,33 @@ class RAPM_Assets {
 		$exclusions[] = 'RAPM_Track';
 		return $exclusions;
 	}
+
+	/**
+	 * 1.64.2: WP Rocket's "Remove Unused CSS" took the plugin's stylesheets
+	 * off the page for visitors and put its own Used CSS in their place. On
+	 * Gates (2026-10-26) that Used CSS had no Promo Manager rules at all, so
+	 * Shop the Look showed every look stacked and unstyled to visitors,
+	 * while signed-in admins (who WP Rocket skips) saw it fine. This keeps
+	 * the plugin's stylesheets on the page. WP Rocket matches each entry as
+	 * plain text inside the <link> tag (RUCSS UsedCSS::remove_external_styles_from_html()).
+	 * No-op on sites without WP Rocket.
+	 */
+	public static function keep_css_in_rocket_rucss( $exclusions ) {
+		$exclusions   = (array) $exclusions;
+		$exclusions[] = wp_make_link_relative( RAPM_URL . 'assets/css/' );
+		return $exclusions;
+	}
+
+	/**
+	 * 1.64.2: pages WP Rocket cached before the exclusion above still lack
+	 * the stylesheets, so its cache is cleared once, the first time this
+	 * version runs on a site with WP Rocket. It rebuilds on its own.
+	 */
+	public static function refresh_rocket_once() {
+		if ( '1' === get_option( 'rapm_rucss_kept' ) || ! function_exists( 'rocket_clean_domain' ) ) {
+			return;
+		}
+		update_option( 'rapm_rucss_kept', '1', false );
+		rocket_clean_domain();
+	}
 }

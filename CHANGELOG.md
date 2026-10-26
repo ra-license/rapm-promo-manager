@@ -4,6 +4,26 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.64.2
+
+**Shop the Look and every other kind keep their styles for visitors on sites using WP Rocket's "Remove Unused CSS".** Phil, Oct 26: on gatesfurniture.com Shop the Look was "loading all the looks individually" on phones and "looking weird" on computers.
+
+- **Root cause:** Gates runs WP Rocket with Remove Unused CSS on.
+  - **For visitors:** WP Rocket takes every stylesheet off the page and puts its own Used CSS (287 KB on the home page) in their place. That Used CSS had **no** Promo Manager rules at all, and rapm-hero.css, rapm-pins.css and rapm-looks.css were gone from the visitor page.
+  - **What visitors saw:** Shop the Look with no styles. Every look stacked down the page, the tabs and arrows were plain buttons, and the photo showed at full size.
+  - **What signed-in admins saw:** WP Rocket skips them, so they got the normal page with all three stylesheets in the head, and it looked fine.
+  - **Not caused by today's releases:** none of 1.60.0–1.64.1 changed how these files load.
+  - **Other sites:** Kemper and StarFine don't use Remove Unused CSS, and their visitor pages load our files.
+- **The fix:**
+  - **Keep our files:** Promo Manager now adds its stylesheet folder to WP Rocket's `rocket_rucss_external_exclusions` filter, so Remove Unused CSS leaves our files on the page. WP Rocket matches each entry as plain text inside the `<link>` tag ([UsedCSS.php](https://raw.githubusercontent.com/wp-media/wp-rocket/develop/inc/Engine/Optimization/RUCSS/Controller/UsedCSS.php); [WP Rocket docs](https://docs.wp-rocket.me/article/1714-prevent-css-files-from-being-removed-by-remove-unused-css)). The theme's and other plugins' styles are still trimmed as before.
+  - **Clear the old pages:** pages cached before the fix still lack our files, so the first time 1.64.2 runs on a site with WP Rocket, it clears WP Rocket's cache once (`rocket_clean_domain()`, option `rapm_rucss_kept`). WP Rocket rebuilds the cache on its own.
+- **Tested** on WordPress 7.1.3 with SQLite in php-wasm, with a stand-in for WP Rocket that copies its clear-cache function and its exclusion matching:
+  - Our two stylesheet tags were kept and the theme's style.min.css was still removed.
+  - The cache was cleared on the first page load only, not the second.
+  - Both changed PHP files parse in PHP 7.4 and 8.3.
+
+---
+
 ## 1.64.1
 
 **The Shop button no longer slides in from the corner.** The staging walk of 1.64.0 found this on staging's WoodMart theme. The theme animates every link (`transition: all .25s`), including the left and top that rapm-pins.js sets when it places the Shop button. So each time the button was placed, it slid in from the top-left corner. It had done that since the button arrived in 1.35.0.
