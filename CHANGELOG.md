@@ -60,6 +60,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Visitor check, real pages:** the update 1.64.2 → 1.65.0 was spotted from the check-in and the home page was checked on its own. "Check as a visitor" passed on computer and phone on 5 pages (/, /promotions/, /home-2/, /living-room-collection/, /about-us/). Cloudflare was seen in the headers.
   - **Checked as a visitor at 1920 and 375 (SOP 16.11), /promotions/ signed out:** Promo Manager's 4 stylesheets and Elementor's page CSS are on the page, nothing scrolls sideways, and the phone shows the promotion box first.
 - **In production (2026-10-26).** Phil pushed main (5437f26) and the tag v1.65.0. **Plugin Monitor 1.4.1 isn't on help.ramarketing.com yet** (it still runs 1.3.1). Until it is, websites on 1.65.0 check in exactly as before, and Connect only says it couldn't reach the help desk.
+- **Plugin Monitor 1.4.1 on help.ramarketing.com (Oct 26),** installed by Phil. Kemper connected (approved by Phil, 2 customers paired), and its update visitor check passed.
+- **Plugin Monitor 1.4.2 (Oct 26): a false red on Gates.** The first update check emailed "Elementor's page styles are missing (post-35040.css, post-35035.css)" for Gates' phone page.
+  - **Root cause:** neither file exists (404). Elementor only writes post-<ID>.css for a document with styles of its own, and these are a 54 px strip at the bottom and an empty WoodMart popup. The check assumed every document had rules.
+  - **Gates is fine:** looked at signed out at 375 and 1920, Shop the Look is styled, the banners are 350/400 px (phone) and 500/600 px (computer), Promo Manager's three stylesheets are linked, and nothing scrolls sideways.
+  - **The fix:** before calling a document's styles missing, the check now loads its post-<ID>.css. A 404 or empty file means the document has no styles of its own. A file it can't load still counts as missing, so a real problem is never hidden.
+  - **Tested:** on the bench, today's Gates page passes, a document with a stylesheet whose rules are missing still fails, and the Oct 26 Gates case still fails. Installed on staging's monitor, where its visitor check passes.
+  - **Email:** the red-check email went to kevin@ramarketing.com, the help desk's WordPress admin email, which is the default. It can be changed on any website's page in the monitor.
 
 ---
 
