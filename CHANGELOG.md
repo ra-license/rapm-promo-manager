@@ -21,6 +21,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - Our two stylesheet tags were kept and the theme's style.min.css was still removed.
   - The cache was cleared on the first page load only, not the second.
   - Both changed PHP files parse in PHP 7.4 and 8.3.
+- **Installed on staging (2026-10-26)** from the v1.64.2 tag. Staging doesn't use WP Rocket, so this confirms only that nothing else changed: the visitor home page still loads rapm-hero.css, rapm-pins.css and rapm-looks.css. The real check is Gates' visitor page after the update.
 
 ---
 
