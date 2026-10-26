@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Client 1.3.0
+ * RA Monitor Client 1.3.1
  *
  * Shared by every R&A plugin, bundled into each one the same way
  * plugin-update-checker is. Once a day it sends one short check-in to
@@ -42,6 +42,10 @@
  * /changed): what changed and, for an Elementor save, the page's address.
  * Never content, users or settings.
  *
+ * 1.3.1: a single plugin or theme update is reported too. WordPress names
+ * it 'plugin' / 'theme' (one) in upgrader_process_complete; only a bulk
+ * update names 'plugins' / 'themes' (a list). Found on staging, Oct 26.
+ *
  * Several R&A plugins on one site each bundle a copy; whichever loads first
  * defines the class and the rest register with it, so the public API below
  * must stay backward compatible. A breaking change needs a new class name.
@@ -53,7 +57,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 
 	class RA_Monitor_Client {
 
-		const VERSION  = '1.3.0';
+		const VERSION  = '1.3.1';
 		const ENDPOINT = 'https://help.ramarketing.com/wp-json/ra-monitor/v1/checkin';
 
 		// Must match RA_MONITOR_KEY in the RA Plugin Monitor receiver.
@@ -299,14 +303,21 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 		 * ----------------------------------------------------------- */
 
 		public static function on_upgraded( $upgrader, $extra ) {
-			$type = is_array( $extra ) && isset( $extra['type'] ) ? $extra['type'] : '';
-			if ( 'plugin' === $type && ! empty( $extra['plugins'] ) ) {
+			$extra  = is_array( $extra ) ? $extra : array();
+			$type   = isset( $extra['type'] ) ? $extra['type'] : '';
+			$verb   = isset( $extra['action'] ) && 'install' === $extra['action'] ? 'installed' : 'updated';
+			// One update names 'plugin' / 'theme'; a bulk update lists 'plugins' / 'themes'.
+			$items  = function ( $one, $many ) use ( $extra ) {
+				return array_values( array_filter( array_merge( isset( $extra[ $many ] ) ? (array) $extra[ $many ] : array(), isset( $extra[ $one ] ) ? (array) $extra[ $one ] : array() ) ) );
+			};
+			if ( 'plugin' === $type ) {
 				$names = array_map( function ( $basename ) {
 					return dirname( $basename ) !== '.' ? dirname( $basename ) : basename( $basename, '.php' );
-				}, (array) $extra['plugins'] );
-				self::report_change( 'Plugin updated: ' . implode( ', ', array_slice( $names, 0, 5 ) ) );
-			} elseif ( 'theme' === $type && ! empty( $extra['themes'] ) ) {
-				self::report_change( 'Theme updated: ' . implode( ', ', array_slice( (array) $extra['themes'], 0, 3 ) ) );
+				}, $items( 'plugin', 'plugins' ) );
+				self::report_change( 'Plugin ' . $verb . ( $names ? ': ' . implode( ', ', array_slice( $names, 0, 5 ) ) : '' ) );
+			} elseif ( 'theme' === $type ) {
+				$names = $items( 'theme', 'themes' );
+				self::report_change( 'Theme ' . $verb . ( $names ? ': ' . implode( ', ', array_slice( $names, 0, 3 ) ) : '' ) );
 			} elseif ( 'core' === $type ) {
 				self::report_change( 'WordPress updated' );
 			}

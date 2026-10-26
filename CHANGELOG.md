@@ -4,6 +4,16 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.66.1
+
+**A single plugin or theme update is reported too.** Found in the 1.66.0 staging walk. After updating Woo Native Dimensions and Room Planner one at a time, the help desk's note said only "Elementor styles regenerated".
+
+- **Root cause:** for a single update, WordPress passes `'plugin' => …` (or `'theme'`) to `upgrader_process_complete`. Only a bulk update passes the list `'plugins'` / `'themes'` (checked in WordPress's class-plugin-upgrader.php and class-theme-upgrader.php). RA Monitor Client 1.3.0 read only the list.
+- **Fix, RA Monitor Client 1.3.1:** both forms are read, and a new install is reported as "Plugin installed". The same file is in Woo Native Dimensions 1.35 and Universal Room Planner 7.25.1.
+- **Tested:** on the bench, a single update, a bulk update, a theme update, an install and a WordPress update each give the right line. The file parses on PHP 7.4 and 8.3.
+
+---
+
 ## 1.66.0
 
 **The help desk hears about any change that could change what visitors see.** Phil, Oct 26, about his note to Kevin: "I don't want to change the language I want to change the plugins to do what I stated". The note says the Plugin Monitor reports caching problems on its own, and that with Woo Native Dimensions on every website it warns "before anyone can notice".
