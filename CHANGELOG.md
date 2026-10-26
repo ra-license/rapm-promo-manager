@@ -4,6 +4,25 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.66.0
+
+**The help desk hears about any change that could change what visitors see.** Phil, Oct 26, about his note to Kevin: "I don't want to change the language I want to change the plugins to do what I stated". The note says the Plugin Monitor reports caching problems on its own, and that with Woo Native Dimensions on every website it warns "before anyone can notice".
+
+- **What was missing:** 1.65.0's visitor check ran only after an R&A plugin update, after an Elementor save on a connected website, or by hand. It didn't run after a theme or other plugin update, or when WP Rocket rebuilt its trimmed CSS on its own, which is what broke Gates.
+- **RA Monitor Client 1.3.0** (the shared check-in, now in Promo Manager 1.66.0, Woo Native Dimensions 1.34 and Universal Room Planner 7.25.0):
+  - **What it reports:** after any plugin, theme or WordPress update, a plugin turned on or off, a new theme, a Customizer save, an Elementor save or "Regenerate CSS", or WP Rocket clearing its whole cache (`rocket_after_clean_domain`, checked in WP Rocket's source), it sends the help desk a short signed note (POST /changed).
+  - **What the note carries:** what changed and, for an Elementor save, the page's address. Changes in the same 5 minutes go together. A help desk without /changed (older than 1.5.0) answers 404 and the note is dropped.
+  - **Every R&A plugin needs this copy.** WordPress loads plugins alphabetically, and the first copy of the shared check-in wins. Room Planner ("universal-…") loads before Dimensions ("woo-…"), so a website with both would run Room Planner's old copy.
+  - **No double notes:** Promo Manager no longer sends its own note for Elementor saves when the shared copy does.
+- **Plugin Monitor 1.5.0:**
+  - **Regular checks:** every website is checked on a schedule, every 6 hours by default (or 12, once a day, or only when something changes), connected or not. That catches WP Rocket's own rebuilds.
+  - **Change notes:** a website's note queues a check 10 minutes later. Notes are only taken from websites the monitor already knows.
+  - **Longer runs:** checks run one after another for up to a minute at a time, so a full round isn't capped at three an hour. A check that died halfway is retried.
+  - **History:** finished checks are kept 90 days.
+  - **Settings:** two new ones under "When it runs".
+
+---
+
 ## 1.65.0
 
 **R&A Help Desk connection, caching list and visitor check.** From the mockup Phil approved on 2026-10-26 (https://claude.ai/artifact/3EuNFCm8L1fTiqN5G1Kc8U): "Approved, yes to all four, build 1.65.0". Goes with **R&A Plugin Monitor 1.4.0** on help.ramarketing.com.

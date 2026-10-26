@@ -293,6 +293,10 @@ class RAPM_Help_Desk {
 		if ( 'connected' !== $c['status'] || wp_is_post_revision( $post_id ) ) {
 			return;
 		}
+		// 1.66.0: RA Monitor Client 1.3.0 reports every Elementor save itself.
+		if ( class_exists( 'RA_Monitor_Client' ) && version_compare( RA_Monitor_Client::VERSION, '1.3.0', '>=' ) ) {
+			return;
+		}
 		$type = get_post_type( $post_id );
 		if ( 'elementor_library' === $type ) {
 			// A header, footer or other template: it's on every page, so check the home page.

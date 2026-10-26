@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Client 1.2.0
+ * RA Monitor Client 1.3.0
  *
  * Shared by every R&A plugin, bundled into each one the same way
  * plugin-update-checker is. Once a day it sends one short check-in to
@@ -33,6 +33,15 @@
  *   ra_monitor_checkin_response action, the monitor's decoded answer
  * With nothing hooked in, it sends and signs exactly as 1.1.0 did.
  *
+ * 1.3.0: tells the monitor when something on the site changed that could
+ * change what visitors see: any plugin, theme or WordPress update, a plugin
+ * turned on or off, a new theme, a Customizer save, an Elementor save or
+ * "Regenerate CSS", or WP Rocket clearing its cache. The monitor then
+ * loads the site as a signed-out visitor (Plugin Monitor 1.5.0+). Changes
+ * are collected for 5 minutes and sent as one short signed note (POST
+ * /changed): what changed and, for an Elementor save, the page's address.
+ * Never content, users or settings.
+ *
  * Several R&A plugins on one site each bundle a copy; whichever loads first
  * defines the class and the rest register with it, so the public API below
  * must stay backward compatible. A breaking change needs a new class name.
@@ -44,7 +53,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 
 	class RA_Monitor_Client {
 
-		const VERSION  = '1.2.0';
+		const VERSION  = '1.3.0';
 		const ENDPOINT = 'https://help.ramarketing.com/wp-json/ra-monitor/v1/checkin';
 
 		// Must match RA_MONITOR_KEY in the RA Plugin Monitor receiver.
@@ -53,6 +62,9 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 		const CRON_HOOK     = 'ra_monitor_daily_checkin';
 		const ERRORS_OPTION = 'ra_monitor_update_errors';
 		const SENT_OPTION   = 'ra_monitor_last_sent';
+		// 1.3.0: changes waiting to be reported, and the hook that sends them.
+		const CHANGES_OPTION = 'ra_monitor_changes';
+		const CHANGES_HOOK   = 'ra_monitor_send_changes';
 
 		// Every R&A product plugin, by main-file name (without .php). Used to
 		// list R&A plugins on the site even when their installed version is
@@ -103,6 +115,18 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			add_action( 'upgrader_process_complete', array( __CLASS__, 'schedule_soon' ) );
 			add_action( 'activated_plugin', array( __CLASS__, 'schedule_soon' ) );
 			add_action( 'deactivated_plugin', array( __CLASS__, 'on_deactivated' ) );
+
+			// 1.3.0: anything that could change what visitors see.
+			add_action( self::CHANGES_HOOK, array( __CLASS__, 'send_changes' ) );
+			add_action( 'upgrader_process_complete', array( __CLASS__, 'on_upgraded' ), 20, 2 );
+			add_action( 'activated_plugin', array( __CLASS__, 'on_plugin_switched' ) );
+			add_action( 'deactivated_plugin', array( __CLASS__, 'on_plugin_switched' ) );
+			add_action( 'switch_theme', array( __CLASS__, 'on_theme_switched' ) );
+			add_action( 'customize_save_after', array( __CLASS__, 'on_customizer_saved' ) );
+			add_action( 'elementor/editor/after_save', array( __CLASS__, 'on_elementor_saved' ) );
+			add_action( 'elementor/core/files/clear_cache', array( __CLASS__, 'on_elementor_css_cleared' ) );
+			add_action( 'rocket_after_clean_domain', array( __CLASS__, 'on_rocket_cleared' ) );
+			add_action( 'after_rocket_clean_domain', array( __CLASS__, 'on_rocket_cleared' ) );
 
 			add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
 			add_action( 'admin_post_ra_monitor_checkin_now', array( __CLASS__, 'checkin_now' ) );
@@ -268,6 +292,112 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 				// on the next wp-admin visit rather than waiting a day.
 				'fingerprint' => 200 === $code ? self::fingerprint() : '',
 			), false );
+		}
+
+		/* --------------------------------------------------------------
+		 * 1.3.0: changes that could change what visitors see
+		 * ----------------------------------------------------------- */
+
+		public static function on_upgraded( $upgrader, $extra ) {
+			$type = is_array( $extra ) && isset( $extra['type'] ) ? $extra['type'] : '';
+			if ( 'plugin' === $type && ! empty( $extra['plugins'] ) ) {
+				$names = array_map( function ( $basename ) {
+					return dirname( $basename ) !== '.' ? dirname( $basename ) : basename( $basename, '.php' );
+				}, (array) $extra['plugins'] );
+				self::report_change( 'Plugin updated: ' . implode( ', ', array_slice( $names, 0, 5 ) ) );
+			} elseif ( 'theme' === $type && ! empty( $extra['themes'] ) ) {
+				self::report_change( 'Theme updated: ' . implode( ', ', array_slice( (array) $extra['themes'], 0, 3 ) ) );
+			} elseif ( 'core' === $type ) {
+				self::report_change( 'WordPress updated' );
+			}
+		}
+
+		public static function on_plugin_switched( $basename ) {
+			$name = dirname( $basename ) !== '.' ? dirname( $basename ) : basename( $basename, '.php' );
+			self::report_change( ( 'deactivated_plugin' === current_filter() ? 'Plugin turned off: ' : 'Plugin turned on: ' ) . $name );
+		}
+
+		public static function on_theme_switched() {
+			self::report_change( 'Theme changed' );
+		}
+
+		public static function on_customizer_saved() {
+			self::report_change( 'Customizer saved' );
+		}
+
+		public static function on_elementor_saved( $post_id ) {
+			if ( wp_is_post_revision( $post_id ) ) {
+				return;
+			}
+			$type = get_post_type( $post_id );
+			if ( 'elementor_library' === $type ) {
+				// A header, footer or other template is on every page.
+				self::report_change( 'Elementor template saved', home_url( '/' ) );
+			} elseif ( 'publish' === get_post_status( $post_id ) && is_post_type_viewable( $type ) ) {
+				self::report_change( 'Page saved in Elementor', get_permalink( $post_id ) );
+			}
+		}
+
+		public static function on_elementor_css_cleared() {
+			self::report_change( 'Elementor styles regenerated' );
+		}
+
+		public static function on_rocket_cleared() {
+			self::report_change( 'WP Rocket cleared its cache' );
+		}
+
+		/**
+		 * Collects a change and sends them all together 5 minutes after the
+		 * first, so a bulk update or a cache clear followed by edits makes
+		 * one note, and caches have a moment to fill again.
+		 */
+		public static function report_change( $reason, $url = '' ) {
+			$changes = get_option( self::CHANGES_OPTION );
+			if ( ! is_array( $changes ) ) {
+				$changes = array( 'reasons' => array(), 'urls' => array(), 'tries' => 0 );
+			}
+			if ( ! in_array( $reason, $changes['reasons'], true ) && count( $changes['reasons'] ) < 10 ) {
+				$changes['reasons'][] = substr( wp_strip_all_tags( $reason ), 0, 120 );
+			}
+			if ( $url && ! in_array( $url, $changes['urls'], true ) && count( $changes['urls'] ) < 6 ) {
+				$changes['urls'][] = esc_url_raw( $url );
+			}
+			update_option( self::CHANGES_OPTION, $changes, false );
+			if ( ! wp_next_scheduled( self::CHANGES_HOOK ) ) {
+				wp_schedule_single_event( time() + 5 * MINUTE_IN_SECONDS, self::CHANGES_HOOK );
+			}
+		}
+
+		public static function send_changes() {
+			$changes = get_option( self::CHANGES_OPTION );
+			if ( ! is_array( $changes ) || empty( $changes['reasons'] ) ) {
+				return;
+			}
+			$body     = wp_json_encode( array(
+				'site_url'       => home_url(),
+				'client_version' => self::VERSION,
+				'reasons'        => $changes['reasons'],
+				'urls'           => $changes['urls'],
+			) );
+			$time     = time();
+			$endpoint = preg_replace( '#/checkin/?$#', '/changed', apply_filters( 'ra_monitor_endpoint', self::ENDPOINT ) );
+			$response = wp_remote_post( $endpoint, array(
+				'timeout' => 10,
+				'headers' => array(
+					'Content-Type'   => 'application/json',
+					'X-RA-Timestamp' => (string) $time,
+					'X-RA-Signature' => hash_hmac( 'sha256', $time . '.' . $body, self::signing_key() ),
+				),
+				'body'    => $body,
+			) );
+			$code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			// A monitor older than 1.5.0 has no /changed (404): nothing to retry.
+			if ( 200 === $code || 404 === $code || ++$changes['tries'] >= 3 ) {
+				delete_option( self::CHANGES_OPTION );
+				return;
+			}
+			update_option( self::CHANGES_OPTION, $changes, false );
+			wp_schedule_single_event( time() + HOUR_IN_SECONDS, self::CHANGES_HOOK );
 		}
 
 		/**
