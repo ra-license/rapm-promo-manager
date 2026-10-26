@@ -135,6 +135,7 @@ class RAPM_Admin_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Promo Manager Settings', 'rapm' ); ?></h1>
+			<?php RAPM_Help_Desk::render_box(); // 1.65.0 ?>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::OPTION ); ?>
 

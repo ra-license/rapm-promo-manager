@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Client 1.1.0
+ * RA Monitor Client 1.2.0
  *
  * Shared by every R&A plugin, bundled into each one the same way
  * plugin-update-checker is. Once a day it sends one short check-in to
@@ -25,6 +25,14 @@
  *       'channel'   => 'production',    // or 'staging'
  *   ) );
  *
+ * 1.2.0: the plugin a site is connected through (RA Promo Manager 1.65.0+,
+ * "R&A Help Desk" in its Settings) can add to the check-in and sign it with
+ * the site's own key instead of the shared one:
+ *   ra_monitor_checkin_payload  filter, the data about to be sent
+ *   ra_monitor_signing_key      filter, the key to sign with
+ *   ra_monitor_checkin_response action, the monitor's decoded answer
+ * With nothing hooked in, it sends and signs exactly as 1.1.0 did.
+ *
  * Several R&A plugins on one site each bundle a copy; whichever loads first
  * defines the class and the rest register with it, so the public API below
  * must stay backward compatible. A breaking change needs a new class name.
@@ -36,7 +44,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 
 	class RA_Monitor_Client {
 
-		const VERSION  = '1.1.0';
+		const VERSION  = '1.2.0';
 		const ENDPOINT = 'https://help.ramarketing.com/wp-json/ra-monitor/v1/checkin';
 
 		// Must match RA_MONITOR_KEY in the RA Plugin Monitor receiver.
@@ -242,12 +250,16 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 				'headers' => array(
 					'Content-Type'   => 'application/json',
 					'X-RA-Timestamp' => (string) $time,
-					'X-RA-Signature' => hash_hmac( 'sha256', $time . '.' . $body, self::KEY ),
+					'X-RA-Signature' => hash_hmac( 'sha256', $time . '.' . $body, self::signing_key() ),
 				),
 				'body'    => $body,
 			) );
 
 			$code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			$answer = is_wp_error( $response ) ? null : json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_array( $answer ) ) {
+				do_action( 'ra_monitor_checkin_response', $answer, $code );
+			}
 			update_option( self::SENT_OPTION, array(
 				'time'        => $time,
 				'code'        => $code,
@@ -256,6 +268,16 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 				// on the next wp-admin visit rather than waiting a day.
 				'fingerprint' => 200 === $code ? self::fingerprint() : '',
 			), false );
+		}
+
+		/**
+		 * 1.2.0: the site's own key once it's connected to the help desk,
+		 * otherwise the shared one. Anything that isn't a 64-character hex
+		 * key falls back to the shared key.
+		 */
+		public static function signing_key() {
+			$key = apply_filters( 'ra_monitor_signing_key', self::KEY );
+			return is_string( $key ) && preg_match( '/^[0-9a-f]{64}$/', $key ) ? $key : self::KEY;
 		}
 
 		/**
@@ -313,7 +335,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 				$plugins[] = $entry;
 			}
 
-			return array(
+			$payload = array(
 				'site_url'       => home_url(),
 				'site_name'      => get_bloginfo( 'name' ),
 				'wp_version'     => get_bloginfo( 'version' ),
@@ -322,6 +344,8 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 				'client_version' => self::VERSION,
 				'plugins'        => $plugins,
 			);
+			$extra = apply_filters( 'ra_monitor_checkin_payload', $payload );
+			return is_array( $extra ) ? $extra : $payload;
 		}
 
 		/**

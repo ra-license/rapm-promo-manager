@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Updates 1.0.2
+ * RA Monitor Updates 1.0.3
  *
  * Lets R&A's Plugin Monitor (help.ramarketing.com) ask this site to update
  * an R&A plugin right away, instead of waiting for WordPress's twice-daily
@@ -35,6 +35,11 @@
  *       'channel' => 'production',    // or 'staging'
  *   ) );
  *
+ * 1.0.3: a poll is signed with the site's own key once the site is
+ * connected to the help desk (the ra_monitor_signing_key filter, as for the
+ * daily check-in), and the monitor's answer is passed on through the
+ * ra_monitor_poll_response action, so the connection hears about approval.
+ *
  * Several R&A plugins on one site may each bundle a copy; whichever loads
  * first defines the class and the rest register with it, so the public API
  * below must stay backward compatible. A breaking change needs a new class
@@ -47,7 +52,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 	class RA_Monitor_Updates {
 
-		const VERSION = '1.0.2';
+		const VERSION = '1.0.3';
 
 		// The check-in address; polls go to /poll next to it, so the
 		// monitor's "Receive this site's own check-ins here" testing switch
@@ -157,6 +162,12 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			return isset( $data['Version'] ) ? (string) $data['Version'] : '';
 		}
 
+		/** 1.0.3: the same key choice as RA_Monitor_Client::signing_key(). */
+		public static function signing_key() {
+			$key = apply_filters( 'ra_monitor_signing_key', self::KEY );
+			return is_string( $key ) && preg_match( '/^[0-9a-f]{64}$/', $key ) ? $key : self::KEY;
+		}
+
 		/**
 		 * Asks the monitor for instructions, and reports the results of
 		 * earlier ones until the monitor confirms it has them.
@@ -189,7 +200,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				'headers' => array(
 					'Content-Type'   => 'application/json',
 					'X-RA-Timestamp' => (string) $time,
-					'X-RA-Signature' => hash_hmac( 'sha256', $time . '.' . $body, self::KEY ),
+					'X-RA-Signature' => hash_hmac( 'sha256', $time . '.' . $body, self::signing_key() ),
 				),
 				'body'    => $body,
 			) );
@@ -207,6 +218,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			if ( ! is_array( $data ) ) {
 				return;
 			}
+			do_action( 'ra_monitor_poll_response', $data );
 
 			// The monitor has these results now; stop sending them.
 			if ( ! empty( $data['acked'] ) && is_array( $data['acked'] ) && $results ) {

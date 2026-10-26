@@ -4,6 +4,57 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.65.0
+
+**R&A Help Desk connection, caching list and visitor check.** From the mockup Phil approved on 2026-10-26 (https://claude.ai/artifact/3EuNFCm8L1fTiqN5G1Kc8U): "Approved, yes to all four, build 1.65.0". Goes with **R&A Plugin Monitor 1.4.0** on help.ramarketing.com.
+
+- **Why:**
+  - **The shared key:** until now every copy of every R&A plugin signed its check-ins with one shared key. Anyone with the plugin could pretend to be any website. A help desk that signs clients in, or puts their art live, needs to know which website is really talking.
+  - **Gates, Oct 26:** an update looked right to every signed-in admin, while visitors got an unstyled home page. Nothing at R&A looked at the website as a visitor. The SOP now says to (golden rule 18, step 16.11), and this does it automatically.
+- **Promo Manager › Settings › R&A Help Desk** (new box at the top, administrators only):
+  - **Connect:** the website makes its own random key and sends it with a request id to the help desk (RAPM_Help_Desk, class-rapm-help-desk.php).
+  - **The help desk calls the website back.** The call goes to the website's own address (`rapm/v1/hd-confirm`), with a random challenge. Only a website holding the key can answer it, so a request can't be made in another website's name.
+  - **R&A approves** on the help desk. The website hears so within 15 minutes (in the answer to its poll).
+  - **States:** Not connected / Waiting for R&A / Connected, with Cancel and Disconnect.
+  - **What it shares and never shares** is spelled out in the box. The box also shows the last visitor check in plain words ("Looks right" or "R&A is on it").
+  - **Older check-in copies:** if another R&A plugin with an older copy of the shared check-in loads first, the box says to update that plugin before connecting. Otherwise that plugin's check-ins would break.
+- **Once connected:**
+  - **Own key:** check-ins and polls are signed with the website's own key. The help desk refuses ones signed with the shared key for that website (Phil's choice 3).
+  - **What the daily check-in adds:**
+    - each spot's name, kind, picture sizes and published pages;
+    - the pages with a promotion (at most 6, home page first);
+    - caching: the caching plugins that are on, by folder name, and WP Rocket's main switches, read from its own `wp_rocket_settings`. The switches are phone cache, Remove Unused CSS, whether the CSS Safelist covers Elementor's page CSS, Delay JavaScript, and whether Promo Manager's 1.64.2 exclusion is active. Only on/off values are sent.
+  - **Elementor saves:** when a page is saved in Elementor, its address is sent so the help desk can check it 10 minutes later (Phil's choice 1). A template sends the home page instead. The request doesn't wait, so Publish stays as fast as before.
+  - **New key:** R&A can ask for one. The website makes it and sends it signed with the old one.
+  - **Removed or turned down by R&A:** the website forgets the connection and goes back to the shared key, with a note in the box.
+- **Shared check-in code** (bundled in every R&A plugin):
+  - **RA Monitor Client 1.2.0:** `ra_monitor_checkin_payload` and `ra_monitor_signing_key` filters, and a `ra_monitor_checkin_response` action.
+  - **RA Monitor Updates 1.0.3:** the same key filter, and a `ra_monitor_poll_response` action.
+  - **Unchanged without a connection:** with nothing hooked in, both send and sign exactly as before.
+- **Plugin Monitor 1.4.0 (separate plugin, installed by zip):**
+  - **The connection:** approve, turn down, remove, make a new key, and check again. Each website has its own page.
+  - **Customers:** pairing with Fluent Support customers. Suggestions are customers whose email is on the website's domain, plus a search. Fluent Support has no company field, so the mockup's "company name" suggestion isn't possible.
+  - **The visitor check (Phil's choice 2 is the email on red):**
+    - **How it loads pages:** signed out, as a computer and as a phone.
+    - **When it runs:** after every R&A plugin update, again 24 hours later when Remove Unused CSS is on, and 10 minutes after an Elementor save.
+    - **Email:** it emails when a website turns red, once, not on every red check. The address defaults to the help desk's admin email.
+    - **Not connected:** websites that aren't connected get their home page checked.
+- **Tested** on WordPress 7.1.3 with SQLite in php-wasm, with Promo Manager and the Plugin Monitor on one WordPress. A stand-in passed their requests to each other through the REST API, and served sample pages.
+  - **Connecting:** connect, call back (a wrong request id is refused), check-in while waiting, approve, the website hearing it, the check-in carrying spots, pages and caching, a check-in signed with the shared key refused (401), a new key, R&A removing and turning down, and the website disconnecting itself.
+  - **Customers:** pairing, Not this website, Undo, search, and help desk staff left out.
+  - **The visitor check, against sample pages:**
+    - a Gates-style phone page (trimmed CSS without Promo Manager or Elementor rules) fails and names both;
+    - trimmed CSS that still has the rules passes;
+    - a Cloudflare challenge is "Couldn't check";
+    - a crash fails;
+    - the email goes once per turn to red;
+    - an update reported by both Update now and the check-in is checked once;
+    - Elementor saves merge into one waiting check.
+  - **Screens and code:** every screen draws with no PHP warnings, and editors don't see the box. All changed PHP parses on 7.4 and 8.3.
+  - **Not tested here:** the call back over the real internet, and the old-copy warning (the bench can't load two versions of the same class).
+
+---
+
 ## 1.64.2
 
 **Shop the Look and every other kind keep their styles for visitors on sites using WP Rocket's "Remove Unused CSS".** Phil, Oct 26: on gatesfurniture.com Shop the Look was "loading all the looks individually" on phones and "looking weird" on computers.
