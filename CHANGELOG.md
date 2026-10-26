@@ -4,6 +4,49 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.64.0
+
+**Alignment tools for the pieces on the picture.** Phil, Oct 26: "There should also be alignment tools for elements." Board 3 of the mockup was approved the same day: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr.
+
+- **Place the words (Slider, Feature banner, Coupon row).** This new row replaces "Text Alignment", and it's always shown.
+  - **Before:** the words always sat in a strip along the bottom of the picture; only left, center or right could change.
+  - **Now:** "Computer / Phone", then across (left, center, right) and up and down (top, middle, bottom), each as a button with a picture.
+    - The shade behind the words follows them: a fade from the top, a band through the middle, or the old fade from the bottom.
+    - Phones use the computer's places until changed. "Same as computers" puts them back.
+    - The Computer and Phone buttons also switch the Live Preview, and the other way round.
+  - **Stored:** across for computers is still `_rapm_text_align`. The rest is in `_rapm_place` (y, and phone pa, py). The website reads it as `data-y`, `data-align-phone` and `data-y-phone` (rapm-hero.css; phones at 768px and under, the same as the dots).
+  - **Promotions saved before 1.64.0** have none of these, so they look exactly as before.
+- **Line the Shop button up (Slider, Feature banner).** These tools are in Place the pieces under "Show a Shop now button", for the picture shown (computer or phone).
+  - **Across and up and down:** left, center or right, and top, middle or bottom.
+  - **"Line it up with the words":** the same left, center or right as the words.
+  - **The gap from the edges** is the words' own padding on the website (40 by 32 pixels on computers, 20 by 24 on phones), so a left button lines up with left words.
+  - **Dragging** places it freely again.
+  - **Stored** with the button (ax, ay, and max, may on the phone picture). rapm-pins.js places it.
+- **Snapping while dragging:** a dot or the button snaps to the picture's middle and to the other pieces, within 1.2%, with pink guides. Alt (Option on a Mac) turns it off. Arrow keys still move it freely.
+- **A warning under Place the words** when:
+  - a line of words reaches past the picture's top or bottom in the Live Preview (the staging walk found a cut-off headline on /promotions/), or
+  - the Shop button sits on top of the words.
+
+  It checks the preview's size only. A page that puts the slider in a narrow column can still cut words off, so put long words in the middle there.
+- **Tested** on WordPress 7.1.3 with SQLite in php-wasm, then in the browser with the real styles and scripts:
+  - **Website, 1200 pixels wide:** the words were in the middle (0 pixels off center), and the centered button sat 32 pixels from the bottom.
+  - **Website, 390 pixels wide:** the words were at the top and centered, and the button was at the top right, 20 pixels from the edge (the words' gap).
+  - **Saved:** the slide got `data-y="middle" data-align-phone="center" data-y-phone="top"`. Bad values were refused and reset to the old place. A promotion without the setting has no new attributes.
+  - **The button's alignment** is kept with it (ax, max, may); an unknown "zz" is dropped. The website button gets `data-ax="c" data-ay="b"`.
+  - **The form:**
+    - Middle updated the preview.
+    - Phone switched the Live Preview to Phone and saved the phone places; "Same as computers" showed.
+    - Back on Computer, the computer's places returned.
+    - A very long headline brought up the cut-off note, and a short one cleared it.
+  - **Place the pieces:**
+    - Right put the button's right edge 2.8% in.
+    - "Line it up with the words" matched the words' left.
+    - A drag to 50.6% snapped to 50% with the pink guide, and cleared the lined-up setting. With Alt it stayed at 50.6%, and the guide hid on release.
+    - A button over the middle words brought up "The Shop button is on top of the words"; moving the words to the top and the button to the bottom right cleared it.
+  - **PHP versions:** the changed PHP files parse in PHP 7.4 and 8.3.
+
+---
+
 ## 1.63.1
 
 **Each kind's tool list mentions fonts and icons.** The staging walk of 1.63.0 found that the Design Center's "Design tools for this kind" didn't mention the Google Fonts (1.62.0) and icons (1.63.0) it had just gained.

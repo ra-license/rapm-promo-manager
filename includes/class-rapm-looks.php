@@ -98,6 +98,14 @@ class RAPM_Looks {
 			$clean['mx'] = round( min( 100, max( 0, (float) $btn['mx'] ) ), 1 );
 			$clean['my'] = round( min( 100, max( 0, (float) $btn['my'] ) ), 1 );
 		}
+		// 1.64.0: lined up with the picture's edges or middle instead of a
+		// dragged spot, across (ax: l, c, r) and up and down (ay: t, m, b);
+		// max and may on the phone picture. rapm-pins.js places it.
+		foreach ( array( 'ax' => array( 'l', 'c', 'r' ), 'ay' => array( 't', 'm', 'b' ), 'max' => array( 'l', 'c', 'r' ), 'may' => array( 't', 'm', 'b' ) ) as $key => $allowed ) {
+			if ( isset( $btn[ $key ] ) && in_array( $btn[ $key ], $allowed, true ) ) {
+				$clean[ $key ] = $btn[ $key ];
+			}
+		}
 		return $clean;
 	}
 

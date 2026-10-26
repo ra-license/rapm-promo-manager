@@ -39,6 +39,23 @@
 		return [ parseFloat( x ), parseFloat( y ) ];
 	}
 
+	// 1.64.0: the button's alignment on this screen, [ across, up and down ] ('' = its dragged spot).
+	function anchors( el, slide ) {
+		var phone = onPhone() && slide.classList.contains( 'has-mobile-img' );
+		var ax = phone && el.hasAttribute( 'data-max' ) ? el.getAttribute( 'data-max' ) : ( phone && el.hasAttribute( 'data-mx' ) ? '' : el.getAttribute( 'data-ax' ) );
+		var ay = phone && el.hasAttribute( 'data-may' ) ? el.getAttribute( 'data-may' ) : ( phone && el.hasAttribute( 'data-my' ) ? '' : el.getAttribute( 'data-ay' ) );
+		return [ ax || '', ay || '' ];
+	}
+
+	// The safe gap from the picture's edges: the words box's padding, so the
+	// button lines up with the words (32px by 40px on computers, 24 by 20 on phones).
+	function gaps( slide ) {
+		var copy = slide.querySelector( '.rapm-slide-copy' );
+		var cs = copy ? window.getComputedStyle( copy ) : null;
+		var x = cs ? parseFloat( cs.paddingLeft ) : NaN, y = cs ? parseFloat( cs.paddingTop ) : NaN;
+		return { x: isNaN( x ) ? ( onPhone() ? 20 : 40 ) : x, y: isNaN( y ) ? ( onPhone() ? 24 : 32 ) : y };
+	}
+
 	// 1.40.1: a lazy-loader's stand-in (WP Rocket swaps in a blank
 	// data: picture until the real one loads) reports a made-up size, which
 	// put Kemper's dots in the wrong places and hid one as cut off.
@@ -62,8 +79,15 @@
 		var btn = slide.querySelector( '.rapm-pin-btn' );
 		if ( btn ) {
 			var s2 = spot( btn, slide ), bw = btn.offsetWidth, bh = btn.offsetHeight, m = 8;
-			btn.style.left = Math.min( Math.max( f.ox + s2[0] / 100 * f.dw - bw / 2, m ), Math.max( m, f.cw - bw - m ) ) + 'px';
-			btn.style.top  = Math.min( Math.max( f.oy + s2[1] / 100 * f.dh - bh / 2, m ), Math.max( m, f.ch - bh - m ) ) + 'px';
+			var left = f.ox + s2[0] / 100 * f.dw - bw / 2, top = f.oy + s2[1] / 100 * f.dh - bh / 2;
+			// 1.64.0: lined up with the picture instead of a dragged spot. The
+			// gap is the words' own (their box's padding), so "left" lines the
+			// button up with left-aligned words.
+			var a = anchors( btn, slide ), gap = gaps( slide );
+			if ( 'l' === a[0] ) { left = gap.x; } else if ( 'c' === a[0] ) { left = ( f.cw - bw ) / 2; } else if ( 'r' === a[0] ) { left = f.cw - bw - gap.x; }
+			if ( 't' === a[1] ) { top = gap.y; } else if ( 'm' === a[1] ) { top = ( f.ch - bh ) / 2; } else if ( 'b' === a[1] ) { top = f.ch - bh - gap.y; }
+			btn.style.left = Math.min( Math.max( left, m ), Math.max( m, f.cw - bw - m ) ) + 'px';
+			btn.style.top  = Math.min( Math.max( top, m ), Math.max( m, f.ch - bh - m ) ) + 'px';
 		}
 	}
 

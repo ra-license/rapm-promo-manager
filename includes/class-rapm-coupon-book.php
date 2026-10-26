@@ -130,7 +130,7 @@ class RAPM_Coupon_Book {
 			<?php if ( $headline || $subhead || $cta_text ) : ?>
 				<?php $fonts = RAPM_Line_Fonts::get( $asset_id ); // 1.62.0: a font for each line on the coupon. ?>
 				<?php $icon = RAPM_Line_Icon::get( $asset_id ); // 1.63.0: an icon with the words. ?>
-				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>" data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">
+				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>"<?php echo RAPM_Place::attrs( $asset_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.64.0; escaped in attrs(). ?> data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">
 					<?php echo RAPM_Line_Fonts::links( $fonts ); // phpcs:ignore WordPress.Security.EscapeOutput -- built with esc_url(). ?>
 					<?php if ( $headline ) : ?><h3 class="rapm-headline"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'head' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo RAPM_Line_Icon::html( $icon, 'head' ) . esc_html( $headline ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in html(). ?></h3><?php endif; ?>
 					<?php if ( $subhead ) : ?><p class="rapm-subhead"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'sub' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $subhead ); ?></p><?php endif; ?>

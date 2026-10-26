@@ -144,3 +144,16 @@ span.rapm-pieces-thumb { display: block; }
 	.rapm-fit-computer, .rapm-fit-phone { flex-basis: 100%; }
 }
 .rapm-fit-whole[hidden] { display: none; }
+
+/* 1.64.0: lining the button up, and snapping guides while dragging. */
+.rapm-pieces-align { margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid #dcdcde; display: grid; gap: 8px; }
+.rapm-pieces-align[hidden] { display: none; }
+.rapm-pieces-align p { margin: 0; }
+.rapm-pieces-align-head { font-weight: 600; }
+.rapm-pieces-align-screen { font-weight: 400; color: #50575e; }
+.rapm-pieces-align-tools, .rapm-pieces-align-tools > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.rapm-pieces-align-tools { gap: 14px; }
+.rapm-pieces-guide { position: absolute; z-index: 3; pointer-events: none; }
+.rapm-pieces-guide.is-x { top: 0; bottom: 0; width: 0; border-left: 1px dashed #ff2d87; }
+.rapm-pieces-guide.is-y { left: 0; right: 0; height: 0; border-top: 1px dashed #ff2d87; }
+.rapm-pieces-guide[hidden] { display: none; }

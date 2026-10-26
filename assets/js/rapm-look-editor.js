@@ -79,6 +79,21 @@
 	function sxy( o, x, y ) {
 		if ( onPhone() ) { o.mx = x; o.my = y; } else { o.x = x; o.y = y; }
 	}
+	// 1.64.0: the button's alignment on the picture shown, [ across, up and
+	// down ] ('' = its dragged spot). Like rapm-pins.js: the phone picture
+	// uses its own, else the computer's unless the button was dragged there.
+	function ga( o ) {
+		if ( ! onPhone() ) { return [ o.ax || '', o.ay || '' ]; }
+		return [ o.max || ( null != o.mx ? '' : o.ax || '' ), o.may || ( null != o.my ? '' : o.ay || '' ) ];
+	}
+	function sa( o, axis, v ) {
+		if ( onPhone() ) {
+			o[ 'm' + axis ] = v;
+			if ( ! v && null == o.mx ) { o.mx = o.x; o.my = o.y; } // Dragged on the phone picture: its own spot from here.
+		} else {
+			o[ axis ] = v;
+		}
+	}
 
 	var state = {
 		src: C.src || '',
@@ -90,7 +105,7 @@
 		fc: ( C.focus || [ 0.5, 0.5 ] ).slice(),
 		fp: ( C.focusPhone || C.focus || [ 0.5, 0.5 ] ).slice(),
 		dots: ( C.dots || [] ).map( function ( d ) { var o = { p: d.p, x: d.x, y: d.y }; if ( null != d.mx ) { o.mx = d.mx; o.my = d.my; } return o; } ),
-		btn: C.photoBtn && C.photoBtn.on ? { on: true, x: C.photoBtn.x, y: C.photoBtn.y, mx: C.photoBtn.mx, my: C.photoBtn.my } : { on: false, x: 50, y: 78 },
+		btn: C.photoBtn && C.photoBtn.on ? { on: true, x: C.photoBtn.x, y: C.photoBtn.y, mx: C.photoBtn.mx, my: C.photoBtn.my, ax: C.photoBtn.ax, ay: C.photoBtn.ay, max: C.photoBtn.max, may: C.photoBtn.may } : { on: false, x: 50, y: 78 },
 		selected: -1
 	};
 	var products = {};
@@ -139,6 +154,8 @@
 		if ( btnField ) {
 			var bo = state.btn.on ? { on: true, x: state.btn.x, y: state.btn.y } : {};
 			if ( state.btn.on && null != state.btn.mx ) { bo.mx = state.btn.mx; bo.my = state.btn.my; }
+			// 1.64.0: lined up with the picture (rapm-pins.js places it).
+			[ 'ax', 'ay', 'max', 'may' ].forEach( function ( k ) { if ( state.btn.on && state.btn[ k ] ) { bo[ k ] = state.btn[ k ]; } } );
 			btnField.value = JSON.stringify( bo );
 		}
 	}
@@ -358,6 +375,7 @@
 			pb.style.top  = gy( state.btn ) + '%';
 			pb.setAttribute( 'aria-label', T.btnLabel || '' );
 			stage.appendChild( pb );
+			placeAligned( pb );
 		}
 		state.dots.forEach( function ( d, k ) {
 			var b = el( 'button', 'rapm-pieces-dot' + ( k === state.selected ? ' is-selected' : '' ) + ( d.p ? ( products[ d.p ] ? '' : ' is-gone' ) : ' is-empty' ), String( k + 1 ) );
@@ -368,6 +386,52 @@
 			b.setAttribute( 'aria-label', d.p && products[ d.p ] ? fmt( T.dotLabel, k + 1, products[ d.p ].name ) : fmt( T.dotEmpty, k + 1 ) );
 			stage.appendChild( b );
 		} );
+	}
+
+	// 1.64.0: a lined-up button sits a safe gap in from the edges, about the
+	// words' own padding on the website (40 by 32 pixels on computers, 20 by
+	// 24 on phones), so the stage shows it where the website will.
+	function placeAligned( pb ) {
+		var a = ga( state.btn );
+		if ( ! a[0] && ! a[1] ) { return; }
+		var sw = stage.clientWidth, sh = stage.clientHeight, bw = pb.offsetWidth, bh = pb.offsetHeight;
+		if ( ! sw || ! sh ) { return; }
+		var gapX = sw * ( onPhone() ? 0.05 : 0.028 ), gapY = sh * ( onPhone() ? 0.035 : 0.07 );
+		var cx = { l: gapX + bw / 2, c: sw / 2, r: sw - gapX - bw / 2 }[ a[0] ];
+		var cy = { t: gapY + bh / 2, m: sh / 2, b: sh - gapY - bh / 2 }[ a[1] ];
+		if ( null != cx ) { pb.style.left = ( cx / sw * 100 ) + '%'; }
+		if ( null != cy ) { pb.style.top = ( cy / sh * 100 ) + '%'; }
+	}
+
+	// 1.64.0: snapping while dragging. A piece's center snaps to the
+	// picture's middle and to the other pieces, within 1.2% (Alt: no snap),
+	// and pink guides show where.
+	function guide( axis, at ) {
+		var g = stage.querySelector( '.rapm-pieces-guide.is-' + axis );
+		if ( null == at ) {
+			if ( g ) { g.hidden = true; }
+			return;
+		}
+		if ( ! g ) {
+			g = el( 'span', 'rapm-pieces-guide is-' + axis );
+			g.setAttribute( 'aria-hidden', 'true' );
+			stage.appendChild( g );
+		}
+		g.hidden = false;
+		g.style[ 'x' === axis ? 'left' : 'top' ] = at + '%';
+	}
+	function snap( x, y, self, free ) {
+		var tx = [ 50 ], ty = [ 50 ];
+		if ( state.btn.on && self !== state.btn ) { tx.push( gx( state.btn ) ); ty.push( gy( state.btn ) ); }
+		state.dots.forEach( function ( d ) { if ( d !== self ) { tx.push( gx( d ) ); ty.push( gy( d ) ); } } );
+		var sx = null, sy = null;
+		if ( ! free ) {
+			tx.forEach( function ( t ) { if ( Math.abs( x - t ) < 1.2 && ( null == sx || Math.abs( x - t ) < Math.abs( x - sx ) ) ) { sx = t; } } );
+			ty.forEach( function ( t ) { if ( Math.abs( y - t ) < 1.2 && ( null == sy || Math.abs( y - t ) < Math.abs( y - sy ) ) ) { sy = t; } } );
+		}
+		guide( 'x', sx );
+		guide( 'y', sy );
+		return [ null == sx ? x : sx, null == sy ? y : sy ];
 	}
 
 	function addDot( x, y ) {
@@ -419,8 +483,10 @@
 			if ( ! drag ) { return; }
 			var box = stage.getBoundingClientRect(), d = drag.btn ? state.btn : state.dots[ drag.k ];
 			if ( ! drag.btn && Math.abs( e.clientX - drag.sx ) + Math.abs( e.clientY - drag.sy ) > 3 ) { drag.moved = true; }
-			sxy( d, Math.round( Math.min( Math.max( ( e.clientX - box.left ) / box.width, 0 ), 1 ) * 1000 ) / 10,
-				Math.round( Math.min( Math.max( ( e.clientY - box.top ) / box.height, 0 ), 1 ) * 1000 ) / 10 );
+			var at = snap( Math.round( Math.min( Math.max( ( e.clientX - box.left ) / box.width, 0 ), 1 ) * 1000 ) / 10,
+				Math.round( Math.min( Math.max( ( e.clientY - box.top ) / box.height, 0 ), 1 ) * 1000 ) / 10, d, e.altKey );
+			if ( drag.btn ) { sa( d, 'ax', '' ); sa( d, 'ay', '' ); } // Dragged: no longer lined up.
+			sxy( d, at[0], at[1] );
 			drag.el.style.left = gx( d ) + '%';
 			drag.el.style.top  = gy( d ) + '%';
 			renderFit();
@@ -429,6 +495,8 @@
 		} );
 		var endDrag = function () {
 			if ( ! drag ) { return; }
+			guide( 'x', null );
+			guide( 'y', null );
 			if ( drag.btn ) {
 				drag.el.classList.remove( 'is-dragging' );
 				drag = null;
@@ -452,6 +520,8 @@
 			if ( e.target.closest( '.rapm-pieces-btn' ) && moves[ e.key ] ) {
 				e.preventDefault();
 				var bstep = e.shiftKey ? 5 : 1;
+				sa( state.btn, 'ax', '' );
+				sa( state.btn, 'ay', '' );
 				sxy( state.btn, Math.min( Math.max( gx( state.btn ) + moves[ e.key ][0] * bstep, 0 ), 100 ),
 					Math.min( Math.max( gy( state.btn ) + moves[ e.key ][1] * bstep, 0 ), 100 ) );
 				renderAll();
@@ -1063,8 +1133,15 @@
 			var b = el( 'span', 'rapm-pin-btn', btnText() );
 			box.appendChild( b );
 			var bw = b.offsetWidth, bh = b.offsetHeight;
-			b.style.left = Math.min( Math.max( ox + px( state.btn ) / 100 * dw - bw / 2, 8 ), cw - bw - 8 ) + 'px';
-			b.style.top  = Math.min( Math.max( oy + py( state.btn ) / 100 * dh - bh / 2, 8 ), ch - bh - 8 ) + 'px';
+			var left = ox + px( state.btn ) / 100 * dw - bw / 2, top = oy + py( state.btn ) / 100 * dh - bh / 2;
+			// 1.64.0: lined up, a gap in from the edges like the words (rapm-pins.js).
+			var o = state.btn, ax = mobile ? ( o.max || ( null != o.mx ? '' : o.ax ) ) : o.ax, ay = mobile ? ( o.may || ( null != o.my ? '' : o.ay ) ) : o.ay;
+			var copy = $( 'rapm-preview-copy' ), cs = copy ? window.getComputedStyle( copy ) : null;
+			var gapX = cs ? parseFloat( cs.paddingLeft ) || 40 : 40, gapY = cs ? parseFloat( cs.paddingTop ) || 32 : 32;
+			if ( 'l' === ax ) { left = gapX; } else if ( 'c' === ax ) { left = ( cw - bw ) / 2; } else if ( 'r' === ax ) { left = cw - bw - gapX; }
+			if ( 't' === ay ) { top = gapY; } else if ( 'm' === ay ) { top = ( ch - bh ) / 2; } else if ( 'b' === ay ) { top = ch - bh - gapY; }
+			b.style.left = Math.min( Math.max( left, 8 ), cw - bw - 8 ) + 'px';
+			b.style.top  = Math.min( Math.max( top, 8 ), ch - bh - 8 ) + 'px';
 		}
 	}
 	if ( BANNER && $( 'rapm-preview' ) ) {
@@ -1076,7 +1153,39 @@
 		if ( $( 'rapm_cta_text' ) ) { $( 'rapm_cta_text' ).addEventListener( 'input', renderBannerPreview ); }
 	}
 
+	// 1.64.0: the button's alignment tools, for the picture shown.
+	var alignBox = $( 'rapm-pieces-align' );
+	function renderAlign() {
+		if ( ! alignBox ) { return; }
+		alignBox.hidden = ! state.btn.on;
+		var a = ga( state.btn );
+		Array.prototype.forEach.call( alignBox.querySelectorAll( '[data-bx]' ), function ( b ) { b.setAttribute( 'aria-pressed', String( b.getAttribute( 'data-bx' ) === a[0] ) ); } );
+		Array.prototype.forEach.call( alignBox.querySelectorAll( '[data-by]' ), function ( b ) { b.setAttribute( 'aria-pressed', String( b.getAttribute( 'data-by' ) === a[1] ) ); } );
+		var scr = $( 'rapm-pieces-align-screen' );
+		if ( scr ) { scr.textContent = onPhone() ? ( T.onPhonePic || '' ) : ( T.onComputerPic || '' ); }
+	}
+	if ( alignBox ) {
+		alignBox.addEventListener( 'click', function ( e ) {
+			var b = e.target.closest( 'button' );
+			if ( ! b ) { return; }
+			if ( b.hasAttribute( 'data-bx' ) ) {
+				sa( state.btn, 'ax', b.getAttribute( 'data-bx' ) );
+			} else if ( b.hasAttribute( 'data-by' ) ) {
+				sa( state.btn, 'ay', b.getAttribute( 'data-by' ) );
+			} else if ( 'rapm-pieces-align-words' === b.id ) {
+				// The same left, center or right as the words on this screen (Place the words).
+				var al = $( 'rapm_text_align' ), pa = $( 'rapm_place_pa' );
+				var w = onPhone() && pa && pa.value ? pa.value : ( al ? al.value : 'left' );
+				sa( state.btn, 'ax', { left: 'l', center: 'c', right: 'r' }[ w ] || 'l' );
+			} else {
+				return;
+			}
+			renderAll();
+		} );
+	}
+
 	function renderAll() {
+		renderAlign();
 		renderStage();
 		renderList();
 		renderFit();

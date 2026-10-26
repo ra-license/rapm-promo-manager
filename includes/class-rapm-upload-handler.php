@@ -48,6 +48,7 @@ class RAPM_Upload_Handler {
 		wp_enqueue_script( 'rapm-editor-js', RAPM_URL . 'assets/js/rapm-editor.js', array(), RAPM_VERSION, true );
 		wp_enqueue_script( 'rapm-line-fonts-js', RAPM_URL . 'assets/js/rapm-line-fonts.js', array(), RAPM_VERSION, true ); // 1.62.0.
 		wp_enqueue_script( 'rapm-line-icon-js', RAPM_URL . 'assets/js/rapm-line-icon.js', array(), RAPM_VERSION, true ); // 1.63.0.
+		wp_enqueue_script( 'rapm-place-js', RAPM_URL . 'assets/js/rapm-place.js', array(), RAPM_VERSION, true ); // 1.64.0.
 		wp_localize_script(
 			'rapm-editor-js',
 			'RAPM_Editor_Text',
@@ -849,6 +850,9 @@ class RAPM_Upload_Handler {
 						</tr>
 						<?php endif; ?>
 						<?php if ( ! $is_look ) : // Alignment, color, style and typeface are for words printed over a picture. ?>
+						<?php if ( RAPM_Place::applies( $kind_key ) ) : // 1.64.0: across and up and down, for computers and phones. ?>
+							<?php self::render_place( $is_edit ? RAPM_Place::get( $asset_id ) : RAPM_Place::get( 0 ), (string) $m( '_rapm_text_align', 'left' ), $restore ); ?>
+						<?php else : ?>
 						<tr class="rapm-more"<?php echo ( $is_quick || $is_box || $is_reveal ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; the promotion box places and colors each piece on its canvas. ?>>
 							<th><label for="rapm_text_align"><?php esc_html_e( 'Text Alignment', 'rapm' ); ?></label></th>
 							<td>
@@ -859,6 +863,7 @@ class RAPM_Upload_Handler {
 								</select>
 							</td>
 						</tr>
+						<?php endif; ?>
 						<tr class="rapm-more"<?php echo ( $is_quick || $is_box ) ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string. ?>>
 							<th><label for="rapm_text_color"><?php echo $is_reveal ? esc_html__( 'Word color', 'rapm' ) : esc_html__( 'Text Color', 'rapm' ); ?></label></th>
 							<td>
@@ -1984,6 +1989,10 @@ class RAPM_Upload_Handler {
 		if ( RAPM_Line_Fonts::applies( $kind_key ) ) {
 			RAPM_Line_Fonts::save( $asset_id );
 		}
+		// 1.64.0: where the words sit.
+		if ( RAPM_Place::applies( $kind_key ) ) {
+			RAPM_Place::save( $asset_id );
+		}
 		// 1.63.0: an icon with them.
 		if ( RAPM_Line_Icon::applies( $kind_key ) ) {
 			RAPM_Line_Icon::save( $asset_id, $kind_key );
@@ -2401,6 +2410,78 @@ class RAPM_Upload_Handler {
 		<?php
 	}
 
+	/**
+	 * 1.64.0: "Place the words" for Slider, Feature banner and Coupon row
+	 * (RAPM_Place): across (the old Text Alignment, still rapm_text_align)
+	 * and up and down, for computers, and phones' own places or "the same".
+	 * rapm-place.js runs the buttons, keeps the Live Preview in step and
+	 * says when the words are taller than the picture.
+	 */
+	private static function render_place( $place, $align, $restore ) {
+		foreach ( array( 'y', 'pa', 'py' ) as $k ) {
+			if ( isset( $restore[ 'rapm_place_' . $k ] ) ) { // A refused save keeps what was picked.
+				$place[ $k ] = sanitize_key( $restore[ 'rapm_place_' . $k ] );
+			}
+		}
+		$align = in_array( $align, RAPM_Place::X, true ) ? $align : 'left';
+		$text  = array(
+			'phoneSame' => __( 'Phones use the same places as computers.', 'rapm' ),
+			'phoneOwn'  => __( 'Phones have their own places.', 'rapm' ),
+			'copy'      => __( 'Use these places on phones too', 'rapm' ),
+			'same'      => __( 'Same as computers', 'rapm' ),
+			'tooTall'   => __( 'The words are taller than the picture here, so some are cut off. Use fewer words, or put them in the middle.', 'rapm' ),
+			'covered'   => __( 'The Shop button is on top of the words. Move the words or the button (Place the pieces).', 'rapm' ),
+		);
+		$icons = array(
+			'left'   => '<path d="M4 3v18"/><rect x="7" y="7" width="12" height="4"/><rect x="7" y="13" width="8" height="4"/>',
+			'center' => '<path d="M12 3v18"/><rect x="5" y="7" width="14" height="4"/><rect x="7" y="13" width="10" height="4"/>',
+			'right'  => '<path d="M20 3v18"/><rect x="5" y="7" width="12" height="4"/><rect x="9" y="13" width="8" height="4"/>',
+			'top'    => '<path d="M3 4h18"/><rect x="7" y="7" width="4" height="12"/><rect x="13" y="7" width="4" height="8"/>',
+			'middle' => '<path d="M3 12h18"/><rect x="7" y="5" width="4" height="14"/><rect x="13" y="7" width="4" height="10"/>',
+			'bottom' => '<path d="M3 20h18"/><rect x="7" y="5" width="4" height="12"/><rect x="13" y="9" width="4" height="8"/>',
+		);
+		$labels = array(
+			'left'   => __( 'Left', 'rapm' ),
+			'center' => __( 'Center', 'rapm' ),
+			'right'  => __( 'Right', 'rapm' ),
+			'top'    => __( 'Top', 'rapm' ),
+			'middle' => __( 'Middle', 'rapm' ),
+			'bottom' => __( 'Bottom', 'rapm' ),
+		);
+		?>
+		<tr class="rapm-place-row">
+			<th><?php esc_html_e( 'Place the words', 'rapm' ); ?></th>
+			<td>
+				<div class="rapm-place" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+					<input type="hidden" id="rapm_text_align" name="rapm_text_align" value="<?php echo esc_attr( $align ); ?>" />
+					<input type="hidden" id="rapm_place_y" name="rapm_place_y" value="<?php echo esc_attr( $place['y'] ); ?>" />
+					<input type="hidden" id="rapm_place_pa" name="rapm_place_pa" value="<?php echo esc_attr( $place['pa'] ); ?>" />
+					<input type="hidden" id="rapm_place_py" name="rapm_place_py" value="<?php echo esc_attr( $place['py'] ); ?>" />
+					<div class="rapm-place-screens" role="group" aria-label="<?php esc_attr_e( 'Screen', 'rapm' ); ?>">
+						<button type="button" class="button" data-screen="computer" aria-pressed="true"><?php esc_html_e( 'Computer', 'rapm' ); ?></button>
+						<button type="button" class="button" data-screen="phone" aria-pressed="false"><?php esc_html_e( 'Phone', 'rapm' ); ?></button>
+					</div>
+					<div class="rapm-place-tools">
+						<div role="group" aria-label="<?php esc_attr_e( 'Across', 'rapm' ); ?>">
+							<?php foreach ( RAPM_Place::X as $v ) : ?>
+								<button type="button" class="rapm-place-btn" data-x="<?php echo esc_attr( $v ); ?>" aria-pressed="false" aria-label="<?php echo esc_attr( $labels[ $v ] ); ?>" title="<?php echo esc_attr( $labels[ $v ] ); ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><?php echo $icons[ $v ]; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></svg></button>
+							<?php endforeach; ?>
+						</div>
+						<div role="group" aria-label="<?php esc_attr_e( 'Up and down', 'rapm' ); ?>">
+							<?php foreach ( RAPM_Place::Y as $v ) : ?>
+								<button type="button" class="rapm-place-btn" data-y="<?php echo esc_attr( $v ); ?>" aria-pressed="false" aria-label="<?php echo esc_attr( $labels[ $v ] ); ?>" title="<?php echo esc_attr( $labels[ $v ] ); ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><?php echo $icons[ $v ]; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></svg></button>
+							<?php endforeach; ?>
+						</div>
+					</div>
+					<p class="rapm-place-phone"><span class="rapm-place-phone-note"></span> <button type="button" class="button-link rapm-place-copy"></button></p>
+					<p class="rapm-place-fit" role="status" hidden></p>
+				</div>
+				<?php RAPM_Tip::hint( __( 'Line the words up with the picture. Computers and phones can each have their own places.', 'rapm' ), __( 'The words keep a safe gap from the edges, and a light shade behind them so they stay readable. Switch the Live Preview to Phone to see the phone places.', 'rapm' ) ); ?>
+			</td>
+		</tr>
+		<?php
+	}
+
 	private static function brand_fonts() {
 		$titles   = RAPM_Elementor::global_fonts();
 		$families = RAPM_Elementor::font_family_map();
@@ -2665,6 +2746,25 @@ class RAPM_Upload_Handler {
 				<div class="rapm-pieces-btn-box">
 					<label><input type="checkbox" id="rapm-photo-btn-on" <?php checked( ! empty( $photo_btn ) ); ?> /> <?php esc_html_e( 'Show a "Shop now" button on the photo', 'rapm' ); ?></label>
 					<p class="description"><?php esc_html_e( 'Drag the button to a clear spot on the photo. It uses this look\'s button words (or "Shop now") and goes to its link from step 4.', 'rapm' ); ?></p>
+					<?php if ( $banner ) : // 1.64.0: line it up instead of dragging. ?>
+						<div class="rapm-pieces-align" id="rapm-pieces-align" hidden>
+							<p class="rapm-pieces-align-head"><?php esc_html_e( 'Line the button up with the picture', 'rapm' ); ?> <span class="rapm-pieces-align-screen" id="rapm-pieces-align-screen"></span></p>
+							<div class="rapm-pieces-align-tools">
+								<div role="group" aria-label="<?php esc_attr_e( 'Across', 'rapm' ); ?>">
+									<?php foreach ( array( 'l' => __( 'Left', 'rapm' ), 'c' => __( 'Center', 'rapm' ), 'r' => __( 'Right', 'rapm' ) ) as $k => $label ) : ?>
+										<button type="button" class="rapm-place-btn" data-bx="<?php echo esc_attr( $k ); ?>" aria-pressed="false" aria-label="<?php echo esc_attr( $label ); ?>" title="<?php echo esc_attr( $label ); ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><?php echo 'l' === $k ? '<path d="M4 3v18"/><rect x="7" y="9" width="12" height="6"/>' : ( 'c' === $k ? '<path d="M12 3v18"/><rect x="5" y="9" width="14" height="6"/>' : '<path d="M20 3v18"/><rect x="5" y="9" width="12" height="6"/>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></svg></button>
+									<?php endforeach; ?>
+								</div>
+								<div role="group" aria-label="<?php esc_attr_e( 'Up and down', 'rapm' ); ?>">
+									<?php foreach ( array( 't' => __( 'Top', 'rapm' ), 'm' => __( 'Middle', 'rapm' ), 'b' => __( 'Bottom', 'rapm' ) ) as $k => $label ) : ?>
+										<button type="button" class="rapm-place-btn" data-by="<?php echo esc_attr( $k ); ?>" aria-pressed="false" aria-label="<?php echo esc_attr( $label ); ?>" title="<?php echo esc_attr( $label ); ?>"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><?php echo 't' === $k ? '<path d="M3 4h18"/><rect x="9" y="7" width="6" height="12"/>' : ( 'm' === $k ? '<path d="M3 12h18"/><rect x="9" y="5" width="6" height="14"/>' : '<path d="M3 20h18"/><rect x="9" y="5" width="6" height="12"/>' ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed markup. ?></svg></button>
+									<?php endforeach; ?>
+								</div>
+							</div>
+							<p><button type="button" class="button" id="rapm-pieces-align-words"><?php esc_html_e( 'Line it up with the words', 'rapm' ); ?></button></p>
+							<p class="description"><?php esc_html_e( 'Or drag it. It snaps to the middle of the picture and to the dots, with pink lines. Hold Alt (Option on a Mac) to place it freely.', 'rapm' ); ?></p>
+						</div>
+					<?php endif; ?>
 				</div>
 				<div class="rapm-pieces-head"><h3><?php esc_html_e( 'Dots and products', 'rapm' ); ?></h3><span class="rapm-pieces-count" id="rapm-pieces-count"></span></div>
 				<ol class="rapm-pieces-list" id="rapm-pieces-list"></ol>
@@ -2817,6 +2917,9 @@ class RAPM_Upload_Handler {
 				'noMobile'      => __( 'No phone picture yet, so phones show the computer picture and its dots.', 'rapm' ),
 				'btnDefault'    => __( 'Shop now', 'rapm' ),
 				'btnLabel'      => __( 'The button on the photo. Drag it, or use the arrow keys to move it.', 'rapm' ),
+				// 1.64.0: which picture the button's alignment is for.
+				'onComputerPic' => __( '(computer picture)', 'rapm' ),
+				'onPhonePic'    => __( '(phone picture)', 'rapm' ),
 				'added'         => __( 'Dot %d added. Now pick its product.', 'rapm' ),
 				'removed'       => __( 'Dot removed. The others were renumbered.', 'rapm' ),
 				'picked'        => __( 'Dot %1$d is now %2$s.', 'rapm' ),

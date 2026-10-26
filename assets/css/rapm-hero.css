@@ -103,6 +103,20 @@
 .rapm-slide-copy[data-align="center"] { align-items: center; text-align: center; }
 .rapm-slide-copy[data-align="right"] { align-items: flex-end; text-align: right; }
 
+/* 1.64.0: up and down (RAPM_Place). Bottom, the old place, needs no
+   attribute. The shade goes where the words are so they stay readable. */
+.rapm-slide-copy[data-y="top"] { top: 0; bottom: auto; background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%); }
+.rapm-slide-copy[data-y="middle"] { top: 50%; bottom: auto; transform: translateY(-50%); background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 25%, rgba(0, 0, 0, 0.4) 75%, rgba(0, 0, 0, 0) 100%); }
+/* Phones can have their own places (the same breakpoint as rapm-pins.js). */
+@media (max-width: 768px) {
+	.rapm-slide-copy[data-align-phone="left"] { align-items: flex-start; text-align: left; }
+	.rapm-slide-copy[data-align-phone="center"] { align-items: center; text-align: center; }
+	.rapm-slide-copy[data-align-phone="right"] { align-items: flex-end; text-align: right; }
+	.rapm-slide-copy[data-y-phone="top"] { top: 0; bottom: auto; transform: none; background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%); }
+	.rapm-slide-copy[data-y-phone="middle"] { top: 50%; bottom: auto; transform: translateY(-50%); background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 25%, rgba(0, 0, 0, 0.4) 75%, rgba(0, 0, 0, 0) 100%); }
+	.rapm-slide-copy[data-y-phone="bottom"] { top: auto; bottom: 0; transform: none; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%); }
+}
+
 .rapm-headline, .rapm-subhead {
 	color: inherit; /* set inline per-asset via the Text Color field, default #fff from .rapm-slide-copy above */
 }
