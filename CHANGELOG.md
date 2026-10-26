@@ -44,6 +44,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - "No icon" clears the value and the preview.
   - **PHP versions:** the changed PHP files parse in PHP 7.4 and 8.3.
 - **Not tested here:** the Font Awesome tab, because the test site has no Elementor. It's the box canvas's own code and file, and staging has Elementor, so it gets checked there.
+- **In production (2026-10-26).** Phil pushed main (fe7f13a) and the tags v1.60.0, v1.61.0, v1.62.0 and v1.63.0 together. This was before their staging install, because staging was waiting for a new sign-in. They were tested in the WordPress copy described in each entry, and the staging walk follows.
 
 ---
 
