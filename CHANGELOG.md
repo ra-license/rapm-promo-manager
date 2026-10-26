@@ -9,6 +9,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 **The Shop button no longer slides in from the corner.** The staging walk of 1.64.0 found this on staging's WoodMart theme. The theme animates every link (`transition: all .25s`), including the left and top that rapm-pins.js sets when it places the Shop button. So each time the button was placed, it slid in from the top-left corner. It had done that since the button arrived in 1.35.0.
 
 - **The fix:** the placed button now animates only its hover change (rapm-pins.css). Its position applies at once. The dots already had their own transitions, so they're unchanged.
+- **Installed on staging (2026-10-26)** from the v1.64.1 tag. On staging's WoodMart page, an ordinary link animates `all / 0.25s`, and a Shop button now animates `filter / 0.15s` only.
 
 ---
 
