@@ -59,6 +59,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - "No caching plugin" was hidden when Cloudflare was seen.
   - **Visitor check, real pages:** the update 1.64.2 → 1.65.0 was spotted from the check-in and the home page was checked on its own. "Check as a visitor" passed on computer and phone on 5 pages (/, /promotions/, /home-2/, /living-room-collection/, /about-us/). Cloudflare was seen in the headers.
   - **Checked as a visitor at 1920 and 375 (SOP 16.11), /promotions/ signed out:** Promo Manager's 4 stylesheets and Elementor's page CSS are on the page, nothing scrolls sideways, and the phone shows the promotion box first.
+- **In production (2026-10-26).** Phil pushed main (5437f26) and the tag v1.65.0. **Plugin Monitor 1.4.1 isn't on help.ramarketing.com yet** (it still runs 1.3.1). Until it is, websites on 1.65.0 check in exactly as before, and Connect only says it couldn't reach the help desk.
 
 ---
 
