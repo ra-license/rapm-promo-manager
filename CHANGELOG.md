@@ -4,6 +4,45 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.62.0
+
+**Google Fonts for words on the picture.** Phil's rule, Oct 26: "Anything within the image section of the promotional banner needs to have the option to select from the Google Typefaces or icons etc. Anything that exists outside the image pane in the body of the website needs to maintain the elementor fonts for the website." Mockup board 2: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr.
+
+- **Which kinds:** each kind was sorted by where it draws its words.
+  - **On the picture, now with a font per line:** Slider, Feature banner, Coupon row, Reveal panels, and Shop the Look.
+    - Shop the Look's fonts apply only when its words and button are on the room photo (`text="overlay"`, or its placed photo button). Under the photo they're on the page and keep the website's font.
+    - The placed Shop button on Slider and Feature banner pictures uses the Button line's font.
+  - **On the page, unchanged:** Quick links and Tile row keep their one Typeface menu of Elementor fonts.
+  - **Promotion box:** already picks a font per piece on its canvas (1.47.0).
+- **On the form, a new "Fonts" row (under More options):**
+  - One button per line: Headline, Smaller line, Button. On reveal panels: Big word, Short line, Link label.
+  - Each opens one list with "Website default", then the website's Elementor fonts, then Google Fonts (1,828, most popular first), each shown in its own type.
+  - A search box finds a font. "Use … for every line" copies one choice to all lines. Escape closes the list.
+  - The Live Preview changes as you pick. Shop the Look's preview shows its words under the photo, so it stays in the website's font.
+  - A refused save keeps what was picked.
+- **On the website:**
+  - A Google Font is copied to the website when the promotion is saved (`RAPM_Fonts`, as the box does), and the page links that copy. Visitors never load anything from Google. If the copy fails, that line falls back to the website's font.
+  - An Elementor font follows Elementor's own setting live.
+- **Stored in `_rapm_fonts`:** line → '' (website default), 'el:<id>' or 'gf:<Family>'. A promotion saved before 1.62.0 uses its old single Typeface for every line until it's saved again; saving moves it to per-line choices.
+- **Tested** on WordPress 7.1.3 with SQLite in php-wasm:
+  - **A Slider saved with Playfair Display on the headline:**
+    - its headline gets `font-family: "Playfair Display", Georgia, …, serif`;
+    - the page links `/wp-content/uploads/rapm-fonts/playfair-display/playfair-display.css`;
+    - the smaller line and button follow the website.
+  - **Refused:** a made-up font name, saved as the default.
+  - **Change log:** records the font change and the old Typeface being cleared.
+  - **The form:**
+    - Slider, Reveal panels and Shop the Look show the Fonts row with the right line names, and the old Typeface menu is gone from them.
+    - Quick links has no Fonts row.
+  - **In the browser** with the real scripts:
+    - opening the Button line's list shows both groups (41 fonts before searching);
+    - "oswa" finds Oswald, and picking it updates the button, the hidden value and the preview;
+    - "Use Oswald for every line" sets all three;
+    - Escape closes the list and returns focus to the button.
+  - **PHP versions:** the changed PHP files parse in PHP 7.4 and 8.3.
+
+---
+
 ## 1.61.0
 
 **Design Center › All kinds.** Phil, Oct 26: "in the Design Center currently I only have these options but I need to make sure we have access to all the options." The plugin already had all 8 kinds, but the Design Center (since 1.46.0) held only the advanced tools. The other kinds could only be reached from the Promotions page and New promotion. Mockup approved the same day: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr (board 1).

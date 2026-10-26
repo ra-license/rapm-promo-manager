@@ -77,3 +77,20 @@ tr.rapm-more-hidden { display: none; }
 .rapm-file-check.is-bad { background: #fcf0f1; color: #8a2424; border: 1px solid #f0c3c4; }
 .rapm-file-check.is-ok { background: #edfaef; color: #00661d; }
 .rapm-file-check.is-busy { background: #f0f6fc; color: #135e96; } /* 1.59.3: getting a picture ready */
+
+/* 1.62.0: a font for each line of words on the picture (rapm-line-fonts.js). */
+.rapm-lf { display: grid; gap: 8px; max-width: 640px; }
+.rapm-lf-line { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+.rapm-lf-label { min-width: 110px; font-weight: 600; }
+.rapm-lf-btn.button { font-size: 15px; min-height: 36px; }
+.rapm-lf-pick { display: grid; gap: 8px; border: 1px solid #dcdcde; border-radius: 4px; padding: 10px; background: #fcfcfc; }
+.rapm-lf-pick[hidden] { display: none; }
+.rapm-lf-search { width: 100%; max-width: none; }
+.rapm-lf-list { max-height: 320px; overflow: auto; display: grid; gap: 6px; }
+.rapm-lf-group { margin: 4px 0 0; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #646970; }
+.rapm-lf-fonts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.rapm-lf-font { display: grid; gap: 2px; text-align: left; padding: 8px 10px; border: 1px solid #dcdcde; border-radius: 4px; background: #fff; cursor: pointer; color: #1d2327; }
+.rapm-lf-font[aria-pressed="true"] { border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; }
+.rapm-lf-sample { font-size: 19px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rapm-lf-name { font-size: 11px; color: #646970; }
+.rapm-lf-all { justify-self: start; }

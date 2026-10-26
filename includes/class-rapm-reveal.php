@@ -123,12 +123,14 @@ class RAPM_Reveal {
 					<img src="<?php echo esc_url( $desk ); ?>" alt="" loading="lazy" decoding="async" fetchpriority="low" />
 				</picture>
 			<?php endif; ?>
+			<?php $fonts = RAPM_Line_Fonts::get( $asset_id ); // 1.62.0: a font for each line on the panel. ?>
+			<?php echo RAPM_Line_Fonts::links( $fonts ); // phpcs:ignore WordPress.Security.EscapeOutput -- built with esc_url(). ?>
 			<span class="rapm-rv-words" aria-hidden="true">
-				<span class="rapm-rv-word"><?php echo esc_html( $word ); ?></span>
+				<span class="rapm-rv-word"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'head' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $word ); ?></span>
 				<?php if ( $line || $go ) : ?>
 					<span class="rapm-rv-more">
-						<?php if ( $line ) : ?><span class="rapm-rv-line"><?php echo esc_html( $line ); ?></span><?php endif; ?>
-						<?php if ( $go && $url ) : ?><span class="rapm-rv-go"><?php echo esc_html( $go ); ?> <span aria-hidden="true">&rarr;</span></span><?php endif; ?>
+						<?php if ( $line ) : ?><span class="rapm-rv-line"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'sub' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $line ); ?></span><?php endif; ?>
+						<?php if ( $go && $url ) : ?><span class="rapm-rv-go"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $go ); ?> <span aria-hidden="true">&rarr;</span></span><?php endif; ?>
 					</span>
 				<?php endif; ?>
 			</span>

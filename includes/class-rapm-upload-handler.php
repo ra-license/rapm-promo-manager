@@ -46,6 +46,7 @@ class RAPM_Upload_Handler {
 		// 1.58.1: the Reveal panel preview uses the website's own styles.
 		wp_enqueue_style( 'rapm-reveal-css', RAPM_URL . 'assets/css/rapm-reveal.css', array(), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-editor-js', RAPM_URL . 'assets/js/rapm-editor.js', array(), RAPM_VERSION, true );
+		wp_enqueue_script( 'rapm-line-fonts-js', RAPM_URL . 'assets/js/rapm-line-fonts.js', array(), RAPM_VERSION, true ); // 1.62.0.
 		wp_localize_script(
 			'rapm-editor-js',
 			'RAPM_Editor_Text',
@@ -442,7 +443,7 @@ class RAPM_Upload_Handler {
 						// 1.59.1: what this server takes, so a picture that's too big is caught when it's chosen.
 						'upload' => array( 'max' => (int) wp_max_upload_size(), 'post' => (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) ), 'maxText' => size_format( wp_max_upload_size() ) ),
 						// "More options" starts open when one of them was changed.
-						'more'   => 'image' === $text_mode || 'left' !== $m( '_rapm_text_align', 'left' ) || '#ffffff' !== strtolower( (string) $m( '_rapm_text_color', '#ffffff' ) ) || 'bold' !== $m( '_rapm_text_style', 'bold' ) || '' !== (string) $m( '_rapm_text_font' ),
+						'more'   => 'image' === $text_mode || 'left' !== $m( '_rapm_text_align', 'left' ) || '#ffffff' !== strtolower( (string) $m( '_rapm_text_color', '#ffffff' ) ) || 'bold' !== $m( '_rapm_text_style', 'bold' ) || '' !== (string) $m( '_rapm_text_font' ) || ( $is_edit && RAPM_Line_Fonts::applies( $kind_key ) && array_filter( RAPM_Line_Fonts::get( $asset_id ) ) ),
 					)
 				);
 				?>
@@ -921,7 +922,7 @@ class RAPM_Upload_Handler {
 							</td>
 						</tr>
 						<?php $site_fonts = RAPM_Elementor::global_fonts(); ?>
-						<?php if ( $site_fonts ) : ?>
+						<?php if ( $site_fonts && ! RAPM_Line_Fonts::applies( $kind_key ) ) : // 1.62.0: words on the picture pick a font per line below; words on the page keep this. ?>
 							<tr class="rapm-more"<?php echo $is_box ? ' style="display:none;"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed string; 1.47.0: the promotion box picks a font per piece on its canvas. ?>>
 								<th><label for="rapm_text_font"><?php esc_html_e( 'Typeface', 'rapm' ); ?></label></th>
 								<td>
@@ -936,6 +937,17 @@ class RAPM_Upload_Handler {
 							</tr>
 						<?php endif; ?>
 						<?php endif; // ! $is_look ?>
+						<?php if ( RAPM_Line_Fonts::applies( $kind_key ) ) : ?>
+							<?php
+							$line_fonts = $is_edit ? RAPM_Line_Fonts::get( $asset_id ) : array_fill_keys( RAPM_Line_Fonts::LINES, '' );
+							foreach ( RAPM_Line_Fonts::LINES as $line ) {
+								if ( isset( $restore[ 'rapm_font_' . $line ] ) ) { // A refused save keeps what was picked.
+									$line_fonts[ $line ] = RAPM_Line_Fonts::clean( $restore[ 'rapm_font_' . $line ] );
+								}
+							}
+							self::render_line_fonts( $kind_key, $line_fonts );
+							?>
+						<?php endif; ?>
 					</table>
 				</div>
 				<?php if ( $is_box ) : ?>
@@ -1958,6 +1970,10 @@ class RAPM_Upload_Handler {
 				update_post_meta( $asset_id, '_' . $field, call_user_func( $sanitizer, wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
+		// 1.62.0: a font for each line of words on the picture.
+		if ( RAPM_Line_Fonts::applies( $kind_key ) ) {
+			RAPM_Line_Fonts::save( $asset_id );
+		}
 		// 1.58.1: a new spot started in the gallery gets its name now.
 		$new_spot_name = isset( $_POST['rapm_new_spot_name'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['rapm_new_spot_name'] ) ), 0, 60 ) : '';
 		$new_spot_code = isset( $_POST['rapm_new_spot_code'] ) ? sanitize_title( wp_unslash( $_POST['rapm_new_spot_code'] ) ) : '';
@@ -2261,6 +2277,56 @@ class RAPM_Upload_Handler {
 	 * (rapm-hero.css), so it shows exactly what ships.
 	 */
 	/** 1.47.0: the site's Elementor brand fonts for the canvas picker, as ID => array( title, family ). */
+	/**
+	 * 1.62.0: the Fonts row for kinds whose words are on the picture, one
+	 * picker per line: the website's Elementor fonts or any Google Font
+	 * (RAPM_Line_Fonts). rapm-line-fonts.js opens the list, searches the
+	 * bundled Google Fonts list and updates the Live Preview.
+	 */
+	private static function render_line_fonts( $kind_key, $fonts ) {
+		$labels = 'reveal' === $kind_key
+			? array( 'head' => __( 'Big word', 'rapm' ), 'sub' => __( 'Short line', 'rapm' ), 'btn' => __( 'Link label', 'rapm' ) )
+			: array( 'head' => __( 'Headline', 'rapm' ), 'sub' => __( 'Smaller line', 'rapm' ), 'btn' => __( 'Button', 'rapm' ) );
+		$site   = RAPM_Line_Fonts::site_fonts();
+		$text   = array(
+			'siteDefault' => __( 'Website default', 'rapm' ),
+			'siteGroup'   => __( 'Your website\'s fonts (Elementor)', 'rapm' ),
+			'googleGroup' => __( 'Google Fonts', 'rapm' ),
+			'search'      => __( 'Find a Google Font, like Playfair', 'rapm' ),
+			'none'        => __( 'No font matches. Try part of a name, like "play" or "sans".', 'rapm' ),
+			/* translators: %s: a font's name */
+			'useAll'      => __( 'Use %s for every line', 'rapm' ),
+			'sample'      => __( 'Big Sale 30% Off', 'rapm' ),
+		);
+		?>
+		<tr class="rapm-more rapm-lf-row">
+			<th><?php esc_html_e( 'Fonts', 'rapm' ); ?></th>
+			<td>
+				<div class="rapm-lf" data-gfonts="<?php echo esc_url( RAPM_URL . 'assets/data/google-fonts.json?ver=' . RAPM_VERSION ); ?>" data-site="<?php echo esc_attr( wp_json_encode( (object) $site ) ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>" data-kind="<?php echo esc_attr( $kind_key ); ?>">
+					<?php foreach ( $labels as $line => $label ) : ?>
+						<div class="rapm-lf-line" data-line="<?php echo esc_attr( $line ); ?>">
+							<span class="rapm-lf-label" id="rapm-lf-label-<?php echo esc_attr( $line ); ?>"><?php echo esc_html( $label ); ?></span>
+							<input type="hidden" name="rapm_font_<?php echo esc_attr( $line ); ?>" id="rapm_font_<?php echo esc_attr( $line ); ?>" value="<?php echo esc_attr( isset( $fonts[ $line ] ) ? $fonts[ $line ] : '' ); ?>" />
+							<button type="button" class="button rapm-lf-btn" aria-expanded="false" aria-describedby="rapm-lf-label-<?php echo esc_attr( $line ); ?>"><?php esc_html_e( 'Website default', 'rapm' ); ?></button>
+						</div>
+					<?php endforeach; ?>
+					<div class="rapm-lf-pick" hidden>
+						<input type="search" class="rapm-lf-search regular-text" placeholder="<?php echo esc_attr( $text['search'] ); ?>" aria-label="<?php echo esc_attr( $text['search'] ); ?>" />
+						<div class="rapm-lf-list"></div>
+						<button type="button" class="button-link rapm-lf-all"></button>
+					</div>
+				</div>
+				<?php
+				RAPM_Tip::hint(
+					'look' === $kind_key ? __( 'Used when the words and button are on the room photo. Under the photo they use your website\'s font.', 'rapm' ) : __( 'Words on the picture can use your website\'s fonts or any Google Font.', 'rapm' ),
+					__( 'A Google Font is copied to your website when you save, so visitors never load it from Google. Words on the page, outside the picture, always use your website\'s fonts.', 'rapm' )
+				);
+				?>
+			</td>
+		</tr>
+		<?php
+	}
+
 	private static function brand_fonts() {
 		$titles   = RAPM_Elementor::global_fonts();
 		$families = RAPM_Elementor::font_family_map();
