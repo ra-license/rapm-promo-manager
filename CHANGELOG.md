@@ -10,6 +10,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 - **The fix:** the placed button now animates only its hover change (rapm-pins.css). Its position applies at once. The dots already had their own transitions, so they're unchanged.
 - **Installed on staging (2026-10-26)** from the v1.64.1 tag. On staging's WoodMart page, an ordinary link animates `all / 0.25s`, and a Shop button now animates `filter / 0.15s` only.
+- **In production (2026-10-26),** together with 1.64.0. Phil pushed main (83d656b) and the tags v1.64.0 and v1.64.1.
 
 ---
 
