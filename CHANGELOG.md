@@ -51,7 +51,14 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - an update reported by both Update now and the check-in is checked once;
     - Elementor saves merge into one waiting check.
   - **Screens and code:** every screen draws with no PHP warnings, and editors don't see the box. All changed PHP parses on 7.4 and 8.3.
-  - **Not tested here:** the call back over the real internet, and the old-copy warning (the bench can't load two versions of the same class).
+  - **Not tested here:** the old-copy warning (the bench can't load two versions of the same class).
+- **Installed on staging (2026-10-26)** from the v1.65.0 tag, with Plugin Monitor 1.4.0 and then 1.4.1 uploaded to staging's own monitor. Staging's "Receive this site's own check-ins here" testing switch was on, so nothing went to help.ramarketing.com. Room Planner 7.24.0 and Woo Native Dimensions 1.33 (older check-in copies) are on staging too, and Promo Manager's copy loaded first, as expected.
+  - **Connect, over real web requests:** the request went out, the call back confirmed it, it was approved, and the poll told the website. The check-in was signed with staging's own key and carried 12 spots with sizes and pages, and the caching. Disconnect and connect again also worked.
+  - **Plugin Monitor 1.4.1, two fixes from this walk:**
+    - The call back had waited on WordPress's scheduler, which only runs on page loads, so "Check again" was needed. Now the website's page confirms a waiting request itself.
+    - "No caching plugin" was hidden when Cloudflare was seen.
+  - **Visitor check, real pages:** the update 1.64.2 → 1.65.0 was spotted from the check-in and the home page was checked on its own. "Check as a visitor" passed on computer and phone on 5 pages (/, /promotions/, /home-2/, /living-room-collection/, /about-us/). Cloudflare was seen in the headers.
+  - **Checked as a visitor at 1920 and 375 (SOP 16.11), /promotions/ signed out:** Promo Manager's 4 stylesheets and Elementor's page CSS are on the page, nothing scrolls sideways, and the phone shows the promotion box first.
 
 ---
 
