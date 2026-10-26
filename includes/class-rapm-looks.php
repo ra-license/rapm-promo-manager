@@ -293,7 +293,7 @@ class RAPM_Looks {
 						<?php endif; ?>
 						<?php if ( $look['photo_btn'] && $look['url'] ) : ?>
 							<?php echo RAPM_Line_Fonts::links( array( $look['fonts']['btn'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- built with esc_url(). ?>
-							<a class="rapm-look-photo-btn" href="<?php echo esc_url( $look['url'] ); ?>" data-x="<?php echo esc_attr( $look['photo_btn']['x'] ); ?>" data-y="<?php echo esc_attr( $look['photo_btn']['y'] ); ?>"<?php echo RAPM_Line_Fonts::style_attr( $look['fonts'], 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.62.0: on the photo; escaped in style_attr(). ?>><?php echo esc_html( self::photo_btn_text( $look['cta'] ) ); ?></a>
+							<a class="rapm-look-photo-btn" href="<?php echo esc_url( $look['url'] ); ?>" data-x="<?php echo esc_attr( $look['photo_btn']['x'] ); ?>" data-y="<?php echo esc_attr( $look['photo_btn']['y'] ); ?>"<?php echo RAPM_Line_Fonts::style_attr( $look['fonts'], 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.62.0: on the photo; escaped in style_attr(). ?>><?php echo RAPM_Line_Icon::html( $look['icon'], 'btn' ) . esc_html( self::photo_btn_text( $look['cta'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.63.0; escaped in html(). ?></a>
 						<?php endif; ?>
 						<?php foreach ( $look['pieces'] as $k => $piece ) : ?>
 							<button type="button" class="rapm-look-dot" data-k="<?php echo (int) $k; ?>" data-pid="<?php echo (int) $piece['p']; ?>" data-x="<?php echo esc_attr( $piece['x'] ); ?>" data-y="<?php echo esc_attr( $piece['y'] ); ?>" aria-expanded="false" aria-label="<?php echo esc_attr( sprintf( /* translators: 1: the dot's number, 2: product name */ __( '%1$d. %2$s', 'rapm' ), $k + 1, $piece['name'] ) ); ?>"><?php echo (int) ( $k + 1 ); ?></button>
@@ -431,7 +431,7 @@ class RAPM_Looks {
 				<p class="rapm-look-note"><?php echo esc_html( $look['note'] ); ?></p>
 			<?php endif; ?>
 			<?php if ( $with_btn && $look['cta'] && $look['url'] ) : ?>
-				<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $look['cta'] ); ?></a>
+				<a class="rapm-look-btn" href="<?php echo esc_url( $look['url'] ); ?>"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo ( $on_photo ? RAPM_Line_Icon::html( $look['icon'], 'btn' ) : '' ) . esc_html( $look['cta'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.63.0: only on the photo; escaped in html(). ?></a>
 			<?php endif; ?>
 		</div>
 		<?php
@@ -479,6 +479,7 @@ class RAPM_Looks {
 			// 1.39.0: off for a picture that already has its words on it.
 			'photo_words' => 'off' !== (string) get_post_meta( $id, '_rapm_photo_words', true ),
 			'fonts'       => RAPM_Line_Fonts::get( $id ), // 1.62.0: for the words and button when they're on the photo.
+			'icon'        => RAPM_Line_Icon::get( $id ), // 1.63.0: in the button when it's on the photo.
 			// 1.40.0: optional words above the button under the photo, never on it.
 			'note'     => trim( (string) get_post_meta( $id, '_rapm_shelf_text', true ) ),
 			'url'      => RAPM_Destination::resolve_url(

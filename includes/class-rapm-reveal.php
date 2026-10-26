@@ -126,6 +126,7 @@ class RAPM_Reveal {
 			<?php $fonts = RAPM_Line_Fonts::get( $asset_id ); // 1.62.0: a font for each line on the panel. ?>
 			<?php echo RAPM_Line_Fonts::links( $fonts ); // phpcs:ignore WordPress.Security.EscapeOutput -- built with esc_url(). ?>
 			<span class="rapm-rv-words" aria-hidden="true">
+				<?php echo RAPM_Line_Icon::html( RAPM_Line_Icon::get( $asset_id ), 'above' ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.63.0; escaped in html(). ?>
 				<span class="rapm-rv-word"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'head' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $word ); ?></span>
 				<?php if ( $line || $go ) : ?>
 					<span class="rapm-rv-more">

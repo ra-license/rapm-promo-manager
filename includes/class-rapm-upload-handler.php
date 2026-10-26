@@ -47,6 +47,7 @@ class RAPM_Upload_Handler {
 		wp_enqueue_style( 'rapm-reveal-css', RAPM_URL . 'assets/css/rapm-reveal.css', array(), RAPM_VERSION );
 		wp_enqueue_script( 'rapm-editor-js', RAPM_URL . 'assets/js/rapm-editor.js', array(), RAPM_VERSION, true );
 		wp_enqueue_script( 'rapm-line-fonts-js', RAPM_URL . 'assets/js/rapm-line-fonts.js', array(), RAPM_VERSION, true ); // 1.62.0.
+		wp_enqueue_script( 'rapm-line-icon-js', RAPM_URL . 'assets/js/rapm-line-icon.js', array(), RAPM_VERSION, true ); // 1.63.0.
 		wp_localize_script(
 			'rapm-editor-js',
 			'RAPM_Editor_Text',
@@ -946,6 +947,15 @@ class RAPM_Upload_Handler {
 								}
 							}
 							self::render_line_fonts( $kind_key, $line_fonts );
+							?>
+						<?php endif; ?>
+						<?php if ( RAPM_Line_Icon::applies( $kind_key ) ) : ?>
+							<?php
+							$line_icon = $is_edit ? RAPM_Line_Icon::get( $asset_id ) : array();
+							if ( isset( $restore['rapm_icon'] ) ) { // A refused save keeps what was picked.
+								$line_icon = RAPM_Line_Icon::clean( json_decode( (string) $restore['rapm_icon'], true ), $kind_key );
+							}
+							self::render_line_icon( $kind_key, $line_icon );
 							?>
 						<?php endif; ?>
 					</table>
@@ -1974,6 +1984,10 @@ class RAPM_Upload_Handler {
 		if ( RAPM_Line_Fonts::applies( $kind_key ) ) {
 			RAPM_Line_Fonts::save( $asset_id );
 		}
+		// 1.63.0: an icon with them.
+		if ( RAPM_Line_Icon::applies( $kind_key ) ) {
+			RAPM_Line_Icon::save( $asset_id, $kind_key );
+		}
 		// 1.58.1: a new spot started in the gallery gets its name now.
 		$new_spot_name = isset( $_POST['rapm_new_spot_name'] ) ? mb_substr( sanitize_text_field( wp_unslash( $_POST['rapm_new_spot_name'] ) ), 0, 60 ) : '';
 		$new_spot_code = isset( $_POST['rapm_new_spot_code'] ) ? sanitize_title( wp_unslash( $_POST['rapm_new_spot_code'] ) ) : '';
@@ -2322,6 +2336,66 @@ class RAPM_Upload_Handler {
 					__( 'A Google Font is copied to your website when you save, so visitors never load it from Google. Words on the page, outside the picture, always use your website\'s fonts.', 'rapm' )
 				);
 				?>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * 1.63.0: the Icon row for kinds whose words are on the picture: where
+	 * it goes (RAPM_Line_Icon::wheres()) and which icon, from Google's
+	 * Material Symbols, Font Awesome or the Media Library, the same three
+	 * places as the promotion box canvas. rapm-line-icon.js keeps the
+	 * hidden rapm_icon (JSON) and the Live Preview up to date.
+	 */
+	private static function render_line_icon( $kind_key, $icon ) {
+		$fa_dir = WP_PLUGIN_DIR . '/elementor/assets/lib/font-awesome/json/';
+		$fa_url = file_exists( $fa_dir . 'solid.json' ) ? plugins_url( 'elementor/assets/lib/font-awesome/json/' ) : '';
+		$where  = $icon ? $icon['w'] : '';
+		$text   = array(
+			'search'     => __( 'Find an icon, like sofa, truck or sale', 'rapm' ),
+			'noIcons'    => __( 'No icons match. Try a simpler word, like sofa, bed, truck or sale.', 'rapm' ),
+			'iconFailed' => __( 'That icon couldn\'t be loaded from Google just now. Please try again.', 'rapm' ),
+			'pickPicture' => __( 'Pick a picture, like a logo or a badge', 'rapm' ),
+			'usePicture'  => __( 'Use this picture', 'rapm' ),
+			'picked'      => __( 'Picked:', 'rapm' ),
+			'pickOne'     => __( 'Pick an icon below.', 'rapm' ),
+		);
+		$preview = '';
+		if ( $icon ) {
+			$preview = RAPM_Line_Icon::html( $icon, $icon['w'] );
+		}
+		?>
+		<tr class="rapm-li-row">
+			<th><?php esc_html_e( 'Icon', 'rapm' ); ?></th>
+			<td>
+				<div class="rapm-lic" data-icons="<?php echo esc_url( RAPM_URL . 'assets/data/material-symbols.json?ver=' . RAPM_VERSION ); ?>" data-fa="<?php echo esc_url( $fa_url ); ?>" data-text="<?php echo esc_attr( wp_json_encode( $text ) ); ?>">
+					<?php
+					$icon_json = $icon;
+					if ( $icon && 'img' === $icon['f'] ) {
+						$icon_json['u'] = wp_get_attachment_image_url( $icon['a'], 'thumbnail' ); // For the editor's preview only; not saved.
+					}
+					?>
+					<input type="hidden" name="rapm_icon" id="rapm_icon" value="<?php echo esc_attr( $icon ? wp_json_encode( $icon_json ) : '' ); ?>" />
+					<fieldset class="rapm-lic-where">
+						<legend class="screen-reader-text"><?php esc_html_e( 'Where the icon goes', 'rapm' ); ?></legend>
+						<label><input type="radio" name="rapm_icon_where" value="" <?php checked( '', $where ); ?> /> <?php esc_html_e( 'No icon', 'rapm' ); ?></label>
+						<?php foreach ( RAPM_Line_Icon::wheres( $kind_key ) as $key => $label ) : ?>
+							<label><input type="radio" name="rapm_icon_where" value="<?php echo esc_attr( $key ); ?>" <?php checked( $key, $where ); ?> /> <?php echo esc_html( $label ); ?></label>
+						<?php endforeach; ?>
+					</fieldset>
+					<div class="rapm-lic-pick"<?php echo $where ? '' : ' hidden'; ?>>
+						<p class="rapm-lic-now"><span class="rapm-lic-now-label"><?php echo esc_html( $icon ? $text['picked'] : $text['pickOne'] ); ?></span> <span class="rapm-lic-now-icon"><?php echo $preview; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in RAPM_Line_Icon::html(). ?></span></p>
+						<div class="rapm-lic-tabs" role="group" aria-label="<?php esc_attr_e( 'Icon set', 'rapm' ); ?>">
+							<button type="button" class="button" data-tab="ms" aria-pressed="true"><?php esc_html_e( 'Google icons', 'rapm' ); ?></button>
+							<?php if ( $fa_url ) : ?><button type="button" class="button" data-tab="fa" aria-pressed="false"><?php esc_html_e( 'Font Awesome', 'rapm' ); ?></button><?php endif; ?>
+							<button type="button" class="button" data-tab="media" aria-pressed="false"><?php esc_html_e( 'Your pictures', 'rapm' ); ?></button>
+						</div>
+						<input type="search" class="rapm-lic-search regular-text" placeholder="<?php echo esc_attr( $text['search'] ); ?>" aria-label="<?php echo esc_attr( $text['search'] ); ?>" />
+						<div class="rapm-lic-grid rapm-cv-icons"></div>
+					</div>
+				</div>
+				<?php RAPM_Tip::hint( __( 'An icon goes with the words on the picture. It takes their size and color.', 'rapm' ), __( 'The icon is saved with the promotion, so the website never loads it from Google. Words on the page, outside the picture, don\'t get icons.', 'rapm' ) ); ?>
 			</td>
 		</tr>
 		<?php

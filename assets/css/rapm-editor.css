@@ -94,3 +94,18 @@ tr.rapm-more-hidden { display: none; }
 .rapm-lf-sample { font-size: 19px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rapm-lf-name { font-size: 11px; color: #646970; }
 .rapm-lf-all { justify-self: start; }
+
+/* 1.63.0: an icon with the words on the picture (rapm-line-icon.js). */
+.rapm-lic { display: grid; gap: 10px; max-width: 640px; }
+.rapm-lic-where { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; border: 0; }
+.rapm-lic-where label { display: inline-flex; gap: 6px; align-items: center; min-height: 32px; }
+.rapm-lic-pick { display: grid; gap: 8px; border: 1px solid #dcdcde; border-radius: 4px; padding: 10px; background: #fcfcfc; }
+.rapm-lic-pick[hidden] { display: none; }
+.rapm-lic-now { margin: 0; display: flex; gap: 8px; align-items: center; font-size: 22px; }
+.rapm-lic-now-label { font-size: 13px; color: #50575e; }
+.rapm-lic-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.rapm-lic-tabs .button[aria-pressed="true"] { background: #f0f6fc; border-color: #2271b1; color: #135e96; }
+.rapm-lic-search { width: 100%; max-width: none; }
+.rapm-lic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; max-height: 300px; overflow: auto; }
+.rapm-lic-grid[hidden] { display: none; }
+.rapm-lic-grid .rapm-cv-ic[aria-pressed="true"] { border-color: #2271b1; box-shadow: 0 0 0 1px #2271b1; }

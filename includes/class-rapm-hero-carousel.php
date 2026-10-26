@@ -212,6 +212,7 @@ class RAPM_Hero_Carousel {
 		$text_style   = get_post_meta( $asset_id, '_rapm_text_style', true ) ?: 'bold'; // phpcs:ignore
 		$text_font    = get_post_meta( $asset_id, '_rapm_text_font', true );
 		$fonts        = RAPM_Line_Fonts::get( $asset_id ); // 1.62.0: a font for each line on the picture.
+		$icon         = RAPM_Line_Icon::get( $asset_id ); // 1.63.0: an icon with the words.
 		$starts_at    = get_post_meta( $asset_id, '_rapm_starts_at', true );
 		$ends_at      = get_post_meta( $asset_id, '_rapm_ends_at', true );
 		$dest_type    = get_post_meta( $asset_id, '_rapm_destination_type', true );
@@ -268,9 +269,9 @@ class RAPM_Hero_Carousel {
 			<?php if ( $headline || $subhead || $cta_text ) : ?>
 				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>" data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">
 					<?php echo RAPM_Line_Fonts::links( $fonts ); // phpcs:ignore WordPress.Security.EscapeOutput -- built with esc_url(). ?>
-					<?php if ( $headline ) : ?><<?php echo $heading_tag; // phpcs:ignore WordPress.Security.EscapeOutput -- only 'h1' or 'h2'. ?> class="rapm-headline"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'head' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $headline ); ?></<?php echo $heading_tag; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php endif; ?>
+					<?php if ( $headline ) : ?><<?php echo $heading_tag; // phpcs:ignore WordPress.Security.EscapeOutput -- only 'h1' or 'h2'. ?> class="rapm-headline"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'head' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo RAPM_Line_Icon::html( $icon, 'head' ) . esc_html( $headline ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in html(). ?></<?php echo $heading_tag; // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php endif; ?>
 					<?php if ( $subhead ) : ?><p class="rapm-subhead"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'sub' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $subhead ); ?></p><?php endif; ?>
-					<?php if ( $cta_text ) : ?><span class="rapm-cta-btn"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo esc_html( $cta_text ); ?></span><?php endif; ?>
+					<?php if ( $cta_text ) : ?><span class="rapm-cta-btn"<?php echo RAPM_Line_Fonts::style_attr( $fonts, 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in style_attr(). ?>><?php echo RAPM_Line_Icon::html( $icon, 'btn' ) . esc_html( $cta_text ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in html(). ?></span><?php endif; ?>
 				</div>
 			<?php endif; ?>
 			<?php if ( $url ) : ?>
@@ -301,7 +302,7 @@ class RAPM_Hero_Carousel {
 		$btn = RAPM_Looks::sanitize_photo_btn( get_post_meta( $asset_id, '_rapm_photo_btn', true ) );
 		if ( $btn && $url ) {
 			?>
-			<a class="rapm-pin-btn" href="<?php echo esc_url( $url ); ?>" data-x="<?php echo esc_attr( $btn['x'] ); ?>" data-y="<?php echo esc_attr( $btn['y'] ); ?>"<?php echo isset( $btn['mx'] ) ? ' data-mx="' . esc_attr( $btn['mx'] ) . '" data-my="' . esc_attr( $btn['my'] ) . '"' : ''; ?><?php echo RAPM_Line_Fonts::style_attr( RAPM_Line_Fonts::get( $asset_id ), 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.62.0: the placed button is on the picture; escaped in style_attr(). ?>><?php echo esc_html( RAPM_Looks::photo_btn_text( $cta_text ) ); ?></a>
+			<a class="rapm-pin-btn" href="<?php echo esc_url( $url ); ?>" data-x="<?php echo esc_attr( $btn['x'] ); ?>" data-y="<?php echo esc_attr( $btn['y'] ); ?>"<?php echo isset( $btn['mx'] ) ? ' data-mx="' . esc_attr( $btn['mx'] ) . '" data-my="' . esc_attr( $btn['my'] ) . '"' : ''; ?><?php echo RAPM_Line_Fonts::style_attr( RAPM_Line_Fonts::get( $asset_id ), 'btn' ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.62.0: the placed button is on the picture; escaped in style_attr(). ?>><?php echo RAPM_Line_Icon::html( RAPM_Line_Icon::get( $asset_id ), 'btn' ) . esc_html( RAPM_Looks::photo_btn_text( $cta_text ) ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.63.0; escaped in html(). ?></a>
 			<?php
 		}
 	}

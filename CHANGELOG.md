@@ -4,6 +4,49 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.63.0
+
+**Icons with the words on the picture.** This is the third release of Phil's Oct 26 rule: words on the picture get Google Fonts and icons; words on the page don't. Mockup board 2: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr.
+
+- **Where an icon can go:** one icon per promotion, in a fixed spot so it stays tidy on phones.
+  - **Slider, Feature banner, Coupon row:** before the headline, or in the button. The placed Shop button on a Slider or Feature banner picture gets it too.
+  - **Reveal panels:** above the big word.
+  - **Shop the Look:** in the button when it's on the photo (the placed photo button, or the button on the photo with `text="overlay"`). The button under the photo is on the page, so it stays plain.
+  - **Never:** Quick links and Tile row, whose words are on the page. The promotion box already places icons anywhere on its canvas.
+- **On the form, a new "Icon" row** (not folded under More options):
+  - **Where it goes:** No icon, or the spots above.
+  - **The picker** opens with the same three sources as the box canvas:
+    - Google icons (Material Symbols, searchable, with the canvas's furniture-store starters);
+    - Font Awesome Free (Elementor's own copy, with the same shopper words, so "sofa" finds the couch);
+    - Your pictures (the Media Library).
+  - **"Picked:"** shows the choice, and the Live Preview shows it beside the words. It stays there as the words are typed.
+  - A refused save keeps it.
+- **On the website:**
+  - The icon's drawing is saved with the promotion (`_rapm_icon`) and drawn inline, so pages load no icons from Google or anywhere else.
+  - It's 1em, so it takes the words' size and color.
+  - Font Awesome icons carry their license credit, as on the box.
+  - The checks are the canvas's: a known source, a name, and a drawing made only of path letters and numbers (up to 20,000 characters). A picture must be a Media Library image.
+- **Tested** on WordPress 7.1.3 with SQLite in php-wasm:
+  - **What drew:**
+    - a Google icon before a Slider headline (with its Playfair Display headline from 1.62.0);
+    - a Font Awesome truck in the button, with its credit;
+    - a reveal panel's icon above its big word;
+    - Shop the Look: the icon in the photo button, and none in the button under the photo.
+  - **Refused:**
+    - "before the headline" on a reveal panel;
+    - a drawing with `"/><script>` in it;
+    - "No icon", which removes the icon.
+  - **In the browser** with the real scripts:
+    - choosing "In the button" opens Google icons with 24 starters;
+    - picking the delivery truck fetched its drawing from Google, filled the hidden value, and put it in the preview button;
+    - "sofa" finds chair, sofa, scene and living;
+    - typing new button words keeps the icon;
+    - "No icon" clears the value and the preview.
+  - **PHP versions:** the changed PHP files parse in PHP 7.4 and 8.3.
+- **Not tested here:** the Font Awesome tab, because the test site has no Elementor. It's the box canvas's own code and file, and staging has Elementor, so it gets checked there.
+
+---
+
 ## 1.62.0
 
 **Google Fonts for words on the picture.** Phil's rule, Oct 26: "Anything within the image section of the promotional banner needs to have the option to select from the Google Typefaces or icons etc. Anything that exists outside the image pane in the body of the website needs to maintain the elementor fonts for the website." Mockup board 2: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr.
