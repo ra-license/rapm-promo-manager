@@ -12,6 +12,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Quick links and Tile row** now say their words use the website's font, because they sit on the page.
 - **Tested** in the WordPress copy: the Slider, Shop the Look, Reveal panels and Quick links lists show the new lines, with no PHP notices. The file parses in PHP 7.4 and 8.3.
 - **Installed on staging (2026-10-26).** Design Center › All kinds › Feature banner lists the font line and "An icon".
+- **In production (2026-10-26).** Phil pushed main (c366808) and v1.63.1.
 
 ---
 
