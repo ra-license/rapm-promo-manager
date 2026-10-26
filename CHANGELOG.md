@@ -11,6 +11,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Root cause:** for a single update, WordPress passes `'plugin' => …` (or `'theme'`) to `upgrader_process_complete`. Only a bulk update passes the list `'plugins'` / `'themes'` (checked in WordPress's class-plugin-upgrader.php and class-theme-upgrader.php). RA Monitor Client 1.3.0 read only the list.
 - **Fix, RA Monitor Client 1.3.1:** both forms are read, and a new install is reported as "Plugin installed". The same file is in Woo Native Dimensions 1.35 and Universal Room Planner 7.25.1.
 - **Tested:** on the bench, a single update, a bulk update, a theme update, an install and a WordPress update each give the right line. The file parses on PHP 7.4 and 8.3.
+- **Installed on staging (2026-10-26),** with Woo Native Dimensions 1.35, Universal Room Planner 7.25.1 and Plugin Monitor 1.5.2 on staging's own monitor.
+  - **Change notes:** updating Dimensions and Room Planner one at a time sent "Plugin updated: woo-native-dimensions" and "Plugin updated: universal-room-planner". Promo Manager's own update wasn't reported, because the copy doing the reporting was still the old one.
+  - **The check after the change ran** and passed on computer and phone on 5 pages.
+  - **Plugin Monitor 1.5.1 (from this walk):** when notes are combined, each change is listed once.
+  - **Plugin Monitor 1.5.2 (from this walk):** the check had sat at "Now" without running. WordPress refuses a second identical scheduled run within 10 minutes of another, and a run that fell while the plugin's files were being replaced did nothing. Now there's always one run set for the earliest waiting check: set again when a check is added, after every run, and when the monitor is opened. On staging, opening the monitor set it again and the check ran.
+  - **Limit:** the help desk's own WordPress scheduler only runs when someone loads a page on help.ramarketing.com. The regular checks (every 6 hours) need that. Recommended: a real server cron calling wp-cron.php every 5 minutes on the help desk's host.
 
 ---
 
@@ -30,6 +36,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Longer runs:** checks run one after another for up to a minute at a time, so a full round isn't capped at three an hour. A check that died halfway is retried.
   - **History:** finished checks are kept 90 days.
   - **Settings:** two new ones under "When it runs".
+- **Installed on staging (2026-10-26):** Plugin Monitor 1.5.0 first, then Promo Manager 1.66.0, Woo Native Dimensions 1.34 and Universal Room Planner 7.25.0. The walk found the single-update gap fixed in 1.66.1.
 
 ---
 
