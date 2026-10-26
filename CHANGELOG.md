@@ -11,6 +11,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - **Kinds with words on the picture** (Slider, Feature banner, Coupon row, Reveal panels, Shop the Look) now say their words can use the website's font or any Google Font, and where an icon can go.
 - **Quick links and Tile row** now say their words use the website's font, because they sit on the page.
 - **Tested** in the WordPress copy: the Slider, Shop the Look, Reveal panels and Quick links lists show the new lines, with no PHP notices. The file parses in PHP 7.4 and 8.3.
+- **Installed on staging (2026-10-26).** Design Center › All kinds › Feature banner lists the font line and "An icon".
 
 ---
 
