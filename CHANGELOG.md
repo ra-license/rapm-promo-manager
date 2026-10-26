@@ -22,6 +22,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - The cache was cleared on the first page load only, not the second.
   - Both changed PHP files parse in PHP 7.4 and 8.3.
 - **Installed on staging (2026-10-26)** from the v1.64.2 tag. Staging doesn't use WP Rocket, so this confirms only that nothing else changed: the visitor home page still loads rapm-hero.css, rapm-pins.css and rapm-looks.css. The real check is Gates' visitor page after the update.
+- **In production (2026-10-26).** Phil pushed main (a581a69) and the tag v1.64.2, then updated Gates himself.
+  - **Visitor check right after the update:** Promo Manager's styles were back, but other sections were still broken. The old Used CSS also had no Elementor page rules (`post-45990.css`), so the WoodMart banners were 1,474 px tall. This was WP Rocket, not Promo Manager.
+  - **Phil's fixes:** he cleared Used CSS. He also closed the gap above Shop the Look by hiding WoodMart's empty header-bottom row and removing the 40 px content padding.
+  - **Visitor check after that (signed out, 1920 and 375):** the plugin's three stylesheets and Elementor's page CSS were on the page, the banners were 500 and 600 px, the phone showed one look at a time, and there was no gap.
+  - **Recommended:** add `/wp-content/uploads/elementor/css/(.*).css` to WP Rocket's CSS Safelist on Gates, so the next Used CSS rebuild keeps Elementor's page CSS.
+  - **SOP:** this became golden rule 18, step 16.11 and Appendix A rule 20 of the site build SOP (version 1.4): every plugin update and site edit is checked as a visitor, on a computer and a phone.
 
 ---
 
