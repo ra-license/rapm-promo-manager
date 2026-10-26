@@ -4,6 +4,14 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.64.1
+
+**The Shop button no longer slides in from the corner.** The staging walk of 1.64.0 found this on staging's WoodMart theme. The theme animates every link (`transition: all .25s`), including the left and top that rapm-pins.js sets when it places the Shop button. So each time the button was placed, it slid in from the top-left corner. It had done that since the button arrived in 1.35.0.
+
+- **The fix:** the placed button now animates only its hover change (rapm-pins.css). Its position applies at once. The dots already had their own transitions, so they're unchanged.
+
+---
+
 ## 1.64.0
 
 **Alignment tools for the pieces on the picture.** Phil, Oct 26: "There should also be alignment tools for elements." Board 3 of the mockup was approved the same day: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr.
@@ -44,6 +52,15 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - A drag to 50.6% snapped to 50% with the pink guide, and cleared the lined-up setting. With Alt it stayed at 50.6%, and the guide hid on release.
     - A button over the middle words brought up "The Shop button is on top of the words"; moving the words to the top and the button to the bottom right cleared it.
   - **PHP versions:** the changed PHP files parse in PHP 7.4 and 8.3.
+- **Installed on staging (2026-10-26).** The update came from the v1.64.0 tag.
+  - **The Dining Days form:**
+    - It has Place the words, and Place the pieces has the button tools.
+    - Middle and center were set for computers, top for phones, and the Shop button turned on and lined up right and bottom. Saving said "Saved", and all of it came back after the reload.
+  - **On the website (/promotions/):**
+    - The words box carries `data-align="center" data-y="middle" data-y-phone="top"` and sits exactly in the middle.
+    - The Shop button is 40 pixels from the right and 32 from the bottom, the words' gap. (My Chrome tab was in the background, which paused the theme's link animation, so this was measured with it off. That animation is fixed in 1.64.1.)
+  - **Seen there:** that page squeezes the slider into a 450 by 141 pixel column, so the button overlaps the words' own button. The form's warning checks its own preview size, so it couldn't see this page's narrow column.
+  - **Cleaned up:** Dining Days was saved back to left, bottom, phones the same, and no Shop button.
 
 ---
 

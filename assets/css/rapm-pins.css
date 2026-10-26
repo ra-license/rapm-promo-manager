@@ -75,6 +75,10 @@ a.rapm-pin-btn:hover, a.rapm-pin-btn:focus { color: #fff; filter: brightness(0.9
 }
 .rapm-hero .rapm-pin-dot[hidden] { display: none !important; }
 .rapm-hero .rapm-pin-btn { position: absolute !important; color: #fff !important; background: var(--rapm-pins-accent, #2271b1) !important; text-decoration: none !important; }
+/* 1.64.1: themes that animate every link (WoodMart: "a { transition: all .25s }")
+   slid the button in from the corner each time rapm-pins.js placed it.
+   Only its hover change animates now. */
+.rapm-hero .rapm-pin-btn { transition: filter 0.15s !important; }
 .rapm-hero .rapm-pin-pop-x {
 	position: absolute !important; display: block !important; width: 28px !important; height: 28px !important;
 	min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
