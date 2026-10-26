@@ -1097,7 +1097,8 @@ class RAPM_Promotions_Screen {
 		$keep    = array( __( 'Pick the part to keep', 'rapm' ), __( 'when a picture is a different shape from the spot.', 'rapm' ) );
 		$tools   = array(
 			'hero'        => array(
-				array( __( 'Words on the picture', 'rapm' ), __( 'big words, a smaller line and a button, with color, style and typeface.', 'rapm' ) ),
+				array( __( 'Words on the picture', 'rapm' ), __( 'big words, a smaller line and a button, each in your website\'s font or any Google Font, with color and style.', 'rapm' ) ),
+				array( __( 'An icon', 'rapm' ), __( 'before the big words or in the button: Google icons, Font Awesome or your own picture.', 'rapm' ) ),
 				array( __( 'Product dots and Shop button', 'rapm' ), __( 'placed on the computer and phone pictures (Place the pieces), with a shop bar under the slide.', 'rapm' ) ),
 				array( __( 'Split view', 'rapm' ), __( 'room photos on one side and a promotion box on the other.', 'rapm' ), self::design_url(), __( 'Split sliders', 'rapm' ) ),
 				$keep,
@@ -1109,32 +1110,33 @@ class RAPM_Promotions_Screen {
 				array( __( 'What stays in view', 'rapm' ), __( 'for a picture behind the design.', 'rapm' ) ),
 			),
 			'fold_banner' => array(
-				array( __( 'Words on the picture', 'rapm' ), __( 'big words, a smaller line and a button, with color, style and typeface.', 'rapm' ) ),
+				array( __( 'Words on the picture', 'rapm' ), __( 'big words, a smaller line and a button, each in your website\'s font or any Google Font, with color and style.', 'rapm' ) ),
+				array( __( 'An icon', 'rapm' ), __( 'before the big words or in the button: Google icons, Font Awesome or your own picture.', 'rapm' ) ),
 				array( __( 'Product dots and Shop button', 'rapm' ), __( 'placed on the computer and phone pictures.', 'rapm' ) ),
 				$keep,
 			),
 			'look'        => array(
 				array( __( 'Numbered product dots', 'rapm' ), __( 'each with the product\'s picture, live price and stock.', 'rapm' ) ),
-				array( __( 'Words and a button on the photo', 'rapm' ), __( 'placed where you want them.', 'rapm' ) ),
+				array( __( 'Words and a button on the photo', 'rapm' ), __( 'placed where you want them, in your website\'s font or any Google Font, with an icon in the button. Words under the photo keep your website\'s font.', 'rapm' ) ),
 				array( __( 'Drag to frame', 'rapm' ), __( 'move the room photo inside its space.', 'rapm' ) ),
 				array( __( 'Tabs', 'rapm' ), __( 'one room or collection per tab.', 'rapm' ) ),
 			),
 			'quick_links' => array(
-				array( __( 'A short name under each picture', 'rapm' ), __( 'and a shorter look on phones.', 'rapm' ) ),
+				array( __( 'A short name under each picture', 'rapm' ), __( 'in your website\'s font (it sits on the page), and a shorter look on phones.', 'rapm' ) ),
 				array( __( 'What stays in view', 'rapm' ), __( 'when the picture is trimmed.', 'rapm' ) ),
 			),
 			'reveal'      => array(
 				array( __( 'Panel colors', 'rapm' ), __( 'linked to the website\'s colors.', 'rapm' ) ),
-				array( __( 'One big word per panel', 'rapm' ), __( 'with a short line and a link label.', 'rapm' ) ),
+				array( __( 'One big word per panel', 'rapm' ), __( 'with a short line and a link label, each in your website\'s font or any Google Font, and an icon above the word if you like.', 'rapm' ) ),
 				array( __( 'What stays in view', 'rapm' ), __( 'for each room photo.', 'rapm' ) ),
 				array( __( 'Every panel card', 'rapm' ), __( 'in its own tab:', 'rapm' ), self::design_url( '', 'reveal' ), __( 'Reveal panels', 'rapm' ) ),
 			),
 			'coupon'      => array(
-				array( __( 'Words on each coupon', 'rapm' ), __( 'big words, a smaller line and a button.', 'rapm' ) ),
+				array( __( 'Words on each coupon', 'rapm' ), __( 'big words, a smaller line and a button, each in your website\'s font or any Google Font, with an icon if you like.', 'rapm' ) ),
 				array( __( 'Dates on every coupon', 'rapm' ), __( 'each one comes and goes on its own.', 'rapm' ) ),
 			),
 			'marquee'     => array(
-				array( __( 'Square tiles', 'rapm' ), __( 'each with its own link and dates, and words under it.', 'rapm' ) ),
+				array( __( 'Square tiles', 'rapm' ), __( 'each with its own link and dates, and words under it in your website\'s font.', 'rapm' ) ),
 			),
 		);
 		$list   = isset( $tools[ $kind ] ) ? $tools[ $kind ] : array();

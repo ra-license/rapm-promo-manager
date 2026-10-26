@@ -4,6 +4,16 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.63.1
+
+**Each kind's tool list mentions fonts and icons.** The staging walk of 1.63.0 found that the Design Center's "Design tools for this kind" didn't mention the Google Fonts (1.62.0) and icons (1.63.0) it had just gained.
+
+- **Kinds with words on the picture** (Slider, Feature banner, Coupon row, Reveal panels, Shop the Look) now say their words can use the website's font or any Google Font, and where an icon can go.
+- **Quick links and Tile row** now say their words use the website's font, because they sit on the page.
+- **Tested** in the WordPress copy: the Slider, Shop the Look, Reveal panels and Quick links lists show the new lines, with no PHP notices. The file parses in PHP 7.4 and 8.3.
+
+---
+
 ## 1.63.0
 
 **Icons with the words on the picture.** This is the third release of Phil's Oct 26 rule: words on the picture get Google Fonts and icons; words on the page don't. Mockup board 2: https://claude.ai/artifact/78Xsrqmi9RHQUxsjvddhnr.
@@ -44,6 +54,18 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
     - "No icon" clears the value and the preview.
   - **PHP versions:** the changed PHP files parse in PHP 7.4 and 8.3.
 - **Not tested here:** the Font Awesome tab, because the test site has no Elementor. It's the box canvas's own code and file, and staging has Elementor, so it gets checked there.
+- **Installed on staging (2026-10-26), after production,** once Phil signed in again. The Plugins screen shows 1.63.0.
+  - **Design Center:** opens on All kinds with the site's real spots ("On: Home page slider, Split test slider +1 more"). The Slider shows its three spots with their pages, Open and Add a promotion. New promotion's one-time gallery tip also shows here once per person, because it points at the same cards.
+  - **The Dining Days form:**
+    - It has the Fonts row with Elementor's four fonts (Primary Roboto, Secondary Roboto Slab, Text, Accent) and the Icon row with all three tabs. Font Awesome works here, which it couldn't in the test copy.
+    - The old Typeface menu is gone.
+    - Playfair Display was picked for the headline and the Font Awesome truck for the button. Saving said "Saved".
+  - **On the website (/promotions/):**
+    - The headline is in Playfair Display, from `/wp-content/uploads/rapm-fonts/playfair-display/` (12 font files, the first 20,980 bytes). The browser confirmed the font loaded, with no requests to Google.
+    - The truck shows in "SHOP DINING".
+    - The home page hides that slider at tablet width (an Elementor setting), so it was checked on /promotions/ instead.
+  - **Found, not caused by these releases:** on /promotions/ the slider sits in a 450-pixel column. Its words need 188 pixels, but the slide is 141 tall, so the top of the headline is cut off. It's the same in the website's own font. Noted for the alignment tools (a "words don't fit" warning).
+  - **Cleaned up:** Dining Days was saved back to the website font and no icon.
 - **In production (2026-10-26).** Phil pushed main (fe7f13a) and the tags v1.60.0, v1.61.0, v1.62.0 and v1.63.0 together. This was before their staging install, because staging was waiting for a new sign-in. They were tested in the WordPress copy described in each entry, and the staging walk follows.
 
 ---
