@@ -17,6 +17,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Plugin Monitor 1.5.1 (from this walk):** when notes are combined, each change is listed once.
   - **Plugin Monitor 1.5.2 (from this walk):** the check had sat at "Now" without running. WordPress refuses a second identical scheduled run within 10 minutes of another, and a run that fell while the plugin's files were being replaced did nothing. Now there's always one run set for the earliest waiting check: set again when a check is added, after every run, and when the monitor is opened. On staging, opening the monitor set it again and the check ran.
   - **Limit:** the help desk's own WordPress scheduler only runs when someone loads a page on help.ramarketing.com. The regular checks (every 6 hours) need that. Recommended: a real server cron calling wp-cron.php every 5 minutes on the help desk's host.
+- **In production (2026-10-27).** Phil pushed Promo Manager main (137f248) with tags v1.66.0 and v1.66.1, Woo Native Dimensions main (a15ecbf) with v1.34 and v1.35, and Universal Room Planner main (68d15c5) with v7.25.0 and v7.25.1. help.ramarketing.com was still on Plugin Monitor 1.4.1 when checked, so 1.5.2 (regular checks, change reports, the 1.4.2 false-red fix) waits on its install.
 
 ---
 
