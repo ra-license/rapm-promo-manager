@@ -16,6 +16,9 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **Opting out:** a site can opt out with `define( 'RA_PLUGINS_AUTO_UPDATE', false );` in wp-config.php, and "Update now" still works there. Promo Manager's and Room Planner's older filters now respect that setting too.
 - **What this means for releases:** a production push now reaches every client site within about 12 hours, without anyone clicking. Staging walks and Phil's OK before pushing are the safeguards. WordPress 6.6 and later puts the old version back if an update breaks a site, and the visitor check looks at each site after it updates.
 - **One hop by hand:** sites still on an older copy (Dimensions 1.33 on those four sites, 1.31 on Bear's) need this version installed once some other way: WP Umbrella's bulk update, or each site's Plugins page. After that they update themselves.
+- **Tested:**
+  - **On the bench,** WordPress's own `should_update()` with the site toggle off: R&A plugins yes, other plugins no. With the opt-out: no for Promo Manager, yes again during "Update now". The twice-daily job is scheduled. All changed PHP parses on 7.4 and 8.3.
+  - **On staging (2026-10-27),** with Promo Manager 1.67.0 installed, Dimensions shows "Auto-updates enabled" with no toggle, like Promo Manager and Room Planner. "Update now" for Dimensions installed 1.35 → 1.36. Staging's old toggle for Dimensions was on, so the toggle-off case is proven on the bench only.
 
 ---
 
