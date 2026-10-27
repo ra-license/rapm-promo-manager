@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Updates 1.0.3
+ * RA Monitor Updates 1.0.4
  *
  * Lets R&A's Plugin Monitor (help.ramarketing.com) ask this site to update
  * an R&A plugin right away, instead of waiting for WordPress's twice-daily
@@ -40,6 +40,20 @@
  * daily check-in), and the monitor's answer is passed on through the
  * ra_monitor_poll_response action, so the connection hears about approval.
  *
+ * 1.0.4 (Phil, Oct 27: "We need to make sure we can do automatic updates"):
+ *   - "Update now" installs even when the site's "Enable auto-updates" toggle
+ *     is off for the plugin. WordPress's automatic updater refuses a plugin
+ *     whose toggle is off (WP_Automatic_Updater::should_update(), the
+ *     auto_update_plugin filter), which is what "WordPress skipped the
+ *     update" meant on Andrews, Barron's, Frazier & Son and Indian River.
+ *   - R&A plugins turn their own automatic updates on (the same filter), and
+ *     twice a day each one installs a newer release on its own channel by
+ *     itself, the same way as "Update now". So a site updates after a
+ *     production release even when WordPress's own list of updates was lost
+ *     (StarFine's full object cache). Opt a site out with
+ *     define( 'RA_PLUGINS_AUTO_UPDATE', false ); in wp-config.php ("Update
+ *     now" still works there).
+ *
  * Several R&A plugins on one site may each bundle a copy; whichever loads
  * first defines the class and the rest register with it, so the public API
  * below must stay backward compatible. A breaking change needs a new class
@@ -52,7 +66,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 	class RA_Monitor_Updates {
 
-		const VERSION = '1.0.3';
+		const VERSION = '1.0.4';
 
 		// The check-in address; polls go to /poll next to it, so the
 		// monitor's "Receive this site's own check-ins here" testing switch
@@ -69,6 +83,9 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 		const RESULTS_OPTION = 'ra_monitor_update_results';
 		const HANDLED_OPTION = 'ra_monitor_update_handled';
 		const POLLED_OPTION  = 'ra_monitor_last_poll';
+		// 1.0.4: R&A plugins install their own updates twice a day.
+		const SELF_HOOK      = 'ra_monitor_self_update';
+		const SELF_OPTION    = 'ra_monitor_self_update_last';
 
 		private static $plugins = array();
 		private static $booted  = false;
@@ -101,6 +118,62 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			add_action( self::POLL_HOOK, array( __CLASS__, 'poll' ) );
 			add_action( self::RUN_HOOK, array( __CLASS__, 'run_queue' ) );
 			add_action( 'deactivated_plugin', array( __CLASS__, 'on_deactivated' ) );
+			// 1.0.4
+			add_filter( 'auto_update_plugin', array( __CLASS__, 'allow_auto_update' ), 20, 2 );
+			add_action( self::SELF_HOOK, array( __CLASS__, 'self_update' ) );
+		}
+
+		/** 1.0.4: off only with define( 'RA_PLUGINS_AUTO_UPDATE', false ). */
+		public static function auto_updates_on() {
+			return ! ( defined( 'RA_PLUGINS_AUTO_UPDATE' ) && ! RA_PLUGINS_AUTO_UPDATE );
+		}
+
+		private static function is_ours( $item ) {
+			if ( ! is_object( $item ) || empty( $item->plugin ) ) {
+				return false;
+			}
+			foreach ( self::$plugins as $args ) {
+				if ( plugin_basename( $args['file'] ) === $item->plugin ) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/** 1.0.4: R&A plugins update automatically unless the site opted out. */
+		public static function allow_auto_update( $update, $item ) {
+			return self::auto_updates_on() && self::is_ours( $item ) ? true : $update;
+		}
+
+		/**
+		 * 1.0.4: twice a day, each R&A plugin with a newer release on its
+		 * own channel (as plugin-update-checker last saw on GitHub) installs
+		 * it the same way as "Update now". The result is kept in SELF_OPTION.
+		 */
+		public static function self_update() {
+			if ( ! self::auto_updates_on() || ! self::can_update() || ! self::load_upgrader() ) {
+				return;
+			}
+			$due = array();
+			foreach ( self::$plugins as $slug => $args ) {
+				$update = method_exists( $args['checker'], 'getUpdate' ) ? $args['checker']->getUpdate() : null;
+				if ( $update && ! empty( $update->version ) && version_compare( $update->version, (string) self::installed_version( $args ), '>' ) ) {
+					$due[ $slug ] = $args;
+				}
+			}
+			if ( ! $due || ! WP_Upgrader::create_lock( 'auto_updater' ) ) {
+				return;
+			}
+			$done = get_option( self::SELF_OPTION, array() );
+			$done = is_array( $done ) ? $done : array();
+			try {
+				foreach ( $due as $slug => $args ) {
+					$done[ $slug ] = array_merge( array( 'time' => time() ), self::update_one( $args ) );
+					update_option( self::SELF_OPTION, $done, false );
+				}
+			} finally {
+				WP_Upgrader::release_lock( 'auto_updater' );
+			}
 		}
 
 		public static function add_interval( $schedules ) {
@@ -114,6 +187,9 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 		public static function schedule() {
 			if ( ! wp_next_scheduled( self::POLL_HOOK ) ) {
 				wp_schedule_event( time() + MINUTE_IN_SECONDS, self::INTERVAL, self::POLL_HOOK );
+			}
+			if ( ! wp_next_scheduled( self::SELF_HOOK ) ) {
+				wp_schedule_event( time() + 10 * MINUTE_IN_SECONDS, 'twicedaily', self::SELF_HOOK );
 			}
 		}
 
@@ -132,6 +208,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				}
 			}
 			wp_clear_scheduled_hook( self::POLL_HOOK );
+			wp_clear_scheduled_hook( self::SELF_HOOK );
 		}
 
 		public static function endpoint() {
@@ -416,10 +493,18 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				add_filter( 'site_transient_update_plugins', $add, PHP_INT_MAX );
 			}
 
+			// 1.0.4: a requested update installs even when the site's
+			// "Enable auto-updates" toggle is off for this plugin; WordPress's
+			// updater refuses it otherwise ("WordPress skipped the update").
+			$allow = function ( $update, $offer ) use ( $basename ) {
+				return is_object( $offer ) && isset( $offer->plugin ) && $offer->plugin === $basename ? true : $update;
+			};
+			add_filter( 'auto_update_plugin', $allow, PHP_INT_MAX, 2 );
 			$updater = new WP_Automatic_Updater();
 			try {
 				$outcome = $updater->update( 'plugin', $item );
 			} finally {
+				remove_filter( 'auto_update_plugin', $allow, PHP_INT_MAX );
 				if ( $add ) {
 					remove_filter( 'pre_site_transient_update_plugins', $add, PHP_INT_MAX );
 					remove_filter( 'site_transient_update_plugins', $add, PHP_INT_MAX );

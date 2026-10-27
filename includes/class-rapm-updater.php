@@ -66,11 +66,15 @@ class RAPM_Updater {
 
 		// Auto-update on by default for this plugin on every site, so a
 		// version promoted to the production repo applies everywhere with
-		// zero clicks (matches Room Planner v7.20.0).
+		// zero clicks (matches Room Planner v7.20.0). 1.67.0: a site opts out
+		// with define( 'RA_PLUGINS_AUTO_UPDATE', false ); like every R&A plugin.
 		$basename = plugin_basename( $plugin_file );
 		add_filter(
 			'auto_update_plugin',
 			function ( $update, $item ) use ( $basename ) {
+				if ( defined( 'RA_PLUGINS_AUTO_UPDATE' ) && ! RA_PLUGINS_AUTO_UPDATE ) {
+					return $update;
+				}
 				if ( isset( $item->plugin ) && $item->plugin === $basename ) {
 					return true;
 				}

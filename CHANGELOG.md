@@ -4,6 +4,21 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## 1.67.0
+
+**R&A plugins update themselves.** Phil, Oct 27, looking at the Plugin Monitor ("This is a problem. We need to make sure we can do automatic updates"): Woo Native Dimensions sat at 1.33 on Andrews, Barron's, Frazier & Son and Indian River. "Update now" said "WordPress skipped the update. Automatic updates may not be allowed for this plugin here." Phil chose automatic updates on by default.
+
+- **Root cause:** "Update now" installs with WordPress's own automatic updater. Its `should_update()` refuses a plugin unless the site's "Enable auto-updates" toggle is on for it, or a plugin allows it through the `auto_update_plugin` filter (checked in WordPress's class-wp-automatic-updater.php). Dimensions' toggle is off on those sites. So neither "Update now" nor WordPress's twice-daily automatic updates could install it; only a click on each site's Plugins page could.
+- **Why only Dimensions:** Promo Manager and Room Planner have turned their own automatic updates on through that filter for a long time (Promo Manager's RAPM_Updater; Room Planner since 7.20.0). Woo Native Dimensions never did, so it depended on each site's toggle. That's why only the Dimensions rows said "skipped". StarFine's Promo Manager is a different case: its automatic updates were on, but its update list kept being thrown out of a full object cache.
+- **Fixes in RA Monitor Updates 1.0.4** (the shared file, also in Woo Native Dimensions 1.36 and Universal Room Planner 7.26.0):
+  - **"Update now" installs even when the toggle is off.** A person at R&A asked for that update.
+  - **R&A plugins turn their own automatic updates on** (`auto_update_plugin`). Twice a day, each one installs a newer release on its own channel by itself, the same way as "Update now". That works even when WordPress's own list of updates was lost, as on StarFine with its full object cache.
+  - **Opting out:** a site can opt out with `define( 'RA_PLUGINS_AUTO_UPDATE', false );` in wp-config.php, and "Update now" still works there. Promo Manager's and Room Planner's older filters now respect that setting too.
+- **What this means for releases:** a production push now reaches every client site within about 12 hours, without anyone clicking. Staging walks and Phil's OK before pushing are the safeguards. WordPress 6.6 and later puts the old version back if an update breaks a site, and the visitor check looks at each site after it updates.
+- **One hop by hand:** sites still on an older copy (Dimensions 1.33 on those four sites, 1.31 on Bear's) need this version installed once some other way: WP Umbrella's bulk update, or each site's Plugins page. After that they update themselves.
+
+---
+
 ## 1.66.1
 
 **A single plugin or theme update is reported too.** Found in the 1.66.0 staging walk. After updating Woo Native Dimensions and Room Planner one at a time, the help desk's note said only "Elementor styles regenerated".
