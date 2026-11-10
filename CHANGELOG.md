@@ -4,6 +4,17 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Production push: See in your Space 0.11.1 and Universal Room Planner 7.29.1 (2026-11-10)
+
+Phil, Nov 10: "Push to production and I can check kemper."
+
+- **See in your Space:** first production release. main (d8d16a6) and every tag v0.3.0 to v0.11.1 pushed to ra-license/see-in-your-space. It includes our rooms in four sizes, store floors, prices and Add to cart, "Ask about these pieces" (Gravity Forms or email), category chips, the floating toolbar, and the planner hand-off.
+- **Universal Room Planner:** main 28e6634 → 3fa33f4, tags v7.27.0 to v7.29.1. It includes the See it in your room button for a selected piece, the matched product-page buttons (7.28.x), secure Save to Profile (7.27.2), and the Shopping List camera (7.29.x). Websites on the live channel install 7.29.1 by themselves within about 12 hours (twice-daily self-updates), or at once with Update now.
+- **Verified on staging first** (signed out, computer and phone width): 0.11.1 + 7.29.1. Not tested live: an "Ask about these pieces" submission into Gravity Forms.
+- **Still to do:** Phil checks Kemper. Plugin Monitor doesn't list the new See in your Space repo yet. Drive copies of both plugins.
+
+---
+
 ## Plugin Monitor 1.5.5 (help desk only)
 
 **Newest versions come from GitHub.** Phil, Oct 27: "Fix the newest-version gap so Update all sees GitHub releases."
