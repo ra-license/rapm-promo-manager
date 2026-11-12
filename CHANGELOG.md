@@ -4,7 +4,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
-## Plugin Monitor 1.6.4, 1.7.0 and 1.7.1 (help desk only; each installed itself from GitHub)
+## Plugin Monitor 1.6.4 to 1.7.2 (help desk only; each installed itself from GitHub)
 
 - **1.6.4: "Check every website now".** Phil, Nov 12: "Let's do a test as though we've hit the 4 hour mark right now." The button runs the regular check for every website at once and refreshes WP Umbrella's status. Test: 37 of 38 websites rechecked and all looked right; Vinson was checked an hour earlier and also passed.
 - **1.7.0: daily summary email** at 7:00 am Eastern, every day, to ra_license@ramarketing.com and phil@ramarketing.com.
@@ -13,6 +13,12 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
   - **All good:** how many websites are fine.
   - Settings and "Send a summary now" are under Visitor check on any website's page. First one sent Nov 12: "34 healthy, 5 need a look".
 - **1.7.1: each failed or couldn't-load check is named.** Phil: "How do I know what failed and couldn't load?" … "we'll need to make sure if we know there's still an issue that needs to be addressed and where". Every red or grey check of the last 24 hours is listed by website. Each shows where (page, computer or phone), what was found, why the check ran, and "Still a problem: needs fixing" or "Fixed itself: passed … ago", with a link to the website's page in the monitor. Websites still failing come first.
+- **1.7.2: headings and spacing.** Phil: "Can we add spacing and headings to the different sections?"
+  - Sections, each with a heading, a rule and space above: Needs fixing, Fixed itself (last 24 hours), Uptime (WP Umbrella), Updates (last 24 hours), Visitor checks (last 24 hours). A one-line total sits at the top.
+  - Each website is its own block: name, status, "Open in the monitor", then one line per problem and "Started by: …".
+  - Updates are grouped by plugin and version (e.g. "RA Promo Manager 1.67.0 → 1.68.2 (6)" with the websites under it).
+  - Website names are shortened at their tagline. Plugin code names read in words ("R&A Product Image Frames").
+  - New Preview button beside "Send a summary now" shows the summary in the browser without sending it. Checked on the help desk: 41 websites, every section rendered. Recipients now include leah@ramarketing.com (added by Phil).
 - **The first summary's 1 failed and 2 couldn't load:**
   - StarFine's home page answered 503 (computer and phone) about 10 minutes after the R&A Product Image Frames 0.3.5 → 0.3.6 update, almost certainly WordPress's maintenance page. The 15-minute recheck passed, so no email.
   - Critelli Furniture couldn't be loaded twice, 14 and 15 hours earlier: the help desk couldn't look up its address (DNS). It has passed since.
