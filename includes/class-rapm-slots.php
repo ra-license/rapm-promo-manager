@@ -227,7 +227,7 @@ class RAPM_Slots {
 			// a fixed-count row, never full-bleed.
 			'marquee'     => array(
 				'label'                 => __( 'Tile row', 'rapm' ),
-				'help'                  => __( 'Small square tiles in a row.', 'rapm' ),
+				'help'                  => __( 'Square tiles in a row, small or large (set on each spot).', 'rapm' ),
 				'desktop'               => 'marquee_tile',
 				'mobile'                => 'marquee_tile',
 				'shortcode'             => 'rapm_marquee',

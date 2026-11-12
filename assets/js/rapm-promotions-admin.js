@@ -245,6 +245,26 @@
 		} ).catch( function () { say( section, T.saveFailed ); } );
 	} );
 
+	/* ---- Tile row size (1.68.0) --------------------------------------------- */
+
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-tile-size' ) : null;
+		if ( ! form ) { return; }
+		e.preventDefault();
+		var section = form.closest( '.rapm-spot' );
+		var picked  = form.querySelector( 'input[name="tile_size"]:checked' );
+		if ( ! picked ) { return; }
+		post( {
+			action: 'rapm_tile_size',
+			nonce: cfg.nonce,
+			placement: section.getAttribute( 'data-placement' ),
+			size: picked.value
+		} ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
+			say( section, T.sizeSaved );
+		} ).catch( function () { say( section, T.saveFailed ); } );
+	} );
+
 	/* ---- Split view layout (1.43.0) ----------------------------------------- */
 
 	root.addEventListener( 'change', function ( e ) {

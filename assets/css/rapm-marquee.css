@@ -100,3 +100,45 @@
 		grid-template-columns: repeat(2, minmax(0, 160px));
 	}
 }
+
+/* 1.68.0: Medium, Large and Extra large tiles (a spot setting; Small keeps
+   the grid above). A wrapping row, centered, so a short row or a lone last
+   tile sits in the middle. Each tile is its size, or less when the row is
+   narrower: as many across as are showing on computers (Extra large: 2),
+   at most 2 on tablets, and on phones 2 (Medium) or 1 (Large, Extra large). */
+.rapm-marquee[data-size] {
+	--rapm-gap: 24px;
+	--rapm-cols: var(--rapm-marquee-items, 3);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--rapm-gap);
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.rapm-marquee[data-size] > .rapm-marquee-tile {
+	flex: 0 1 var(--rapm-marquee-tile, 400px);
+	width: var(--rapm-marquee-tile, 400px);
+	max-width: calc((100% - (var(--rapm-cols) - 1) * var(--rapm-gap)) / var(--rapm-cols));
+	min-width: 0;
+}
+
+/* Extra large is two across, so each tile keeps its 540 px. */
+.rapm-marquee[data-size="xl"] {
+	--rapm-cols: min(var(--rapm-marquee-items, 2), 2);
+}
+
+@media (max-width: 1024px) {
+	.rapm-marquee[data-size] {
+		--rapm-gap: 16px;
+		--rapm-cols: min(var(--rapm-marquee-items, 3), 2);
+	}
+}
+
+@media (max-width: 600px) {
+	.rapm-marquee[data-size="large"],
+	.rapm-marquee[data-size="xl"] {
+		--rapm-cols: 1;
+	}
+}

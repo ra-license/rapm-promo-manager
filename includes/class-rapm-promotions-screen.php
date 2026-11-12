@@ -260,6 +260,7 @@ class RAPM_Promotions_Screen {
 					'showEnded'   => __( 'Show %d ended', 'rapm' ),
 					'hideEnded'   => __( 'Hide ended', 'rapm' ),
 					'nameSaved'   => __( 'Name saved.', 'rapm' ),
+					'sizeSaved'   => __( 'Tile size saved. The page shows it at the next visit.', 'rapm' ),
 					'noResults'   => __( 'No promotions match “%s”.', 'rapm' ),
 					'confirmRemove' => __( 'Remove "%s"? It has no promotions and isn\'t on any page.', 'rapm' ),
 					// 1.52.0: linked groups.
@@ -790,6 +791,38 @@ class RAPM_Promotions_Screen {
 					<input type="text" id="<?php echo esc_attr( $heading ); ?>-name" name="name" value="<?php echo esc_attr( $name ); ?>" maxlength="60" />
 					<button type="submit" class="button button-small"><?php esc_html_e( 'Save name', 'rapm' ); ?></button>
 				</form>
+				<?php if ( 'marquee' === $kind ) : ?>
+					<?php $tile_size = RAPM_Spots::tile_size( $placement ); ?>
+					<?php if ( current_user_can( 'manage_options' ) ) : // 1.68.0: it changes the live site, so administrators only. ?>
+						<form class="rapm-tile-size">
+							<fieldset>
+								<legend><?php esc_html_e( 'Tile size on the page', 'rapm' ); ?></legend>
+								<?php
+								$notes = array(
+									'small' => __( 'quick links', 'rapm' ),
+									'large' => __( 'promotions', 'rapm' ),
+									'xl'    => __( '2 across', 'rapm' ),
+								);
+								foreach ( RAPM_Spots::TILE_SIZES as $key => $px ) :
+									?>
+									<label>
+										<input type="radio" name="tile_size" value="<?php echo esc_attr( $key ); ?>" <?php checked( $tile_size, $key ); ?> />
+										<?php echo esc_html( RAPM_Spots::tile_size_label( $key ) ); ?><?php echo isset( $notes[ $key ] ) ? ' · ' . esc_html( $notes[ $key ] ) : ''; ?>
+									</label>
+								<?php endforeach; ?>
+							</fieldset>
+							<button type="submit" class="button button-small"><?php esc_html_e( 'Save size', 'rapm' ); ?></button>
+						</form>
+						<p><?php esc_html_e( 'Pictures stay 1080 × 1080, which stays sharp on every screen up to Extra large. Tiles shrink to fit smaller screens: 2 across on tablets, 1 or 2 on phones.', 'rapm' ); ?></p>
+					<?php else : ?>
+						<p>
+							<?php
+							/* translators: %s: tile size, e.g. "Large (400 × 400)" */
+							echo esc_html( sprintf( __( 'Tile size on the page: %s. An administrator can change it.', 'rapm' ), RAPM_Spots::tile_size_label( $tile_size ) ) );
+							?>
+						</p>
+					<?php endif; ?>
+				<?php endif; ?>
 				<?php if ( RAPM_Spots::is_carousel( $kind ) ) : ?>
 					<p><?php esc_html_e( 'Main heading (H1) for search engines: set it where the spot is placed, only on pages with no other H1. In Elementor, turn on "Main heading (H1)" in its Promo Carousel widget, or add heading="h1" to its code on that page.', 'rapm' ); ?></p>
 				<?php endif; ?>
@@ -1651,6 +1684,22 @@ class RAPM_Promotions_Screen {
 				'countLine' => self::count_line( self::spot_posts( $kind, $placement ) ),
 			)
 		);
+	}
+
+	/** 1.68.0: a Tile row spot's tile size (administrators only: it changes the live site). */
+	public static function ajax_tile_size() {
+		check_ajax_referer( self::NONCE, 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
+		}
+		$placement = isset( $_POST['placement'] ) ? sanitize_title( wp_unslash( $_POST['placement'] ) ) : '';
+		$size      = isset( $_POST['size'] ) ? sanitize_key( wp_unslash( $_POST['size'] ) ) : '';
+		if ( ! $placement || ! isset( RAPM_Spots::TILE_SIZES[ $size ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Missing spot or size.', 'rapm' ) ), 400 );
+		}
+		RAPM_Spots::update( 'marquee', $placement, array( 'tile_size' => 'small' === $size ? null : $size ) );
+		RAPM_Cache::queue_spot( 'marquee|' . $placement ); // clear the pages it's on, as split view does
+		wp_send_json_success( array( 'size' => RAPM_Spots::tile_size( $placement ) ) );
 	}
 
 	public static function ajax_rename() {

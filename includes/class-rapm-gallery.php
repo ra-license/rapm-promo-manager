@@ -101,6 +101,17 @@ class RAPM_Gallery {
 		if ( 'promo_box' === $kind_key ) {
 			$text .= ' ' . __( '(or design it with words and colors)', 'rapm' );
 		}
+		// 1.68.0 (Phil, Nov 12): the picture size isn't the size on the page.
+		if ( 'marquee' === $kind_key ) {
+			/* translators: %s: the picture size, e.g. "1080 × 1080, one for every screen" */
+			$text = sprintf( __( 'Picture: %s.', 'rapm' ), $text );
+			if ( $placement ) {
+				/* translators: %s: tile size, e.g. "Large (400 × 400)" */
+				$text .= ' ' . sprintf( __( 'Shown on the page at %s, set on the spot.', 'rapm' ), RAPM_Spots::tile_size_label( RAPM_Spots::tile_size( $placement ) ) );
+			} else {
+				$text .= ' ' . __( 'Shown smaller on the page, 200 to 540 pixels, set on each spot.', 'rapm' );
+			}
+		}
 		return $text;
 	}
 

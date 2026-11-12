@@ -67,6 +67,40 @@ class RAPM_Spots {
 		update_option( self::OPTION, $all, false );
 	}
 
+	/**
+	 * 1.68.0 (Phil, Nov 12, Vinson): how big a Tile row's tiles show on the
+	 * page. The picture stays 1080 x 1080; a phone or Retina screen uses about
+	 * twice the shown size in pixels, so 1080 stays sharp up to 540. Small is
+	 * the size every Tile row had before, and stays the default.
+	 */
+	const TILE_SIZES = array(
+		'small'  => 200,
+		'medium' => 300,
+		'large'  => 400,
+		'xl'     => 540,
+	);
+
+	/** A Tile row spot's tile size: small, medium, large or xl. */
+	public static function tile_size( $placement ) {
+		$spot = self::get( 'marquee', $placement );
+		$key  = isset( $spot['tile_size'] ) ? (string) $spot['tile_size'] : '';
+		return isset( self::TILE_SIZES[ $key ] ) ? $key : 'small';
+	}
+
+	/** "Large (400 × 400)". */
+	public static function tile_size_label( $key ) {
+		$names = array(
+			'small'  => __( 'Small', 'rapm' ),
+			'medium' => __( 'Medium', 'rapm' ),
+			'large'  => __( 'Large', 'rapm' ),
+			'xl'     => __( 'Extra large', 'rapm' ),
+		);
+		$key = isset( self::TILE_SIZES[ $key ] ) ? $key : 'small';
+		$px  = self::TILE_SIZES[ $key ];
+		/* translators: 1: size name, 2: width in pixels, 3: height in pixels */
+		return sprintf( __( '%1$s (%2$d × %3$d)', 'rapm' ), $names[ $key ], $px, $px );
+	}
+
 	/** The type in plain words: Slider, Feature banner, Coupon row, Tile row. */
 	public static function type_label( $kind ) {
 		$info = RAPM_Slots::kind( $kind );

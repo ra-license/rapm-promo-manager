@@ -277,7 +277,7 @@ class RAPM_Training_Guide {
 								<div class="rapm-tg-type-shape-wrap"><div class="rapm-tg-type-shape" style="width:58px;height:58px;"></div></div>
 								<h3><?php esc_html_e( 'Tile row', 'rapm' ); ?></h3>
 								<p class="rapm-tg-dims">1080 &times; 1080 &middot; <?php esc_html_e( 'square tile', 'rapm' ); ?></p>
-								<p><?php esc_html_e( 'A small square tile in a compact row, like quick links (Financing, Visit Us, and so on).', 'rapm' ); ?></p>
+								<p><?php esc_html_e( 'A square tile in a row: small like quick links (Financing, Visit Us, and so on), or large for promotions. The size on the page is set on each spot; the picture is always 1080 × 1080.', 'rapm' ); ?></p>
 							</div>
 						</div>
 					</section>

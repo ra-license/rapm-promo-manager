@@ -81,7 +81,32 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
-## 1.67.1
+## 1.68.0
+
+**Tile row sizes.** Phil, Nov 12, on Vinson's Promotions page: the Tile row card says "1080 × 1080", but the tiles showed at 200 × 200, too small to read the fine print on Black Friday art. Mockup approved ("Proceed"): https://claude.ai/artifact/MWAxM6vBBffXpGnsGgV1gA
+
+- **New "Tile size on the page" on each Tile row spot** (Setup for R&A, administrators only, since it changes the live site):
+  - Small 200 × 200: as before, and still the default, so existing spots don't change.
+  - Medium 300 × 300.
+  - Large 400 × 400, for promotions.
+  - Extra large 540 × 540, two across.
+- **Picture size stays 1080 × 1080.** Phones and Retina screens use about twice the shown size in pixels, so 1080 stays sharp up to 540. That's why there's no 1000 or 1080 display size.
+- **Bigger sizes shrink to fit smaller screens:** at most 2 across on tablets (1024 px and under); on phones (600 px and under) 2 across for Medium and 1 for Large and Extra large.
+- **Short rows are centered,** including a lone tile on the last row.
+- **Wording:**
+  - The Tile row card reads "Picture: 1080 × 1080, one for every screen. Shown on the page at Large (400 × 400), set on the spot."
+  - The Training guide and the kind's one-line help mention both sizes.
+  - Editors who aren't administrators see the spot's size as a line of text.
+- **Saving a size** clears the page cache for the pages the spot is on. The change log records it, like any spot setting.
+- **Tested on the bench:**
+  - PHP 7.4 and 8.3: 132 files, 0 errors; the admin script parses.
+  - Each size with 3 tiles in a row set to 3. At 1440 px: 200, 300, 400 and 540 (2 + 1), every row centered.
+  - At 768 px: Small 200 in 1 row; Medium 300, Large and Extra large 353, each 2 + 1.
+  - At 375 px: Small 160 (2 + 1, as before), Medium 164 (2 + 1), Large and Extra large 343 (1 per row).
+  - No sideways scrolling at any width.
+
+---
+
 
 **Tile row centered.** Phil, Nov 12, on Vinson's Promotions page: "We have an issue with the 1080 x 1080 tiles. They are not displaying correctly."
 

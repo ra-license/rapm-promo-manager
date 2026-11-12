@@ -69,7 +69,12 @@ class RAPM_Marquee {
 		?>
 		<div class="rapm-marquee-wrap <?php echo esc_attr( $instance_id ); ?>" data-rapm-marquee style="display:none;">
 			<button type="button" class="rapm-marquee-arrow rapm-marquee-prev" aria-label="<?php esc_attr_e( 'Previous', 'rapm' ); ?>" hidden>&lsaquo;</button>
-			<div class="rapm-marquee" style="--rapm-marquee-items:<?php echo (int) $per_row; ?>;">
+			<?php
+			// 1.68.0: the spot's tile size. Small keeps the grid every Tile row had.
+			$tile_size = RAPM_Spots::tile_size( $placement );
+			$tile_px   = RAPM_Spots::TILE_SIZES[ $tile_size ];
+			?>
+			<div class="rapm-marquee" <?php echo 'small' === $tile_size ? '' : 'data-size="' . esc_attr( $tile_size ) . '"'; ?> style="--rapm-marquee-items:<?php echo (int) $per_row; ?>;<?php echo 'small' === $tile_size ? '' : '--rapm-marquee-tile:' . (int) $tile_px . 'px;'; ?>">
 				<?php foreach ( $query->posts as $post ) : self::render_tile( $post->ID ); endforeach; ?>
 			</div>
 			<button type="button" class="rapm-marquee-arrow rapm-marquee-next" aria-label="<?php esc_attr_e( 'Next', 'rapm' ); ?>" hidden>&rsaquo;</button>
