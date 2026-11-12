@@ -93,6 +93,7 @@ Phil, Nov 10: "Push to production and I can check kemper."
   - No origin cache is involved: a tablet visitor's copy (Rocket.net keeps separate computer, tablet and phone copies) came back `MISS` from the plain address with the new tiles.
 - **The fix:** `RAPM_Cache::clear_rocket_net()` turns each page address into its path before calling `CDN_Clear_Cache_Api::cache_api_call( $paths, 'purge' )`. The home page becomes `/`, a query string is kept, duplicates are dropped, and an address on another website is skipped. R&A setup details now list the paths sent.
 - **Not changed:** when a spot sits in a template or widget, Rocket.net still gets only the spot's known pages (no "clear everything" call is known for it).
+- **On staging (2026-11-12):** updated from 1.68.0 through Plugins › Check for updates. First, all three copies of /living-room-collection/ (computer, tablet, phone) were loaded until they were `HIT`s with Large tiles (400 px). Then the Living Room tiles spot was saved as Medium. Right after, all three copies came back signed out as `MISS` at the plain address with 300 px tiles, then as fresh `HIT`s at both Cloudflare locations. Saving it back to Large did the same, with 400 px tiles. The spot is left at Large. R&A setup details read: "Rocket.net CDN: asked to clear 4 pages (/living-room-collection/, /promo-calendar/, /about-us/, /promotions/). Reply: {"success":true,…}".
 
 ---
 
