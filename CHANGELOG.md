@@ -4,6 +4,17 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Plugin Monitor 1.6.1 (help desk only)
+
+**Why WP Umbrella refused.** Phil saved the WP Umbrella token on the help desk (monitor 1.6.0, Nov 12). Save and test said "WP Umbrella refused the token (error 403)". Nothing changed: outage emails work as before.
+
+- **Checked from outside (no token involved):** WP Umbrella's API answers 401 "missing_token" without a token and 401 "invalid_token" for a token it doesn't know. So the help desk's 403 means WP Umbrella knew the token but wouldn't allow the request: a missing public_api scope, or a plan without the Public API. A firewall in front of the API blocking the help desk's server is the other possibility.
+- **1.6.1:** WP Umbrella errors show WP Umbrella's own code and message, and say plainly whether the token is unknown (401), known but not allowed (403), or blocked by a firewall (Cloudflare page instead of the API). The token itself is never shown.
+- **Tested:** both PHP versions lint clean. Against stand-in answers on 7.4 and 8.3: 401 invalid_token, 403 insufficient_scope, a Cloudflare page, and the earlier cases; no token in any message.
+- **Install:** `~/Desktop/R&A plugin files for Drive/2 RA Plugin Monitor/ra-plugin-monitor.zip` by hand. The monitor's GitHub repos don't exist yet, so 1.6.0's self-update can't deliver it.
+
+---
+
 ## Plugin Monitor 1.6.0 (help desk only)
 
 **The monitor updates itself.** Phil, Nov 12, after "the plugin monitor is already installed there": "We need to make it so the monitor can auto update as needed."
