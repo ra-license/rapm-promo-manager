@@ -81,6 +81,16 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.67.1
+
+**Tile row centered.** Phil, Nov 12, on Vinson's Promotions page: "We have an issue with the 1080 x 1080 tiles. They are not displaying correctly."
+
+- **Root cause:** the Tile row (`[rapm_marquee]`) always laid out as many columns as its "items" setting. Vinson's "Promotion Page Tiles" spot is set to 4 at a time with 3 promotions live, so the 4th column stayed empty and the tiles sat about 110 px left of the page's middle.
+- **Fix:** the row has as many columns as tiles showing on the current page, so it centers with 1, 2, 3 or a short last page.
+- **Tested:** on Vinson's live page in a test browser only (nothing changed on the site), the same change moved the tiles' middle from about 115 px left of the page's middle to 7 px. Tiles stay 200 × 200 px, as designed.
+
+---
+
 ## 1.67.0
 
 **R&A plugins update themselves.** Phil, Oct 27, looking at the Plugin Monitor ("This is a problem. We need to make sure we can do automatic updates"): Woo Native Dimensions sat at 1.33 on Andrews, Barron's, Frazier & Son and Indian River. "Update now" said "WordPress skipped the update. Automatic updates may not be allowed for this plugin here." Phil chose automatic updates on by default.

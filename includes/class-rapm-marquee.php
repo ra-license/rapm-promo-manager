@@ -111,6 +111,10 @@ class RAPM_Marquee {
 						var all = track.querySelectorAll( '.rapm-marquee-tile' );
 						Array.prototype.forEach.call( all, function ( el ) { el.style.display = 'none'; } );
 						pages[ pageIndex ].forEach( function ( el ) { el.style.display = ''; } );
+						// 1.67.1: as many columns as tiles showing. With "items" at 4 and only
+						// 3 promotions live (Vinson, Nov 12), the empty 4th column pushed the
+						// row left of center.
+						track.style.setProperty( '--rapm-marquee-items', String( Math.max( 1, pages[ pageIndex ].length ) ) );
 					}
 
 					function stopTimer() {
