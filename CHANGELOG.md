@@ -11,7 +11,7 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 - "Check every website" now also offers Every 2 hours and Every 4 hours (before: 6, 12, once a day, or only when something changes).
 - **Load:** a round loads each website's pages signed out, once as a computer and once as a phone; for most websites that's just the home page, usually from the cache. That's about 80 page loads a round for 38 websites. Every 4 hours is 6 rounds a day, about 480 loads, against about 320 at every 6 hours: about 4 more cached page views per website per day. The hourly WP Umbrella reads don't change.
 - **Tested:** PHP 7.4 and 8.3 lint clean.
-- **Install:** `~/Desktop/R&A plugin files for Drive/2 RA Plugin Monitor/ra-plugin-monitor.zip` by hand, then pick Every 4 hours on any website's page and Save.
+- **Installed by itself (Nov 12):** Phil created ra-license/ra-plugin-monitor and ra-plugin-monitor-staging, and main plus tags v1.5.8 to v1.6.3 were pushed to both. The help desk, on 1.6.2, found 1.6.3 with Check for updates and installed it from GitHub, the first self-update. Every 4 hours is set, and email goes to ra_license@ramarketing.com. From now on a monitor release is a push of main and its vX.Y.Z tag.
 
 ---
 
