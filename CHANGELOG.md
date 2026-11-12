@@ -81,6 +81,21 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.68.1
+
+**Fix: on Rocket.net websites, a saved promotion or spot setting didn't reach visitors.** Found on staging, Nov 12: after saving the Living Room tile row's new "Tile size on the page", R&A setup details said "Rocket.net CDN: asked to clear 4 pages. Reply: {"success":true,…}", yet signed-out visitors to /living-room-collection/ kept getting the old page (`cf-cache-status: HIT`, the copy still aging). The same page with `?v=1` showed the new tiles, so WordPress was rendering it right; only the CDN's copy at the plain address was stale.
+
+- **Root cause:** Promo Manager sent Rocket.net full addresses (`https://gbh0yydkkp.wpdns.site/living-room-collection/`). Rocket.net's purge expects paths (`/living-room-collection/`). It answers "success" either way, but a full address clears nothing. So every Rocket.net clear since 1.28.1 reported success and cleared nothing. This was also the unexplained "Home 2 stays cached" from 1.28.2.
+- **Evidence (staging, 2026-11-12):**
+  - Rocket.net's own **Tools › CDN Cache Purge** form ("CDN Cache Plugin" 1.1.14) asks for paths: "/wp-content/theme/style.css", "/some-url/".
+  - That form with the full address said "CDN Cache has been Successfully Purged", but the page stayed a `HIT` with the old tiles and kept aging (age 420, 425, 430).
+  - The same form with `/living-room-collection/` cleared it at once: `MISS`, then fresh `HIT`s with the new 400 px tiles, at both Cloudflare locations seen (CLE and CMH).
+  - No origin cache is involved: a tablet visitor's copy (Rocket.net keeps separate computer, tablet and phone copies) came back `MISS` from the plain address with the new tiles.
+- **The fix:** `RAPM_Cache::clear_rocket_net()` turns each page address into its path before calling `CDN_Clear_Cache_Api::cache_api_call( $paths, 'purge' )`. The home page becomes `/`, a query string is kept, duplicates are dropped, and an address on another website is skipped. R&A setup details now list the paths sent.
+- **Not changed:** when a spot sits in a template or widget, Rocket.net still gets only the spot's known pages (no "clear everything" call is known for it).
+
+---
+
 ## 1.68.0
 
 **Tile row sizes.** Phil, Nov 12, on Vinson's Promotions page: the Tile row card says "1080 × 1080", but the tiles showed at 200 × 200, too small to read the fine print on Black Friday art. Mockup approved ("Proceed"): https://claude.ai/artifact/MWAxM6vBBffXpGnsGgV1gA

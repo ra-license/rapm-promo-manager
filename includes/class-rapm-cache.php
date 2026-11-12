@@ -18,7 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * Rocket.net (the staging host): its own must-use plugin clears only its
  * own short list of pages (the home page) when a promotion is saved, so
- * the pages a spot shows on are cleared directly (clear_rocket_net()).
+ * the pages a spot shows on are cleared directly, by path
+ * (clear_rocket_net(), fixed in 1.68.1).
  *
  * Every call below was checked against the plugin's own source
  * (WP Rocket 3.23.5.1, LiteSpeed Cache 7.9.1, W3 Total Cache 2.10.7,
@@ -213,14 +214,19 @@ class RAPM_Cache {
 	}
 
 	/**
-	 * Rocket.net's CDN (1.28.1). Its must-use plugin clears only its own
-	 * list of pages when a promotion is saved: on staging, switching a
-	 * promotion off cleared the home page but left "Home 2", the one page
-	 * that promotion shows on, cached with the old banner. Rocket.net
-	 * publishes no developer API. This is the call its own plugin makes to
-	 * clear one post's pages, as quoted from that plugin in WP Rocket
-	 * issue #5252 (github.com/wp-media/wp-rocket/issues/5252):
-	 * CDN_Clear_Cache_Api::cache_api_call( $list_of_urls, 'purge' ).
+	 * Rocket.net's CDN (1.28.1). Its must-use plugin ("CDN Cache Plugin")
+	 * clears only its own list of pages when a promotion is saved, so the
+	 * pages a spot shows on are cleared here with the call its own plugin
+	 * makes: CDN_Clear_Cache_Api::cache_api_call( $list, 'purge' ) (quoted
+	 * from that plugin in github.com/wp-media/wp-rocket/issues/5252).
+	 *
+	 * 1.68.1: the list must be paths ("/living-room-collection/"), not full
+	 * addresses. Rocket.net's own Tools > CDN Cache Purge form asks for
+	 * paths ("/some-url/"). Tested there on staging, 2026-11-12: the full
+	 * https:// address answered "Successfully Purged" but the cached page
+	 * stayed (HIT, still aging); the path cleared it at once (MISS, new
+	 * page). Up to 1.68.0 full addresses were sent, so every Rocket.net
+	 * clear since 1.28.1 said success and cleared nothing.
 	 * Guarded so a renamed class or changed method can never break a save.
 	 */
 	private static function clear_rocket_net( $urls ) {
@@ -247,15 +253,49 @@ class RAPM_Cache {
 			self::note( 'Rocket.net CDN', 'cache_api_call not callable. Methods: ' . implode( ', ', get_class_methods( 'CDN_Clear_Cache_Api' ) ) );
 			return;
 		}
+		$paths = self::rocket_net_paths( $urls );
+		if ( ! $paths ) {
+			self::note( 'Rocket.net CDN', 'no page on this website to clear' );
+			return;
+		}
 		try {
-			$reply = CDN_Clear_Cache_Api::cache_api_call( array_values( $urls ), 'purge' );
+			$reply = CDN_Clear_Cache_Api::cache_api_call( $paths, 'purge' );
 			$reply = is_scalar( $reply ) ? (string) $reply : wp_json_encode( $reply );
-			/* translators: 1: number of pages, 2: what Rocket.net's plugin answered */
-			self::note( 'Rocket.net CDN', sprintf( _n( 'asked to clear %1$d page. Reply: %2$s', 'asked to clear %1$d pages. Reply: %2$s', count( $urls ), 'rapm' ), count( $urls ), substr( (string) $reply, 0, 300 ) ) );
+			/* translators: 1: number of pages, 2: the pages, 3: what Rocket.net's plugin answered */
+			self::note( 'Rocket.net CDN', sprintf( _n( 'asked to clear %1$d page (%2$s). Reply: %3$s', 'asked to clear %1$d pages (%2$s). Reply: %3$s', count( $paths ), 'rapm' ), count( $paths ), implode( ', ', $paths ), substr( (string) $reply, 0, 300 ) ) );
 		} catch ( Throwable $e ) {
 			// The page refreshes when its CDN copy expires; say why for R&A.
 			self::note( 'Rocket.net CDN', 'error: ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Full addresses to the paths Rocket.net's purge expects (1.68.1):
+	 * "https://site/living-room-collection/" becomes
+	 * "/living-room-collection/", the home page "/". A query string is
+	 * kept. Addresses on another website are left out (not on this CDN).
+	 */
+	private static function rocket_net_paths( $urls ) {
+		$home_host = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+		$paths     = array();
+		foreach ( $urls as $url ) {
+			$parts = wp_parse_url( (string) $url );
+			if ( ! is_array( $parts ) ) {
+				continue;
+			}
+			if ( ! empty( $parts['host'] ) && strtolower( $parts['host'] ) !== $home_host ) {
+				continue;
+			}
+			$path = isset( $parts['path'] ) && '' !== $parts['path'] ? $parts['path'] : '/';
+			if ( '/' !== $path[0] ) {
+				$path = '/' . $path;
+			}
+			if ( isset( $parts['query'] ) && '' !== $parts['query'] ) {
+				$path .= '?' . $parts['query'];
+			}
+			$paths[ $path ] = true;
+		}
+		return array_keys( $paths );
 	}
 
 	private static function clear_everything() {
