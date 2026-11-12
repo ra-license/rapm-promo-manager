@@ -4,6 +4,17 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Plugin Monitor 1.6.3 (help desk only)
+
+**Every 2 or 4 hours.** Phil, Nov 12: "How much of a load would this be if I had it check every 4 hours?", then "Yes" to adding it.
+
+- "Check every website" now also offers Every 2 hours and Every 4 hours (before: 6, 12, once a day, or only when something changes).
+- **Load:** a round loads each website's pages signed out, once as a computer and once as a phone; for most websites that's just the home page, usually from the cache. That's about 80 page loads a round for 38 websites. Every 4 hours is 6 rounds a day, about 480 loads, against about 320 at every 6 hours: about 4 more cached page views per website per day. The hourly WP Umbrella reads don't change.
+- **Tested:** PHP 7.4 and 8.3 lint clean.
+- **Install:** `~/Desktop/R&A plugin files for Drive/2 RA Plugin Monitor/ra-plugin-monitor.zip` by hand, then pick Every 4 hours on any website's page and Save.
+
+---
+
 ## Plugin Monitor 1.6.2 (help desk only)
 
 **WP Umbrella's "down right now" on the dashboard.** Phil, Nov 12: "let's use the flag on the plugin so if someone is working there they can see it. Also, who will it email when a website is down or the CSS breaks?"
