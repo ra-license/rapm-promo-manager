@@ -4,6 +4,30 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Plugin Monitor 1.5.8 (help desk only)
+
+**WP Umbrella and outages.** Phil, Nov 12: "If the report has already happened from WP Umbrella we don't need to notice it's down." He has a WP Umbrella API key.
+
+- **Checked first (Nov 12, help desk):** 38 websites report in, 32 of them through Woo Native Dimensions. All 38 had a recent visitor check; all said "Looks right".
+- **Before 1.5.8:** a page answering with a server error (500, 502, 503) or WordPress's "critical error" emailed at once, and WP Umbrella usually reports the same outage. A website that doesn't answer at all was "couldn't check", with no email.
+- **New "WP Umbrella token for outages" box,** beside the GitHub token box. Phil pastes the Public API token himself (WP Umbrella › Profile › Public API, public_api scope; not a website's connection key). It's never shown again and only sent to public-api.wp-umbrella.com. Only reads are made. Save and test lists which of the monitor's websites WP Umbrella watches and the uptime answer's field names.
+- **A website that looks down** (every failed page is a 5xx or the critical error) is checked again 15 minutes later instead of emailing at once. WP Umbrella confirms outages from several regions first, so it can lag.
+- **Still down after the recheck:**
+  - If WP Umbrella recorded an outage for it in the last 12 hours, no email; the check says why.
+  - If it didn't (not in WP Umbrella, monitoring off, or WP Umbrella unreachable), the email goes out as before, with the reason.
+- **Unchanged:** a page that loads but is broken (Promo Manager or Elementor styles missing, other errors) emails at once. WP Umbrella doesn't check that. Without a token, everything works as before.
+- **API, from WP Umbrella's own OpenAPI file** (github.com/WP-Umbrella/umbrella-skill): GET /projects (id, name, base_url) and GET /projects/{id}/uptime (confirmed incidents, monitoring_enabled).
+- **Tested:** both PHP versions lint clean (8 files). Against stand-in WP Umbrella answers on 7.4 and 8.3:
+  - website matching with www and https, and a list across pages;
+  - each case: outage recorded, no outage, monitoring off, not in WP Umbrella, token refused (401), WP Umbrella unreachable;
+  - the token never appears in any message.
+- **Not tested:**
+  - Live WP Umbrella answers: the uptime answer's real field names are confirmed by Save and test once the token is in.
+  - The 15-minute recheck on a real outage.
+- **Install:** Phil installs `ra-plugin-monitor.zip` on help.ramarketing.com (the monitor has no updater), then saves the token in the new box.
+
+---
+
 ## Production push: See in your Space 0.11.1 and Universal Room Planner 7.29.1 (2026-11-10)
 
 Phil, Nov 10: "Push to production and I can check kemper."
