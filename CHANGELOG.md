@@ -4,6 +4,27 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Plugin Monitor 1.6.2 (help desk only)
+
+**WP Umbrella's "down right now" on the dashboard.** Phil, Nov 12: "let's use the flag on the plugin so if someone is working there they can see it. Also, who will it email when a website is down or the CSS breaks?"
+
+- **Working since 1.6.1:**
+  - Phil's new Public API token passed Save and test: WP Umbrella watches 81 websites, and 34 of the monitor's 38 are among them.
+  - Not in WP Umbrella: f1mb7cqtvs.wpdns.site, dfqvkj1dfx.onrocket.site, jaxbhu510x.onrocket.site, slonebrothers.com.
+  - WP Umbrella's real uptime answer has monitoring_enabled, uptime_percentage, is_currently_down, from, to, incidents, incidents_total, incidents_returned and response_time.
+- **Every hour,** the monitor reads is_currently_down for each website WP Umbrella watches (one short read each, up to 40 seconds a round). It also reads it right after Save and test.
+- **Each website on By website** has an Uptime line: Down now (with roughly since when), Up (with the last hour's uptime %), Not monitored, Not in WP Umbrella, or Couldn't read. A website that's down counts as needing attention.
+- **New tile at the top:** "Down now (WP Umbrella)".
+- **Outage emails:** WP Umbrella showing the website down right now also counts as "WP Umbrella has reported this", even before the outage shows in its incident list.
+- **Who's emailed:**
+  - The "Email when a check turns red, to…" setting on any website's page, the same for every website. It was phil@ramarketing.com on Nov 12.
+  - It now takes several addresses, separated by commas.
+  - WP Umbrella's own outage alerts go to whoever is set in WP Umbrella.
+- **Tested:** both PHP versions lint clean. Against stand-in answers on 7.4 and 8.3: each Uptime state, "down right now" with no incident yet, and the down-since time kept from one round to the next; no token in any message.
+- **Install:** `~/Desktop/R&A plugin files for Drive/2 RA Plugin Monitor/ra-plugin-monitor.zip` by hand (the monitor's GitHub repos don't exist yet).
+
+---
+
 ## Plugin Monitor 1.6.1 (help desk only)
 
 **Why WP Umbrella refused.** Phil saved the WP Umbrella token on the help desk (monitor 1.6.0, Nov 12). Save and test said "WP Umbrella refused the token (error 403)". Nothing changed: outage emails work as before.
