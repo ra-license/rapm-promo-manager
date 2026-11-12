@@ -81,6 +81,12 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.68.2
+
+**Cleanup: 1.68.1 shipped four stray files.** `plain.html`, `plain.h`, `q.html` and `q.h` were saved into the plugin folder by mistake. They were copies of staging's signed-out /living-room-collection/ page and its response headers, captured while finding the Rocket.net root cause, and they went out in the v1.68.1 tag. They held nothing private: the same page any visitor gets, plus Cloudflare's bot-check cookie. They did nothing on a website, but a site with 1.68.1 serves them from its plugin folder. 1.68.2 removes them; updating deletes them from the site. No code changes.
+
+---
+
 ## 1.68.1
 
 **Fix: on Rocket.net websites, a saved promotion or spot setting didn't reach visitors.** Found on staging, Nov 12: after saving the Living Room tile row's new "Tile size on the page", R&A setup details said "Rocket.net CDN: asked to clear 4 pages. Reply: {"success":true,…}", yet signed-out visitors to /living-room-collection/ kept getting the old page (`cf-cache-status: HIT`, the copy still aging). The same page with `?v=1` showed the new tiles, so WordPress was rendering it right; only the CDN's copy at the plain address was stale.
