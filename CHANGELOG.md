@@ -4,6 +4,25 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Plugin Monitor 1.6.0 (help desk only)
+
+**The monitor updates itself.** Phil, Nov 12, after "the plugin monitor is already installed there": "We need to make it so the monitor can auto update as needed."
+
+- **Before:** every new monitor version had to be uploaded by hand (Plugins › Add New › Upload › Replace current with uploaded). The monitor had no GitHub repo and no updater.
+- **Now:** the same plugin-update-checker library as Woo Native Dimensions.
+  - It reads the newest version tag of ra-license/ra-plugin-monitor, or ra-plugin-monitor-staging with `define( 'RAPMON_UPDATE_CHANNEL', 'staging' );` on the staging site.
+  - It uses the GitHub token already saved in the monitor.
+  - Automatic updates are on, like the other R&A plugins, so WordPress installs a new tag in its twice-daily updates.
+  - Opt out with `define( 'RA_PLUGINS_AUTO_UPDATE', false );`. Plugins › "Check for updates" still works.
+- **Includes 1.5.8** (WP Umbrella outages).
+- **One last upload by hand:** `ra-plugin-monitor.zip` (1.6.0). After that, releases arrive on their own.
+- **Needs from Phil:**
+  - Create ra-license/ra-plugin-monitor and ra-license/ra-plugin-monitor-staging, private like Room Planner. Then the main branch and tags v1.5.8 and v1.6.0 get pushed.
+  - Make sure the GitHub token saved in the monitor can read them. A fine-grained token lists its repos.
+- **Tested:** PHP 7.4 and 8.3 lint clean. Not tested yet: a real update from the repo (needs the repos and 1.6.0 installed).
+
+---
+
 ## Plugin Monitor 1.5.8 (help desk only)
 
 **WP Umbrella and outages.** Phil, Nov 12: "If the report has already happened from WP Umbrella we don't need to notice it's down." He has a WP Umbrella API key.
