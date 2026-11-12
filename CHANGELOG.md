@@ -85,7 +85,7 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 **Cleanup: 1.68.1 shipped four stray files.** `plain.html`, `plain.h`, `q.html` and `q.h` were saved into the plugin folder by mistake. They were copies of staging's signed-out /living-room-collection/ page and its response headers, captured while finding the Rocket.net root cause, and they went out in the v1.68.1 tag. They held nothing private: the same page any visitor gets, plus Cloudflare's bot-check cookie. They did nothing on a website, but a site with 1.68.1 serves them from its plugin folder. 1.68.2 removes them; updating deletes them from the site. No code changes.
 - **On staging (2026-11-12):** updated from 1.68.1 through Check for updates. All four addresses under /wp-content/plugins/rapm-promo-manager/ stopped serving the files (they now redirect to the home page). /living-room-collection/ still shows the Large tiles, loading rapm-marquee.css?ver=1.68.2.
-- **Production:** 1.68.1 was pushed to production on 2026-11-12 with Phil's OK ("Push to production"): origin main db21f11, tag v1.68.1. 1.68.2 waits for Phil's OK.
+- **Production:** 1.68.1 was pushed to production on 2026-11-12 with Phil's OK ("Push to production"): origin main db21f11, tag v1.68.1. 1.68.2 pushed to production the same day with Phil's OK ("Push 1.68.2"): origin main abcdf44, tag v1.68.2. Sites on 1.68.1 delete the stray files when they update. Zip: `rapm-promo-manager.zip` (built from v1.68.2, one `rapm-promo-manager/` folder).
 
 ---
 
