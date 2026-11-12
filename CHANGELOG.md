@@ -98,6 +98,8 @@ Phil, Nov 10: "Push to production and I can check kemper."
   - The Training guide and the kind's one-line help mention both sizes.
   - Editors who aren't administrators see the spot's size as a line of text.
 - **Saving a size** clears the page cache for the pages the spot is on. The change log records it, like any spot setting.
+- **On staging (2026-11-12),** signed out, "Living Room tiles" set to Large: 4 tiles fill the 1,240 px row on a computer (292 px each); on a phone, 305 px, one per row, centered, no sideways scroll. Small before the change: unchanged at 200 px. Found: Rocket.net's purge answered "success", but the plain page address kept the old copy (a separate task is looking for the cause).
+- **In production (2026-11-12).** main 9fde66b with tags v1.67.1 and v1.68.0.
 - **Tested on the bench:**
   - PHP 7.4 and 8.3: 132 files, 0 errors; the admin script parses.
   - Each size with 3 tiles in a row set to 3. At 1440 px: 200, 300, 400 and 540 (2 + 1), every row centered.
