@@ -4,6 +4,13 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Plugin Monitor 1.9.1: problem tiles are links (production, Nov 16, 2026)
+
+- **Why.** Phil: "How do I check the failed visitor check without scrolling through all the websites? There should be a link for this."
+- **What.** "Failed the visitor check", "Waiting for you to approve" and "Down now (WP Umbrella)" are links ("Show these →") when they aren't 0. Each opens a list of just those websites (`&show=visitor|waiting|down`), each with its summary box (What was found opens on its own for the visitor list), "Check as a visitor" (comes back to the same list) and "Open this website's page", plus "← Back to everything". "Need attention" opens All plugins with "Only show what needs attention" ticked (`&only=bad`).
+- **Staging (gbh0yydkkp):** installed by zip (staging has no GitHub token for the private repo). Need attention opened All plugins with the box ticked; the visitor list opened with "Nothing here right now" (staging only monitors itself).
+- **Production (Phil's OK):** main and v1.9.1 pushed to ra-license/ra-plugin-monitor; the help desk found it with Check for updates and installed it ("Version 1.9.1"). The visitor tile showed "Show these →"; the list showed Mecklenburg Home Furniture and Mattress (jaxbhu510x.onrocket.site) with the Markdown leak finding open. Drive zip replaced.
+
 ## Plugin Monitor 1.9.0: Markdown leak test (production, Nov 16, 2026)
 
 - **Why.** The visitor check flagged Markdown on 5 websites (Martin, 5th and Main, American Crafted, Frazier & Son, Giorgi Bros), but testing every website by hand found 14 live ones that could show shoppers raw Markdown. The cause on all of them is SEOPress PRO's "Agent Readiness": it answers AI tools (Accept: text/markdown) from the page's own address without `Vary: Accept`, so Cloudflare saves the Markdown as the page. The other 42 websites use Cloudflare's own Markdown for Agents, which marks its copies and kept shoppers on the page in every test. The visitor check only sees damage already cached, so websites not yet hit passed. Phil: "what do we need to do to make it pick up the ones it missed?"
