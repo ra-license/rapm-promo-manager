@@ -215,6 +215,14 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.69.1
+
+**Fix: 1.69.0 took staging down.** 1.69.0 was missing the closing `}` of `RAPM_Hero_Carousel`, so the plugin couldn't load and every page on staging, admin included, showed WordPress's "critical error" (Nov 16, a few minutes after updating; the Plugins page still showed "updated!" because that request ran on the old code). Never reached production or a client site.
+- **Root cause:** after the syntax check passed, a one-line `sed` used to remove a blank line (`N;…;P;D`) also dropped the file's last line on macOS, whose `sed` quits without printing the last line when `N` hits the end. The check was not run again before the commit.
+- **Found by** requesting each changed file directly on staging: a file that can't be compiled answers 500 before its own `ABSPATH` guard runs. Only class-rapm-hero-carousel.php did, and its last line was missing compared with v1.68.2.
+- **Fix:** the brace is back. Every PHP file parses on 7.4 and 8.3, checked on the files as committed.
+- **Rule from this:** run the syntax check on the final files right before each commit, and don't edit PHP with multi-line `sed`.
+
 ## 1.69.0
 
 **Between-sales slides and store-time dates.** Step 2 of the integration plan (Phil, Nov 16: "start step 2"). Decision 8, option A, in the Approved Art Pipeline brief (https://claude.ai/artifact/XJnkaLjqL57qJ8ykm5oapF), from Kenna Walls' request at Kemper (Sep 23, and ticket #1594): "between sales when no promotion is running, I'd like to have a default image and text to reappear."

@@ -465,3 +465,4 @@ class RAPM_Hero_Carousel {
 		}
 		RAPM_Assets::need( 'hero' );
 	}
+}
