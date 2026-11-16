@@ -71,6 +71,10 @@ class RAPM_Admin_List {
 		if ( $ends && strtotime( $ends ) < $now ) {
 			return __( 'Expired', 'rapm' );
 		}
+		// 1.69.0: a between-sales promotion waits while another one in its spot is showing.
+		if ( RAPM_Between::is_on( $post_id ) && false !== RAPM_Between::waiting( get_post( $post_id ) ) ) {
+			return __( 'Waiting (between sales)', 'rapm' );
+		}
 		return __( 'Live', 'rapm' );
 	}
 

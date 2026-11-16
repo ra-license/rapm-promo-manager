@@ -120,7 +120,7 @@ class RAPM_Coupon_Book {
 
 		$tag = $url ? 'a' : 'div';
 		?>
-		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-coupon-card" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>">
+		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-coupon-card" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>">
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 480px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />

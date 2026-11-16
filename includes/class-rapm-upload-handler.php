@@ -1619,8 +1619,17 @@ class RAPM_Upload_Handler {
 						<th><label for="rapm_ends_at"><?php esc_html_e( 'Stop showing on', 'rapm' ); ?></label></th>
 						<td><input type="datetime-local" id="rapm_ends_at" name="rapm_ends_at" value="<?php echo esc_attr( $m( '_rapm_ends_at' ) ); ?>" />
 							<?php RAPM_Tip::hint( __( 'Leave blank to keep it on until you change it.', 'rapm' ), __( 'If you set an end time, it turns off right on time, by itself.', 'rapm' ) ); ?>
+							<p class="description rapm-store-time"><?php echo esc_html( RAPM_Store_Time::form_note() ); // 1.69.0 ?></p>
 						</td>
 					</tr>
+					<?php if ( RAPM_Between::applies( $kind_key ) ) : // 1.69.0 ?>
+					<tr>
+						<th><?php esc_html_e( 'Between sales', 'rapm' ); ?></th>
+						<td><label for="rapm_between_sales"><input type="checkbox" id="rapm_between_sales" name="rapm_between_sales" value="1" <?php checked( '1', (string) $m( RAPM_Between::META ) ); ?> /> <?php esc_html_e( 'Show this only when nothing else is showing here', 'rapm' ); ?></label>
+							<?php RAPM_Tip::hint( __( 'Tick it for your regular slide. It steps aside while a sale runs here and comes back when the sale ends.', 'rapm' ), __( 'Any other promotion showing in this spot sends it back to waiting, and it returns by itself when the last one ends, so the spot is never empty between sales. Nobody has to change its dates.', 'rapm' ) ); ?>
+						</td>
+					</tr>
+					<?php endif; ?>
 				</table>
 
 				<?php
@@ -1985,6 +1994,8 @@ class RAPM_Upload_Handler {
 				update_post_meta( $asset_id, '_' . $field, call_user_func( $sanitizer, wp_unslash( $_POST[ $field ] ) ) );
 			}
 		}
+		// 1.69.0: shown only when nothing else is showing in its spot.
+		RAPM_Between::save( $asset_id, $kind_key );
 		// 1.62.0: a font for each line of words on the picture.
 		if ( RAPM_Line_Fonts::applies( $kind_key ) ) {
 			RAPM_Line_Fonts::save( $asset_id );

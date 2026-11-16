@@ -14,6 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class RAPM_Hero_Carousel {
 
+	/** 1.69.0: whether a promotion that isn't between-sales is showing in the carousel being printed. */
+	private static $sale_live = false;
+
 	public static function shortcode_hero( $atts ) {
 		return self::render( 'hero', $atts, 'rapm_hero' );
 	}
@@ -140,6 +143,7 @@ class RAPM_Hero_Carousel {
 				// 1.40.1: a Slider's first picture is usually the first thing
 				// on the page, so it loads right away (see render_slide()).
 				$eager = 'hero' === $kind_key;
+				self::$sale_live = RAPM_Between::sale_live_in( $query->posts ); // 1.69.0
 				foreach ( $query->posts as $post ) {
 					$heading = $main_heading && ! $h1_used ? 'h1' : 'h2';
 					if ( self::render_slide( $post->ID, $heading, $eager ) && 'h1' === $heading ) {
@@ -234,8 +238,10 @@ class RAPM_Hero_Carousel {
 		$goes = RAPM_Split::goes_with( $asset_id );
 		// 1.54.0: what stays in view when the picture is trimmed (split view).
 		$focus_vars = RAPM_Focal::style_vars( $asset_id );
+		// 1.69.0: a between-sales slide, shown only when nothing else here is (rapm-schedule.js).
+		$between = RAPM_Between::is_on( $asset_id );
 		?>
-		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?><?php echo $picture_only ? ' is-picture-only' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>"<?php echo $goes ? ' data-rapm-goes="' . (int) $goes . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- an integer. ?><?php echo $focus_vars ? ' style="' . esc_attr( $focus_vars ) . '"' : ''; ?>>
+		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?><?php echo $picture_only ? ' is-picture-only' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>"<?php echo $between ? ' data-rapm-between' : ''; ?><?php echo $goes ? ' data-rapm-goes="' . (int) $goes . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- an integer. ?><?php echo $focus_vars ? ' style="' . esc_attr( $focus_vars ) . '"' : ''; ?>>
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 768px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />
@@ -258,7 +264,8 @@ class RAPM_Hero_Carousel {
 				// swapping in a placeholder. On Kemper that placeholder
 				// delayed the hero and threw off the product dots. The other
 				// slides stay lazy.
-				$first      = $eager && RAPM_Quick_Links::is_live_now( $starts_at, $ends_at );
+				// 1.69.0: a between-sales slide waiting for a sale to end isn't first.
+				$first      = $eager && RAPM_Quick_Links::is_live_now( $starts_at, $ends_at ) && ! ( $between && self::$sale_live );
 				$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
 				if ( $first ) {
 					$eager = false;
@@ -458,4 +465,3 @@ class RAPM_Hero_Carousel {
 		}
 		RAPM_Assets::need( 'hero' );
 	}
-}

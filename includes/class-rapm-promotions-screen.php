@@ -356,7 +356,7 @@ class RAPM_Promotions_Screen {
 	 * in the site's own timezone. Visitors' browsers make the same
 	 * start/end decision on the live site (rapm-schedule.js).
 	 *
-	 * @return array state ('showing'|'upcoming'|'hidden'|'ended'), status, when, soon (ends within 7 days).
+	 * @return array state ('showing'|'upcoming'|'waiting'|'hidden'|'ended'), status, when, soon (ends within 7 days).
 	 */
 	public static function describe( $post ) {
 		$tz    = wp_timezone();
@@ -387,7 +387,22 @@ class RAPM_Promotions_Screen {
 			);
 		}
 
-		$d = array( 'state' => 'showing', 'status' => __( 'Showing now', 'rapm' ), 'when' => __( 'No end date', 'rapm' ), 'soon' => false );
+		// 1.69.0: a between-sales promotion waits while another one here is showing.
+		$between = RAPM_Between::is_on( $post->ID );
+		if ( $between ) {
+			$back = RAPM_Between::waiting( $post );
+			if ( false !== $back ) {
+				return array(
+					'state'  => 'waiting',
+					'status' => __( 'Between sales: waiting', 'rapm' ),
+					/* translators: %s: a date and time like "Oct 31, 6:00 PM" */
+					'when'   => $back ? sprintf( __( 'Back %s', 'rapm' ), wp_date( 'M j, g:i A', $back ) ) : __( 'Back when the other promotions here end', 'rapm' ),
+					'soon'   => false,
+				);
+			}
+		}
+
+		$d = array( 'state' => 'showing', 'status' => $between ? __( 'Between sales: showing', 'rapm' ) : __( 'Showing now', 'rapm' ), 'when' => $between ? __( 'Steps aside when a sale starts', 'rapm' ) : __( 'No end date', 'rapm' ), 'soon' => false );
 		if ( $end ) {
 			$left = (int) $now->setTime( 0, 0 )->diff( $end->setTime( 0, 0 ) )->days;
 			if ( 0 === $left ) {
@@ -405,9 +420,31 @@ class RAPM_Promotions_Screen {
 		return $d;
 	}
 
+	/**
+	 * 1.69.0: "This spot will be empty after Nov 2". Every promotion still
+	 * to come here ends, and none is between-sales, so after the last one
+	 * the spot drops off the page. Behind the empty and out-of-date
+	 * rotators flagged at Wagner's, Stacy and Short Furniture.
+	 */
+	private static function render_empty_warning( $kind, $posts ) {
+		if ( ! RAPM_Between::applies( $kind ) ) {
+			return;
+		}
+		$after = RAPM_Between::empty_after( $posts );
+		if ( ! $after ) {
+			return;
+		}
+		?>
+		<div class="notice notice-warning inline rapm-empty-warning">
+			<p><strong><?php echo esc_html( sprintf( /* translators: %s: a date and time like "Nov 2, 11:59 PM" */ __( 'This spot will be empty after %s', 'rapm' ), wp_date( 'M j, g:i A', $after ) ) ); ?></strong></p>
+			<p><?php esc_html_e( 'Every promotion here has an end date and nothing is set to follow them. Tick "Between sales" on your regular slide, or add one with no end date, so the spot isn’t blank between sales.', 'rapm' ); ?></p>
+		</div>
+		<?php
+	}
+
 	/** "3 showing now · 1 starting later · 1 hidden" for a spot's posts. */
 	public static function count_line( $posts ) {
-		$n = array( 'showing' => 0, 'upcoming' => 0, 'hidden' => 0 );
+		$n = array( 'showing' => 0, 'upcoming' => 0, 'waiting' => 0, 'hidden' => 0 );
 		foreach ( $posts as $post ) {
 			$state = self::describe( $post )['state'];
 			if ( isset( $n[ $state ] ) ) {
@@ -419,6 +456,10 @@ class RAPM_Promotions_Screen {
 		if ( $n['upcoming'] ) {
 			/* translators: %d: how many promotions have a start date still to come */
 			$parts[] = sprintf( _n( '%d starting later', '%d starting later', $n['upcoming'], 'rapm' ), $n['upcoming'] );
+		}
+		if ( $n['waiting'] ) {
+			/* translators: %d: how many between-sales promotions are waiting for a sale to end */
+			$parts[] = sprintf( _n( '%d waiting between sales', '%d waiting between sales', $n['waiting'], 'rapm' ), $n['waiting'] );
 		}
 		if ( $n['hidden'] ) {
 			/* translators: %d: how many promotions are switched off */
@@ -744,6 +785,7 @@ class RAPM_Promotions_Screen {
 					<p class="rapm-spot-count"><?php echo esc_html( self::count_line( $spot['posts'] ) ); ?></p>
 				<?php endif; ?>
 			</div>
+			<?php self::render_empty_warning( $kind, $spot['posts'] ); // 1.69.0 ?>
 
 			<?php if ( 'look' === $kind ) : ?>
 				<?php self::render_tab_order( $live ); ?>

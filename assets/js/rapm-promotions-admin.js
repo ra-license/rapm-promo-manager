@@ -121,7 +121,7 @@
 	/* ---- On/off switch ---------------------------------------------------- */
 
 	function applyState( card, d ) {
-		card.classList.remove( 'is-showing', 'is-upcoming', 'is-hidden', 'is-ended' );
+		card.classList.remove( 'is-showing', 'is-upcoming', 'is-waiting', 'is-hidden', 'is-ended' );
 		card.classList.add( 'is-' + d.state );
 		card.querySelector( '.rapm-pill-text' ).textContent = d.status;
 		var when = card.querySelector( '.rapm-when' );

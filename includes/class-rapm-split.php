@@ -496,7 +496,7 @@ class RAPM_Split {
 		$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
 		if ( $design ) {
 			list( $inner, $bg ) = self::render_design( $asset_id, $src, $url, $load_attrs );
-			return '<div class="rapm-pb-item is-design" data-rapm-key="' . (int) $asset_id . '" data-rapm-start="' . esc_attr( $starts_at ) . '" data-rapm-end="' . esc_attr( $ends_at ) . '" hidden style="' . esc_attr( 'background:' . $bg . ';' . RAPM_Focal::style_vars( $asset_id ) ) . '">' . $inner . '</div>';
+			return '<div class="rapm-pb-item is-design" data-rapm-key="' . (int) $asset_id . '" data-rapm-start="' . esc_attr( RAPM_Store_Time::attr( $starts_at ) ) . '" data-rapm-end="' . esc_attr( RAPM_Store_Time::attr( $ends_at ) ) . '" hidden style="' . esc_attr( 'background:' . $bg . ';' . RAPM_Focal::style_vars( $asset_id ) ) . '">' . $inner . '</div>';
 		}
 		// A finished graphic (no words over it) is shown whole, with a
 		// blurred copy of itself behind any gap, so its own words are never
@@ -506,7 +506,7 @@ class RAPM_Split {
 		$style = $has_words ? ( RAPM_Focal::style_vars( $asset_id ) ? ' style="' . esc_attr( RAPM_Focal::style_vars( $asset_id ) ) . '"' : '' ) : ' style="--rapm-blur:url(&quot;' . esc_url( $src ) . '&quot;);"';
 		ob_start();
 		?>
-		<div class="rapm-pb-item<?php echo $has_words ? '' : ' is-picture-only'; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>" hidden<?php echo $style; // phpcs:ignore WordPress.Security.EscapeOutput -- URL escaped above. ?>>
+		<div class="rapm-pb-item<?php echo $has_words ? '' : ' is-picture-only'; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>" hidden<?php echo $style; // phpcs:ignore WordPress.Security.EscapeOutput -- URL escaped above. ?>>
 			<img class="rapm-pb-img" src="<?php echo esc_url( $src ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> />
 			<?php if ( $has_words ) : ?>
 				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>" data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">

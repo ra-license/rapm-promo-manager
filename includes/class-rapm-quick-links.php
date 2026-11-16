@@ -189,7 +189,7 @@ class RAPM_Quick_Links {
 		ob_start();
 		?>
 		<?php $focus_vars = RAPM_Focal::style_vars( $asset_id ); // 1.54.0 ?>
-		<li class="rapm-ql-item"<?php echo $focus_vars ? ' style="' . esc_attr( $focus_vars ) . '"' : ''; ?> data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( $starts_at ); ?>" data-rapm-end="<?php echo esc_attr( $ends_at ); ?>" <?php echo $live ? '' : 'hidden'; ?>>
+		<li class="rapm-ql-item"<?php echo $focus_vars ? ' style="' . esc_attr( $focus_vars ) . '"' : ''; ?> data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>" <?php echo $live ? '' : 'hidden'; ?>>
 			<<?php echo esc_html( $tag ); ?> class="rapm-ql-link" <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?>>
 				<span class="rapm-ql-image"><?php echo $img; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_get_attachment_image() output. ?></span>
 				<?php if ( $headline || $subhead ) : ?>

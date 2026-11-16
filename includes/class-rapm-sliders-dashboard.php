@@ -110,7 +110,7 @@ class RAPM_Sliders_Dashboard {
 						$starts = get_post_meta( $p->ID, '_rapm_starts_at', true );
 						$ends   = get_post_meta( $p->ID, '_rapm_ends_at', true );
 						$now    = current_time( 'timestamp' ); // phpcs:ignore WordPress.DateTime.CurrentTimeTimestamp
-						if ( ( ! $starts || strtotime( $starts ) <= $now ) && ( ! $ends || strtotime( $ends ) >= $now ) ) {
+						if ( ( ! $starts || strtotime( $starts ) <= $now ) && ( ! $ends || strtotime( $ends ) >= $now ) && false === RAPM_Between::waiting( $p ) ) { // 1.69.0: not a between-sales slide that's waiting.
 							++$live_count;
 						}
 					}

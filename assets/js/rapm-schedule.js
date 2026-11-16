@@ -104,8 +104,13 @@
 		// set on the Sliders screen, then cut to "show at most" if set. The
 		// cap is applied after the schedule check, so a promotion that hasn't
 		// started yet (or has ended) never takes up one of the spots.
+		// 1.69.0: a between-sales slide (data-rapm-between) steps aside
+		// while any other slide here is live, and comes back when the last
+		// one ends (Kenna's request, RAPM_Between).
 		function shownSlides() {
 			var active = allSlides.filter( isActive );
+			var others = active.filter( function ( s ) { return ! s.hasAttribute( 'data-rapm-between' ); } );
+			if ( others.length ) { active = others; }
 			active = max ? active.slice( 0, max ) : active;
 			return 'function' === typeof root.rapmArrange ? root.rapmArrange( active ) : active;
 		}

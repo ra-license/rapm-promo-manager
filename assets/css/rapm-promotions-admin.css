@@ -49,6 +49,11 @@
 .rapm-card.is-showing .rapm-dot { background: #00a32a; }
 .rapm-card.is-upcoming .rapm-pill { background: #e5f0fa; color: #0a4b78; }
 .rapm-card.is-upcoming .rapm-dot { background: #2271b1; }
+/* 1.69.0: a between-sales promotion waiting for a sale to end. */
+.rapm-card.is-waiting .rapm-pill { background: #f6f0e3; color: #6b4a00; }
+.rapm-card.is-waiting .rapm-dot { background: #b8860b; }
+.rapm-empty-warning { margin: 4px 0 12px; }
+.rapm-empty-warning p { margin: 4px 0; }
 .rapm-when { font-size: 12px; color: #50575e; }
 .rapm-when.is-soon { color: #8a4b00; }
 .rapm-card-issue { margin: 0; font-size: 12px; color: #b32d2e; }

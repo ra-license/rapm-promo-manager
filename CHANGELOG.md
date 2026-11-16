@@ -215,6 +215,20 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.69.0
+
+**Between-sales slides and store-time dates.** Step 2 of the integration plan (Phil, Nov 16: "start step 2"). Decision 8, option A, in the Approved Art Pipeline brief (https://claude.ai/artifact/XJnkaLjqL57qJ8ykm5oapF), from Kenna Walls' request at Kemper (Sep 23, and ticket #1594): "between sales when no promotion is running, I'd like to have a default image and text to reappear."
+
+- **Between sales.** Slider and Feature banner promotions have a new "Between sales" checkbox under When It Should Show: "Show this only when nothing else is showing here". A ticked promotion steps aside while any other promotion in its spot is showing and comes back by itself when the last one ends, so nobody has to re-date the regular slide for each sale. More than one can be ticked. Unticked promotions work exactly as before. Ad servers call these house ads (lowest priority, shown only when nothing else fills the spot). Saved as `_rapm_between_sales` (`RAPM_Between`).
+  - **On the website:** the slide carries `data-rapm-between`, and rapm-schedule.js drops it from the live set when any other live slide is in the carousel. Decided in the shopper's browser like the dates, so it works behind WP Rocket and the CDN, and a page left open switches within a minute. Split sliders' room photos follow the same rule.
+  - **First picture:** a between-sales slide that's waiting no longer gets the "load first" treatment (1.40.1); the first live sale slide does.
+- **Store-time dates.** Root cause, found Oct 14 on Kenna's sale: start and end times are saved without a time zone (the form's datetime-local field) and went to the page as typed, so each shopper's browser read them in its own zone. A sale ending at 6:00 PM ended at 6 PM Eastern for Eastern shoppers, 7 PM Eastern for Chicago and 9 PM Eastern for Los Angeles. Now every kind's start and end go to the page with the store's offset for that date (`RAPM_Store_Time::attr`, e.g. `2026-10-31T18:00:00-04:00`), so every shopper's browser switches at the same moment. Daylight saving is handled per date.
+  - **Safe by default:** a website still on WordPress's out-of-the-box UTC probably never had its time zone set (6 PM UTC is 2 PM Eastern), so there the times go out as before, and the form says so with how to fix it (Settings › General).
+  - The form's date section now says "Times are the store's time (Eastern), for every shopper."
+- **Promotions screen:** a between-sales promotion shows "Between sales: waiting" with "Back Oct 31, 6:00 PM" (when the last thing showing in its spot ends), or "Between sales: showing" with "Steps aside when a sale starts". The spot's count line adds "1 waiting between sales". All Assets and the older Sliders screen count it the same way.
+- **Empty-spot warning:** a Slider or Feature banner spot where every promotion has an end date and none is between-sales gets "This spot will be empty after Nov 2, 11:59 PM" with what to do. This is the case behind the empty or out-of-date rotators flagged at Wagner's, Stacy and Short Furniture.
+- **Checked:** every PHP file parses on PHP 7.4 and 8.3 (php-wasm), and rapm-schedule.js and rapm-promotions-admin.js parse.
+
 ## 1.68.2
 
 **Cleanup: 1.68.1 shipped four stray files.** `plain.html`, `plain.h`, `q.html` and `q.h` were saved into the plugin folder by mistake. They were copies of staging's signed-out /living-room-collection/ page and its response headers, captured while finding the Rocket.net root cause, and they went out in the v1.68.1 tag. They held nothing private: the same page any visitor gets, plus Cloudflare's bot-check cookie. They did nothing on a website, but a site with 1.68.1 serves them from its plugin folder. 1.68.2 removes them; updating deletes them from the site. No code changes.
