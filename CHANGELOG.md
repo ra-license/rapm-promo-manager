@@ -4,6 +4,14 @@ Versions follow semver: PATCH = fixes, MINOR = new backward-compatible features,
 
 ---
 
+## Website Monitor 1.9.2: renamed from Plugin Monitor (production, Nov 16, 2026)
+
+- **Why.** Phil asked whether the name should change, since the monitor now covers far more than plugin versions (visitor check, uptime, caching, help desk connection, Markdown leaks). Options compared with industry naming (ManageWP/MainWP "dashboard", "monitor", "command center", "fleet", "portal"); Phil chose **R&A Website Monitor**, display name only.
+- **What changed:** Plugin Name "R&A Website Monitor" with a new description; left menu and page heading "Website Monitor"; the daily summary email's footer and link. The subject stays "R&A websites: …".
+- **Unchanged on purpose:** folder/zip/slug `ra-plugin-monitor`, the GitHub repos, `page=ra-plugin-monitor`, the `rapmon_*` settings and the `ra-monitor/v1` address client sites report to, so self-updates and check-ins carry on.
+- **Staging:** installed by zip; Plugins page shows "R&A Website Monitor" Version 1.9.2, menu and heading "Website Monitor".
+- **Production (Phil's OK):** main and v1.9.2 pushed; the help desk updated itself via Check for updates / Update now; heading and menu "Website Monitor", "Monitor version 1.9.2", dashboard loads (60 websites). Drive zip replaced (the Drive folder is still "2 RA Plugin Monitor").
+
 ## Plugin Monitor 1.9.1: problem tiles are links (production, Nov 16, 2026)
 
 - **Why.** Phil: "How do I check the failed visitor check without scrolling through all the websites? There should be a link for this."
