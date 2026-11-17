@@ -101,6 +101,36 @@ class RAPM_Spots {
 		return sprintf( __( '%1$s (%2$d × %3$d)', 'rapm' ), $names[ $key ], $px, $px );
 	}
 
+	/**
+	 * 1.72.0 (Phil, Nov 17: "more rectangular or vertical or square?",
+	 * mockup claude.ai/artifact/R8qZh6QpAVa1W91ELdCapk): a Coupon row's card
+	 * shape. Tall is every row before 1.72.0 and stays the default. Each:
+	 * the picture slot (RAPM_Slots), and the card's width and height on
+	 * computers and phones (rapm-coupon-book.css).
+	 */
+	const COUPON_SHAPES = array(
+		'tall'   => array( 'slot' => 'coupon_card', 'w' => 220, 'h' => 275, 'pw' => 170, 'ph' => 213 ),
+		'square' => array( 'slot' => 'coupon_card_square', 'w' => 240, 'h' => 240, 'pw' => 180, 'ph' => 180 ),
+		'wide'   => array( 'slot' => 'coupon_card_wide', 'w' => 330, 'h' => 220, 'pw' => 240, 'ph' => 160 ),
+	);
+
+	/** A Coupon row spot's card shape: tall, square or wide. */
+	public static function coupon_shape( $placement ) {
+		$spot = self::get( 'coupon', $placement );
+		$key  = isset( $spot['shape'] ) ? (string) $spot['shape'] : '';
+		return isset( self::COUPON_SHAPES[ $key ] ) ? $key : 'tall';
+	}
+
+	/** "Square (1:1)". */
+	public static function coupon_shape_label( $key ) {
+		$names = array(
+			'tall'   => __( 'Tall (4:5)', 'rapm' ),
+			'square' => __( 'Square (1:1)', 'rapm' ),
+			'wide'   => __( 'Wide (3:2)', 'rapm' ),
+		);
+		return isset( $names[ $key ] ) ? $names[ $key ] : $names['tall'];
+	}
+
 	/** The type in plain words: Slider, Feature banner, Coupon row, Tile row. */
 	public static function type_label( $kind ) {
 		$info = RAPM_Slots::kind( $kind );

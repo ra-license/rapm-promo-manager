@@ -261,6 +261,23 @@ class RAPM_Promotions_Screen {
 					'hideEnded'   => __( 'Hide ended', 'rapm' ),
 					'nameSaved'   => __( 'Name saved.', 'rapm' ),
 					'sizeSaved'   => __( 'Tile size saved. The page shows it at the next visit.', 'rapm' ),
+					// 1.72.0: Coupon row card shape.
+					'shapeSaved'  => __( 'Card shape saved. The page shows it at the next visit.', 'rapm' ),
+					'shapeHead'   => __( 'Changing to %1$s trims %2$d coupon pictures in this row', 'rapm' ),
+					'shapeHeadOne' => __( 'Changing to %1$s trims 1 coupon picture in this row', 'rapm' ),
+					'shapeText'   => __( 'Their files aren\'t changed: the page shows the part inside the dashed box. To choose what stays in view, open a coupon and drag its point (it appears once the new shape is saved), or upload a new %s picture.', 'rapm' ),
+					'shapeWords'  => __( 'No typed words: its offer is probably in the picture and could be cut off.', 'rapm' ),
+					'shapeEdit'   => __( 'Open', 'rapm' ),
+					'shapeChange' => __( 'Change to %s', 'rapm' ),
+					'shapeKeep'   => __( 'Keep %s', 'rapm' ),
+					'shapes'      => array_map(
+						function ( $key ) {
+							$c    = RAPM_Spots::COUPON_SHAPES[ $key ];
+							$slot = RAPM_Slots::get( $c['slot'] );
+							return array( 'label' => RAPM_Spots::coupon_shape_label( $key ), 'w' => (int) $slot['width'], 'h' => (int) $slot['height'] );
+						},
+						array_combine( array_keys( RAPM_Spots::COUPON_SHAPES ), array_keys( RAPM_Spots::COUPON_SHAPES ) )
+					),
 					'noResults'   => __( 'No promotions match “%s”.', 'rapm' ),
 					'confirmRemove' => __( 'Remove "%s"? It has no promotions and isn\'t on any page.', 'rapm' ),
 					// 1.52.0: linked groups.
@@ -861,6 +878,36 @@ class RAPM_Promotions_Screen {
 							<?php
 							/* translators: %s: tile size, e.g. "Large (400 × 400)" */
 							echo esc_html( sprintf( __( 'Tile size on the page: %s. An administrator can change it.', 'rapm' ), RAPM_Spots::tile_size_label( $tile_size ) ) );
+							?>
+						</p>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( 'coupon' === $kind ) : // 1.72.0: card shape. ?>
+					<?php $coupon_shape = RAPM_Spots::coupon_shape( $placement ); ?>
+					<?php if ( current_user_can( 'manage_options' ) ) : // It changes the live site, so administrators only (as the Tile row size). ?>
+						<form class="rapm-coupon-shape" data-current="<?php echo esc_attr( $coupon_shape ); ?>" data-coupons="<?php echo esc_attr( wp_json_encode( self::coupon_pictures( $placement ) ) ); ?>">
+							<fieldset>
+								<legend><?php esc_html_e( 'Card shape', 'rapm' ); ?></legend>
+								<?php foreach ( RAPM_Spots::COUPON_SHAPES as $key => $c ) : ?>
+									<?php $cslot = RAPM_Slots::get( $c['slot'] ); ?>
+									<label>
+										<input type="radio" name="coupon_shape" value="<?php echo esc_attr( $key ); ?>" <?php checked( $coupon_shape, $key ); ?> />
+										<span class="rapm-shape-swatch" style="<?php echo esc_attr( 'width:' . round( $c['w'] / 9 ) . 'px;height:' . round( $c['h'] / 9 ) . 'px;' ); ?>" aria-hidden="true"></span>
+										<?php echo esc_html( RAPM_Spots::coupon_shape_label( $key ) ); ?>
+										<?php /* translators: 1: width, 2: height */ ?>
+										<span class="description"> · <?php echo esc_html( sprintf( __( 'upload %1$d × %2$d', 'rapm' ), (int) $cslot['width'], (int) $cslot['height'] ) ); ?></span>
+									</label>
+								<?php endforeach; ?>
+							</fieldset>
+							<div class="rapm-shape-warn" hidden></div>
+							<button type="submit" class="button button-small"><?php esc_html_e( 'Save shape', 'rapm' ); ?></button>
+						</form>
+						<p><?php esc_html_e( 'Every coupon in this row, and any card made for a shopper, takes this shape on computers and phones. New pictures are checked against its size.', 'rapm' ); ?></p>
+					<?php else : ?>
+						<p>
+							<?php
+							/* translators: %s: card shape, e.g. "Square (1:1)" */
+							echo esc_html( sprintf( __( 'Card shape: %s. An administrator can change it.', 'rapm' ), RAPM_Spots::coupon_shape_label( $coupon_shape ) ) );
 							?>
 						</p>
 					<?php endif; ?>
@@ -1726,6 +1773,52 @@ class RAPM_Promotions_Screen {
 				'countLine' => self::count_line( self::spot_posts( $kind, $placement ) ),
 			)
 		);
+	}
+
+	/**
+	 * 1.72.0: what the card-shape warning needs about each coupon in a row:
+	 * its picture's size and thumbnail, its "What stays in view" point,
+	 * whether it has typed words (without them, the offer is probably in
+	 * the picture and could be cut off), and its form.
+	 */
+	private static function coupon_pictures( $placement ) {
+		$out = array();
+		foreach ( self::spot_posts( 'coupon', $placement ) as $p ) {
+			$img  = (int) get_post_meta( $p->ID, '_rapm_image_desktop_id', true );
+			$meta = $img ? wp_get_attachment_metadata( $img ) : array();
+			if ( ! $img || empty( $meta['width'] ) || empty( $meta['height'] ) ) {
+				continue;
+			}
+			$focus = RAPM_Focal::get( $p->ID, 'desktop' );
+			$xy    = $focus ? array_map( 'floatval', explode( ' ', str_replace( '%', '', $focus ) ) ) : array( 50, 50 );
+			$out[] = array(
+				'name'  => html_entity_decode( get_the_title( $p ), ENT_QUOTES, 'UTF-8' ),
+				'src'   => (string) wp_get_attachment_image_url( $img, 'medium' ),
+				'w'     => (int) $meta['width'],
+				'h'     => (int) $meta['height'],
+				'fx'    => $xy[0],
+				'fy'    => $xy[1],
+				'words' => '' !== trim( get_post_meta( $p->ID, '_rapm_headline', true ) . get_post_meta( $p->ID, '_rapm_subhead', true ) ),
+				'edit'  => admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $p->ID ),
+			);
+		}
+		return $out;
+	}
+
+	/** 1.72.0: a Coupon row spot's card shape (administrators only: it changes the live site). */
+	public static function ajax_coupon_shape() {
+		check_ajax_referer( self::NONCE, 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Not allowed.', 'rapm' ) ), 403 );
+		}
+		$placement = isset( $_POST['placement'] ) ? sanitize_title( wp_unslash( $_POST['placement'] ) ) : '';
+		$shape     = isset( $_POST['shape'] ) ? sanitize_key( wp_unslash( $_POST['shape'] ) ) : '';
+		if ( ! $placement || ! isset( RAPM_Spots::COUPON_SHAPES[ $shape ] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Missing spot or shape.', 'rapm' ) ), 400 );
+		}
+		RAPM_Spots::update( 'coupon', $placement, array( 'shape' => 'tall' === $shape ? null : $shape ) );
+		RAPM_Cache::queue_spot( 'coupon|' . $placement ); // clear the pages it's on
+		wp_send_json_success( array( 'shape' => RAPM_Spots::coupon_shape( $placement ) ) );
 	}
 
 	/** 1.68.0: a Tile row spot's tile size (administrators only: it changes the live site). */

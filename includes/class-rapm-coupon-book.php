@@ -52,12 +52,13 @@ class RAPM_Coupon_Book {
 		}
 
 		$instance_id = 'rapm-coupons-' . $placement . '-' . wp_unique_id();
+		$shape       = RAPM_Spots::coupon_shape( $placement ); // 1.72.0
 
 		ob_start();
 		echo RAPM_Assets::need( 'coupon_book' ); // phpcs:ignore WordPress.Security.EscapeOutput -- core-generated link and script tags.
 		?>
 		<div class="rapm-coupon-book-wrap <?php echo esc_attr( $instance_id ); ?>-wrap">
-			<div class="rapm-coupon-book <?php echo esc_attr( $instance_id ); ?>" data-rapm-coupon-book<?php echo RAPM_Interests::row_attr( $placement ); // phpcs:ignore WordPress.Security.EscapeOutput -- a fixed attribute name. ?> style="display:none;">
+			<div class="rapm-coupon-book <?php echo esc_attr( $instance_id ); ?>" data-rapm-coupon-book<?php echo 'tall' === $shape ? '' : ' data-shape="' . esc_attr( $shape ) . '"'; ?><?php echo RAPM_Interests::row_attr( $placement ); // phpcs:ignore WordPress.Security.EscapeOutput -- a fixed attribute name. ?> style="display:none;">
 				<?php foreach ( $query->posts as $post ) : self::render_card( $post->ID ); endforeach; ?>
 			</div>
 			<?php // 1.37.1, Phil's standing rule: a row that scrolls sideways shows dots for where you are. ?>
@@ -129,9 +130,10 @@ class RAPM_Coupon_Book {
 			return; // No usable image — nothing to show for this card.
 		}
 
-		$tag = $url ? 'a' : 'div';
+		$tag   = $url ? 'a' : 'div';
+		$focus = RAPM_Focal::style_vars( $asset_id ); // 1.72.0: what stays in view when a square or wide row trims it.
 		?>
-		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-coupon-card" data-rapm-key="<?php echo (int) $asset_id; ?>"<?php echo RAPM_Interests::attr( $asset_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.70.0; escaped in attr(). ?> data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>">
+		<<?php echo esc_html( $tag ); ?> <?php echo $url ? 'href="' . esc_url( $url ) . '"' : ''; ?> class="rapm-coupon-card" data-rapm-key="<?php echo (int) $asset_id; ?>"<?php echo RAPM_Interests::attr( $asset_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.70.0; escaped in attr(). ?> data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>"<?php echo $focus ? ' style="' . esc_attr( $focus ) . '"' : ''; ?>>
 			<picture>
 				<?php if ( $mobile_src ) : ?>
 					<source media="(max-width: 480px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />

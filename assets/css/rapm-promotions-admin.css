@@ -305,3 +305,21 @@
 .rapm-tile-size fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .rapm-tile-size legend { font-size: 12px; color: #50575e; padding: 0; margin-bottom: 4px; width: 100%; }
 .rapm-tile-size label { font-size: 13px; color: #1d2327; }
+
+/* 1.72.0: a Coupon row's card shape, and the warning before it trims pictures. */
+.rapm-coupon-shape { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; margin: 4px 0 8px; }
+.rapm-coupon-shape fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.rapm-coupon-shape legend { font-size: 12px; color: #50575e; padding: 0; margin-bottom: 4px; width: 100%; }
+.rapm-coupon-shape label { font-size: 13px; color: #1d2327; display: inline-flex; align-items: center; gap: 6px; }
+.rapm-shape-swatch { display: inline-block; border-radius: 2px; background: #a7aaad; }
+.rapm-coupon-shape input:checked + .rapm-shape-swatch { background: #2271b1; }
+.rapm-shape-warn { flex: 1 1 100%; box-sizing: border-box; padding: 14px 16px; background: #fcf9e8; border: 1px solid #dba617; border-radius: 4px; }
+.rapm-shape-warn h4 { margin: 0 0 6px; font-size: 14px; }
+.rapm-shape-warn p { margin: 0 0 10px; }
+.rapm-shape-list { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 12px; padding: 0; list-style: none; }
+.rapm-shape-list li { width: 130px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+.rapm-shape-pic { position: relative; width: 120px; border-radius: 3px; overflow: hidden; background: #ddd; }
+.rapm-shape-pic img { display: block; width: 100%; height: auto; }
+.rapm-shape-box { position: absolute; border: 2px dashed #fff; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); box-sizing: border-box; }
+.rapm-shape-words { color: #b32d2e; }
+.rapm-shape-buttons { display: flex; gap: 8px; flex-wrap: wrap; }

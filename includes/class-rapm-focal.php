@@ -30,6 +30,10 @@ class RAPM_Focal {
 		if ( 'hero' === $kind ) {
 			return class_exists( 'RAPM_Split' ) && RAPM_Split::is_split( $placement );
 		}
+		// 1.72.0: a Coupon row set to square or wide trims tall pictures.
+		if ( 'coupon' === $kind ) {
+			return 'tall' !== RAPM_Spots::coupon_shape( $placement );
+		}
 		return in_array( $kind, array( 'reveal', 'promo_box', 'quick_links' ), true );
 	}
 
@@ -87,7 +91,11 @@ class RAPM_Focal {
 	 * form's live previews: list of array( label, width, height, round? ).
 	 * Typical screens, from the mockup's measurements.
 	 */
-	public static function shapes( $kind, $which ) {
+	public static function shapes( $kind, $which, $placement = 'default' ) {
+		if ( 'coupon' === $kind && 'desktop' === $which ) {
+			$c = RAPM_Spots::COUPON_SHAPES[ RAPM_Spots::coupon_shape( $placement ) ];
+			return array( array( __( 'Computer', 'rapm' ), $c['w'], $c['h'] ), array( __( 'Phone', 'rapm' ), $c['pw'], $c['ph'] ) );
+		}
 		$s = array(
 			'reveal'      => array(
 				'desktop' => array( array( __( '2 panels, 1920 screen', 'rapm' ), 960, 560 ), array( __( '2 panels, 1440 laptop', 'rapm' ), 720, 560 ), array( __( '3 panels', 'rapm' ), 640, 560 ), array( __( '4 panels', 'rapm' ), 480, 560 ) ),
@@ -112,11 +120,11 @@ class RAPM_Focal {
 	 * updated live (rapm-focal.js). $src may be '' for a new promotion; the
 	 * box then waits for a chosen file.
 	 */
-	public static function render_picker( $kind, $which, $src, $value ) {
+	public static function render_picker( $kind, $which, $src, $value, $placement = 'default' ) {
 		$value = self::clean( $value );
 		$xy    = $value ? array_map( 'floatval', explode( ' ', str_replace( '%', '', $value ) ) ) : array( 50, 50 );
 		?>
-		<div class="rapm-focal" data-which="<?php echo esc_attr( $which ); ?>" data-shapes="<?php echo esc_attr( wp_json_encode( self::shapes( $kind, $which ) ) ); ?>"<?php echo $src ? '' : ' hidden'; ?>>
+		<div class="rapm-focal" data-which="<?php echo esc_attr( $which ); ?>" data-shapes="<?php echo esc_attr( wp_json_encode( self::shapes( $kind, $which, $placement ) ) ); ?>"<?php echo $src ? '' : ' hidden'; ?>>
 			<input type="hidden" name="rapm_focus_<?php echo esc_attr( $which ); ?>" value="<?php echo esc_attr( $xy[0] . '% ' . $xy[1] . '%' ); ?>" />
 			<p class="rapm-focal-head"><strong><?php esc_html_e( 'What stays in view', 'rapm' ); ?></strong> <span class="description"><?php esc_html_e( 'Drag the pink point onto what matters, like the sofa. Where the website trims this picture to fit, that part stays in view.', 'rapm' ); ?></span></p>
 			<div class="rapm-focal-row">

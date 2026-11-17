@@ -93,6 +93,10 @@ class RAPM_Ready {
 				} elseif ( $pic['w'] < $slot['width'] * 0.98 && RAPM_Slots::aspect_ratio_matches( $slot, $pic['w'], $pic['h'] ) ) {
 					/* translators: 1: Computer picture / Phone picture, 2: size, 3: needed size */
 					$add( 'warn', sprintf( __( '%1$s is %2$s, smaller than the %3$s needed, so it will look soft on sharp screens.', 'rapm' ), $label, $pic['w'] . '×' . $pic['h'], (int) $slot['width'] . '×' . (int) $slot['height'] ) );
+				} elseif ( 'coupon' === $kind ) {
+					// 1.72.0: a Coupon row whose shape changed trims its pictures to fit; that's expected, not broken.
+					/* translators: 1: Computer picture / Phone picture, 2: size, 3: needed size */
+					$add( 'warn', sprintf( __( '%1$s is %2$s, a different shape from this row\'s cards (%3$s), so it\'s trimmed to fit. Check "What stays in view" on its form, or upload a %3$s picture. Words in the picture may be cut off.', 'rapm' ), $label, $pic['w'] . '×' . $pic['h'], (int) $slot['width'] . '×' . (int) $slot['height'] ) );
 				} else {
 					/* translators: 1: Computer picture / Phone picture, 2: size, 3: needed size */
 					$add( 'fail', sprintf( __( '%1$s is %2$s, a different shape from the %3$s this spot needs, so it will be trimmed.', 'rapm' ), $label, $pic['w'] . '×' . $pic['h'], (int) $slot['width'] . '×' . (int) $slot['height'] ) );

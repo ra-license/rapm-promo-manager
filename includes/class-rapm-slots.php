@@ -75,6 +75,25 @@ class RAPM_Slots {
 				'max_kb'                 => 150,
 				'format'                 => 'webp',
 			),
+			// 1.72.0: a Coupon row can be set to square or wide cards
+			// (RAPM_Spots::COUPON_SHAPES). Shown at most 240 and 330 wide,
+			// so these are about twice that for sharp screens.
+			'coupon_card_square'  => array(
+				'label'                  => __( 'Coupon Card — Square', 'rapm' ),
+				'width'                  => 750,
+				'height'                 => 750,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 150,
+				'format'                 => 'webp',
+			),
+			'coupon_card_wide'    => array(
+				'label'                  => __( 'Coupon Card — Wide', 'rapm' ),
+				'width'                  => 900,
+				'height'                 => 600,
+				'aspect_ratio_tolerance' => 0.02,
+				'max_kb'                 => 150,
+				'format'                 => 'webp',
+			),
 			// A square tile shown small in a row (the marquee). Deliberately
 			// matches Instagram's standard square post size (1080x1080) —
 			// a recognizable, easy-to-export target for clients who already
@@ -295,6 +314,12 @@ class RAPM_Slots {
 		$kind = self::kind( $kind_key );
 		if ( 'hero' === $kind_key && class_exists( 'RAPM_Split' ) && RAPM_Split::is_split( $placement ) ) {
 			$kind['desktop'] = 'hero_split_desktop';
+		}
+		// 1.72.0: a Coupon row's card shape picks its picture size.
+		if ( 'coupon' === $kind_key ) {
+			$slot            = RAPM_Spots::COUPON_SHAPES[ RAPM_Spots::coupon_shape( $placement ) ]['slot'];
+			$kind['desktop'] = $slot;
+			$kind['mobile']  = $slot;
 		}
 		return $kind;
 	}

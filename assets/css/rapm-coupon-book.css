@@ -91,6 +91,52 @@
 	}
 }
 
+/* 1.72.0: a Coupon row's card shape (Setup for R&A on its spot). Tall is
+   the rule above; square and wide set their own width and shape. A picture
+   of another shape is trimmed around its "What stays in view" point. */
+.rapm-coupon-card img {
+	object-position: var(--rapm-fp, 50% 50%);
+}
+
+.rapm-coupon-book[data-shape="square"] .rapm-coupon-card {
+	width: 240px;
+	aspect-ratio: 1 / 1;
+}
+
+.rapm-coupon-book[data-shape="wide"] .rapm-coupon-card {
+	width: 330px;
+	aspect-ratio: 3 / 2;
+}
+
+/* Wide cards are shorter: the words sit lower and the small line stays on one line. */
+.rapm-coupon-book[data-shape="wide"] .rapm-coupon-card .rapm-slide-copy {
+	padding: 14px 16px;
+}
+
+.rapm-coupon-book[data-shape="wide"] .rapm-coupon-card .rapm-headline {
+	font-size: 17px;
+}
+
+.rapm-coupon-book[data-shape="wide"] .rapm-coupon-card .rapm-subhead {
+	display: block;
+	max-width: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+	.rapm-coupon-book[data-shape="square"] .rapm-coupon-card { width: 180px; }
+	.rapm-coupon-book[data-shape="wide"] .rapm-coupon-card { width: 240px; }
+
+	/* Smaller cards than tall ones on phones: smaller words, as for made cards (1.71.1). */
+	.rapm-coupon-book[data-shape] .rapm-coupon-card .rapm-slide-copy { padding: 12px; }
+	.rapm-coupon-book[data-shape] .rapm-coupon-card .rapm-headline { font-size: 15px; line-height: 1.25; margin-bottom: 4px; }
+	.rapm-coupon-book[data-shape="wide"] .rapm-coupon-card .rapm-headline { font-size: 14px; }
+	.rapm-coupon-book[data-shape] .rapm-coupon-card .rapm-subhead { font-size: 11px; line-height: 1.35; margin-bottom: 8px; }
+	.rapm-coupon-book[data-shape] .rapm-coupon-card .rapm-cta-btn { padding: 7px 12px; font-size: 11px; white-space: nowrap; }
+}
+
 /* 1.37.1: dots under the row whenever it scrolls sideways (Phil's standing
    rule: anything that scrolls shows where you are). One per screenful, each
    a 24px tap target around an 8px dot. Same as rapm-quick-links.css; theme

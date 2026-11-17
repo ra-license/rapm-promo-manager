@@ -664,7 +664,7 @@ class RAPM_Upload_Handler {
 							<p class="description"><?php echo esc_html( sprintf( __( 'Size: %1$d by %2$d pixels (width by height). A bigger picture with the same shape is made smaller for you. If the shape is different, we show you what to fix.', 'rapm' ), $desktop_slot['width'], $desktop_slot['height'] ) ); ?></p>
 							<?php endif; ?>
 							<?php if ( $focal ) : ?>
-								<?php RAPM_Focal::render_picker( $kind_key, 'desktop', $img_desktop ? (string) wp_get_attachment_image_url( $img_desktop, 'large' ) : '', $is_edit ? RAPM_Focal::get( $asset_id, 'desktop' ) : '' ); ?>
+								<?php RAPM_Focal::render_picker( $kind_key, 'desktop', $img_desktop ? (string) wp_get_attachment_image_url( $img_desktop, 'large' ) : '', $is_edit ? RAPM_Focal::get( $asset_id, 'desktop' ) : '', $placement ); ?>
 							<?php endif; ?>
 						</td>
 					</tr>

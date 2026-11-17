@@ -215,6 +215,15 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.72.0
+
+**Coupon card shapes.** Phil, Nov 17: "Will we have the ability to change the shape of the coupon cards depending on the aesthetic of the website? More rectangular or vertical or square?" Until now every Coupon row was tall (4:5): the card's shape was fixed in the stylesheet, and Settings › Slot Overrides only changed the upload check, so a square picture was still trimmed to tall. Mockup approved the same day (claude.ai/artifact/R8qZh6QpAVa1W91ELdCapk).
+- **Setup for R&A on each Coupon row spot** (administrators only, like the Tile row size): Card shape, Tall (4:5, as before and the default), Square (1:1) or Wide (3:2), each with its upload size. Saved with `rapm_coupon_shape` (`RAPM_Spots::COUPON_SHAPES`, `coupon_shape()`), and the pages the row is on are cleared from the cache. Others see "Card shape: … An administrator can change it."
+- **On the page:** the row carries `data-shape`. Computers: tall 220 × 275, square 240 × 240, wide 330 × 220. Phones: 170 × 213, 180 × 180, 240 × 160. Wide cards' words sit lower with the small line on one line; square and wide get smaller words on phones (like made cards, 1.71.1). Made cards (1.71.0) take the row's shape.
+- **Pictures:** new slots `coupon_card_square` (750 × 750) and `coupon_card_wide` (900 × 600); `RAPM_Slots::kind_for()` picks the row's, so the upload check, the form's size line and Live Preview, the Promotions screen cards, the Asset library and "Ready to go live" all follow it. Coupons in a square or wide row get "What stays in view" (`RAPM_Focal`, previews of the computer and phone card) and the card uses its point.
+- **Before trimming:** choosing a shape that doesn't match pictures already in the row shows a warning listing each one with a dashed box over what stays in view, marks the ones with no typed words ("its offer is probably in the picture and could be cut off"), links to each, and asks "Change to Square" / "Keep Tall". Files are never changed. (The mockup had the point draggable in the warning; it's on each coupon's form instead, where "What stays in view" already lives, and appears once the new shape is saved.)
+- **Ready to go live:** a coupon whose picture is a different shape from its row is Needs a look (other kinds stay Problem), saying it's trimmed to fit, to check "What stays in view" or upload the row's size, and that words in the picture may be cut off.
+
 ## 1.71.2
 
 **The reminder card can't promise anything.** Phil, Nov 17: anything that isn't an approved offer must only be a reminder, with no dollar or percentage off. Until now the reminder's wording was free text in Settings, so an administrator could have typed "10% Off {category}" and every shopper would have seen it with no approval.

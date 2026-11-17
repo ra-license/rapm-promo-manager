@@ -265,6 +265,131 @@
 		} ).catch( function () { say( section, T.saveFailed ); } );
 	} );
 
+	/* ---- Coupon row card shape (1.72.0) ------------------------------------- */
+
+	function fill( text, a, b ) {
+		return String( text || '' ).replace( '%1$s', a ).replace( '%2$d', b ).replace( '%s', a );
+	}
+
+	// The coupons whose picture isn't the new shape: each shown with a dashed
+	// box over the part that stays in view (as CSS object-position trims it).
+	function shapeWarning( form, shape ) {
+		var box     = form.querySelector( '.rapm-shape-warn' );
+		var info    = ( T.shapes || {} )[ shape ];
+		var current = ( T.shapes || {} )[ form.getAttribute( 'data-current' ) ];
+		var coupons = [];
+		try { coupons = JSON.parse( form.getAttribute( 'data-coupons' ) || '[]' ); } catch ( e ) { coupons = []; }
+		var ratio   = info.w / info.h;
+		var trimmed = coupons.filter( function ( c ) { return Math.abs( c.w / c.h - ratio ) / ratio > 0.02; } );
+		if ( ! trimmed.length ) { return false; }
+		box.innerHTML = '';
+		var h = document.createElement( 'h4' );
+		h.textContent = 1 === trimmed.length ? fill( T.shapeHeadOne, info.label ) : fill( T.shapeHead, info.label, trimmed.length );
+		var p = document.createElement( 'p' );
+		p.textContent = fill( T.shapeText, info.w + ' × ' + info.h );
+		var list = document.createElement( 'ul' );
+		list.className = 'rapm-shape-list';
+		trimmed.forEach( function ( c ) {
+			var li  = document.createElement( 'li' );
+			var pic = document.createElement( 'div' );
+			pic.className = 'rapm-shape-pic';
+			var img = document.createElement( 'img' );
+			img.src = c.src;
+			img.alt = '';
+			pic.appendChild( img );
+			var W = 120, H = 120 * c.h / c.w, frame = document.createElement( 'span' );
+			frame.className = 'rapm-shape-box';
+			if ( c.w / c.h > ratio ) { // Wider than the card: the sides are trimmed.
+				var bw = H * ratio;
+				frame.style.cssText = 'top:0;height:' + H + 'px;width:' + bw + 'px;left:' + ( ( W - bw ) * c.fx / 100 ) + 'px;';
+			} else { // Taller: top and bottom are trimmed.
+				var bh = W / ratio;
+				frame.style.cssText = 'left:0;width:' + W + 'px;height:' + bh + 'px;top:' + ( ( H - bh ) * c.fy / 100 ) + 'px;';
+			}
+			pic.appendChild( frame );
+			li.appendChild( pic );
+			var name = document.createElement( 'span' );
+			name.textContent = c.name;
+			li.appendChild( name );
+			if ( ! c.words ) {
+				var w = document.createElement( 'span' );
+				w.className = 'rapm-shape-words';
+				w.textContent = T.shapeWords;
+				li.appendChild( w );
+			}
+			var a = document.createElement( 'a' );
+			a.href = c.edit;
+			a.textContent = T.shapeEdit;
+			li.appendChild( a );
+			list.appendChild( li );
+		} );
+		var buttons = document.createElement( 'div' );
+		buttons.className = 'rapm-shape-buttons';
+		var go = document.createElement( 'button' );
+		go.type = 'button';
+		go.className = 'button button-primary rapm-shape-go';
+		go.textContent = fill( T.shapeChange, info.label );
+		var keep = document.createElement( 'button' );
+		keep.type = 'button';
+		keep.className = 'button rapm-shape-keep';
+		keep.textContent = fill( T.shapeKeep, current ? current.label : '' );
+		buttons.appendChild( go );
+		buttons.appendChild( keep );
+		box.appendChild( h );
+		box.appendChild( p );
+		box.appendChild( list );
+		box.appendChild( buttons );
+		box.hidden = false;
+		go.focus();
+		return true;
+	}
+
+	function saveShape( form, shape ) {
+		var section = form.closest( '.rapm-spot' );
+		post( {
+			action: 'rapm_coupon_shape',
+			nonce: cfg.nonce,
+			placement: section.getAttribute( 'data-placement' ),
+			shape: shape
+		} ).then( function ( res ) {
+			if ( ! res || ! res.success ) { throw new Error( 'save failed' ); }
+			form.setAttribute( 'data-current', res.data.shape );
+			form.querySelector( '.rapm-shape-warn' ).hidden = true;
+			say( section, T.shapeSaved );
+		} ).catch( function () { say( section, T.saveFailed ); } );
+	}
+
+	root.addEventListener( 'submit', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-coupon-shape' ) : null;
+		if ( ! form ) { return; }
+		e.preventDefault();
+		var picked = form.querySelector( 'input[name="coupon_shape"]:checked' );
+		if ( ! picked || picked.value === form.getAttribute( 'data-current' ) ) { return; }
+		if ( ! shapeWarning( form, picked.value ) ) {
+			saveShape( form, picked.value );
+		}
+	} );
+
+	root.addEventListener( 'click', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-coupon-shape' ) : null;
+		if ( ! form ) { return; }
+		var picked = form.querySelector( 'input[name="coupon_shape"]:checked' );
+		if ( e.target.closest( '.rapm-shape-go' ) && picked ) {
+			saveShape( form, picked.value );
+		} else if ( e.target.closest( '.rapm-shape-keep' ) ) {
+			var keep = form.querySelector( 'input[name="coupon_shape"][value="' + form.getAttribute( 'data-current' ) + '"]' );
+			if ( keep ) { keep.checked = true; }
+			form.querySelector( '.rapm-shape-warn' ).hidden = true;
+		}
+	} );
+
+	root.addEventListener( 'change', function ( e ) {
+		var form = e.target.closest ? e.target.closest( '.rapm-coupon-shape' ) : null;
+		if ( form && 'coupon_shape' === e.target.name ) {
+			form.querySelector( '.rapm-shape-warn' ).hidden = true;
+		}
+	} );
+
 	/* ---- Split view layout (1.43.0) ----------------------------------------- */
 
 	root.addEventListener( 'change', function ( e ) {
