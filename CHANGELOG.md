@@ -222,6 +222,7 @@ Phil, Nov 10: "Push to production and I can check kemper."
 - **Settings › Coupons:** a reminder field with one is refused: what was saved before stays (or the default), and the save says which field, what was typed, the word, and to use "Offers the store approved". A red line under the field says the same while typing. The section's help line says no prices, percentages or offer words.
 - **On the page:** if a reminder field holds one anyway (saved before 1.71.2, or straight into the database), the row sends the default wording instead.
 - Offers still only come through the approved-offer table, which needs who approved it and when (1.71.0).
+- **Staging (Nov 17):** installed by Check for updates. Typing "10% Off {category}" into the reminder headline showed the red line at once; saving anyway showed "The reminder card's headline wasn't changed. \"10% Off {category}\" sounds like an offer (\"%\")…", the headline stayed "Still thinking about {category}?", the approved offer was kept, and the signed-out Promotions page still sent the plain wording.
 - **Bench:** the pattern passed 7 plain phrases ("Still interested in {category}?", "Shop coffee tables", "New office chairs"…) and refused 11 offer phrases ("10% Off", "$100 off", "Save on", "Free delivery", "0 APR", "Special Financing", "on SALE", "Get a coupon", "No interest", "£50 off", "Big savings").
 
 ## 1.71.1
