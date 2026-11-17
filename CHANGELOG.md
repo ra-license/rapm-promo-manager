@@ -215,6 +215,14 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.73.0, 1.73.1 and Website Monitor 1.10.0 (Nov 17, 2026)
+
+- **Phil's OK:** Promo Manager main and tags v1.73.0 and v1.73.1 pushed to ra-license/rapm-promo-manager (production was on 1.72.1); client sites install 1.73.1 on their own. Website Monitor main and v1.10.0 pushed to ra-license/ra-plugin-monitor; on the help desk, Check for updates / update now installed it: the Plugins page shows Version 1.10.0, the monitor's dashboard loads (60 websites reporting), the help desk's front page answers 200.
+- **Client websites are protected from their next update after 1.73.1:** the check before installing runs in the version doing the installing.
+- **Drive folders** (Desktop "R&A plugin files for Drive"): "1 RA Promo Manager (main folder)" has rapm-promo-manager.zip (1.73.1) with readme and CHANGELOG v1.73.1 (v1.72.1 copies removed); "2 RA Plugin Monitor" has ra-plugin-monitor.zip (1.10.0). Phil drags them into Drive.
+- **Visitor check:** the one-time check on Nov 18 at 9:00 AM now expects 1.73.1 and also looks for the paused marker.
+- **Separate session started by Phil:** bundling RA Monitor Client 1.4.0 into Product Image Frames, See in your Space (and Pro), Room Planner and Woo Native Dimensions.
+
 ## 1.73.1 and Website Monitor 1.10.0
 
 **R&A hears when a website breaks or Promo Manager pauses.** Phil, Nov 17: would a broken Promo Manager report to the monitor (through Dimensions) and send an email that the website's down? Checked in the code: no plugin, Dimensions included, can report from a crashed website, because PHP stops for the whole website. The Website Monitor finds it from outside: its regular visitor check (every 6 hours by default) sees WordPress's "critical error", looks again 15 minutes later when WP Umbrella is connected, and emails "Visitor check failed: …" (or leaves it to WP Umbrella's own alert). Two gaps:
