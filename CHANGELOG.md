@@ -215,6 +215,15 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.71.2
+
+**The reminder card can't promise anything.** Phil, Nov 17: anything that isn't an approved offer must only be a reminder, with no dollar or percentage off. Until now the reminder's wording was free text in Settings, so an administrator could have typed "10% Off {category}" and every shopper would have seen it with no approval.
+- `RAPM_Made_Cards::offer_word()`: a price or percent sign ($ € £ ¢ %) or an offer word as a whole word (percent, off, save, savings, free, discount, deal, sale, rebate, clearance, markdown, bogo, bonus, cash, cashback, coupon, promo, interest, apr, finance, financing, payment and their plurals). Whole words only, so "coffee", "office" and "interested" pass. The category name filled in later isn't checked, only the wording R&A types.
+- **Settings › Coupons:** a reminder field with one is refused: what was saved before stays (or the default), and the save says which field, what was typed, the word, and to use "Offers the store approved". A red line under the field says the same while typing. The section's help line says no prices, percentages or offer words.
+- **On the page:** if a reminder field holds one anyway (saved before 1.71.2, or straight into the database), the row sends the default wording instead.
+- Offers still only come through the approved-offer table, which needs who approved it and when (1.71.0).
+- **Bench:** the pattern passed 7 plain phrases ("Still interested in {category}?", "Shop coffee tables", "New office chairs"…) and refused 11 offer phrases ("10% Off", "$100 off", "Save on", "Free delivery", "0 APR", "Special Financing", "on SALE", "Get a coupon", "No interest", "£50 off", "Big savings").
+
 ## 1.71.1
 
 **Made cards fit on phones.** Found in the 1.71.0 staging walk-through (375px phone): the approved financing offer ("0% Interest for 36 Months" / "On Recliners with approved credit. See store for details." / "Shop Recliners") filled the whole 170px card, covering the recliner photo, and the button wrapped to two lines. Hand-made coupons are designed with short words; made cards carry whatever the offer says.

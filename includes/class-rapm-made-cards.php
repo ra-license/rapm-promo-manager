@@ -39,6 +39,20 @@ class RAPM_Made_Cards {
 	const PICS  = array( 'product', 'category', 'brand', 'upload' );
 	const MAX_OFFERS = 50;
 
+	/**
+	 * 1.71.2 (Phil): the reminder card can't promise anything, so its words
+	 * can't hold a price, a percentage or an offer word. Offers only come
+	 * through "Offers the store approved", with who approved them and when.
+	 * The {category} name filled in later isn't checked (a "Clearance"
+	 * category is fine); only the wording R&A types.
+	 */
+	const OFFER_PATTERN = '[$€£¢%]|\\b(percent|off|save|saves|saving|savings|free|discount|discounts|discounted|deal|deals|sale|sales|rebate|rebates|clearance|markdown|markdowns|bogo|bonus|cash|cashback|coupon|coupons|promo|promos|interest|apr|finance|financed|financing|payment|payments)\\b';
+
+	/** The first price, percentage or offer word in a reminder's wording, or ''. */
+	public static function offer_word( $text ) {
+		return preg_match( '/' . self::OFFER_PATTERN . '/iu', (string) $text, $m ) ? $m[0] : '';
+	}
+
 	public static function defaults() {
 		return array(
 			'made_enabled' => 0,
@@ -117,9 +131,28 @@ class RAPM_Made_Cards {
 		}
 		$d = self::defaults();
 		$out['made_enabled'] = isset( $input['made_enabled'] ) ? 1 : 0;
+		$labels = array(
+			'made_head' => __( 'headline', 'rapm' ),
+			'made_sub'  => __( 'small line', 'rapm' ),
+			'made_btn'  => __( 'button', 'rapm' ),
+		);
 		foreach ( array( 'made_head' => 80, 'made_sub' => 140, 'made_btn' => 40 ) as $key => $max ) {
-			$v           = isset( $input[ $key ] ) ? self::clean( $input[ $key ], $max ) : '';
-			$out[ $key ] = '' !== $v ? $v : $d[ $key ];
+			$v    = isset( $input[ $key ] ) ? self::clean( $input[ $key ], $max ) : '';
+			$v    = '' !== $v ? $v : $d[ $key ];
+			$word = self::offer_word( $v );
+			if ( '' !== $word ) {
+				// Refused: keep what was saved before (if that's clean), else the default.
+				$out[ $key ] = '' === self::offer_word( $saved[ $key ] ) ? $saved[ $key ] : $d[ $key ];
+				add_settings_error(
+					RAPM_Admin_Settings::OPTION,
+					'rapm_made_' . $key,
+					/* translators: 1: which field, 2: the words typed, 3: the word that sounds like an offer */
+					sprintf( __( 'The reminder card\'s %1$s wasn\'t changed. "%2$s" sounds like an offer ("%3$s"), and the reminder can\'t promise a price, a percentage or a discount. To show an offer, add it under "Offers the store approved" with who at the store approved it and when.', 'rapm' ), $labels[ $key ], $v, $word ),
+					'error'
+				);
+				continue;
+			}
+			$out[ $key ] = $v;
 		}
 		$out['made_pic']    = isset( $input['made_pic'] ) && in_array( $input['made_pic'], self::PICS, true ) ? $input['made_pic'] : 'product';
 		$out['made_pic_id'] = isset( $input['made_pic_id'] ) ? absint( $input['made_pic_id'] ) : 0;
@@ -197,6 +230,14 @@ class RAPM_Made_Cards {
 			}
 		}
 		$upload = 'upload' === $s['made_pic'] && $s['made_pic_id'] ? (string) wp_get_attachment_image_url( (int) $s['made_pic_id'], 'large' ) : '';
+		// 1.71.2: never an offer in the reminder, even if one got saved some
+		// other way (before 1.71.2, or straight into the database).
+		$d = self::defaults();
+		foreach ( array( 'made_head', 'made_sub', 'made_btn' ) as $key ) {
+			if ( '' !== self::offer_word( $s[ $key ] ) ) {
+				$s[ $key ] = $d[ $key ];
+			}
+		}
 		$data   = array(
 			'h'  => $s['made_head'],
 			's'  => $s['made_sub'],
@@ -379,10 +420,27 @@ class RAPM_Made_Cards {
 		<tr>
 			<th><?php esc_html_e( 'The reminder card', 'rapm' ); ?></th>
 			<td>
-				<p class="description" style="margin-top:0;"><?php esc_html_e( '{category} is filled in with the category\'s name, like "Dining Tables".', 'rapm' ); ?></p>
-				<p><label><?php esc_html_e( 'Headline', 'rapm' ); ?><br /><input type="text" class="regular-text" name="<?php echo esc_attr( $o ); ?>[made_head]" value="<?php echo esc_attr( $opts['made_head'] ); ?>" /></label></p>
-				<p><label><?php esc_html_e( 'Small line', 'rapm' ); ?><br /><input type="text" class="regular-text" name="<?php echo esc_attr( $o ); ?>[made_sub]" value="<?php echo esc_attr( $opts['made_sub'] ); ?>" /></label></p>
-				<p><label><?php esc_html_e( 'Button', 'rapm' ); ?><br /><input type="text" class="regular-text" name="<?php echo esc_attr( $o ); ?>[made_btn]" value="<?php echo esc_attr( $opts['made_btn'] ); ?>" /></label></p>
+				<p class="description" style="margin-top:0;"><?php esc_html_e( '{category} is filled in with the category\'s name, like "Dining Tables". No prices, percentages or offer words here (like off, save, free or financing): the reminder can\'t promise anything. Offers go under "Offers the store approved".', 'rapm' ); ?></p>
+				<?php foreach ( array( 'made_head' => __( 'Headline', 'rapm' ), 'made_sub' => __( 'Small line', 'rapm' ), 'made_btn' => __( 'Button', 'rapm' ) ) as $key => $label ) : ?>
+					<p>
+						<label><?php echo esc_html( $label ); ?><br /><input type="text" class="regular-text rapm-made-reminder" name="<?php echo esc_attr( $o . '[' . $key . ']' ); ?>" value="<?php echo esc_attr( $opts[ $key ] ); ?>" /></label>
+						<span class="rapm-made-reminder-warn" role="alert" style="display:block;color:#b32d2e;"></span>
+					</p>
+				<?php endforeach; ?>
+				<script>
+					( function () {
+						var re = new RegExp( <?php echo wp_json_encode( self::OFFER_PATTERN ); ?>, 'i' );
+						Array.prototype.forEach.call( document.querySelectorAll( '.rapm-made-reminder' ), function ( input ) {
+							var warn = input.parentNode.parentNode.querySelector( '.rapm-made-reminder-warn' );
+							function check() {
+								var m = input.value.match( re );
+								warn.textContent = m ? <?php echo wp_json_encode( __( 'Sounds like an offer ("%s"). This won\'t be saved: add offers under "Offers the store approved".', 'rapm' ) ); ?>.replace( '%s', m[0] ) : '';
+							}
+							input.addEventListener( 'input', check );
+							check();
+						} );
+					} )();
+				</script>
 			</td>
 		</tr>
 		<tr>
