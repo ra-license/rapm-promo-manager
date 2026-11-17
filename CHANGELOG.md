@@ -215,6 +215,13 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.71.0 to 1.72.1 (Nov 17, 2026)
+
+- **Phil's OK:** main and tags v1.71.0, v1.71.1, v1.71.2, v1.72.0 and v1.72.1 pushed to ra-license/rapm-promo-manager (production was on 1.70.2 since earlier the same day). Client sites install 1.72.1 on their own (automatic updates, twice a day).
+- **What changes for shoppers on its own:** nothing visible. Made cards are off until R&A turns them on in Settings › Coupons, and every Coupon row stays Tall until R&A picks another shape.
+- **Drive folder** (Desktop "R&A plugin files for Drive/1 RA Promo Manager (main folder)"): rapm-promo-manager.zip (1.72.1) replaced, readme and CHANGELOG v1.72.1 beside it (the v1.70.2 copies removed); Phil drags them into Drive.
+- **Visitor check:** the one-time check on Nov 18 at 9:00 AM was moved to expect 1.72.1 (signed out, computer and phone, Kemper first).
+
 ## 1.72.1
 
 **Two things found in the 1.72.0 staging walk-through** (Promotions coupons row set to Wide).
