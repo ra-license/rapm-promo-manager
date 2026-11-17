@@ -102,7 +102,24 @@ class RAPM_Sync {
 		$old_id   = (int) get_post_meta( $asset_id, '_rapm_image_' . $which . '_id', true );
 
 		// 1.58.2: a one-picture link of a different shape is trimmed the way the person picked.
-		$result = RAPM_Link_Source::fetch_and_validate( $url, $slot, $asset_id, $which, (string) get_post_meta( $asset_id, '_rapm_image_' . $which . '_crop_anchor', true ) );
+		$anchor = (string) get_post_meta( $asset_id, '_rapm_image_' . $which . '_crop_anchor', true );
+		$result = RAPM_Link_Source::fetch_and_validate( $url, $slot, $asset_id, $which, $anchor );
+
+		// 1.72.0: a coupon whose row changed card shape keeps its linked
+		// picture if it's another coupon shape: the page trims it around
+		// "What stays in view", and "Ready to go live" says so. No false
+		// "link failed" email for a shape R&A chose on purpose.
+		if ( 'coupon' === $kind_key && '' === $anchor && is_wp_error( $result ) && 'rapm_wrong_dimensions' === $result->get_error_code() ) {
+			foreach ( RAPM_Spots::COUPON_SHAPES as $shape ) {
+				if ( $shape['slot'] !== $kind[ $which ] && isset( $slots[ $shape['slot'] ] ) ) {
+					$retry = RAPM_Link_Source::fetch_and_validate( $url, $slots[ $shape['slot'] ], $asset_id, $which, '' );
+					if ( ! is_wp_error( $retry ) ) {
+						$result = $retry;
+						break;
+					}
+				}
+			}
+		}
 
 		if ( 'mobile' === $which && RAPM_Link_Source::is_folder_url( $url ) && RAPM_Link_Source::is_waiting_for_picture( $result ) ) {
 			// No tall picture in the folder (yet) — not a failure; phones

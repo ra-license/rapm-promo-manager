@@ -345,7 +345,9 @@
 		} else if ( dims.desktop && slots.desktop && ! slots.desktop.flex ) {
 			var d = dims.desktop, s = slots.desktop;
 			if ( Math.abs( d.w / d.h - s.w / s.h ) / ( s.w / s.h ) > s.tol ) {
-				add( 'warn', fmt( T.picShape, size( d ), size( s ) ), '', first );
+				// 1.72.0: a coupon's saved picture in a row whose card shape
+				// changed is trimmed around "What stays in view", not cropped.
+				add( 'warn', fmt( 'coupon' === cfg.kind && ! chosenFile( 'desktop' ) && T.picShapeTrim ? T.picShapeTrim : T.picShape, size( d ), size( s ) ), '', first );
 			} else if ( d.w < s.w ) {
 				add( 'warn', fmt( T.picSmall, size( d ), size( s ) ) );
 			} else {

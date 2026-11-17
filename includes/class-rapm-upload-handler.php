@@ -104,6 +104,8 @@ class RAPM_Upload_Handler {
 				'picSmall'   => __( 'Computer picture is %1$s, smaller than the %2$s needed, so it may look soft.', 'rapm' ),
 				/* translators: 1: the picture's size, 2: the size needed */
 				'picShape'   => __( 'Computer picture is %1$s, a different shape from %2$s. Pick which part to keep under the picture.', 'rapm' ),
+				/* translators: 1: the picture's size, 2: the size the row's cards need */
+				'picShapeTrim' => __( 'Computer picture is %1$s, a different shape from this row\'s cards (%2$s), so it\'s trimmed to fit. Check "What stays in view" under the picture, or choose a %2$s picture.', 'rapm' ),
 				'picLink'    => __( 'The picture comes from a link. It is checked when you save.', 'rapm' ),
 				/* translators: 1: the picture's size, 2: the size needed */
 				'phoneShape' => __( 'Phone picture is %1$s, a different shape from %2$s. Pick which part to keep under the picture.', 'rapm' ),
