@@ -142,8 +142,12 @@ class RAPM_Interests {
 		if ( ! class_exists( 'WooCommerce' ) ) {
 			return array();
 		}
-		$type  = (string) get_post_meta( $asset_id, '_rapm_destination_type', true );
-		$value = (int) get_post_meta( $asset_id, '_rapm_destination_value', true );
+		$type = (string) get_post_meta( $asset_id, '_rapm_destination_type', true );
+		$raw  = get_post_meta( $asset_id, '_rapm_destination_value', true );
+		if ( 'url' === $type ) {
+			return self::url_keys( (string) $raw );
+		}
+		$value = (int) $raw;
 		if ( ! $value ) {
 			return array();
 		}
@@ -153,10 +157,61 @@ class RAPM_Interests {
 			case 'wc_brand':
 				return array( 'b' . $value );
 			case 'wc_product':
-				// The product's own categories, not their parents: a coupon for
-				// one recliner follows shoppers who looked at recliners, not
-				// everyone who looked at anything in Living Room.
-				return array_values( array_unique( array_merge( self::cat_keys( wc_get_product_term_ids( $value, 'product_cat' ), false ), self::brand_keys_for_product( $value ) ) ) );
+				return self::product_keys( $value );
+		}
+		return array();
+	}
+
+	/**
+	 * A product's own categories and brands, not their parents: a coupon for
+	 * one recliner follows shoppers who looked at recliners, not everyone who
+	 * looked at anything in Living Room.
+	 */
+	private static function product_keys( $product_id ) {
+		return array_values( array_unique( array_merge( self::cat_keys( wc_get_product_term_ids( $product_id, 'product_cat' ), false ), self::brand_keys_for_product( $product_id ) ) ) );
+	}
+
+	/**
+	 * 1.70.1: a coupon linked with "A specific link" to this website's own
+	 * category, brand or product page counts like one linked with "A product
+	 * category", "A specific brand" or "A specific product". Found on staging:
+	 * its "15% Off Accent Chairs" coupon links to /living-room/chairs/ as a
+	 * typed address, and coupons made before those choices existed are likely
+	 * the same. Another website, a page, or a search keeps its place.
+	 */
+	private static function url_keys( $url ) {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return array();
+		}
+		$host = strtolower( preg_replace( '/^www\./i', '', (string) wp_parse_url( $url, PHP_URL_HOST ) ) );
+		$home = strtolower( preg_replace( '/^www\./i', '', (string) wp_parse_url( home_url(), PHP_URL_HOST ) ) );
+		if ( '' === $host || $host !== $home || '' !== (string) wp_parse_url( $url, PHP_URL_QUERY ) ) {
+			return array(); // Another website, or a filtered or search address.
+		}
+		$path = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+		if ( '' === $path ) {
+			return array();
+		}
+		$slug = sanitize_title( basename( $path ) );
+		$tax  = RAPM_Destination::brand_taxonomy();
+		foreach ( array( 'c' => 'product_cat', 'b' => $tax ) as $prefix => $taxonomy ) {
+			if ( ! $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
+				continue;
+			}
+			$term = get_term_by( 'slug', $slug, $taxonomy );
+			if ( ! $term ) {
+				continue;
+			}
+			$link = get_term_link( $term );
+			// The whole path has to match, so /bedroom/chairs/ isn't taken for /living-room/chairs/.
+			if ( ! is_wp_error( $link ) && trim( (string) wp_parse_url( $link, PHP_URL_PATH ), '/' ) === $path ) {
+				return array( $prefix . (int) $term->term_id );
+			}
+		}
+		$post_id = url_to_postid( $url );
+		if ( $post_id && 'product' === get_post_type( $post_id ) ) {
+			return self::product_keys( $post_id );
 		}
 		return array();
 	}
@@ -200,6 +255,6 @@ class RAPM_Interests {
 			/* translators: %s: category and brand names, like "Sofas, Flexsteel" */
 			return sprintf( __( 'Moves to the front for shoppers who looked at: %s. It comes from the coupon\'s link.', 'rapm' ), implode( ', ', $names ) );
 		}
-		return __( 'Link this coupon to a product category, a brand or a product, and it moves to the front for shoppers who looked at those. Linked anywhere else, it keeps its place.', 'rapm' );
+		return __( 'Link this coupon to a product category, a brand or a product (or to one of their pages on this website), and it moves to the front for shoppers who looked at those. Linked anywhere else, it keeps its place.', 'rapm' );
 	}
 }

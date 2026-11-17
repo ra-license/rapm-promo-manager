@@ -215,6 +215,13 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.70.1
+
+**Coupons linked by a typed address follow shoppers too.** Found in the staging walk-through: staging's "15% Off Accent Chairs" coupon links to `/living-room/chairs/` with "A specific link", not "A product category", so 1.70.0 left it in place. Coupons made before the category, brand and product choices existed are likely the same on client sites.
+- A "specific link" to this website's own category, brand or product page now counts like choosing that category, brand or product (`RAPM_Interests::url_keys()`). The whole path has to match the term's own address, so `/bedroom/chairs/` isn't taken for `/living-room/chairs/`.
+- Another website, a page, a search, or an address with filters (`?filter_brand=…`) keeps its place, as before.
+- The coupon form's line mentions it.
+
 ## 1.70.0
 
 **Coupons that follow what the shopper looked at.** Phil, Nov 17 call: could Promo Manager see which pages a shopper has been to and use that for the coupons? Google Analytics' cookie can't: it only carries an id, and the pages visited stay inside Google (the Hub and Search Console only have totals). So Promo Manager keeps its own short note in the shopper's browser.
