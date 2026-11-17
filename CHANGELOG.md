@@ -215,6 +215,14 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.70.2
+
+**A Coupon row that fits no longer scrolls.** Found Nov 17 in the 1.70.1 walk-through on staging's Promotions page (748px window): three coupons that looked like they fit had a thin scrollbar and two scroll dots, the second lit. It happened with the normal order too, so it went back to 1.37.1.
+- **Root cause:** the row had 4px of padding on each side, so three 220px cards with two 16px gaps needed 700px; the row was 693px, so it really overflowed by 7px. And with snapping to each card's start (`scroll-snap-align: start`, no `scroll-padding`), the browser snapped the first card to the row's edge, past the padding, leaving the row at scrollLeft 4. The dots read that as scrolled, so the second one lit.
+- **Fix (rapm-coupon-book.css):** no side padding (`padding: 4px 0 16px`), so cards fit whenever their widths and gaps fit. The keyboard focus ring is drawn just inside the card (`outline-offset: -4px`) so the row's edge can't clip it.
+- **Dots tolerance (rapm-schedule.js `scrollDots`):** dots show only for more than 8px of overflow (was 2px), so rounding or a theme's padding can't bring up dots for a row that fits. Applies to every row with dots: Coupon row, Quick links and Shop the Look / pin cards.
+- **Same snap problem elsewhere:** Shop the Look cards (phones) and pin cards started at scrollLeft 6, hiding their 6px left padding (seen on staging's home page). They and Quick links (swipe and compact on phones) now have `scroll-padding` matching their padding, so the first card starts at the edge of the padding. The Tile row is a grid that never scrolls, so it was not affected.
+
 ## 1.70.1
 
 **Coupons linked by a typed address follow shoppers too.** Found in the staging walk-through: staging's "15% Off Accent Chairs" coupon links to `/living-room/chairs/` with "A specific link", not "A product category", so 1.70.0 left it in place. Coupons made before the category, brand and product choices existed are likely the same on client sites.

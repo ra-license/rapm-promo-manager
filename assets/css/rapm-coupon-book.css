@@ -3,7 +3,12 @@
 	gap: 16px;
 	overflow-x: auto;
 	scroll-snap-type: x mandatory;
-	padding: 4px 4px 16px;
+	/* 1.70.2: no side padding. 4px each side made three 220px cards need
+	   700px, so a 693px row scrolled 7px with a scrollbar and two dots, and
+	   snapping the first card to the edge parked the row at scrollLeft 4
+	   (second dot lit). Cards now fit whenever they fit; the focus ring is
+	   drawn inside the card instead (below). */
+	padding: 4px 0 16px;
 	-webkit-overflow-scrolling: touch;
 }
 
@@ -18,6 +23,11 @@
 	display: block;
 	text-decoration: none;
 	background: #111;
+}
+
+.rapm-coupon-card:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -4px;
 }
 
 .rapm-coupon-card picture,

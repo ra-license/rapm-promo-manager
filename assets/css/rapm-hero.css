@@ -320,7 +320,7 @@
 .rapm-split .rapm-pins-panel { grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; align-items: center; }
 .rapm-split .rapm-pins-panel.no-cards { grid-template-columns: minmax(0, 1fr); }
 .rapm-split .rapm-pins-shelf .rapm-pins-shelf-btn { min-height: 38px; padding: 0 16px; font-size: 12px; }
-.rapm-split .rapm-pins-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 8px; padding: 6px 0 6px 6px; }
+.rapm-split .rapm-pins-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-left: 6px; gap: 8px; padding: 6px 0 6px 6px; }
 .rapm-split .rapm-pins-card { flex: 0 0 230px; scroll-snap-align: start; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; padding: 8px; }
 .rapm-split .rapm-pins-card-img img { width: 52px; height: 52px; }
 

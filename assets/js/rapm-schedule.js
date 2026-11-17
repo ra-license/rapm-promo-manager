@@ -301,6 +301,10 @@
 
 		function overflow() { return list.scrollWidth - list.clientWidth; }
 
+		// 1.70.2: a row only a few pixels too wide (rounding, a theme's
+		// padding) counts as fitting: no dots for under 9px of overflow.
+		var TOLERANCE = 8;
+
 		function mark() {
 			if ( pages < 2 ) { return; }
 			var over = overflow();
@@ -310,7 +314,7 @@
 
 		function build() {
 			var over = overflow();
-			pages = over > 2 && list.clientWidth > 0 ? Math.max( 2, Math.ceil( list.scrollWidth / list.clientWidth ) ) : 0;
+			pages = over > TOLERANCE && list.clientWidth > 0 ? Math.max( 2, Math.ceil( list.scrollWidth / list.clientWidth ) ) : 0;
 			dotsBox.innerHTML = '';
 			dotsBox.hidden = pages < 2;
 			for ( var i = 0; i < pages; i++ ) {

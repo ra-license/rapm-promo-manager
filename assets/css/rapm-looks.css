@@ -226,7 +226,7 @@
 	/* Phones have their own "What each screen shows" position (1.36.0). */
 	.rapm-looks .rapm-look-photo img { object-position: var(--rapm-pos-phone, var(--rapm-pos, 50% 50%)); }
 	.rapm-looks .rapm-look-dot { width: 32px; height: 32px; margin: -16px 0 0 -16px; line-height: 28px; font-size: 13px; }
-	.rapm-look-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 6px 0 6px 6px; }
+	.rapm-look-cards { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-left: 6px; gap: 10px; padding: 6px 0 6px 6px; }
 	.rapm-look-card { flex: 0 0 82%; scroll-snap-align: start; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 10px; }
 	.rapm-look-card-img img { width: 64px; height: 64px; }
 	.rapm-look-card-name { font-size: 14px; }

@@ -194,6 +194,8 @@
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
 		scroll-snap-type: x proximity;
+		/* 1.70.2: snap the first link to the padding's edge, not past it. */
+		scroll-padding-inline: 2px;
 		-webkit-overflow-scrolling: touch;
 		scrollbar-width: none;
 		padding: 2px 2px 6px;
