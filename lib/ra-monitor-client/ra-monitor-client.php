@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Client 1.3.1
+ * RA Monitor Client 1.4.0
  *
  * Shared by every R&A plugin, bundled into each one the same way
  * plugin-update-checker is. Once a day it sends one short check-in to
@@ -46,6 +46,28 @@
  * it 'plugin' / 'theme' (one) in upgrader_process_complete; only a bulk
  * update names 'plugins' / 'themes' (a list). Found on staging, Oct 26.
  *
+ * 1.3.2: R&A Product Image Frames and See in your Space are on the list
+ * of R&A plugins. And any plugin that registers with this client is always
+ * reported, list or not. Until now a registered plugin missing from the
+ * list was left out of every check-in, so the monitor said it was
+ * "probably deleted" (found Nov 12, 2026 with Product Image Frames).
+ *
+ * 1.3.3: "no token" is only reported when an update check actually failed
+ * and no token is set. Public repos (Woo Native Dimensions, RA Promo
+ * Manager) update fine without one, but 1.3.2 and earlier said "No GitHub
+ * token, so it can't update itself" for every site without a token and
+ * never sent the real update status (found Nov 12, 2026 on Slone,
+ * Doughty's, Mecklenburg and ABC Retail, all on the newest version).
+ *
+ * 1.4.0: after an update (plugin, theme or WordPress), the note goes out
+ * at the end of the request that ran the update, instead of 5 minutes
+ * later from WordPress's scheduler. On Nov 16, 2026 an update crashed a
+ * website (RA Promo Manager 1.69.0, a missing brace); a crashed website
+ * never runs its scheduler, so the note never went and the monitor only
+ * found it on its regular round, up to 6 hours later. The request doing the
+ * update still has the old code loaded, so it can always send. Other
+ * changes still wait 5 minutes and go together.
+ *
  * Several R&A plugins on one site each bundle a copy; whichever loads first
  * defines the class and the rest register with it, so the public API below
  * must stay backward compatible. A breaking change needs a new class name.
@@ -57,7 +79,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 
 	class RA_Monitor_Client {
 
-		const VERSION  = '1.3.1';
+		const VERSION  = '1.4.0';
 		const ENDPOINT = 'https://help.ramarketing.com/wp-json/ra-monitor/v1/checkin';
 
 		// Must match RA_MONITOR_KEY in the RA Plugin Monitor receiver.
@@ -78,7 +100,12 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			'rapm-promo-manager',
 			'woo-native-dimensions',
 			'ra-space-viewer',
+			'see-in-your-space',
+			'ra-product-image-frames',
 		);
+
+		/** 1.4.0: an update's note goes out at the end of its own request. */
+		private static $send_at_shutdown = false;
 
 		private static $plugins = array();
 		private static $booted  = false;
@@ -321,6 +348,11 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			} elseif ( 'core' === $type ) {
 				self::report_change( 'WordPress updated' );
 			}
+			// 1.4.0: send at the end of this request, while it still runs.
+			if ( ! self::$send_at_shutdown ) {
+				self::$send_at_shutdown = true;
+				add_action( 'shutdown', array( __CLASS__, 'send_changes' ) );
+			}
 		}
 
 		public static function on_plugin_switched( $basename ) {
@@ -438,9 +470,14 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			if ( ! function_exists( 'get_plugins' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
+			// 1.3.2: plugins that registered with this client always count.
+			$registered = array();
+			foreach ( self::$plugins as $args ) {
+				$registered[ plugin_basename( $args['file'] ) ] = true;
+			}
 			$found = array();
 			foreach ( get_plugins() as $basename => $data ) {
-				if ( in_array( basename( $basename, '.php' ), self::$known_slugs, true ) ) {
+				if ( isset( $registered[ $basename ] ) || in_array( basename( $basename, '.php' ), self::$known_slugs, true ) ) {
 					$found[ $basename ] = $data;
 				}
 			}
@@ -510,11 +547,6 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			if ( ! $checker || ! method_exists( $checker, 'getUpdateState' ) ) {
 				return $health;
 			}
-			if ( false === $args['has_token'] ) {
-				$health['update_status'] = 'no_token';
-				return $health;
-			}
-
 			$state      = $checker->getUpdateState();
 			$last_check = (int) $state->getLastCheck();
 			$update     = $state->getUpdate();
@@ -530,7 +562,9 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 				return $health;
 			}
 
-			$health['update_status'] = 'failed';
+			// 1.3.3: a failed check with no token set is reported as "no token":
+			// a private repo needs one. With a token it's a real failure.
+			$health['update_status'] = false === $args['has_token'] ? 'no_token' : 'failed';
 			$errors = get_option( self::ERRORS_OPTION, array() );
 			$slug   = $args['slug'];
 			// The library saves the check time before contacting GitHub, so an

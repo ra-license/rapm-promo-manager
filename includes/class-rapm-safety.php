@@ -29,6 +29,14 @@
  *    update is refused before the old files are touched: the version already
  *    installed keeps running, and administrators see what was wrong.
  *
+ * 1.73.1: R&A hears about a pause. The first request that finds Promo
+ * Manager paused sends R&A's Website Monitor a signed "something changed"
+ * note naming the file and line (RA_Monitor_Client::report_change), and
+ * every page carries <meta name="ra-promo-manager" content="paused">.
+ * Website Monitor 1.10.0 counts that marker as a failed visitor check, so
+ * its usual "Visitor check failed" email goes out about 15 minutes after
+ * the pause. Before this, a paused website looked fine to the monitor.
+ *
  * What these don't catch: a mistake that only shows when a page runs (a
  * misspelled function, say) and a few errors PHP can't hand back as an
  * exception (like declaring the same method twice). R&A's own checks before
@@ -87,7 +95,23 @@ class RAPM_Safety {
 		if ( get_option( self::OPTION_PAUSED ) !== self::$error ) {
 			update_option( self::OPTION_PAUSED, self::$error, false );
 			error_log( 'RA Promo Manager ' . RAPM_VERSION . ' is paused: ' . self::$error['file'] . ' line ' . self::$error['line'] . ': ' . self::$error['message'] ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
+			// 1.73.1: tell R&A's Website Monitor once (a signed note, a few
+			// minutes later). It then checks the website as a visitor, sees
+			// the marker below and emails. Which file is in the note, not on
+			// the page.
+			if ( class_exists( 'RA_Monitor_Client' ) && method_exists( 'RA_Monitor_Client', 'report_change' ) ) {
+				RA_Monitor_Client::report_change( 'RA Promo Manager ' . RAPM_VERSION . ' paused: ' . self::$error['file'] . ' line ' . self::$error['line'] );
+			}
 		}
+		// 1.73.1: a marker on every page while paused, for the monitor's
+		// visitor check (Website Monitor 1.10.0+). Says only "paused".
+		add_action(
+			'wp_head',
+			function () {
+				echo '<meta name="ra-promo-manager" content="paused" />' . "\n";
+			},
+			1
+		);
 		add_action(
 			'init',
 			function () {
