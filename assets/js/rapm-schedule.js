@@ -499,5 +499,51 @@
 	window.addEventListener( 'load', splitAll );
 	window.addEventListener( 'elementor/popup/show', splitAll );
 
-	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split, reveal: reveal };
+	/**
+	 * 1.70.0 (RAPM_Interests): put the items that match what this shopper
+	 * looked at first. Each item lists what it's about in data-rapm-for
+	 * ("c12 b34"); the note in localStorage "rapm_seen" holds, for each
+	 * category or brand looked at, [times, day]. A match scores its times,
+	 * halved for every two weeks since it was last looked at. Items keep
+	 * their usual order among equals, so with no note (a first-time
+	 * visitor, storage blocked) nothing moves. Items that match get
+	 * data-rapm-picked, which Google Analytics reports (rapm-track.js).
+	 */
+	function followInterests( root, itemSelector ) {
+		var seen;
+		try {
+			seen = JSON.parse( window.localStorage.getItem( 'rapm_seen' ) || '{}' );
+		} catch ( e ) {
+			return;
+		}
+		if ( ! seen || 'object' !== typeof seen ) {
+			return;
+		}
+		var today = Math.floor( Date.now() / 864e5 );
+		var items = Array.prototype.slice.call( root.querySelectorAll( itemSelector ) );
+		if ( items.length < 2 ) {
+			return;
+		}
+		var scored = items.map( function ( el, i ) {
+			var score = 0;
+			( el.getAttribute( 'data-rapm-for' ) || '' ).split( ' ' ).forEach( function ( k ) {
+				var e = k && seen[ k ];
+				if ( e && e[ 0 ] > 0 && e[ 1 ] > 0 ) {
+					score += e[ 0 ] * Math.pow( 0.5, Math.max( 0, today - e[ 1 ] ) / 14 );
+				}
+			} );
+			return { el: el, i: i, score: score };
+		} );
+		var sorted = scored.slice().sort( function ( a, b ) {
+			return b.score - a.score || a.i - b.i;
+		} );
+		sorted.forEach( function ( s ) {
+			if ( s.score > 0 ) {
+				s.el.setAttribute( 'data-rapm-picked', '' );
+			}
+			s.el.parentNode.appendChild( s.el );
+		} );
+	}
+
+	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split, reveal: reveal, followInterests: followInterests };
 } )( window );

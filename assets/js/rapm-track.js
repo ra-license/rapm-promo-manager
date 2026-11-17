@@ -77,10 +77,14 @@
 		items = items.length ? items.map( function ( it ) {
 			return { item_id: it[ 0 ], item_name: it[ 1 ] };
 		} ) : [ { item_id: 'rapm-' + key, item_name: p.n } ];
+		// 1.70.0: a coupon that matches what this shopper looked at (and so
+		// moved to the front) reports as "Coupon row (picked for you)", so the
+		// two can be compared.
+		var picked = document.querySelector( '.rapm-coupon-card[data-rapm-picked][data-rapm-key="' + String( key ).replace( /[^0-9]/g, '' ) + '"]' );
 		var params = {
 			promotion_id: 'rapm-' + key,
 			promotion_name: p.n,
-			creative_name: p.k,
+			creative_name: picked && p.k ? p.k + ' (picked for you)' : p.k,
 			creative_slot: p.s,
 			items: items
 		};

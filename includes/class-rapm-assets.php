@@ -157,6 +157,7 @@ class RAPM_Assets {
 		$exclusions[] = 'rapm-pins'; // 1.35.0: banner dots and button.
 		$exclusions[] = 'rapm-track'; // 1.59.0: promotion views and clicks.
 		$exclusions[] = 'RAPM_Track';
+		$exclusions[] = 'RAPM_Seen'; // 1.70.0: the note of what the shopper looked at.
 		return $exclusions;
 	}
 

@@ -50,6 +50,9 @@ class RAPM_Admin_Settings {
 			'ga_mode'                 => 'auto',
 			// What item_id holds: 'sku' (product number if there's no SKU) or 'id'.
 			'ga_item_id'              => 'sku',
+			// 1.70.0: coupons that follow what the shopper looked at
+			// (RAPM_Interests). Off until R&A turns it on for a site.
+			'interests_enabled'       => 0,
 		);
 	}
 
@@ -109,6 +112,8 @@ class RAPM_Admin_Settings {
 		$out['ga_enabled'] = isset( $input['ga_enabled'] ) ? 1 : 0;
 		$out['ga_mode']    = isset( $input['ga_mode'] ) && in_array( $input['ga_mode'], array( 'auto', 'gtag', 'gtm' ), true ) ? $input['ga_mode'] : 'auto';
 		$out['ga_item_id'] = isset( $input['ga_item_id'] ) && 'id' === $input['ga_item_id'] ? 'id' : 'sku';
+
+		$out['interests_enabled'] = isset( $input['interests_enabled'] ) ? 1 : 0;
 
 		$overrides = array();
 		if ( isset( $input['slot_overrides'] ) && is_array( $input['slot_overrides'] ) ) {
@@ -312,6 +317,19 @@ class RAPM_Admin_Settings {
 							<th><label for="rapm_search_base"><?php esc_html_e( 'Search Results Page', 'rapm' ); ?></label></th>
 							<td><input type="url" class="regular-text" id="rapm_search_base" name="<?php echo esc_attr( self::OPTION ); ?>[search_results_base_url]" placeholder="<?php esc_attr_e( 'Leave blank for the normal site search', 'rapm' ); ?>" value="<?php echo esc_attr( $opts['search_results_base_url'] ); ?>" />
 								<p class="description"><?php esc_html_e( 'Only fill this in if this site has a separate, dedicated search results page from a tool like Fast Simon (rather than using the normal WordPress search). Leave blank otherwise — that\'s the right setting for most sites.', 'rapm' ); ?></p>
+							</td>
+						</tr>
+					</table>
+				<?php endif; ?>
+
+				<?php if ( class_exists( 'WooCommerce' ) ) : // 1.70.0: RAPM_Interests. ?>
+					<h2 id="rapm-coupons"><?php esc_html_e( 'Coupons', 'rapm' ); ?></h2>
+					<table class="form-table">
+						<tr>
+							<th><?php esc_html_e( 'Follow what the shopper looked at', 'rapm' ); ?></th>
+							<td><label><input type="checkbox" name="<?php echo esc_attr( self::OPTION ); ?>[interests_enabled]" value="1" <?php checked( $opts['interests_enabled'], 1 ); ?> /> <?php esc_html_e( 'Move coupons to the front for shoppers who looked at what they\'re for', 'rapm' ); ?></label>
+								<p class="description"><?php esc_html_e( 'Someone who looked at recliners sees the recliner coupon first. A coupon is matched by its link: a product category, a brand or a product. Every coupon still shows; only the order changes. First-time visitors see the normal order.', 'rapm' ); ?></p>
+								<p class="description"><?php esc_html_e( 'What a shopper looked at is kept in their own browser for 30 days and never sent anywhere. If this website asks visitors for cookie consent through the WP Consent API, it\'s only kept once they allow "preferences".', 'rapm' ); ?></p>
 							</td>
 						</tr>
 					</table>

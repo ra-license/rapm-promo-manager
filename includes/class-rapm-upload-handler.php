@@ -1630,6 +1630,12 @@ class RAPM_Upload_Handler {
 						</td>
 					</tr>
 					<?php endif; ?>
+					<?php if ( 'coupon' === $kind_key && class_exists( 'WooCommerce' ) ) : // 1.70.0 ?>
+					<tr>
+						<th><?php esc_html_e( 'Picked for shoppers', 'rapm' ); ?></th>
+						<td><p class="description rapm-interests-note"><?php echo esc_html( RAPM_Interests::form_note( $is_edit ? $asset_id : 0 ) ); ?></p></td>
+					</tr>
+					<?php endif; ?>
 				</table>
 
 				<?php

@@ -215,6 +215,17 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.70.0
+
+**Coupons that follow what the shopper looked at.** Phil, Nov 17 call: could Promo Manager see which pages a shopper has been to and use that for the coupons? Google Analytics' cookie can't: it only carries an id, and the pages visited stay inside Google (the Hub and Search Console only have totals). So Promo Manager keeps its own short note in the shopper's browser.
+- **Settings › Coupons:** "Move coupons to the front for shoppers who looked at what they're for". Off until R&A turns it on for a website.
+- **The note** (`RAPM_Interests::record()`): on a product page, a product category page or a brand page, a few lines in the footer add that page's categories (with their parent categories) and brands to localStorage `rapm_seen`: times looked at and the last day. Entries older than 30 days drop off; at most 30 are kept. Browser storage, not a cookie, so nothing is sent to the website or anywhere else, and every shopper gets the same cached page. When the website's consent tool uses the WP Consent API (Complianz, CookieYes and others), the note is only kept once the shopper allows "preferences". WP Rocket's "Delay JavaScript" leaves it alone (`RAPM_Seen`).
+- **What a coupon is about** comes from its link (`data-rapm-for`): a product category, a brand, or a product's own categories and brands (not their parents, so a recliner coupon follows recliner shoppers, not all of Living Room). A coupon that links to a page, a search, a hand-picked list or another website keeps its place.
+- **The coupon row** (`RAPM_Schedule.followInterests`) scores each coupon by how often its categories and brands were looked at, halved for every two weeks since, and puts the highest first. Equal coupons keep their usual order, so a first-time visitor (or a browser that blocks storage) sees the normal order. Every coupon still shows; nothing about an offer or its link changes.
+- **Google Analytics:** a coupon that matches what the shopper looked at (and so moved to the front) reports as "Coupon row (picked for you)" in creative_name, so its clicks can be compared with the normal order.
+- **The coupon form** has a "Picked for shoppers" line: which categories and brands the coupon follows (from its saved link), how to make it follow something, or that it's off for this website.
+- Only the Coupon row uses it for now. The same scoring could order Slider slides or Tile row tiles later.
+
 ## 1.69.1
 
 **Fix: 1.69.0 took staging down.** 1.69.0 was missing the closing `}` of `RAPM_Hero_Carousel`, so the plugin couldn't load and every page on staging, admin included, showed WordPress's "critical error" (Nov 16, a few minutes after updating; the Plugins page still showed "updated!" because that request ran on the old code). Never reached production or a client site.
