@@ -549,5 +549,157 @@
 		} );
 	}
 
-	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split, reveal: reveal, followInterests: followInterests };
+	/**
+	 * 1.71.0 (RAPM_Made_Cards): a card made for this shopper when they looked
+	 * at a category that has no coupon. Reads the note and its card details
+	 * (localStorage "rapm_seen" and "rapm_seen_cards", kept by the few lines
+	 * RAPM_Interests::record() prints on product and category pages) and the
+	 * row's data-rapm-made: the reminder wording, the picture choice and the
+	 * offers the store approved. At most one card, for the category looked
+	 * at most (and most recently) that no live coupon in the row covers.
+	 * Its words: an approved offer for that category or a category above it,
+	 * else an approved standing offer, else the reminder (no discount).
+	 * It goes in front of every coupon the shopper looked at less.
+	 */
+	function madeCard( root, itemSelector ) {
+		var cfg, seen, cards;
+		try {
+			cfg   = JSON.parse( root.getAttribute( 'data-rapm-made' ) || 'null' );
+			seen  = JSON.parse( window.localStorage.getItem( 'rapm_seen' ) || '{}' );
+			cards = JSON.parse( window.localStorage.getItem( 'rapm_seen_cards' ) || '{}' );
+		} catch ( e ) {
+			return;
+		}
+		if ( ! cfg || ! seen || ! cards || 'object' !== typeof seen || 'object' !== typeof cards ) {
+			return;
+		}
+		var today = Math.floor( Date.now() / 864e5 );
+		function score( keys ) {
+			var total = 0;
+			keys.forEach( function ( k ) {
+				var e = k && seen[ k ];
+				if ( e && e[ 0 ] > 0 && e[ 1 ] > 0 ) {
+					total += e[ 0 ] * Math.pow( 0.5, Math.max( 0, today - e[ 1 ] ) / 14 );
+				}
+			} );
+			return total;
+		}
+		function safeUrl( u, sameSite ) {
+			try {
+				var url = new URL( String( u ), window.location.href );
+				if ( 'http:' !== url.protocol && 'https:' !== url.protocol ) { return ''; }
+				if ( sameSite && url.host !== window.location.host ) { return ''; }
+				return url.href;
+			} catch ( e ) {
+				return '';
+			}
+		}
+		var coupons = Array.prototype.slice.call( root.querySelectorAll( itemSelector ) ).filter( isActive );
+		var covered = {};
+		coupons.forEach( function ( el ) {
+			( el.getAttribute( 'data-rapm-for' ) || '' ).split( ' ' ).forEach( function ( k ) { if ( k ) { covered[ k ] = true; } } );
+		} );
+		var picks = Object.keys( cards ).filter( function ( k ) {
+			var c = cards[ k ];
+			if ( ! /^c\d+$/.test( k ) || ! Array.isArray( c ) || ! c[ 0 ] || ! c[ 1 ] ) { return false; }
+			var family = [ k ].concat( Array.isArray( c[ 4 ] ) ? c[ 4 ] : [] );
+			return ! family.some( function ( f ) { return covered[ f ]; } ) && score( [ k ] ) > 0;
+		} ).sort( function ( a, b ) {
+			return score( [ b ] ) - score( [ a ] ) || ( seen[ b ][ 1 ] - seen[ a ][ 1 ] );
+		} );
+		if ( ! picks.length ) {
+			return;
+		}
+		var key  = picks[ 0 ];
+		var c    = cards[ key ];
+		var link = safeUrl( c[ 1 ], true );
+		if ( ! link ) {
+			return;
+		}
+		var family = [ key ].concat( Array.isArray( c[ 4 ] ) ? c[ 4 ] : [] );
+		var now    = new Date();
+		var offers = ( Array.isArray( cfg.o ) ? cfg.o : [] ).filter( function ( o ) {
+			return o && o.h && ! ( o.st && now < new Date( o.st ) ) && ! ( o.en && now > new Date( o.en ) );
+		} );
+		var offer = null;
+		family.some( function ( f ) {
+			offer = offers.filter( function ( o ) { return o.f === f; } )[ 0 ] || null;
+			return !! offer;
+		} );
+		if ( ! offer ) {
+			offer = offers.filter( function ( o ) { return 'any' === o.f; } )[ 0 ] || null;
+		}
+		function fill( text ) {
+			return String( text || '' ).split( '{category}' ).join( c[ 0 ] );
+		}
+		var words = offer
+			? { h: fill( offer.h ), s: fill( offer.s ), b: fill( offer.b || 'Shop {category}' ) }
+			: { h: fill( cfg.h ), s: fill( cfg.s ), b: fill( cfg.b ) };
+		var pic = 'upload' === cfg.p ? cfg.u : ( 'category' === cfg.p ? ( c[ 2 ] || c[ 3 ] ) : ( 'brand' === cfg.p ? '' : ( c[ 3 ] || c[ 2 ] ) ) );
+		pic = pic ? safeUrl( pic, false ) : '';
+
+		var card = document.createElement( 'a' );
+		card.className = 'rapm-coupon-card is-made' + ( pic ? '' : ' is-plain' );
+		card.href = link;
+		card.setAttribute( 'data-rapm-key', 'made-' + key );
+		card.setAttribute( 'data-rapm-made-for', key );
+		if ( offer ) {
+			if ( offer.st ) { card.setAttribute( 'data-rapm-start', offer.st ); }
+			if ( offer.en ) { card.setAttribute( 'data-rapm-end', offer.en ); }
+		}
+		if ( pic ) {
+			var img = document.createElement( 'img' );
+			img.src = pic;
+			img.alt = '';
+			img.loading = 'lazy';
+			card.appendChild( img );
+		} else if ( cfg.bg ) {
+			card.style.background = cfg.bg;
+		}
+		var copy = document.createElement( 'div' );
+		copy.className = 'rapm-slide-copy';
+		copy.setAttribute( 'data-align', 'left' );
+		copy.setAttribute( 'data-style', 'bold' );
+		copy.style.color = '#ffffff';
+		var h = document.createElement( 'h3' );
+		h.className = 'rapm-headline';
+		h.textContent = words.h;
+		copy.appendChild( h );
+		if ( words.s ) {
+			var p = document.createElement( 'p' );
+			p.className = 'rapm-subhead';
+			p.textContent = words.s;
+			copy.appendChild( p );
+		}
+		if ( words.b ) {
+			var b = document.createElement( 'span' );
+			b.className = 'rapm-cta-btn';
+			b.textContent = words.b;
+			copy.appendChild( b );
+		}
+		card.appendChild( copy );
+
+		// Google Analytics (RAPM_Track, when it's on): named for what it was made for.
+		if ( window.RAPM_Track && window.RAPM_Track.data ) {
+			window.RAPM_Track.data[ 'made-' + key ] = {
+				n: 'Made for shopper: ' + c[ 0 ] + ( offer ? ' (' + ( { product: 'product offer', financing: 'financing offer', delivery: 'delivery offer', design: 'design service offer' }[ offer.k ] || 'offer' ) + ')' : ' (reminder)' ),
+				s: cfg.sp || '',
+				k: 'Coupon row (made for shopper)',
+				i: []
+			};
+		}
+
+		// In front of every coupon this shopper looked at less; first when
+		// coupons don't move for shoppers (Settings: follow is off).
+		var mine   = score( [ key ] );
+		var before = root.hasAttribute( 'data-rapm-follow' ) ? null : root.querySelector( itemSelector );
+		Array.prototype.slice.call( root.hasAttribute( 'data-rapm-follow' ) ? root.querySelectorAll( itemSelector ) : [] ).some( function ( el ) {
+			var keys = ( el.getAttribute( 'data-rapm-for' ) || '' ).split( ' ' );
+			if ( score( keys ) < mine ) { before = el; return true; }
+			return false;
+		} );
+		root.insertBefore( card, before );
+	}
+
+	window.RAPM_Schedule = { init: init, isActive: isActive, watch: watch, scrollDots: scrollDots, split: split, reveal: reveal, followInterests: followInterests, madeCard: madeCard };
 } )( window );

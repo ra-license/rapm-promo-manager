@@ -80,7 +80,8 @@
 		// 1.70.0: a coupon that matches what this shopper looked at (and so
 		// moved to the front) reports as "Coupon row (picked for you)", so the
 		// two can be compared.
-		var picked = document.querySelector( '.rapm-coupon-card[data-rapm-picked][data-rapm-key="' + String( key ).replace( /[^0-9]/g, '' ) + '"]' );
+		// 1.71.0: only numbered keys; a made card's key ("made-c12") isn't a coupon's.
+		var picked = /^\d+$/.test( String( key ) ) && document.querySelector( '.rapm-coupon-card[data-rapm-picked][data-rapm-key="' + String( key ) + '"]' );
 		var params = {
 			promotion_id: 'rapm-' + key,
 			promotion_name: p.n,

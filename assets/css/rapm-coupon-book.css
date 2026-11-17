@@ -25,6 +25,17 @@
 	background: #111;
 }
 
+/* 1.71.0: a card made for the shopper (RAPM_Made_Cards). Its picture is
+   often a product on a white background, so the words get a deeper shade
+   behind them; on the plain brand color they need none. */
+.rapm-coupon-card.is-made .rapm-slide-copy {
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.62) 30%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+.rapm-coupon-card.is-plain .rapm-slide-copy {
+	background: none;
+}
+
 .rapm-coupon-card:focus-visible {
 	outline: 2px solid currentColor;
 	outline-offset: -4px;

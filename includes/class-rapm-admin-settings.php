@@ -53,7 +53,7 @@ class RAPM_Admin_Settings {
 			// 1.70.0: coupons that follow what the shopper looked at
 			// (RAPM_Interests). Off until R&A turns it on for a site.
 			'interests_enabled'       => 0,
-		);
+		) + RAPM_Made_Cards::defaults(); // 1.71.0: cards made for shoppers.
 	}
 
 	public static function get( $key = null ) {
@@ -114,6 +114,7 @@ class RAPM_Admin_Settings {
 		$out['ga_item_id'] = isset( $input['ga_item_id'] ) && 'id' === $input['ga_item_id'] ? 'id' : 'sku';
 
 		$out['interests_enabled'] = isset( $input['interests_enabled'] ) ? 1 : 0;
+		RAPM_Made_Cards::sanitize_into( $input, $out ); // 1.71.0
 
 		$overrides = array();
 		if ( isset( $input['slot_overrides'] ) && is_array( $input['slot_overrides'] ) ) {
@@ -140,6 +141,13 @@ class RAPM_Admin_Settings {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Promo Manager Settings', 'rapm' ); ?></h1>
+			<?php
+			// 1.71.0: show save notes (an approved offer missing who approved it).
+			// Screens outside Settings don't show them on their own.
+			if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				settings_errors( self::OPTION );
+			}
+			?>
 			<?php RAPM_Help_Desk::render_box(); // 1.65.0 ?>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::OPTION ); ?>
@@ -332,6 +340,7 @@ class RAPM_Admin_Settings {
 								<p class="description"><?php esc_html_e( 'What a shopper looked at is kept in their own browser for 30 days and never sent anywhere. If this website asks visitors for cookie consent through the WP Consent API, it\'s only kept once they allow "preferences".', 'rapm' ); ?></p>
 							</td>
 						</tr>
+						<?php RAPM_Made_Cards::render_settings( $opts ); // 1.71.0 ?>
 					</table>
 				<?php endif; ?>
 

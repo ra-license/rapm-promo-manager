@@ -44,8 +44,16 @@ class RAPM_Interests {
 		add_action( 'wp_footer', array( __CLASS__, 'record' ), 5 );
 	}
 
-	/** Whether this website has it turned on. */
+	/**
+	 * Whether the note is kept: for following (1.70.0) or for made cards
+	 * (1.71.0, RAPM_Made_Cards), either one.
+	 */
 	public static function enabled() {
+		return class_exists( 'WooCommerce' ) && ( (bool) RAPM_Admin_Settings::get( 'interests_enabled' ) || (bool) RAPM_Admin_Settings::get( 'made_enabled' ) );
+	}
+
+	/** Whether coupons move to the front (Settings › Coupons, 1.70.0). */
+	public static function follow_on() {
 		return class_exists( 'WooCommerce' ) && (bool) RAPM_Admin_Settings::get( 'interests_enabled' );
 	}
 
@@ -123,7 +131,10 @@ class RAPM_Interests {
 		if ( ! $keys ) {
 			return;
 		}
-		$js = '/* RAPM_Seen */(function(k){try{'
+		// 1.71.0: with made cards on, the page's own categories (name,
+		// address, pictures) go beside the note, for RAPM_Schedule.madeCard().
+		$cards = RAPM_Made_Cards::page_cards();
+		$js = '/* RAPM_Seen */(function(k,c){try{'
 			. 'if(typeof window.wp_has_consent==="function"&&!window.wp_has_consent("preferences")){return;}'
 			. 'var s,d=Math.floor(Date.now()/864e5),o={};'
 			. 'try{s=JSON.parse(localStorage.getItem("rapm_seen")||"{}");}catch(e){s=null;}'
@@ -133,8 +144,13 @@ class RAPM_Interests {
 			. '.sort(function(a,b){return s[b][1]-s[a][1]||s[b][0]-s[a][0];}).slice(0,30)'
 			. '.forEach(function(x){o[x]=s[x];});'
 			. 'localStorage.setItem("rapm_seen",JSON.stringify(o));'
-			. '}catch(e){}})(' . wp_json_encode( $keys ) . ');';
-		echo "<script>{$js}</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput -- keys are built from integers only.
+			. 'if(c){var m,n={};try{m=JSON.parse(localStorage.getItem("rapm_seen_cards")||"{}");}catch(e){m=null;}'
+			. 'if(!m||typeof m!=="object"||Array.isArray(m)){m={};}'
+			. 'Object.keys(c).forEach(function(x){m[x]=c[x];});'
+			. 'Object.keys(m).forEach(function(x){if(o[x]&&Array.isArray(m[x])){n[x]=m[x];}});'
+			. 'localStorage.setItem("rapm_seen_cards",JSON.stringify(n));}'
+			. '}catch(e){}})(' . wp_json_encode( $keys ) . ',' . ( $cards ? wp_json_encode( $cards, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) : '0' ) . ');';
+		echo "<script>{$js}</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput -- keys are integers; card text is JSON with <, >, &, ' and " escaped.
 	}
 
 	/** What a coupon is about, from its link. Empty when it links to a page, a search or another website. */
@@ -225,9 +241,9 @@ class RAPM_Interests {
 		return $keys ? ' data-rapm-for="' . esc_attr( implode( ' ', $keys ) ) . '"' : '';
 	}
 
-	/** The coupon row's switch for the browser script. */
-	public static function row_attr() {
-		return self::enabled() ? ' data-rapm-follow' : '';
+	/** The coupon row's switches for the browser script: following, and (1.71.0) made cards. */
+	public static function row_attr( $placement = '' ) {
+		return ( self::follow_on() ? ' data-rapm-follow' : '' ) . RAPM_Made_Cards::row_attr( $placement );
 	}
 
 	/** The names behind a coupon's keys, for the form: "Sofas, Flexsteel". */
@@ -245,7 +261,7 @@ class RAPM_Interests {
 
 	/** The line on a coupon's form under its dates. */
 	public static function form_note( $asset_id ) {
-		if ( ! self::enabled() ) {
+		if ( ! self::follow_on() ) {
 			return current_user_can( 'manage_options' )
 				? __( 'Off for this website. Turn it on in Settings › Coupons to move coupons to the front for shoppers who looked at what they\'re for.', 'rapm' )
 				: __( 'Off for this website. Ask R&A if you\'d like coupons to move to the front for shoppers who looked at what they\'re for.', 'rapm' );

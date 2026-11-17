@@ -215,6 +215,17 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.71.0
+
+**Coupon cards made for the shopper.** Phil, Nov 17: 1.70.0 only reorders coupons, so "if a shopper looks at dining tables and there's no dining coupon, nothing new appears." He wants a card made for them. His rules (answered Nov 17): a reminder with no discount by default; an offer only when someone works it out with the client (a standing offer or a category offer), and offers can be about financing, delivery or design services, not just products; pictures from the products or category, the brand, or an upload. Mockup approved the same day (claude.ai/artifact/PwizTAyVpjnyHrH1PPHvPM).
+- **Settings › Coupons** (administrators): "When a shopper looked at a category that has no coupon, make a card for it" (off until R&A turns it on); the reminder card's headline, small line and button, with `{category}` filled in; the picture (a product photo: the product the shopper looked at, or the category's best seller with a photo; the category's own picture; the brand color with no photo; or a picture chosen from the Media Library); and "Offers the store approved": for any category (standing) or one category (which covers the categories under it), kind (product, financing, delivery, design service), headline, small line, button, start and end (store time), and who approved it and when. An offer without who and when is kept but doesn't show, and saving says so.
+- **Which card a shopper gets, first match wins:** a live coupon in the row for that category or a category above it (it already moves to the front, 1.70.0, so nothing is made); an approved offer for that category or the nearest category above it; an approved standing offer; the reminder. At most one made card per row, for the category the shopper looked at most (same score as 1.70.0: times looked at, halved every two weeks). It goes in front of every coupon the shopper looked at less, or first when coupons don't move (following off).
+- **How:** on product and category pages, the note in the shopper's browser (1.70.0) also keeps each of the page's own categories' name, address, category picture, product photo and parent categories (`rapm_seen_cards`, pruned with the note; "Uncategorized" left out). The row carries the wording, picture choice and live offers (`data-rapm-made`), and `RAPM_Schedule.madeCard()` builds the card in the browser, so it works behind page caches and nothing is sent to the website. Offers past their end drop out on the page too. A made card's link must be on this website.
+- With made cards on, a Coupon row with no coupons is still printed (hidden) so a shopper can get a made card.
+- **Pictures:** made cards get a deeper shade behind the words (product photos are often on white); with the brand color, none.
+- **Google Analytics:** "Coupon row (made for shopper)" in creative_name, named "Made for shopper: Dining Tables (reminder)" or "(financing offer)" and so on.
+- **Cache:** switching following or made cards on or off clears the whole page cache (product and category pages carry the note); other changes clear the pages with a Coupon row. Rocket.net has no "clear everything" call, so its product pages pick it up as they expire.
+
 ## 1.70.2
 
 **A Coupon row that fits no longer scrolls.** Found Nov 17 in the 1.70.1 walk-through on staging's Promotions page (748px window): three coupons that looked like they fit had a thin scrollbar and two scroll dots, the second lit. It happened with the normal order too, so it went back to 1.37.1.

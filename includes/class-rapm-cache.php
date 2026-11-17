@@ -38,6 +38,9 @@ class RAPM_Cache {
 
 	private static $hooked = false;
 
+	/** 1.71.0: something every product and category page carries changed. */
+	private static $all = false;
+
 	/** What the last clear did, for the Setup panel on the Promotions screen (1.28.2). */
 	private static $report = array();
 	const REPORT_OPTION    = 'rapm_last_cache_clear';
@@ -71,6 +74,17 @@ class RAPM_Cache {
 		self::hook();
 	}
 
+	/**
+	 * 1.71.0: Settings › Coupons switched following or made cards on or off.
+	 * Product and category pages carry the few lines that keep the shopper's
+	 * note, so the whole site is cleared (Rocket.net has no call for that:
+	 * its pages refresh as they expire).
+	 */
+	public static function queue_everything() {
+		self::$all = true;
+		self::hook();
+	}
+
 	private static function hook() {
 		if ( ! self::$hooked ) {
 			self::$hooked = true;
@@ -85,6 +99,10 @@ class RAPM_Cache {
 	}
 
 	public static function flush_queue() {
+		if ( self::$all ) {
+			self::$all = false;
+			self::clear_everything();
+		}
 		$keys = self::$keys;
 		foreach ( array_keys( self::$ids ) as $id ) {
 			if ( get_post( $id ) ) {
