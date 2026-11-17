@@ -2,7 +2,8 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.72.1
+ * Version: 1.73.0
+ * Requires PHP: 7.4
  * Author: RA Marketing
  * Text Domain: rapm
  */
@@ -11,59 +12,80 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.72.1' );
+define( 'RAPM_VERSION', '1.73.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
-require_once RAPM_DIR . 'includes/class-rapm-post-types.php';
-require_once RAPM_DIR . 'includes/class-rapm-slots.php';
-require_once RAPM_DIR . 'includes/class-rapm-assets.php';
-require_once RAPM_DIR . 'includes/class-rapm-track.php';
-require_once RAPM_DIR . 'includes/class-rapm-changes.php';
-require_once RAPM_DIR . 'includes/class-rapm-store-time.php'; // 1.69.0
-require_once RAPM_DIR . 'includes/class-rapm-between.php'; // 1.69.0
-require_once RAPM_DIR . 'includes/class-rapm-webp-converter.php';
-require_once RAPM_DIR . 'includes/class-rapm-destination.php';
-require_once RAPM_DIR . 'includes/class-rapm-admin-settings.php';
-require_once RAPM_DIR . 'includes/class-rapm-upload-handler.php';
-require_once RAPM_DIR . 'includes/class-rapm-admin-list.php';
-require_once RAPM_DIR . 'includes/class-rapm-sliders-dashboard.php';
-require_once RAPM_DIR . 'includes/class-rapm-spot-usage.php';
-require_once RAPM_DIR . 'includes/class-rapm-spots.php';
-require_once RAPM_DIR . 'includes/class-rapm-promotions-screen.php';
-require_once RAPM_DIR . 'includes/class-rapm-cache.php';
-require_once RAPM_DIR . 'includes/class-rapm-help.php';
-require_once RAPM_DIR . 'includes/class-rapm-training-guide.php';
-require_once RAPM_DIR . 'includes/class-rapm-link-source.php';
-require_once RAPM_DIR . 'includes/class-rapm-sync.php';
-require_once RAPM_DIR . 'includes/class-rapm-hero-carousel.php';
-require_once RAPM_DIR . 'includes/class-rapm-split.php';
-require_once RAPM_DIR . 'includes/class-rapm-fonts.php';
-require_once RAPM_DIR . 'includes/class-rapm-line-fonts.php'; // 1.62.0
-require_once RAPM_DIR . 'includes/class-rapm-line-icon.php'; // 1.63.0
-require_once RAPM_DIR . 'includes/class-rapm-place.php'; // 1.64.0
-require_once RAPM_DIR . 'includes/class-rapm-help-desk.php'; // 1.65.0
-require_once RAPM_DIR . 'includes/class-rapm-library.php';
-require_once RAPM_DIR . 'includes/class-rapm-brand-kit.php';
-require_once RAPM_DIR . 'includes/class-rapm-ready.php';
-require_once RAPM_DIR . 'includes/class-rapm-marquee.php';
-require_once RAPM_DIR . 'includes/class-rapm-quick-links.php';
-require_once RAPM_DIR . 'includes/class-rapm-reveal.php';
-require_once RAPM_DIR . 'includes/class-rapm-focal.php';
-require_once RAPM_DIR . 'includes/class-rapm-tip.php';
-require_once RAPM_DIR . 'includes/class-rapm-gallery.php';
-require_once RAPM_DIR . 'includes/class-rapm-first-tips.php';
-require_once RAPM_DIR . 'includes/class-rapm-coupon-book.php';
-require_once RAPM_DIR . 'includes/class-rapm-interests.php'; // 1.70.0
-require_once RAPM_DIR . 'includes/class-rapm-made-cards.php'; // 1.71.0
-require_once RAPM_DIR . 'includes/class-rapm-looks.php';
-require_once RAPM_DIR . 'includes/class-rapm-calendar.php';
-require_once RAPM_DIR . 'includes/class-rapm-curated-results.php';
-require_once RAPM_DIR . 'includes/class-rapm-elementor.php';
-require_once RAPM_DIR . 'includes/class-rapm-updater.php';
+// 1.73.0: the safety nets (RAPM_Safety). Loaded first and on its own:
+// a check of every new version before it's installed, and the safe loader.
+require_once RAPM_DIR . 'includes/class-rapm-safety.php';
+RAPM_Safety::init( __FILE__ );
 
-// Self-update from private GitHub repos — see class-rapm-updater.php.
-RAPM_Updater::init( __FILE__ );
+// Everything else loads inside the safe loader. If a file can't load (like
+// 1.69.0's missing brace), Promo Manager pauses instead of taking the
+// website down, and administrators see which file and line.
+$rapm_loaded = RAPM_Safety::load(
+	array(
+		'includes/class-rapm-post-types.php',
+		'includes/class-rapm-slots.php',
+		'includes/class-rapm-assets.php',
+		'includes/class-rapm-track.php',
+		'includes/class-rapm-changes.php',
+		'includes/class-rapm-store-time.php', // 1.69.0
+		'includes/class-rapm-between.php', // 1.69.0
+		'includes/class-rapm-webp-converter.php',
+		'includes/class-rapm-destination.php',
+		'includes/class-rapm-admin-settings.php',
+		'includes/class-rapm-upload-handler.php',
+		'includes/class-rapm-admin-list.php',
+		'includes/class-rapm-sliders-dashboard.php',
+		'includes/class-rapm-spot-usage.php',
+		'includes/class-rapm-spots.php',
+		'includes/class-rapm-promotions-screen.php',
+		'includes/class-rapm-cache.php',
+		'includes/class-rapm-help.php',
+		'includes/class-rapm-training-guide.php',
+		'includes/class-rapm-link-source.php',
+		'includes/class-rapm-sync.php',
+		'includes/class-rapm-hero-carousel.php',
+		'includes/class-rapm-split.php',
+		'includes/class-rapm-fonts.php',
+		'includes/class-rapm-line-fonts.php', // 1.62.0
+		'includes/class-rapm-line-icon.php', // 1.63.0
+		'includes/class-rapm-place.php', // 1.64.0
+		'includes/class-rapm-help-desk.php', // 1.65.0
+		'includes/class-rapm-library.php',
+		'includes/class-rapm-brand-kit.php',
+		'includes/class-rapm-ready.php',
+		'includes/class-rapm-marquee.php',
+		'includes/class-rapm-quick-links.php',
+		'includes/class-rapm-reveal.php',
+		'includes/class-rapm-focal.php',
+		'includes/class-rapm-tip.php',
+		'includes/class-rapm-gallery.php',
+		'includes/class-rapm-first-tips.php',
+		'includes/class-rapm-coupon-book.php',
+		'includes/class-rapm-interests.php', // 1.70.0
+		'includes/class-rapm-made-cards.php', // 1.71.0
+		'includes/class-rapm-looks.php',
+		'includes/class-rapm-calendar.php',
+		'includes/class-rapm-curated-results.php',
+		'includes/class-rapm-elementor.php',
+	)
+);
+
+// Self-update from private GitHub repos — see class-rapm-updater.php. Loaded
+// on its own, after the rest, so a fixed version can still install itself
+// while Promo Manager is paused.
+if ( RAPM_Safety::load( array( 'includes/class-rapm-updater.php' ) ) ) {
+	RAPM_Updater::init( __FILE__ );
+}
+
+if ( ! $rapm_loaded ) {
+	RAPM_Safety::paused();
+	return;
+}
+RAPM_Safety::loaded();
 
 // 1.60.0: the change log starts recording (screens come in a later release).
 RAPM_Changes::init();
