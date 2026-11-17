@@ -220,6 +220,7 @@ Phil, Nov 10: "Push to production and I can check kemper."
 **Made cards fit on phones.** Found in the 1.71.0 staging walk-through (375px phone): the approved financing offer ("0% Interest for 36 Months" / "On Recliners with approved credit. See store for details." / "Shop Recliners") filled the whole 170px card, covering the recliner photo, and the button wrapped to two lines. Hand-made coupons are designed with short words; made cards carry whatever the offer says.
 - Phones (≤480px), made cards only: headline 15px, small line 11px and at most two lines, a one-line button (cut with "…" if it's too long), tighter padding. Computers are unchanged.
 - Settings › Coupons: the offer table's "Words" column is at least 340px wide (its fields showed about 20 characters).
+- **Staging (Nov 17):** installed by Check for updates. Signed out on a phone (375): the financing card shows the recliner photo above the words, the small print is two lines, "SHOP RECLINERS" is one line, card 170 × 213 like the others; no page sideways scroll. The plain addresses of a recliner, Recliners, Living Room and Promotions (no cache-busting query) already carry the new lines (Rocket.net MISS). Left on staging for Phil to try: made cards on, one standing financing offer approved as "Staging test (not a real approval)". Not checked: Google Analytics naming (GA is off on staging).
 
 ## 1.71.0
 
