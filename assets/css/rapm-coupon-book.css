@@ -63,6 +63,32 @@
 
 @media (max-width: 480px) {
 	.rapm-coupon-card { width: 170px; }
+
+	/* 1.71.1: a made card's offer words are often longer than a designed
+	   coupon's ("On Recliners with approved credit. See store for
+	   details."), and at 170px wide they covered the whole picture and
+	   wrapped the button. Smaller words, at most two lines of small print,
+	   and a one-line button. */
+	.rapm-coupon-card.is-made .rapm-slide-copy { padding: 14px 12px; }
+	.rapm-coupon-card.is-made .rapm-headline { font-size: 15px; line-height: 1.25; margin-bottom: 4px; }
+	.rapm-coupon-card.is-made .rapm-subhead {
+		font-size: 11px;
+		line-height: 1.35;
+		margin-bottom: 10px;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.rapm-coupon-card.is-made .rapm-cta-btn {
+		max-width: 100%;
+		box-sizing: border-box;
+		padding: 8px 12px;
+		font-size: 11px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 }
 
 /* 1.37.1: dots under the row whenever it scrolls sideways (Phil's standing

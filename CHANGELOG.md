@@ -215,6 +215,12 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.71.1
+
+**Made cards fit on phones.** Found in the 1.71.0 staging walk-through (375px phone): the approved financing offer ("0% Interest for 36 Months" / "On Recliners with approved credit. See store for details." / "Shop Recliners") filled the whole 170px card, covering the recliner photo, and the button wrapped to two lines. Hand-made coupons are designed with short words; made cards carry whatever the offer says.
+- Phones (≤480px), made cards only: headline 15px, small line 11px and at most two lines, a one-line button (cut with "…" if it's too long), tighter padding. Computers are unchanged.
+- Settings › Coupons: the offer table's "Words" column is at least 340px wide (its fields showed about 20 characters).
+
 ## 1.71.0
 
 **Coupon cards made for the shopper.** Phil, Nov 17: 1.70.0 only reorders coupons, so "if a shopper looks at dining tables and there's no dining coupon, nothing new appears." He wants a card made for them. His rules (answered Nov 17): a reminder with no discount by default; an offer only when someone works it out with the client (a standing offer or a category offer), and offers can be about financing, delivery or design services, not just products; pictures from the products or category, the brand, or an upload. Mockup approved the same day (claude.ai/artifact/PwizTAyVpjnyHrH1PPHvPM).
@@ -225,6 +231,8 @@ Phil, Nov 10: "Push to production and I can check kemper."
 - **Pictures:** made cards get a deeper shade behind the words (product photos are often on white); with the brand color, none.
 - **Google Analytics:** "Coupon row (made for shopper)" in creative_name, named "Made for shopper: Dining Tables (reminder)" or "(financing offer)" and so on.
 - **Cache:** switching following or made cards on or off clears the whole page cache (product and category pages carry the note); other changes clear the pages with a Coupon row. Rocket.net has no "clear everything" call, so its product pages pick it up as they expire.
+- **Bench:** lint 0 errors on PHP 7.4 and 8.3; 12 browser cases of `madeCard()` passed (reminder first; standing offer with {category}; a parent category's offer beats the standing one; a coupon for the parent covers it; an ended coupon doesn't; an offer not started is skipped; with following on, it goes after a coupon looked at more; a link to another website makes nothing; brand color has no picture; category picture; no note, no card; the category looked at most wins).
+- **Staging walk-through (Nov 17):** installed by Check for updates; home, Promotions and Settings load. Settings › Coupons: turned on; a financing offer saved without an approver was kept, the save said "1 approved offer was saved but won't show until it says who at the store approved it and when", its row said "Not showing", and the signed-out page carried no offers. Signed out (built-in browser), after one recliner product page: Promotions showed "Still thinking about Recliners?" first, with the recliner's photo, linking to /living-room/recliners/. With the approver and date filled in: "0% Interest for 36 Months / On Recliners with approved credit. See store for details. / Shop Recliners". After Accent Chairs twice (it has a coupon): Accent Chairs coupon first, the Recliners card second, one made card. Phone (375): no page sideways scroll, three dots, but the offer's words covered the picture and wrapped the button: fixed in 1.71.1.
 
 ## 1.70.2
 

@@ -410,7 +410,7 @@ class RAPM_Made_Cards {
 					<thead>
 						<tr>
 							<th style="width:210px;"><?php esc_html_e( 'For / kind', 'rapm' ); ?></th>
-							<th><?php esc_html_e( 'Words ({category} works here too)', 'rapm' ); ?></th>
+							<th style="min-width:340px;"><?php esc_html_e( 'Words ({category} works here too)', 'rapm' ); ?></th>
 							<th style="width:200px;"><?php esc_html_e( 'Dates (store time)', 'rapm' ); ?></th>
 							<th style="width:190px;"><?php esc_html_e( 'Approved by', 'rapm' ); ?></th>
 							<th style="width:60px;"><span class="screen-reader-text"><?php esc_html_e( 'Remove', 'rapm' ); ?></span></th>
