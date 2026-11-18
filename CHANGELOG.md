@@ -215,6 +215,11 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.75.0 round and Website Monitor 1.12.0 (Nov 18, 2026)
+
+- **Phil's OK** ("Yes, push to production"). Website Monitor main + v1.12.0 pushed; on the help desk, Updates › Check again installed 1.12.0 (only the monitor ticked); the dashboard loads, and the Website keys box read 16 of 61 websites with their own key (2 this morning). Pushed to the production repos (main + tag): RA Promo Manager v1.75.0, Woo Native Dimensions v1.41, Universal Room Planner v7.30.0, See in your Space v0.13.0, See in your Space Pro v1.1.0, R&A Product Image Frames v0.4.0. Client sites install them on their own; their rows get **Roll back to X** once they've updated and polled.
+- **Drive:** Desktop "R&A plugin files for Drive" folders and Google Drive updated (old copies to Previous Versions as -vX.Y.Z). See in your Space's own zip (27 MB) is in the Desktop folder only.
+
 ## 1.75.0 and Website Monitor 1.12.0
 
 **Roll back an update (Phil, Nov 18: "I need a way to rollback an update in case it makes sites crash").**
