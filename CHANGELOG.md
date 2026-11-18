@@ -215,6 +215,16 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.75.0 and Website Monitor 1.12.0
+
+**Roll back an update (Phil, Nov 18: "I need a way to rollback an update in case it makes sites crash").**
+- **What was already there:** R&A plugins install their own updates through WordPress's automatic updater, and WordPress 6.6+ undoes an automatic plugin update that breaks the home page. That doesn't cover an update installed by hand on the Plugins page (how 1.69.0 took staging down on Nov 16), a page other than the home page breaking, or a release that works but is wrong.
+- **Website Monitor 1.12.0:** each plugin row remembers the version the site had before its last update (from check-ins and polls; new columns `previous_version`, `can_rollback`, and `type` / `target_version` on requests). Next to "Update now" there's **Roll back to X** when the site can do it. The request goes to the site at its next poll (every 15 minutes), like "Update now", and the badges say "Roll back to X requested / Rolling back / Rolled back from Y to X".
+- **RA Monitor Updates 1.1.0** (in every R&A plugin): a `rollback` request installs the tag `vX` from the plugin's own repo on its channel, through `WP_Automatic_Updater` exactly like "Update now", so WordPress's crash protection applies. The version it rolled back from is then **held**: the site's own automatic updates (the twice-daily self-update and WordPress's) skip it and anything older, and resume with the next newer release. "Update now" still installs whatever R&A asks for, and clears the hold once past it.
+- **A check before installing, for every R&A plugin** (Promo Manager has had its own since 1.73.0, which still handles Promo Manager): after WordPress unpacks a new version of a registered R&A plugin and before it removes the old one, every PHP file is read with the site's own PHP, and the main file must be there. A broken package is refused with the file and line; the installed version keeps running and administrators see a notice for 14 days. Also catches a broken zip uploaded on Plugins › Add New.
+- Same file in Woo Native Dimensions 1.41, Universal Room Planner 7.30.0, See in your Space 0.13.0, See in your Space Pro 1.1.0 and R&A Product Image Frames 0.4.0.
+- **Bench:** php-wasm 7.4 and 8.3 lint clean; code check 0 findings on `ra-monitor-updates.php`; local PHP 8.5 test 8 of 8 (a good package passes, a file with an unclosed brace is refused as "includes/x.php line 3: Unclosed '{' on line 2", a missing main file is refused, the hold keeps the rolled-back version and older, lets a newer release through, and clears).
+
 ## Production: 1.74.1 round (Nov 18, 2026)
 
 - **Phil's OK** ("Yes, both"). Pushed to the production repos (main + tag): RA Promo Manager v1.74.1, Universal Room Planner v7.29.7, Woo Native Dimensions v1.40, R&A Product Image Frames v0.3.9, See in your Space v0.12.3. Client sites install them on their own.

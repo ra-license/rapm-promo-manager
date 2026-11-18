@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Updates 1.0.5
+ * RA Monitor Updates 1.1.0
  *
  * Lets R&A's Plugin Monitor (help.ramarketing.com) ask this site to update
  * an R&A plugin right away, instead of waiting for WordPress's twice-daily
@@ -58,6 +58,23 @@
  * the monitor has it (RA Monitor Client 1.5.0), and the monitor's answer
  * about that key is passed on to the client.
  *
+ * 1.1.0 (Phil, Nov 18, 2026: "I need a way to rollback an update in case it
+ * makes sites crash"):
+ *   - Roll back. The monitor (1.12.0+) can ask for an earlier version of an
+ *     R&A plugin: the site installs that version's tag from its own GitHub
+ *     repo with WordPress's automatic updater, exactly like "Update now", so
+ *     the check below and WordPress's own crash protection (6.6+: a plugin
+ *     update that breaks the home page is undone) apply to it too. The bad
+ *     version is then held back: the site doesn't install it again on its
+ *     own, and updates by itself again once a newer release is out.
+ *     "Update now" still installs whatever R&A asks for.
+ *   - A check before installing, for every R&A plugin (Promo Manager has had
+ *     its own since 1.73.0): after WordPress unpacks a new version and before
+ *     it removes the old one, every PHP file is read with the site's own PHP,
+ *     and the main file must be there. A broken package is refused and the
+ *     installed version keeps running. Nov 16, 2026: Promo Manager 1.69.0's
+ *     missing brace took staging down for 18 hours.
+ *
  * Several R&A plugins on one site may each bundle a copy; whichever loads
  * first defines the class and the rest register with it, so the public API
  * below must stay backward compatible. A breaking change needs a new class
@@ -70,7 +87,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 	class RA_Monitor_Updates {
 
-		const VERSION = '1.0.5';
+		const VERSION = '1.1.0';
 
 		// The check-in address; polls go to /poll next to it, so the
 		// monitor's "Receive this site's own check-ins here" testing switch
@@ -90,6 +107,10 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 		// 1.0.4: R&A plugins install their own updates twice a day.
 		const SELF_HOOK      = 'ra_monitor_self_update';
 		const SELF_OPTION    = 'ra_monitor_self_update_last';
+		// 1.1.0: versions rolled back from (slug => version), and the last
+		// package refused by the check before installing.
+		const HOLD_OPTION    = 'ra_monitor_update_holds';
+		const REFUSED_OPTION = 'ra_monitor_package_refused';
 
 		private static $plugins = array();
 		private static $booted  = false;
@@ -125,6 +146,9 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			// 1.0.4
 			add_filter( 'auto_update_plugin', array( __CLASS__, 'allow_auto_update' ), 20, 2 );
 			add_action( self::SELF_HOOK, array( __CLASS__, 'self_update' ) );
+			// 1.1.0
+			add_filter( 'upgrader_source_selection', array( __CLASS__, 'check_package' ), 20, 4 );
+			add_action( 'admin_notices', array( __CLASS__, 'refused_notice' ) );
 		}
 
 		/** 1.0.4: off only with define( 'RA_PLUGINS_AUTO_UPDATE', false ). */
@@ -146,7 +170,207 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 		/** 1.0.4: R&A plugins update automatically unless the site opted out. */
 		public static function allow_auto_update( $update, $item ) {
-			return self::auto_updates_on() && self::is_ours( $item ) ? true : $update;
+			if ( ! self::auto_updates_on() || ! self::is_ours( $item ) ) {
+				return $update;
+			}
+			// 1.1.0: never on its own back to a version R&A rolled back from.
+			$slug = self::slug_for( isset( $item->plugin ) ? $item->plugin : '' );
+			if ( $slug && isset( $item->new_version ) && self::held( $slug, (string) $item->new_version ) ) {
+				return false;
+			}
+			return true;
+		}
+
+		/* --------------------------------------------------------------
+		 * 1.1.0: roll back, and the hold that keeps a bad version away
+		 * ----------------------------------------------------------- */
+
+		private static function slug_for( $basename ) {
+			foreach ( self::$plugins as $slug => $args ) {
+				if ( plugin_basename( $args['file'] ) === $basename ) {
+					return $slug;
+				}
+			}
+			return '';
+		}
+
+		/** Whether a version is one R&A rolled back from (or older). */
+		private static function held( $slug, $version ) {
+			$holds = get_option( self::HOLD_OPTION, array() );
+			return is_array( $holds ) && ! empty( $holds[ $slug ] ) && '' !== $version && version_compare( $version, (string) $holds[ $slug ], '<=' );
+		}
+
+		private static function set_hold( $slug, $version ) {
+			$holds = get_option( self::HOLD_OPTION, array() );
+			$holds = is_array( $holds ) ? $holds : array();
+			if ( '' === (string) $version ) {
+				unset( $holds[ $slug ] );
+			} else {
+				$holds[ $slug ] = (string) $version;
+			}
+			update_option( self::HOLD_OPTION, $holds, false );
+		}
+
+		/**
+		 * Installs an earlier version of one R&A plugin: its tag (vX.Y.Z) in
+		 * the plugin's own GitHub repo on its channel, through WordPress's
+		 * automatic updater, like "Update now".
+		 *
+		 * @return array status ("done" or "failed"), from, version, message.
+		 */
+		private static function rollback_one( $args, $version ) {
+			$basename = plugin_basename( $args['file'] );
+			$before   = self::installed_version( $args );
+			$result   = array( 'from' => $before, 'version' => $before );
+			if ( ! self::can_update() ) {
+				return $result + array( 'status' => 'failed', 'message' => 'Automatic updates are turned off on this site.' );
+			}
+			if ( version_compare( $version, $before, '>=' ) ) {
+				return $result + array( 'status' => 'failed', 'message' => 'Version ' . $version . ' isn’t older than the installed ' . $before . '.' );
+			}
+			$checker = $args['checker'];
+			$api     = method_exists( $checker, 'getVcsApi' ) ? $checker->getVcsApi() : null;
+			if ( ! $api || ! method_exists( $api, 'buildArchiveDownloadUrl' ) ) {
+				return $result + array( 'status' => 'failed', 'message' => 'This plugin’s updater can’t install a chosen version.' );
+			}
+			$item = (object) array(
+				'id'          => $basename,
+				'slug'        => dirname( $basename ),
+				'plugin'      => $basename,
+				'new_version' => $version,
+				'url'         => '',
+				'package'     => $api->buildArchiveDownloadUrl( 'v' . ltrim( $version, 'vV' ) ),
+				'autoupdate'  => true,
+			);
+			// WordPress's updater reads the package from its list of
+			// updates, so the earlier version is put on it for this install.
+			$add = function ( $list ) use ( $basename, $item ) {
+				if ( is_object( $list ) ) {
+					if ( ! isset( $list->response ) || ! is_array( $list->response ) ) {
+						$list->response = array();
+					}
+					$list->response[ $basename ] = $item;
+				}
+				return $list;
+			};
+			$allow = function ( $update, $offer ) use ( $basename ) {
+				return is_object( $offer ) && isset( $offer->plugin ) && $offer->plugin === $basename ? true : $update;
+			};
+			add_filter( 'pre_site_transient_update_plugins', $add, PHP_INT_MAX );
+			add_filter( 'site_transient_update_plugins', $add, PHP_INT_MAX );
+			add_filter( 'auto_update_plugin', $allow, PHP_INT_MAX, 2 );
+			$updater = new WP_Automatic_Updater();
+			try {
+				$outcome = $updater->update( 'plugin', $item );
+			} finally {
+				remove_filter( 'auto_update_plugin', $allow, PHP_INT_MAX );
+				remove_filter( 'pre_site_transient_update_plugins', $add, PHP_INT_MAX );
+				remove_filter( 'site_transient_update_plugins', $add, PHP_INT_MAX );
+			}
+			$after             = self::installed_version( $args );
+			$result['version'] = $after;
+			if ( $after && version_compare( $after, $version, '==' ) ) {
+				self::set_hold( self::slug_for( $basename ), $before );
+				return $result + array( 'status' => 'done', 'message' => 'Rolled back from ' . $before . '. Version ' . $before . ' won’t install itself again; updates resume with the next newer release.' );
+			}
+			if ( is_wp_error( $outcome ) ) {
+				return $result + array( 'status' => 'failed', 'message' => substr( wp_strip_all_tags( $outcome->get_error_message() ), 0, 200 ) );
+			}
+			$why = self::updater_messages( $updater );
+			return $result + array( 'status' => 'failed', 'message' => substr( 'Version ' . $version . ' couldn’t be installed' . ( $why ? ': ' . $why : ' (is there a v' . ltrim( $version, 'vV' ) . ' tag on GitHub?)' ), 0, 199 ) . '.' );
+		}
+
+		/* --------------------------------------------------------------
+		 * 1.1.0: the check before installing, for every R&A plugin
+		 * ----------------------------------------------------------- */
+
+		/** The registered R&A plugin a folder about to be installed is, or null. */
+		private static function package_plugin( $source, $hook_extra ) {
+			foreach ( self::$plugins as $slug => $args ) {
+				$basename = plugin_basename( $args['file'] );
+				if ( isset( $hook_extra['plugin'] ) && $hook_extra['plugin'] === $basename ) {
+					return $args;
+				}
+				// A zip uploaded on Plugins › Add New: the same main file name.
+				if ( empty( $hook_extra['plugin'] ) && is_readable( trailingslashit( $source ) . basename( $args['file'] ) ) ) {
+					return $args;
+				}
+			}
+			return null;
+		}
+
+		/** Problems in a plugin folder, each "file line N: message". At most 5. */
+		public static function package_problems( $dir, $main ) {
+			$dir = trailingslashit( $dir );
+			if ( ! is_readable( $dir . $main ) ) {
+				return array( $main . ' is missing' );
+			}
+			if ( ! function_exists( 'token_get_all' ) || ! defined( 'TOKEN_PARSE' ) ) {
+				return array(); // No tokenizer on this server: it can't check, which isn't a reason to refuse.
+			}
+			$problems = array();
+			$files    = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) );
+			foreach ( $files as $file ) {
+				if ( count( $problems ) >= 5 ) {
+					break;
+				}
+				if ( 'php' !== strtolower( $file->getExtension() ) ) {
+					continue;
+				}
+				$path = $file->getPathname();
+				try {
+					token_get_all( (string) file_get_contents( $path ), TOKEN_PARSE ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local file in the unpacked package.
+				} catch ( \Throwable $e ) {
+					$problems[] = ltrim( str_replace( '\\', '/', substr( $path, strlen( $dir ) ) ), '/' ) . ' line ' . (int) $e->getLine() . ': ' . $e->getMessage();
+				}
+			}
+			return $problems;
+		}
+
+		/**
+		 * upgrader_source_selection: after WordPress unpacks a new version
+		 * and before it removes the old one. A WP_Error stops the install.
+		 * Promo Manager checks its own package (RAPM_Safety), so it's left
+		 * to that.
+		 */
+		public static function check_package( $source, $remote_source = '', $upgrader = null, $hook_extra = array() ) {
+			if ( is_wp_error( $source ) || ! is_string( $source ) ) {
+				return $source;
+			}
+			$args = self::package_plugin( $source, (array) $hook_extra );
+			if ( ! $args || ( 'rapm-promo-manager' === $args['slug'] && class_exists( 'RAPM_Safety' ) ) ) {
+				return $source;
+			}
+			$main     = basename( $args['file'] );
+			$problems = self::package_problems( $source, $main );
+			if ( ! $problems ) {
+				return $source;
+			}
+			$data    = get_file_data( trailingslashit( $source ) . $main, array( 'Name' => 'Plugin Name', 'Version' => 'Version' ) );
+			$name    = ! empty( $data['Name'] ) ? $data['Name'] : $args['slug'];
+			$version = ! empty( $data['Version'] ) ? $data['Version'] : '?';
+			$kept    = self::installed_version( $args );
+			update_option( self::REFUSED_OPTION, array( 'name' => $name, 'version' => $version, 'kept' => $kept, 'problems' => $problems, 'time' => time() ), false );
+			return new WP_Error( 'ra_package_broken', sprintf( '%1$s %2$s was not installed because a file in it is broken (%3$s). Version %4$s keeps running. Tell R&A Marketing.', $name, $version, implode( '; ', $problems ), $kept ) );
+		}
+
+		public static function refused_notice() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+			$refused = get_option( self::REFUSED_OPTION, false );
+			if ( ! is_array( $refused ) ) {
+				return;
+			}
+			if ( empty( $refused['time'] ) || time() - (int) $refused['time'] > 14 * DAY_IN_SECONDS ) {
+				delete_option( self::REFUSED_OPTION );
+				return;
+			}
+			printf(
+				'<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
+				esc_html( sprintf( 'An update to %s was stopped.', $refused['name'] ) ),
+				esc_html( sprintf( 'Version %1$s wasn’t installed because a file in it is broken (%2$s). Version %3$s keeps running, so nothing changed for visitors. R&A will release a fixed version.', $refused['version'], implode( '; ', (array) $refused['problems'] ), $refused['kept'] ) )
+			);
 		}
 
 		/**
@@ -161,7 +385,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			$due = array();
 			foreach ( self::$plugins as $slug => $args ) {
 				$update = method_exists( $args['checker'], 'getUpdate' ) ? $args['checker']->getUpdate() : null;
-				if ( $update && ! empty( $update->version ) && version_compare( $update->version, (string) self::installed_version( $args ), '>' ) ) {
+				if ( $update && ! empty( $update->version ) && version_compare( $update->version, (string) self::installed_version( $args ), '>' ) && ! self::held( $slug, (string) $update->version ) ) {
 					$due[ $slug ] = $args;
 				}
 			}
@@ -279,6 +503,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				'site_name'      => get_bloginfo( 'name' ),
 				'client_version' => self::VERSION,
 				'can_update'     => self::can_update(),
+				'can_rollback'   => true, // 1.1.0
 				'plugins'        => $plugins,
 				'results'        => array_values( $results ),
 			) );
@@ -377,7 +602,16 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				$id   = isset( $command['id'] ) ? (int) $command['id'] : 0;
 				$type = isset( $command['type'] ) ? (string) $command['type'] : '';
 				$slug = isset( $command['slug'] ) ? sanitize_key( $command['slug'] ) : '';
-				if ( $id < 1 || 'update' !== $type || ! isset( self::$plugins[ $slug ] ) || in_array( $id, $handled, true ) ) {
+				if ( $id < 1 || ! in_array( $type, array( 'update', 'rollback' ), true ) || ! isset( self::$plugins[ $slug ] ) || in_array( $id, $handled, true ) ) {
+					continue;
+				}
+				if ( 'rollback' === $type ) {
+					// 1.1.0: an earlier version, named by the monitor.
+					$version = isset( $command['version'] ) ? (string) $command['version'] : '';
+					if ( ! preg_match( '/^[0-9][0-9A-Za-z.\-+]{0,31}$/', $version ) ) {
+						continue;
+					}
+					$queue[ $id ] = array( 'slug' => $slug, 'rollback' => $version );
 					continue;
 				}
 				$queue[ $id ] = $slug;
@@ -414,8 +648,10 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			$handled = is_array( $handled ) ? $handled : array();
 
 			try {
-				foreach ( $queue as $id => $slug ) {
-					$id = (int) $id;
+				foreach ( $queue as $id => $entry ) {
+					$id       = (int) $id;
+					$slug     = is_array( $entry ) && isset( $entry['slug'] ) ? (string) $entry['slug'] : (string) $entry;
+					$rollback = is_array( $entry ) && isset( $entry['rollback'] ) ? (string) $entry['rollback'] : '';
 					// Recorded before starting, so a crash mid-update reports
 					// as one instead of retrying forever.
 					unset( $queue[ $id ] );
@@ -432,7 +668,8 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 					update_option( self::RESULTS_OPTION, $results, false );
 
 					if ( isset( self::$plugins[ $slug ] ) ) {
-						$results[ $id ] = array_merge( array( 'id' => $id, 'slug' => $slug, 'time' => time() ), self::update_one( self::$plugins[ $slug ] ) );
+						$outcome        = '' !== $rollback ? self::rollback_one( self::$plugins[ $slug ], $rollback ) : self::update_one( self::$plugins[ $slug ] );
+						$results[ $id ] = array_merge( array( 'id' => $id, 'slug' => $slug, 'time' => time() ), $outcome );
 					}
 					update_option( self::RESULTS_OPTION, $results, false );
 				}
@@ -532,6 +769,9 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				return $result + array( 'status' => 'failed', 'message' => substr( wp_strip_all_tags( $outcome->get_error_message() ), 0, 200 ) );
 			}
 			if ( $after && version_compare( $after, $before, '>' ) ) {
+				if ( ! self::held( self::slug_for( $basename ), $after ) ) {
+					self::set_hold( self::slug_for( $basename ), '' ); // 1.1.0: past the version rolled back from.
+				}
 				$note = $add ? substr( 'It wasn’t on WordPress’s update list, so it was added for this update' . ( $hiders ? ' (' . $hiders . ')' : '' ), 0, 199 ) . '.' : '';
 				return $result + array( 'status' => 'done', 'message' => $note );
 			}
