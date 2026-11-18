@@ -75,12 +75,25 @@ class RAPM_Admin_Settings {
 		);
 	}
 
+	/**
+	 * 1.74.1 (security review item 3): the saved key is never printed back
+	 * into the page. An empty box keeps it; "Remove the saved key" clears it.
+	 */
+	public static function sanitize_token( $value ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- options.php checked the nonce.
+		if ( ! empty( $_POST['rapm_github_token_remove'] ) ) {
+			return '';
+		}
+		$value = trim( (string) $value );
+		return '' === $value ? (string) get_option( RAPM_Updater::OPTION_TOKEN, '' ) : sanitize_text_field( $value );
+	}
+
 	public static function register_settings() {
 		register_setting( self::OPTION, self::OPTION, array( __CLASS__, 'sanitize' ) );
 		// Stored as their own options, not inside rapm_settings, so the
 		// updater can read them at plugin load and so sanitize()'s reset-to-
 		// defaults behavior can never wipe a site's token.
-		register_setting( self::OPTION, RAPM_Updater::OPTION_TOKEN, array( 'sanitize_callback' => 'sanitize_text_field' ) );
+		register_setting( self::OPTION, RAPM_Updater::OPTION_TOKEN, array( 'sanitize_callback' => array( __CLASS__, 'sanitize_token' ) ) );
 		register_setting( self::OPTION, RAPM_Updater::OPTION_CHANNEL, array( 'sanitize_callback' => array( 'RAPM_Updater', 'sanitize_channel' ) ) );
 	}
 
@@ -401,7 +414,11 @@ class RAPM_Admin_Settings {
 					<tr>
 						<th><label for="rapm_github_token"><?php esc_html_e( 'GitHub Update Key', 'rapm' ); ?></label></th>
 						<td>
-							<input type="password" class="regular-text" id="rapm_github_token" name="<?php echo esc_attr( RAPM_Updater::OPTION_TOKEN ); ?>" value="<?php echo esc_attr( get_option( RAPM_Updater::OPTION_TOKEN, '' ) ); ?>" autocomplete="off" placeholder="github_pat_..." />
+							<?php $rapm_token_saved = '' !== (string) get_option( RAPM_Updater::OPTION_TOKEN, '' ); ?>
+							<input type="password" class="regular-text" id="rapm_github_token" name="<?php echo esc_attr( RAPM_Updater::OPTION_TOKEN ); ?>" value="" autocomplete="new-password" placeholder="<?php echo $rapm_token_saved ? esc_attr__( 'Saved. Paste a new key to replace it.', 'rapm' ) : 'github_pat_...'; ?>" />
+							<?php if ( $rapm_token_saved ) : ?>
+								<label style="display:block;margin-top:6px;"><input type="checkbox" name="rapm_github_token_remove" value="1" /> <?php esc_html_e( 'Remove the saved key', 'rapm' ); ?></label>
+							<?php endif; ?>
 							<?php if ( $token_locked ) : ?>
 								<p class="description"><?php esc_html_e( 'A key set in wp-config.php is already active and is used instead of this field.', 'rapm' ); ?></p>
 							<?php else : ?>

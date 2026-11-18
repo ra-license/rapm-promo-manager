@@ -215,6 +215,12 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.74.1
+
+- The GitHub update key is no longer printed back into the settings page (security review item 3). Before, the saved key sat in the page's HTML for anyone who could open Settings, and could end up in screenshots or a browser's saved form data. The box is now empty with "Saved. Paste a new key to replace it."; leaving it empty keeps the saved key, and "Remove the saved key" clears it. Settings › Updates (`RAPM_Admin_Settings::sanitize_token()`). The same change ships in Universal Room Planner 7.29.7, Woo Native Dimensions 1.40 and R&A Product Image Frames 0.3.9; See in your Space already worked this way.
+- **Checked with Phil, Nov 18:** every key handed to client sites is a fine-grained, read-only token (no classic tokens), so a leaked key can read R&A's private plugin code but can't change it. Loading the key with every page (autoload) was in the review too; it's left as it is, since any plugin on the site can read any option either way, and turning it off would cost a database query on every page of sites without an object cache.
+- **See in your Space 0.12.3 (item 4)** ships in the same round: its open "email me this picture" route gets a limit for the whole website (40 an hour), one per email address (5 a day), and counts IPv6 visitors by their /64 network.
+
 ## Production: 1.74.0, RA Monitor Client 1.5.0 and Website Monitor 1.11.1 (Nov 18, 2026)
 
 - **Phil's OK** ("let's complete in that order"). Website Monitor main, v1.11.0 and v1.11.1 pushed to ra-license/ra-plugin-monitor; on the help desk, Updates › Check again found 1.11.1 and installed it (only the monitor ticked). The help desk's front page answers 200, /enroll answers a bad request with 400, and the dashboard's new **Website keys** box reads "2 of 61 websites … have their own key" (the two help-desk-connected sites); 59 still on the shared key until their plugins update.
