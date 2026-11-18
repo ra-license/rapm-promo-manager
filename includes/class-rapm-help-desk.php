@@ -243,7 +243,9 @@ class RAPM_Help_Desk {
 					'asked_at' => time(),
 					'asked_by' => (int) $user->ID,
 				);
-				$shared = class_exists( 'RA_Monitor_Client' ) ? RA_Monitor_Client::KEY : '';
+				// 1.74.0: signed with the site's own key once the monitor has
+				// it (RA Monitor Client 1.5.0), the shared key until then.
+				$shared = class_exists( 'RA_Monitor_Client' ) ? RA_Monitor_Client::signing_key() : '';
 				list( $code, $answer, $error ) = self::send( 'connect', array(
 					'site_url'       => home_url(),
 					'site_name'      => get_bloginfo( 'name' ),

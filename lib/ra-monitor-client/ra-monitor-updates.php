@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Updates 1.0.4
+ * RA Monitor Updates 1.0.5
  *
  * Lets R&A's Plugin Monitor (help.ramarketing.com) ask this site to update
  * an R&A plugin right away, instead of waiting for WordPress's twice-daily
@@ -54,6 +54,10 @@
  *     define( 'RA_PLUGINS_AUTO_UPDATE', false ); in wp-config.php ("Update
  *     now" still works there).
  *
+ * 1.0.5: polls are signed like the check-in, with the site's own key once
+ * the monitor has it (RA Monitor Client 1.5.0), and the monitor's answer
+ * about that key is passed on to the client.
+ *
  * Several R&A plugins on one site may each bundle a copy; whichever loads
  * first defines the class and the rest register with it, so the public API
  * below must stay backward compatible. A breaking change needs a new class
@@ -66,7 +70,7 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 
 	class RA_Monitor_Updates {
 
-		const VERSION = '1.0.4';
+		const VERSION = '1.0.5';
 
 		// The check-in address; polls go to /poll next to it, so the
 		// monitor's "Receive this site's own check-ins here" testing switch
@@ -239,8 +243,15 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 			return isset( $data['Version'] ) ? (string) $data['Version'] : '';
 		}
 
-		/** 1.0.3: the same key choice as RA_Monitor_Client::signing_key(). */
+		/**
+		 * 1.0.3: the same key choice as RA_Monitor_Client::signing_key().
+		 * 1.0.5: asks RA_Monitor_Client 1.5.0+ itself, so polls are signed
+		 * with the site's own key too.
+		 */
 		public static function signing_key() {
+			if ( class_exists( 'RA_Monitor_Client' ) && method_exists( 'RA_Monitor_Client', 'own_key' ) ) {
+				return RA_Monitor_Client::signing_key();
+			}
 			$key = apply_filters( 'ra_monitor_signing_key', self::KEY );
 			return is_string( $key ) && preg_match( '/^[0-9a-f]{64}$/', $key ) ? $key : self::KEY;
 		}
@@ -288,6 +299,10 @@ if ( ! class_exists( 'RA_Monitor_Updates' ) ) {
 				'code'  => $code,
 				'error' => is_wp_error( $response ) ? $response->get_error_message() : '',
 			), false );
+			// 1.0.5: what the monitor says about the site's own key.
+			if ( ! is_wp_error( $response ) && class_exists( 'RA_Monitor_Client' ) && method_exists( 'RA_Monitor_Client', 'hear_own_key' ) ) {
+				RA_Monitor_Client::hear_own_key( json_decode( wp_remote_retrieve_body( $response ), true ), $code );
+			}
 			if ( 200 !== $code ) {
 				return;
 			}

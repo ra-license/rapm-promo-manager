@@ -1,6 +1,6 @@
 <?php
 /**
- * RA Monitor Client 1.4.0
+ * RA Monitor Client 1.5.0
  *
  * Shared by every R&A plugin, bundled into each one the same way
  * plugin-update-checker is. Once a day it sends one short check-in to
@@ -68,6 +68,18 @@
  * update still has the old code loaded, so it can always send. Other
  * changes still wait 5 minutes and go together.
  *
+ * 1.5.0: every site gets its own key (security review, Nov 17, 2026: the
+ * shared key below is in code anyone can read). Once, the site makes a
+ * random key and sends it to the monitor (POST /enroll, Website Monitor
+ * 1.11.0+). The monitor calls the site back on its own domain
+ * (POST /wp-json/ra-monitor-site/v1/confirm) with a challenge; only this
+ * site can answer it with that key. Every answer from the monitor then
+ * carries a short fingerprint of the key it saved, and once it matches,
+ * check-ins, polls and notes are signed with the site's own key. The shared
+ * key is only used until then. A site whose key the monitor no longer has
+ * (a restored backup, say) asks again on its own. The key is never sent
+ * anywhere after the first request, and never shown.
+ *
  * Several R&A plugins on one site each bundle a copy; whichever loads first
  * defines the class and the rest register with it, so the public API below
  * must stay backward compatible. A breaking change needs a new class name.
@@ -79,7 +91,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 
 	class RA_Monitor_Client {
 
-		const VERSION  = '1.4.0';
+		const VERSION  = '1.5.0';
 		const ENDPOINT = 'https://help.ramarketing.com/wp-json/ra-monitor/v1/checkin';
 
 		// Must match RA_MONITOR_KEY in the RA Plugin Monitor receiver.
@@ -91,6 +103,8 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 		// 1.3.0: changes waiting to be reported, and the hook that sends them.
 		const CHANGES_OPTION = 'ra_monitor_changes';
 		const CHANGES_HOOK   = 'ra_monitor_send_changes';
+		// 1.5.0: the site's own key: key, request, verified, asked_at.
+		const OWN_OPTION = 'ra_monitor_own_key';
 
 		// Every R&A product plugin, by main-file name (without .php). Used to
 		// list R&A plugins on the site even when their installed version is
@@ -159,6 +173,9 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			add_action( 'rocket_after_clean_domain', array( __CLASS__, 'on_rocket_cleared' ) );
 			add_action( 'after_rocket_clean_domain', array( __CLASS__, 'on_rocket_cleared' ) );
 
+			// 1.5.0: the monitor's call back when the site asks for its own key.
+			add_action( 'rest_api_init', array( __CLASS__, 'own_key_route' ) );
+
 			add_filter( 'plugin_row_meta', array( __CLASS__, 'plugin_row_meta' ), 10, 2 );
 			add_action( 'admin_post_ra_monitor_checkin_now', array( __CLASS__, 'checkin_now' ) );
 			add_action( 'admin_notices', array( __CLASS__, 'checkin_notice' ) );
@@ -223,7 +240,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 			if ( 0 === $code ) {
 				$why = 'couldn’t reach help.ramarketing.com' . ( ! empty( $last['error'] ) ? ' (' . $last['error'] . ')' : '' );
 			} elseif ( 401 === $code ) {
-				$why = 'the monitor rejected it, because this plugin’s check-in key doesn’t match the monitor’s';
+				$why = 'the monitor rejected its key; this site asks for its own key again on its own, so the next check-in should work';
 			} elseif ( 404 === $code ) {
 				$why = 'the RA Plugin Monitor plugin isn’t installed or turned on at help.ramarketing.com';
 			} else {
@@ -296,6 +313,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 		}
 
 		public static function send( $timeout = 15 ) {
+			self::maybe_ask_for_own_key(); // 1.5.0
 			$payload = self::build_payload();
 			$body    = wp_json_encode( $payload );
 			$time    = time();
@@ -312,6 +330,7 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 
 			$code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
 			$answer = is_wp_error( $response ) ? null : json_decode( wp_remote_retrieve_body( $response ), true );
+			self::hear_own_key( $answer, $code ); // 1.5.0
 			if ( is_array( $answer ) ) {
 				do_action( 'ra_monitor_checkin_response', $answer, $code );
 			}
@@ -447,10 +466,131 @@ if ( ! class_exists( 'RA_Monitor_Client' ) ) {
 		 * 1.2.0: the site's own key once it's connected to the help desk,
 		 * otherwise the shared one. Anything that isn't a 64-character hex
 		 * key falls back to the shared key.
+		 * 1.5.0: the site's own key (below) once the monitor has it; Promo
+		 * Manager's help desk connection key still takes over when connected.
 		 */
 		public static function signing_key() {
-			$key = apply_filters( 'ra_monitor_signing_key', self::KEY );
-			return is_string( $key ) && preg_match( '/^[0-9a-f]{64}$/', $key ) ? $key : self::KEY;
+			$base = self::own_key( true );
+			if ( ! $base ) {
+				$base = self::KEY;
+			}
+			$key = apply_filters( 'ra_monitor_signing_key', $base );
+			return is_string( $key ) && preg_match( '/^[0-9a-f]{64}$/', $key ) ? $key : $base;
+		}
+
+		/* --------------------------------------------------------------
+		 * 1.5.0: the site's own key
+		 * ----------------------------------------------------------- */
+
+		private static function own() {
+			$own = get_option( self::OWN_OPTION );
+			if ( ! is_array( $own ) || empty( $own['key'] ) || ! preg_match( '/^[0-9a-f]{64}$/', (string) $own['key'] ) ) {
+				return null;
+			}
+			return wp_parse_args( $own, array( 'request' => '', 'verified' => false, 'asked_at' => 0 ) );
+		}
+
+		/** The site's own key; with $verified, only once the monitor has it. */
+		public static function own_key( $verified = false ) {
+			$own = self::own();
+			if ( ! $own || ( $verified && empty( $own['verified'] ) ) ) {
+				return '';
+			}
+			return $own['key'];
+		}
+
+		/** The same short fingerprint the monitor sends back (never the key). */
+		private static function key_fingerprint( $key ) {
+			return $key ? substr( hash( 'sha256', 'ra-monitor-key-id.' . $key ), 0, 16 ) : '';
+		}
+
+		/**
+		 * Asks the monitor to save this site's own key, unless it has it or
+		 * was asked in the last day. The key is made once and kept; each ask
+		 * only gets a new request id.
+		 */
+		public static function maybe_ask_for_own_key() {
+			$own = self::own();
+			if ( $own && ( ! empty( $own['verified'] ) || time() - (int) $own['asked_at'] < DAY_IN_SECONDS ) ) {
+				return;
+			}
+			if ( ! $own ) {
+				$own = array( 'key' => bin2hex( random_bytes( 32 ) ), 'verified' => false );
+			}
+			$own['request']  = bin2hex( random_bytes( 16 ) );
+			$own['asked_at'] = time();
+			// Saved first: the monitor calls back about 20 seconds later.
+			update_option( self::OWN_OPTION, $own, false );
+
+			$endpoint = preg_replace( '#/checkin/?$#', '/enroll', apply_filters( 'ra_monitor_endpoint', self::ENDPOINT ) );
+			wp_remote_post( $endpoint, array(
+				'timeout' => 10,
+				'headers' => array( 'Content-Type' => 'application/json' ),
+				'body'    => wp_json_encode( array(
+					'site_url'    => home_url(),
+					'key'         => $own['key'],
+					'request'     => $own['request'],
+					'confirm_url' => rest_url( 'ra-monitor-site/v1/confirm' ),
+				) ),
+			) );
+		}
+
+		/**
+		 * What the monitor's answer (check-in or poll) says about this
+		 * site's own key: the fingerprint of the key it saved, or '' for
+		 * none. A monitor older than 1.11.0 says nothing, and nothing changes.
+		 */
+		public static function hear_own_key( $answer, $code = 200 ) {
+			if ( ! is_array( $answer ) || ! array_key_exists( 'own_key', $answer ) ) {
+				return;
+			}
+			$own = self::own();
+			if ( ! $own ) {
+				return;
+			}
+			$saved = self::key_fingerprint( $own['key'] ) === (string) $answer['own_key'];
+			if ( $saved && empty( $own['verified'] ) ) {
+				// The monitor has the key: sign with it from now on, starting
+				// with a check-in in a minute.
+				$own['verified'] = true;
+				update_option( self::OWN_OPTION, $own, false );
+				self::schedule_soon();
+			} elseif ( ! $saved && ! empty( $own['verified'] ) ) {
+				// The monitor doesn't have it (any more): ask again.
+				$own['verified'] = false;
+				$own['asked_at'] = 0;
+				update_option( self::OWN_OPTION, $own, false );
+				self::schedule_soon();
+			} elseif ( ! $saved && 401 === (int) $code && isset( $answer['error'] ) && 'site_key_required' === $answer['error'] && time() - (int) $own['asked_at'] > 10 * MINUTE_IN_SECONDS ) {
+				// Refused with the shared key and still no key there: ask now.
+				$own['asked_at'] = 0;
+				update_option( self::OWN_OPTION, $own, false );
+				self::schedule_soon();
+			}
+		}
+
+		public static function own_key_route() {
+			register_rest_route( 'ra-monitor-site/v1', '/confirm', array(
+				'methods'             => 'POST',
+				'callback'            => array( __CLASS__, 'confirm_own_key' ),
+				// Anyone may ask; only the right request id gets an answer, and
+				// the answer proves the key without giving it away.
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'request'   => array( 'type' => 'string', 'required' => true ),
+					'challenge' => array( 'type' => 'string', 'required' => true ),
+				),
+			) );
+		}
+
+		public static function confirm_own_key( $request ) {
+			$own       = self::own();
+			$id        = (string) $request->get_param( 'request' );
+			$challenge = (string) $request->get_param( 'challenge' );
+			if ( ! $own || empty( $own['request'] ) || ! hash_equals( (string) $own['request'], $id ) || ! preg_match( '/^[0-9a-f]{32,128}$/', $challenge ) ) {
+				return new WP_REST_Response( array( 'ok' => false ), 404 );
+			}
+			return new WP_REST_Response( array( 'ok' => true, 'proof' => hash_hmac( 'sha256', 'enroll.' . $challenge, $own['key'] ) ), 200 );
 		}
 
 		/**
