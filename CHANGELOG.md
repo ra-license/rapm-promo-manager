@@ -215,6 +215,11 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.74.1 round (Nov 18, 2026)
+
+- **Phil's OK** ("Yes, both"). Pushed to the production repos (main + tag): RA Promo Manager v1.74.1, Universal Room Planner v7.29.7, Woo Native Dimensions v1.40, R&A Product Image Frames v0.3.9, See in your Space v0.12.3. Client sites install them on their own.
+- **Drive:** Desktop "R&A plugin files for Drive" folders and Google Drive updated (zips, readmes, CHANGELOG; old copies to each Previous Versions folder as -vX.Y.Z). See in your Space's own 27 MB zip is in the Desktop folder only (over the connector's 10 MB limit).
+
 ## 1.74.1
 
 - The GitHub update key is no longer printed back into the settings page (security review item 3). Before, the saved key sat in the page's HTML for anyone who could open Settings, and could end up in screenshots or a browser's saved form data. The box is now empty with "Saved. Paste a new key to replace it."; leaving it empty keeps the saved key, and "Remove the saved key" clears it. Settings › Updates (`RAPM_Admin_Settings::sanitize_token()`). The same change ships in Universal Room Planner 7.29.7, Woo Native Dimensions 1.40 and R&A Product Image Frames 0.3.9; See in your Space already worked this way.
