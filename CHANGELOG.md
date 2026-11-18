@@ -215,6 +215,13 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.74.0, RA Monitor Client 1.5.0 and Website Monitor 1.11.1 (Nov 18, 2026)
+
+- **Phil's OK** ("let's complete in that order"). Website Monitor main, v1.11.0 and v1.11.1 pushed to ra-license/ra-plugin-monitor; on the help desk, Updates › Check again found 1.11.1 and installed it (only the monitor ticked). The help desk's front page answers 200, /enroll answers a bad request with 400, and the dashboard's new **Website keys** box reads "2 of 61 websites … have their own key" (the two help-desk-connected sites); 59 still on the shared key until their plugins update.
+- **Plugins** pushed to their production repos (main + tag): RA Promo Manager v1.74.0, Woo Native Dimensions v1.39, Universal Room Planner v7.29.6, See in your Space v0.12.2, See in your Space Pro v1.0.2, R&A Product Image Frames v0.3.8. Client sites install them on their own (twice a day) and the monitor checks each one as a visitor after its update.
+- **Next for R&A:** watch the Website keys box; once every website is listed as having its own key, tick **Refuse the shared key**. Sites still listed after a day or two have an older R&A plugin loading first (RA Space Viewer is likely: it isn't in these repos).
+- **Drive:** Desktop "R&A plugin files for Drive" folders have the new zips, readmes and the CHANGELOG; Google Drive has them too (old copies moved to each Previous Versions / Old Versions / Previous folder as -vX.Y.Z). See in your Space's own zip (27 MB) is over the connector's 10 MB limit and still needs dragging in from "4 See in your Space".
+
 ## 1.74.0 and Website Monitor 1.11.0
 
 **Every website gets its own key (security review, Nov 17, item 1), and the help desk only calls public addresses (item 2).** The review found the one key every R&A plugin signs its check-ins with is in code anyone can read (this repo and Woo Native Dimensions' are public), and the Website Monitor accepted it for every website that hadn't connected through the help desk box. With it, anyone could change a website's row on the dashboard, add up to 2,000 made-up websites, answer a website's "Update now" so it looked done, or point the help desk's own requests (visitor check, wake-up, call backs) at addresses inside its network.
