@@ -215,6 +215,13 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.76.3 (Nov 24, 2026)
+
+- **Phil's OK** ("Yes, push to production"). Phil pushed main (b8d4955..63141d4) and v1.76.3 to ra-license/rapm-promo-manager; both confirmed on GitHub afterwards. This release carries 1.76.0 to 1.76.3 (Drive drops with a record, receipts, Undo, "It waits for approval here first", plain names in emails).
+- **Client sites install it on their own** within about 12 hours. Right after the push, Kemper's live page still loaded 1.75.0 files, as expected. Every existing link stays "Goes live automatically", so nothing changes for clients until a new picture lands in their folder, and then they get a receipt with an Undo link.
+- **Receipts go to each site's admin email** until Settings › Receipts is filled in with the client contacts and R&A.
+- **Visitor check:** booked for the morning of Nov 25, once the sites have updated (signed out, computer and phone, Promo Manager's files at 1.76.3).
+
 ## Staging: the Drive round trip on 1.76.2 (Nov 24, 2026)
 
 Test folder "RAPM 1.76 test folder (staging only, safe to delete)" in Phil's Drive, shared view-only with anyone with the link; Settings › Receipts on staging set to phil@ramarketing.com; the "Test" promotion box (id 137127) linked to the folder.
