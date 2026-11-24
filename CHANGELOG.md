@@ -215,6 +215,12 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.76.2
+
+- **Saving a promotion followed none of 1.76.0's rules.** Saving re-reads the link and takes the newest picture again, so with "It waits for approval here first" any save (even fixing a typo) put up a picture that was waiting, and after an Undo, Reject or Restore previous a save put the taken-down picture back. Found on staging on Nov 24 before it happened. Now, with the link unchanged, a save follows the hourly check's rules: the same picture as live changes nothing (no new copy and no new record on every save), a picture someone took down stays down, and with "waits for approval" a new picture is held with a notice. A new link the person just picked and saw in the preview is taken as before (`RAPM_Approvals::keep_on_save()`).
+- **"Live now: Added to the client's folder, by R&A Marketing"** named whoever clicked "Check link now". A picture that arrived in the folder is now recorded as by the client's folder.
+- Bench: 44 of 44 (6 new checks for the above).
+
 ## Staging: 1.76.0 and 1.76.1 (Nov 24, 2026)
 
 - **Bench (PHP 8.5):** 38 of 38 checks on the real RAPM_Approvals and RAPM_Sync code with WordPress stand-ins: a picture live before the update is recorded with no email; a new drop goes live, keeps the old one, is recorded with its Drive file, and sends a receipt to the Settings addresses; the same file an hour later does nothing; Undo refuses a tampered link, shows a confirm page on open, puts the old picture back on confirm, emails, refuses a second use and an expired link; the hourly check doesn't put an undone picture back; "waits for approval" holds a new picture (one notice, a newer file replaces it); approving on the client's behalf needs proof, records who and how, and sends a receipt; Restore previous swaps back; records keep the last 25; a broken link changes nothing.

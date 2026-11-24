@@ -116,14 +116,18 @@ class RAPM_Approvals {
 		if ( ! $asset_id || ! $hash ) {
 			return;
 		}
-		$user  = wp_get_current_user();
-		$list  = self::approvals( $asset_id, $which );
-		$entry = array(
+		$user   = wp_get_current_user();
+		$list   = self::approvals( $asset_id, $which );
+		$method = isset( $how['method'] ) && isset( self::methods()[ $how['method'] ] ) ? $how['method'] : 'drop-folder';
+		// 1.76.2: a picture that arrived in the folder was put there by the
+		// client, not by whoever happened to click "Check link now".
+		$by_person = $user->ID && ! in_array( $method, array( 'drop-folder', 'already-live' ), true );
+		$entry  = array(
 			'hash'    => $hash,
 			'at'      => time(),
-			'user_id' => (int) $user->ID,
-			'by'      => $user->ID ? $user->display_name : ( isset( $how['by'] ) ? sanitize_text_field( $how['by'] ) : '' ),
-			'method'  => isset( $how['method'] ) && isset( self::methods()[ $how['method'] ] ) ? $how['method'] : 'drop-folder',
+			'user_id' => $by_person ? (int) $user->ID : 0,
+			'by'      => $by_person ? $user->display_name : ( isset( $how['by'] ) ? sanitize_text_field( $how['by'] ) : '' ),
+			'method'  => $method,
 			'via'     => isset( $how['via'] ) && isset( self::on_behalf_ways()[ $how['via'] ] ) ? $how['via'] : '',
 			'proof'   => isset( $how['proof'] ) ? sanitize_textarea_field( $how['proof'] ) : '',
 			'file_id' => isset( $how['file_id'] ) ? sanitize_text_field( $how['file_id'] ) : '',
@@ -280,6 +284,49 @@ class RAPM_Approvals {
 		update_post_meta( $asset_id, self::key( $which, 'pending_file' ), $file_id );
 		update_post_meta( $asset_id, self::key( $which, 'pending_found_at' ), time() );
 		return true;
+	}
+
+	/**
+	 * 1.76.2: saving a promotion re-reads its link and picks the newest
+	 * picture again. With the link unchanged, that must follow the same
+	 * rules as the hourly check, or any save (fixing a typo) would put up a
+	 * picture that's waiting for approval or one someone took down.
+	 *
+	 * Returns the attachment to use, or null to keep the picture that's
+	 * live now (the fetched copy is then deleted, or held for approval).
+	 */
+	public static function keep_on_save( $asset_id, $which, $new_id, $url, $mode ) {
+		if ( ! $asset_id || ! $new_id ) {
+			return $new_id;
+		}
+		$picked = RAPM_Link_Source::last_fetch( $which );
+		if ( ! $picked || (int) $picked['attachment_id'] !== (int) $new_id || ! $picked['hash'] ) {
+			return $new_id;
+		}
+		$current_id = (int) get_post_meta( $asset_id, self::key( $which, 'id' ), true );
+		if ( ! $current_id || ! get_post( $current_id ) ) {
+			return $new_id;
+		}
+		$hash = $picked['hash'];
+		$live = (string) get_post_meta( $asset_id, self::key( $which, 'live_hash' ), true );
+		if ( $live && hash_equals( $live, $hash ) ) {
+			wp_delete_attachment( $new_id, true ); // The same picture: nothing changes.
+			return null;
+		}
+		if ( (string) get_post_meta( $asset_id, self::key( $which, 'url' ), true ) !== (string) $url ) {
+			return $new_id; // A new link the person just picked and saw in the preview.
+		}
+		if ( self::is_blocked( $asset_id, $which, $hash ) ) {
+			wp_delete_attachment( $new_id, true );
+			return null;
+		}
+		if ( 'hold' === $mode && ! self::is_approved( $asset_id, $which, $hash ) ) {
+			if ( self::hold( $asset_id, $which, $new_id, $hash, $picked['name'], $picked['file_id'] ) ) {
+				self::send_hold_notice( $asset_id, $which, $picked['name'] );
+			}
+			return null;
+		}
+		return $new_id;
 	}
 
 	public static function clear_pending( $asset_id, $which, $delete_attachment ) {

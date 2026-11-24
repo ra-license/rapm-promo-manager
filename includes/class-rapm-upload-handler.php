@@ -1921,6 +1921,19 @@ class RAPM_Upload_Handler {
 			RAPM_Link_Source::remember_folder_state( $asset_id, 'mobile' );
 		}
 
+		// 1.76.2: with the link unchanged, a save follows the same rules as
+		// the hourly check (RAPM_Approvals::keep_on_save()): a picture that's
+		// waiting for approval or was taken down doesn't go up.
+		if ( $is_edit ) {
+			$save_mode = isset( $_POST['rapm_approval_mode'] ) ? ( 'hold' === $_POST['rapm_approval_mode'] ? 'hold' : 'auto' ) : RAPM_Approvals::mode( $asset_id ); // phpcs:ignore WordPress.Security.NonceVerification -- checked at the top of handle_save().
+			if ( 'link' === $desktop_source && null !== $new_desktop_id ) {
+				$new_desktop_id = RAPM_Approvals::keep_on_save( $asset_id, 'desktop', $new_desktop_id, $desktop_url, $save_mode );
+			}
+			if ( 'link' === $mobile_source && null !== $new_mobile_id ) {
+				$new_mobile_id = RAPM_Approvals::keep_on_save( $asset_id, 'mobile', $new_mobile_id, $mobile_url, $save_mode );
+			}
+		}
+
 		if ( null !== $new_desktop_id ) {
 			update_post_meta( $asset_id, '_rapm_image_desktop_id', $new_desktop_id );
 		}
