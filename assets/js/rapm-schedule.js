@@ -107,8 +107,26 @@
 		// 1.69.0: a between-sales slide (data-rapm-between) steps aside
 		// while any other slide here is live, and comes back when the last
 		// one ends (Kenna's request, RAPM_Between).
+		// 1.76.5: a slide the website's own styles hide (for example
+		// Additional CSS with display:none for phones, as on Kemper on
+		// Nov 24) is left out of the carousel. Swiper still counted it, so
+		// the slider moved onto an invisible slide, measured 0 px tall and
+		// stopped there. Checked while the slide sits in the wrapper, since
+		// a slide taken out of the page has no styles to read; re-checked
+		// when the screen changes size (see below).
+		function hiddenBySite( slide ) {
+			var added = false;
+			if ( slide.parentNode !== wrapper ) {
+				wrapper.appendChild( slide );
+				added = true;
+			}
+			var hidden = 'none' === window.getComputedStyle( slide ).display;
+			if ( added ) { wrapper.removeChild( slide ); }
+			return hidden;
+		}
+
 		function shownSlides() {
-			var active = allSlides.filter( isActive );
+			var active = allSlides.filter( isActive ).filter( function ( s ) { return ! hiddenBySite( s ); } );
 			var others = active.filter( function ( s ) { return ! s.hasAttribute( 'data-rapm-between' ); } );
 			if ( others.length ) { active = others; }
 			active = max ? active.slice( 0, max ) : active;
@@ -228,6 +246,17 @@
 		setInterval( function () {
 			if ( sig( shownSlides() ) !== lastSig ) { build(); }
 		}, 60000 );
+
+		// 1.76.5: a phone turned sideways, or a browser window resized,
+		// can cross a breakpoint where the website's styles show or hide a
+		// slide, so check again once the resizing stops.
+		var resizeTimer = null;
+		window.addEventListener( 'resize', function () {
+			clearTimeout( resizeTimer );
+			resizeTimer = setTimeout( function () {
+				if ( sig( shownSlides() ) !== lastSig ) { build(); }
+			}, 300 );
+		} );
 	}
 
 	/**

@@ -215,6 +215,13 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.76.5
+
+- **The real cause of Kemper's empty phone slider.** Checking Kemper after it took 1.76.4, the slider still dropped to 0 px on phones about 8 seconds in and never came back (40 seconds watched), although every picture now loaded. The slide "Black Friday Desktop 1 1" (key 728506) was hidden on phones by a rule in Kemper's Additional CSS: `@media (max-width: 767px) { .rapm-slide[data-rapm-key="728506"] { display: none !important; } }`. Swiper still counted the hidden slide, so autoplay moved onto it, autoHeight measured 0 and autoplay stopped there. **1.76.4's diagnosis (WP Rocket's placeholder) was wrong:** the placeholder never loaded because the slide was hidden, not the other way round. 1.76.4's change (sized pictures, no placeholder) is kept, but it didn't fix Kemper.
+- **Kemper, Nov 24 (Phil's OK):** the rule was removed from Appearance › Customize › Additional CSS (only that rule; the rest unchanged) and published. Signed out at 375 wide the slider then rotated 609 px → 108 px (the Black Friday banner with no phone picture) → 609 px and round again.
+- **Fix:** `RAPM_Schedule.init()` leaves out any slide whose own computed `display` is `none` when the carousel is built (checked while the slide is in the wrapper), and checks again 300 ms after the window stops resizing, so a phone turned sideways or a resized window crossing a breakpoint gets the right set. A whole slider hidden by Elementor (its section hidden on computers) is unaffected: a slide's own display stays `block` inside a hidden section. So "show this banner on computers only" by CSS now works.
+- **Bench:** `node --check` clean. A copy of Kemper's slider with the rule put back, at 375 wide: the 1.76.4 script reproduced the bug (609 px, then 0 px from 8 s to 22 s); the 1.76.5 script played the two visible slides at 609 px throughout. At 1280 wide all three slides (395 px). Resizing 1280 → 375 rebuilt to the two visible slides (609 px each), and back to 1280 restored all three.
+
 ## Production: 1.76.4 (Nov 24, 2026)
 
 - **Phil's OK** ("Build the 1.76.4 fix", then the push). Phil pushed main (1a24b0b..60b3030) and v1.76.4 to ra-license/rapm-promo-manager; both confirmed on GitHub. Client sites install it on their own within about 12 hours, so the sites that hadn't taken 1.76.3 yet go straight to 1.76.4. Kemper (updated to 1.76.3 by hand today) picks it up the same way, or by hand.
