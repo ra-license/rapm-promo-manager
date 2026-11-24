@@ -215,6 +215,11 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.76.4
+
+- **On phones, a Slider shrank to nothing on a slide with no phone picture.** Found on Kemper's live home page right after 1.76.3 (not caused by it: the front-end files are unchanged since 1.75.0). Kemper's second slide, "Black Friday Desktop 1 1", has no phone picture. WP Rocket's LazyLoad swapped its picture for a placeholder with no size (`viewBox='0 0 0 0'`), the Slider sizes itself to the slide (autoHeight), so after 7 seconds the slider measured 0 px tall, the page jumped up, and the picture never loaded because there was nothing on screen to trigger it. Slides that have a phone picture loaded, and computers were fine.
+- **Fix:** every Slider picture now carries `data-no-lazy="1"` (the first already did since 1.40.1), so WP Rocket leaves them alone; the slides after the first keep the browser's own `loading="lazy"`. Each picture, and each phone `<source>`, also carries its own width and height, so a slide has its shape before its picture arrives (`RAPM_Hero_Carousel::size_attrs()`).
+
 ## Production: 1.76.3 (Nov 24, 2026)
 
 - **Phil's OK** ("Yes, push to production"). Phil pushed main (b8d4955..63141d4) and v1.76.3 to ra-license/rapm-promo-manager; both confirmed on GitHub afterwards. This release carries 1.76.0 to 1.76.3 (Drive drops with a record, receipts, Undo, "It waits for approval here first", plain names in emails).

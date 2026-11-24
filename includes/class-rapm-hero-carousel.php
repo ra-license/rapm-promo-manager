@@ -205,6 +205,18 @@ class RAPM_Hero_Carousel {
 	 * decides in the browser), but the browser removes it, so it shouldn't
 	 * take the first load.
 	 */
+	/**
+	 * 1.76.4: ' width="W" height="H"' for an attachment's full size, so the
+	 * browser knows a picture's shape before it loads. '' when unknown.
+	 */
+	private static function size_attrs( $attachment_id ) {
+		$img = $attachment_id ? wp_get_attachment_image_src( $attachment_id, 'full' ) : false;
+		if ( ! $img || empty( $img[1] ) || empty( $img[2] ) ) {
+			return '';
+		}
+		return ' width="' . (int) $img[1] . '" height="' . (int) $img[2] . '"';
+	}
+
 	private static function render_slide( $asset_id, $heading_tag = 'h2', &$eager = false ) {
 		RAPM_Track::remember( $asset_id ); // 1.59.0: its details for Google Analytics, when that's on.
 		$headline     = get_post_meta( $asset_id, '_rapm_headline', true );
@@ -244,7 +256,7 @@ class RAPM_Hero_Carousel {
 		<div class="swiper-slide rapm-slide<?php echo $mobile_src ? ' has-mobile-img' : ''; ?><?php echo $picture_only ? ' is-picture-only' : ''; ?>" data-rapm-key="<?php echo (int) $asset_id; ?>" data-rapm-start="<?php echo esc_attr( RAPM_Store_Time::attr( $starts_at ) ); ?>" data-rapm-end="<?php echo esc_attr( RAPM_Store_Time::attr( $ends_at ) ); ?>"<?php echo $between ? ' data-rapm-between' : ''; ?><?php echo $goes ? ' data-rapm-goes="' . (int) $goes . '"' : ''; // phpcs:ignore WordPress.Security.EscapeOutput -- an integer. ?><?php echo $focus_vars ? ' style="' . esc_attr( $focus_vars ) . '"' : ''; ?>>
 			<picture>
 				<?php if ( $mobile_src ) : ?>
-					<source media="(max-width: 768px)" srcset="<?php echo esc_url( $mobile_src ); ?>" />
+					<source media="(max-width: 768px)" srcset="<?php echo esc_url( $mobile_src ); ?>"<?php echo self::size_attrs( $mobile_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- integers. ?> />
 				<?php endif; ?>
 				<?php
 				// No dedicated mobile picture — the desktop one is the
@@ -266,12 +278,20 @@ class RAPM_Hero_Carousel {
 				// slides stay lazy.
 				// 1.69.0: a between-sales slide waiting for a sale to end isn't first.
 				$first      = $eager && RAPM_Quick_Links::is_live_now( $starts_at, $ends_at ) && ! ( $between && self::$sale_live );
-				$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy"';
+				// 1.76.4: the other slides also carry data-no-lazy="1" and
+				// keep the browser's own lazy loading. WP Rocket's LazyLoad
+				// swapped their picture for a placeholder with no size, so
+				// on Kemper's phones (Nov 24) a slide with no phone picture
+				// had nothing to measure: the slider (autoHeight) shrank to
+				// 0 px on that slide and the picture never loaded. The
+				// picture's own width and height (below) give every slide
+				// its shape before the picture arrives.
+				$load_attrs = $first ? 'loading="eager" fetchpriority="high" data-no-lazy="1"' : 'loading="lazy" data-no-lazy="1"';
 				if ( $first ) {
 					$eager = false;
 				}
 				?>
-				<img src="<?php echo esc_url( $desktop_src ); ?>" alt="<?php echo esc_attr( $alt ); ?>" <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> class="rapm-slide-img<?php echo esc_attr( $img_class ); ?>" />
+				<img src="<?php echo esc_url( $desktop_src ); ?>" alt="<?php echo esc_attr( $alt ); ?>"<?php echo self::size_attrs( $desktop_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- integers. ?> <?php echo $load_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute text. ?> class="rapm-slide-img<?php echo esc_attr( $img_class ); ?>" />
 			</picture>
 			<?php if ( $headline || $subhead || $cta_text ) : ?>
 				<div class="rapm-slide-copy" data-align="<?php echo esc_attr( $text_align ); ?>"<?php echo RAPM_Place::attrs( $asset_id ); // phpcs:ignore WordPress.Security.EscapeOutput -- 1.64.0; escaped in attrs(). ?> data-style="<?php echo esc_attr( $text_style ); ?>" style="color:<?php echo esc_attr( $text_color ); ?>;<?php echo esc_attr( RAPM_Elementor::font_family_css( $text_font ) ); ?>">
