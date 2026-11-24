@@ -215,6 +215,11 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.76.4 (Nov 24, 2026)
+
+- **Phil's OK** ("Build the 1.76.4 fix", then the push). Phil pushed main (1a24b0b..60b3030) and v1.76.4 to ra-license/rapm-promo-manager; both confirmed on GitHub. Client sites install it on their own within about 12 hours, so the sites that hadn't taken 1.76.3 yet go straight to 1.76.4. Kemper (updated to 1.76.3 by hand today) picks it up the same way, or by hand.
+- **Weekend watch:** the visitor check runs at 9 AM and 3 PM through Monday Dec 1 (Kemper at computer and phone width, including the slider's height while it autoplays, plus the other sites as they update).
+
 ## 1.76.4
 
 - **On phones, a Slider shrank to nothing on a slide with no phone picture.** Found on Kemper's live home page right after 1.76.3 (not caused by it: the front-end files are unchanged since 1.75.0). Kemper's second slide, "Black Friday Desktop 1 1", has no phone picture. WP Rocket's LazyLoad swapped its picture for a placeholder with no size (`viewBox='0 0 0 0'`), the Slider sizes itself to the slide (autoHeight), so after 7 seconds the slider measured 0 px tall, the page jumped up, and the picture never loaded because there was nothing on screen to trigger it. Slides that have a phone picture loaded, and computers were fine.
