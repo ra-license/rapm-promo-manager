@@ -230,6 +230,8 @@ Test folder "RAPM 1.76 test folder (staging only, safe to delete)" in Phil's Dri
 ## 1.76.3
 
 - Emails (receipts, "Waiting for approval", "Undone", and the older "A linked promotion picture stopped updating") show the site and promotion names as plain text: "[R&A Testing Website]", not "[R&amp;A Testing Website]". Bench 45 of 45.
+- **Staging:** update now on the Plugins page: "RA Promo Manager updated!", still active. A new picture dropped in the test folder was held and its "Waiting for approval" email arrived as "[R&A Testing Website] Waiting for approval: Test"; rejected afterwards. Signed out, / and /home-2/ answer 200 with Promo Manager's 1.76.3 files, no raw shortcodes, not paused.
+- **Left on staging for more testing:** the "Test" promotion box is linked to the test folder and set to "It waits for approval here first"; Settings › Receipts sends to Phil's address.
 
 ## 1.76.2
 
