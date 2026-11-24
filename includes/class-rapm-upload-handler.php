@@ -705,7 +705,7 @@ class RAPM_Upload_Handler {
 								<?php elseif ( $mobile_synced ) : ?>
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $mobile_synced ) ) ) ); ?></p>
 								<?php endif; ?>
-								<?php RAPM_Approvals::render_link_panel( $is_edit ? $asset_id : 0, 'mobile', 'link' !== $desktop_source ); // 1.76.0 ?>
+								<?php RAPM_Approvals::render_link_panel( $is_edit ? $asset_id : 0, 'mobile', false ); // 1.76.0; 1.76.1: the choice shows once, under the computer picture ?>
 							</div>
 							<?php // 1.58.2: shared by uploads and one-picture links. ?>
 							<div id="rapm-mobile-crop-picker" class="rapm-crop-picker" style="display:none;">

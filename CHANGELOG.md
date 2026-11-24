@@ -215,6 +215,10 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## 1.76.1
+
+- "When a new picture lands in this folder" showed twice on a promotion whose computer picture was an upload (once under each picture). The two pairs shared one name, so neither showed as picked. It now shows once, under the computer picture; when that picture is an upload, the saved choice is kept as it was. Found on staging on Nov 24.
+
 ## 1.76.0: Drive drops that just work, with a record, receipts and an undo
 
 **Why.** The Nov 23 research on the Slack, Hub and Promo Manager plan named the Drive folder sync as the biggest gap: the newest picture of the right shape went live every hour with no record of who approved it, and the picture it replaced was deleted. Phil, Nov 24: "a client needs to know they can drop something in the folder and it'll just work." So dropping a picture in the client's folder still puts it live on its own. What's new is around it (`includes/class-rapm-approvals.php`):
