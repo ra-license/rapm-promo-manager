@@ -215,6 +215,15 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Staging: 1.76.0 and 1.76.1 (Nov 24, 2026)
+
+- **Bench (PHP 8.5):** 38 of 38 checks on the real RAPM_Approvals and RAPM_Sync code with WordPress stand-ins: a picture live before the update is recorded with no email; a new drop goes live, keeps the old one, is recorded with its Drive file, and sends a receipt to the Settings addresses; the same file an hour later does nothing; Undo refuses a tampered link, shows a confirm page on open, puts the old picture back on confirm, emails, refuses a second use and an expired link; the hourly check doesn't put an undone picture back; "waits for approval" holds a new picture (one notice, a newer file replaces it); approving on the client's behalf needs proof, records who and how, and sends a receipt; Restore previous swaps back; records keep the last 25; a broken link changes nothing.
+- **1.76.0 on staging:** pushed to the staging repo with its tag; staging installed it on its own within minutes (it answered 503 for about a minute while it did). An admin page loaded during that minute found the plugin folder mid-swap, and WordPress turned Promo Manager off ("Plugin file does not exist"): the home page printed `[rapm_hero placement="home"]` as text. Activate on the Plugins page brought it back as 1.76.0 (home loads `rapm-hero.css?ver=1.76.0`, `rapm/v1` routes back, not paused). This is WordPress's own check on admin pages, not 1.76.0's code, and can happen on any self-update while someone has the admin open.
+- **Found on staging:** "When a new picture lands in this folder" showed twice on a promotion whose computer picture is an upload, with neither choice picked. Fixed in 1.76.1.
+- **1.76.1 on staging:** Check for updates, then update now on the Plugins page: "RA Promo Manager updated!", Version 1.76.1, still active. The choice shows once, with "It goes live automatically" picked. Settings shows the new Receipts box.
+- **Visitor check (signed out):** /, /home-2/ and /shop/ answer 200, load Promo Manager's 1.76.1 files where they have spots, print no raw shortcodes and aren't paused. /home-2/ looks right at computer width; at phone width the slider's phone picture loads (1080 wide) but showed dark in the screenshot (rendering code is unchanged from 1.75.0; to look at on a phone).
+- **Not yet done on staging:** the end-to-end Drive test (drop a picture in a shared test folder, the receipt email, the Undo link signed out, waiting for approval, Approve and Reject). It needs a test Drive folder shared "Anyone with the link" and a receipt address someone can read.
+
 ## 1.76.1
 
 - "When a new picture lands in this folder" showed twice on a promotion whose computer picture was an upload (once under each picture). The two pairs shared one name, so neither showed as picked. It now shows once, under the computer picture; when that picture is an upload, the saved choice is kept as it was. Found on staging on Nov 24.
