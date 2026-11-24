@@ -215,6 +215,12 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Production: 1.76.5 (Nov 24, 2026)
+
+- **Phil's OK** ("Remove CSS + build 1.76.5", then the push). Phil pushed main (3289dc4..cca3e46) and v1.76.5 to ra-license/rapm-promo-manager; both confirmed on GitHub. Client sites install it on their own within about 12 hours; most go from 1.75.0 straight to 1.76.5.
+- **Kemper** already works on 1.76.4 since its hiding rule was removed; 1.76.5 makes the same thing safe if a slide is hidden by CSS again.
+- **Pause and roll back everywhere** (Phil: "I also need a way to pause or roll back via the website monitor in case this issue ever happens again"): handed to the Website Monitor session; its clickable mockup is waiting on Phil's decisions. Today: Roll back to X per site (Website Monitor 1.12.0); the fastest brake for every site is a higher tag with the last good code.
+
 ## 1.76.5
 
 - **The real cause of Kemper's empty phone slider.** Checking Kemper after it took 1.76.4, the slider still dropped to 0 px on phones about 8 seconds in and never came back (40 seconds watched), although every picture now loaded. The slide "Black Friday Desktop 1 1" (key 728506) was hidden on phones by a rule in Kemper's Additional CSS: `@media (max-width: 767px) { .rapm-slide[data-rapm-key="728506"] { display: none !important; } }`. Swiper still counted the hidden slide, so autoplay moved onto it, autoHeight measured 0 and autoplay stopped there. **1.76.4's diagnosis (WP Rocket's placeholder) was wrong:** the placeholder never loaded because the slide was hidden, not the other way round. 1.76.4's change (sized pictures, no placeholder) is kept, but it didn't fix Kemper.
