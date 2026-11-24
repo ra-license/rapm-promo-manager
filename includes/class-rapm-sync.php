@@ -194,14 +194,14 @@ class RAPM_Sync {
 		if ( ! $admin_email ) {
 			return;
 		}
-		$title    = get_the_title( $asset_id );
+		$title    = wp_specialchars_decode( get_the_title( $asset_id ), ENT_QUOTES );
 		$edit_url = admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . $asset_id );
 		wp_mail(
 			$admin_email,
 			sprintf(
 				/* translators: %s: site name */
 				__( '[%s] A linked promotion picture stopped updating', 'rapm' ),
-				get_bloginfo( 'name' )
+				wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES )
 			),
 			sprintf(
 				/* translators: 1: desktop/mobile, 2: asset name, 3: error message, 4: edit link */

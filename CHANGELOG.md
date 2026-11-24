@@ -215,6 +215,22 @@ Phil, Nov 10: "Push to production and I can check kemper."
 
 ---
 
+## Staging: the Drive round trip on 1.76.2 (Nov 24, 2026)
+
+Test folder "RAPM 1.76 test folder (staging only, safe to delete)" in Phil's Drive, shared view-only with anyone with the link; Settings › Receipts on staging set to phil@ramarketing.com; the "Test" promotion box (id 137127) linked to the folder.
+- **Save with the link:** preview picked rapm-test-1.jpg; "Live now: Added in Promo Manager, by R&A Marketing".
+- **Drop rapm-test-2.jpg, Check link now:** "Updated", "Live now: Added to the client's folder", Restore previous picture shown. Receipt arrived in Phil's inbox at 9:28 with the file, the spot ("Split Test Slider promotion box") and an Undo link whose fingerprint matched the uploaded file byte for byte.
+- **Undo signed out (in-app browser, not signed in):** a confirm page showing the previous picture; "Yes, put the previous picture back" → "Done. The previous picture is back up"; "Undone" email arrived; the same link again → 410 "This undo link has already been used." Check link now afterwards: "Checked", picture 1 still live.
+- **Found here and fixed in 1.76.2:** saving the promotion re-read the folder, which would have put the undone picture (or a held one) back up. On 1.76.2, switching to "It waits for approval here first" and saving kept picture 1 live.
+- **Drop rapm-test-3.jpg (waits for approval):** held with its preview, "Waiting for approval" email; Approve as "the client approved it by email" with no proof → "add the proof" and nothing changed; with proof → "Approved. The new picture is live, and a receipt was sent." and "Live now: Approved by R&A on the client's behalf (by email), by R&A Marketing: STAGING TEST - not a real approval".
+- **Drop rapm-test-4.jpg, Reject:** "Rejected. The current picture stays"; the next check didn't hold it again.
+- **Found here and fixed in 1.76.3:** email subjects read "[R&amp;A Testing Website]".
+- Seen, not from this release: "Last checked: 5 hours ago" right after a check (the link's check time is shown as if it were UTC; Eastern is 5 hours behind).
+
+## 1.76.3
+
+- Emails (receipts, "Waiting for approval", "Undone", and the older "A linked promotion picture stopped updating") show the site and promotion names as plain text: "[R&A Testing Website]", not "[R&amp;A Testing Website]". Bench 45 of 45.
+
 ## 1.76.2
 
 - **Saving a promotion followed none of 1.76.0's rules.** Saving re-reads the link and takes the newest picture again, so with "It waits for approval here first" any save (even fixing a typo) put up a picture that was waiting, and after an Undo, Reject or Restore previous a save put the taken-down picture back. Found on staging on Nov 24 before it happened. Now, with the link unchanged, a save follows the hourly check's rules: the same picture as live changes nothing (no new copy and no new record on every save), a picture someone took down stays down, and with "waits for approval" a new picture is held with a notice. A new link the person just picked and saw in the preview is taken as before (`RAPM_Approvals::keep_on_save()`).

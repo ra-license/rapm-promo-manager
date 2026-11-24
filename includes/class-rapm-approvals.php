@@ -363,6 +363,11 @@ class RAPM_Approvals {
 		return 'mobile' === $which ? __( 'phone picture', 'rapm' ) : __( 'computer picture', 'rapm' );
 	}
 
+	/** 1.76.3: plain text for email (WordPress hands names over HTML-encoded, e.g. "R&amp;A"). */
+	public static function plain( $text ) {
+		return wp_specialchars_decode( (string) $text, ENT_QUOTES );
+	}
+
 	public static function edit_url( $asset_id ) {
 		return admin_url( 'edit.php?post_type=rapm_asset&page=rapm-add-asset&edit=' . (int) $asset_id );
 	}
@@ -373,7 +378,7 @@ class RAPM_Approvals {
 		if ( ! $to ) {
 			return;
 		}
-		$title = get_the_title( $asset_id );
+		$title = self::plain( get_the_title( $asset_id ) );
 		$where = self::where( $asset_id );
 		$image = wp_get_attachment_url( (int) get_post_meta( $asset_id, self::key( $which, 'id' ), true ) );
 		$lines = array(
@@ -409,7 +414,7 @@ class RAPM_Approvals {
 		wp_mail(
 			$to,
 			/* translators: 1: site name, 2: promotion name */
-			sprintf( __( '[%1$s] New picture live: %2$s', 'rapm' ), get_bloginfo( 'name' ), $title ),
+			sprintf( __( '[%1$s] New picture live: %2$s', 'rapm' ), self::plain( get_bloginfo( 'name' ) ), $title ),
 			implode( "\n", $lines )
 		);
 	}
@@ -420,11 +425,11 @@ class RAPM_Approvals {
 		if ( ! $to ) {
 			return;
 		}
-		$title = get_the_title( $asset_id );
+		$title = self::plain( get_the_title( $asset_id ) );
 		wp_mail(
 			$to,
 			/* translators: 1: site name, 2: promotion name */
-			sprintf( __( '[%1$s] Waiting for approval: %2$s', 'rapm' ), get_bloginfo( 'name' ), $title ),
+			sprintf( __( '[%1$s] Waiting for approval: %2$s', 'rapm' ), self::plain( get_bloginfo( 'name' ) ), $title ),
 			implode(
 				"\n",
 				array(
@@ -505,7 +510,7 @@ class RAPM_Approvals {
 			wp_die( esc_html( $checked->get_error_message() ), esc_html( $heading ), array( 'response' => 410 ) );
 		}
 		list( $asset_id, $which, $hash ) = $checked;
-		$title = get_the_title( $asset_id );
+		$title = self::plain( get_the_title( $asset_id ) );
 
 		if ( 'POST' !== $_SERVER['REQUEST_METHOD'] ) {
 			$fields = '';
@@ -544,7 +549,7 @@ class RAPM_Approvals {
 			wp_mail(
 				$to,
 				/* translators: 1: site name, 2: promotion name */
-				sprintf( __( '[%1$s] Undone: %2$s', 'rapm' ), get_bloginfo( 'name' ), $title ),
+				sprintf( __( '[%1$s] Undone: %2$s', 'rapm' ), self::plain( get_bloginfo( 'name' ) ), $title ),
 				/* translators: 1: computer/phone picture, 2: promotion name, 3: link */
 				sprintf( __( "Someone used the undo link: the previous %1\$s for \"%2\$s\" is back up. The picture that was taken down won't be put back by the hourly check.\n\nR&A: %3\$s", 'rapm' ), self::which_words( $which ), $title, self::edit_url( $asset_id ) )
 			);
