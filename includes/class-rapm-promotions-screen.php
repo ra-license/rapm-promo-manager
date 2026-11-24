@@ -1653,6 +1653,9 @@ class RAPM_Promotions_Screen {
 				<?php if ( $link_issue ) : ?>
 					<p class="rapm-card-issue"><?php esc_html_e( 'The picture link stopped working. The last picture that worked is still showing.', 'rapm' ); ?></p>
 				<?php endif; ?>
+				<?php if ( class_exists( 'RAPM_Approvals' ) && RAPM_Approvals::has_pending( $id ) ) : // 1.76.0 ?>
+					<p class="rapm-card-issue"><?php esc_html_e( 'A new picture is waiting for approval. Click Edit to approve or reject it.', 'rapm' ); ?></p>
+				<?php endif; ?>
 				<?php if ( $links && 'room' === $links['type'] && ! $ended ) : ?>
 					<?php if ( $goes && $links['groups'][ $goes ]['ended'] ) : ?>
 						<p class="rapm-card-issue rapm-goes-ended"><?php esc_html_e( 'Not playing: the promotion it goes with has ended. Pick another one below.', 'rapm' ); ?></p>

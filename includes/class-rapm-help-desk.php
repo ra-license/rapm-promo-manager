@@ -142,6 +142,9 @@ class RAPM_Help_Desk {
 				'spots'   => self::spots(),
 				'pages'   => self::pages(),
 				'caching' => self::caching(),
+				// 1.76.0: linked promotions, pictures waiting for approval,
+				// and pictures that went live from a link in the last day.
+				'links'   => class_exists( 'RAPM_Approvals' ) ? RAPM_Approvals::summary() : array(),
 			);
 		}
 		return $payload;

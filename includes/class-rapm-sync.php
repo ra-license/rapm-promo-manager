@@ -103,7 +103,7 @@ class RAPM_Sync {
 
 		// 1.58.2: a one-picture link of a different shape is trimmed the way the person picked.
 		$anchor = (string) get_post_meta( $asset_id, '_rapm_image_' . $which . '_crop_anchor', true );
-		$result = RAPM_Link_Source::fetch_and_validate( $url, $slot, $asset_id, $which, $anchor );
+		$result = RAPM_Link_Source::fetch_validate_fingerprinted( $url, $slot, $asset_id, $which, $anchor );
 
 		// 1.72.0: a coupon whose row changed card shape keeps its linked
 		// picture if it's another coupon shape: the page trims it around
@@ -112,7 +112,7 @@ class RAPM_Sync {
 		if ( 'coupon' === $kind_key && '' === $anchor && is_wp_error( $result ) && 'rapm_wrong_dimensions' === $result->get_error_code() ) {
 			foreach ( RAPM_Spots::COUPON_SHAPES as $shape ) {
 				if ( $shape['slot'] !== $kind[ $which ] && isset( $slots[ $shape['slot'] ] ) ) {
-					$retry = RAPM_Link_Source::fetch_and_validate( $url, $slots[ $shape['slot'] ], $asset_id, $which, '' );
+					$retry = RAPM_Link_Source::fetch_validate_fingerprinted( $url, $slots[ $shape['slot'] ], $asset_id, $which, '' );
 					if ( ! is_wp_error( $retry ) ) {
 						$result = $retry;
 						break;
@@ -141,20 +141,39 @@ class RAPM_Sync {
 			return;
 		}
 
-		$new_id    = $result;
+		$new_id    = $result['attachment_id'];
+		$hash      = $result['hash'];
 		$unchanged = $old_id && self::files_match( $old_id, $new_id );
 
 		if ( $unchanged ) {
 			wp_delete_attachment( $new_id, true );
-		} else {
-			update_post_meta( $asset_id, '_rapm_image_' . $which . '_id', $new_id );
-			if ( $old_id ) {
-				wp_delete_attachment( $old_id, true );
+			// 1.76.0: a picture that was live before approval records began
+			// counts as approved, so nothing changes for it.
+			if ( $hash && ! RAPM_Approvals::live_record( $asset_id, $which ) ) {
+				RAPM_Approvals::record( $asset_id, $which, $hash, array( 'method' => 'already-live', 'by' => __( 'Promo Manager', 'rapm' ), 'file_id' => $result['file_id'], 'name' => $result['name'] ) );
+				update_post_meta( $asset_id, '_rapm_image_' . $which . '_live_hash', $hash );
 			}
-			// A normal save, so cached pages stop pointing at the deleted
-			// old picture: it clears the cache for the pages this promotion
-			// shows on (RAPM_Cache, 1.28.0).
-			wp_update_post( array( 'ID' => $asset_id ) );
+		} elseif ( RAPM_Approvals::is_blocked( $asset_id, $which, $hash ) ) {
+			// Someone took this picture down (Undo, Restore previous or
+			// Reject): it stays down until a different file arrives.
+			wp_delete_attachment( $new_id, true );
+		} elseif ( 'hold' === RAPM_Approvals::mode( $asset_id ) && ! RAPM_Approvals::is_approved( $asset_id, $which, $hash ) ) {
+			// 1.76.0 "Wait for approval": held, the live picture stays.
+			if ( RAPM_Approvals::hold( $asset_id, $which, $new_id, $hash, $result['name'], $result['file_id'] ) ) {
+				RAPM_Approvals::send_hold_notice( $asset_id, $which, $result['name'] );
+			}
+		} else {
+			// Goes live: dropped in the client's own folder (the default),
+			// or approved earlier. Recorded, the old picture kept for Undo,
+			// and a receipt sent. Saving the promotion clears the cache for
+			// the pages it shows on (RAPM_Cache, 1.28.0).
+			RAPM_Changes::set_route( 'drive-sync', __( 'Hourly link check', 'rapm' ) );
+			if ( ! RAPM_Approvals::is_approved( $asset_id, $which, $hash ) ) {
+				RAPM_Approvals::record( $asset_id, $which, $hash, array( 'method' => 'drop-folder', 'by' => __( 'Client\'s folder', 'rapm' ), 'file_id' => $result['file_id'], 'name' => $result['name'] ) );
+			}
+			RAPM_Approvals::clear_pending( $asset_id, $which, true );
+			RAPM_Approvals::swap_in( $asset_id, $which, $new_id, $hash );
+			RAPM_Approvals::send_receipt( $asset_id, $which, $hash, $result['name'] );
 		}
 
 		update_post_meta( $asset_id, '_rapm_image_' . $which . '_synced_at', current_time( 'mysql' ) );

@@ -115,6 +115,28 @@ class RAPM_Link_Source {
 	 * of the right shape.
 	 */
 	public static function fetch_and_validate( $url, $slot, $parent_id, $which = 'desktop', $crop_anchor = '' ) {
+		$picked = self::fetch_validate_fingerprinted( $url, $slot, $parent_id, $which, $crop_anchor );
+		return is_wp_error( $picked ) ? $picked : $picked['attachment_id'];
+	}
+
+	/**
+	 * 1.76.0: what the last fetch_validate_fingerprinted() call for $which
+	 * picked (hash, name, file_id), so the Add/Edit screen's save can record
+	 * the picture the person saw as approved by them.
+	 */
+	private static $last = array();
+
+	public static function last_fetch( $which ) {
+		return isset( self::$last[ $which ] ) ? self::$last[ $which ] : null;
+	}
+
+	/**
+	 * Same as fetch_and_validate(), but returns array( attachment_id, hash,
+	 * name, file_id ): hash is the SHA-256 of the file as downloaded, before
+	 * any conversion (RAPM_Approvals), and file_id is the Drive file it came
+	 * from ('' for other links).
+	 */
+	public static function fetch_validate_fingerprinted( $url, $slot, $parent_id, $which = 'desktop', $crop_anchor = '' ) {
 		$url = esc_url_raw( $url );
 		if ( ! $url ) {
 			return new WP_Error( 'rapm_bad_url', __( 'That doesn\'t look like a valid web address.', 'rapm' ) );
@@ -132,8 +154,18 @@ class RAPM_Link_Source {
 		if ( file_exists( $tmp_path ) ) {
 			wp_delete_file( $tmp_path );
 		}
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
-		return $result;
+		$info = array(
+			'attachment_id' => (int) $result,
+			'hash'          => $picked['hash'],
+			'name'          => (string) $filename_hint,
+			'file_id'       => $picked['file_id'],
+		);
+		self::$last[ $which ] = $info;
+		return $info;
 	}
 
 	/**
@@ -178,9 +210,15 @@ class RAPM_Link_Source {
 			);
 		}
 
+		$file_id = '';
+		if ( $is_drive && preg_match( '#(?:/file/d/|[?&]id=)([a-zA-Z0-9_-]+)#', $url, $m ) ) {
+			$file_id = $m[1];
+		}
 		return array(
 			'tmp_path' => $tmp_path,
 			'name'     => basename( (string) wp_parse_url( $url, PHP_URL_PATH ) ),
+			'hash'     => class_exists( 'RAPM_Approvals' ) ? RAPM_Approvals::fingerprint( $tmp_path ) : '',
+			'file_id'  => $file_id,
 		);
 	}
 
@@ -239,6 +277,8 @@ class RAPM_Link_Source {
 				return array(
 					'tmp_path' => $tmp_path,
 					'name'     => $entry['name'],
+					'hash'     => class_exists( 'RAPM_Approvals' ) ? RAPM_Approvals::fingerprint( $tmp_path ) : '',
+					'file_id'  => $entry['id'],
 				);
 			}
 			wp_delete_file( $tmp_path );

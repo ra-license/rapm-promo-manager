@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RA Promo Manager
  * Description: Validated, scheduled promotional assets (hero banners and more) for client sites — enforces correct image dimensions/format/size on upload, schedules reliably even behind full-page caching, and links out to WordPress content, Elementor pages, or WooCommerce products/categories. Shortcode: [rapm_hero placement="default"].
- * Version: 1.75.0
+ * Version: 1.76.0
  * Requires PHP: 7.4
  * Author: RA Marketing
  * Text Domain: rapm
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RAPM_VERSION', '1.75.0' );
+define( 'RAPM_VERSION', '1.76.0' );
 define( 'RAPM_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RAPM_URL', plugin_dir_url( __FILE__ ) );
 
@@ -47,6 +47,7 @@ $rapm_loaded = RAPM_Safety::load(
 		'includes/class-rapm-training-guide.php',
 		'includes/class-rapm-link-source.php',
 		'includes/class-rapm-sync.php',
+		'includes/class-rapm-approvals.php', // 1.76.0
 		'includes/class-rapm-hero-carousel.php',
 		'includes/class-rapm-split.php',
 		'includes/class-rapm-fonts.php',
@@ -92,6 +93,9 @@ RAPM_Changes::init();
 
 // 1.65.0: "R&A Help Desk" in Settings, the site's own key for the Plugin Monitor.
 RAPM_Help_Desk::init();
+
+// 1.76.0: Drive drops that just work, with a record, receipts and an undo.
+RAPM_Approvals::init();
 
 // 1.70.0: coupons that follow what the shopper looked at (off until R&A turns it on).
 RAPM_Interests::init();

@@ -84,6 +84,7 @@ class RAPM_Library {
 			'link'   => 'link' === $src,
 			'synced' => $synced ? sprintf( /* translators: %s: e.g. "2 hours" */ __( '%s ago', 'rapm' ), human_time_diff( $synced ) ) : '',
 			'error'  => (string) get_post_meta( $asset_id, '_rapm_image_' . $which . '_sync_error', true ),
+			'held'   => class_exists( 'RAPM_Approvals' ) && RAPM_Approvals::pending( $asset_id, $which ) ? 1 : 0, // 1.76.0
 		);
 	}
 

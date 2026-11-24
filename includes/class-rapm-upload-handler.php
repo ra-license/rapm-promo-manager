@@ -387,6 +387,8 @@ class RAPM_Upload_Handler {
 				</p></div>
 			<?php endif; ?>
 
+			<?php RAPM_Approvals::render_notice(); // 1.76.0 ?>
+
 			<?php if ( isset( $_GET['rapm_saved'] ) ) : ?>
 				<div class="notice notice-success is-dismissible"><p><strong><?php esc_html_e( 'Saved.', 'rapm' ); ?></strong> <?php esc_html_e( 'If its start date has arrived, it\'s already on every page this spot is on.', 'rapm' ); ?></p></div>
 			<?php endif; ?>
@@ -636,6 +638,7 @@ class RAPM_Upload_Handler {
 								<?php elseif ( $desktop_synced ) : ?>
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $desktop_synced ) ) ) ); ?></p>
 								<?php endif; ?>
+								<?php RAPM_Approvals::render_link_panel( $is_edit ? $asset_id : 0, 'desktop', true ); // 1.76.0 ?>
 							</div>
 							<?php // 1.58.2: shared by uploads and one-picture links. ?>
 							<?php if ( ! $is_look ) : ?>
@@ -702,6 +705,7 @@ class RAPM_Upload_Handler {
 								<?php elseif ( $mobile_synced ) : ?>
 									<p class="description"><?php echo esc_html( sprintf( __( 'Last checked: %s ago', 'rapm' ), human_time_diff( strtotime( $mobile_synced ) ) ) ); ?></p>
 								<?php endif; ?>
+								<?php RAPM_Approvals::render_link_panel( $is_edit ? $asset_id : 0, 'mobile', 'link' !== $desktop_source ); // 1.76.0 ?>
 							</div>
 							<?php // 1.58.2: shared by uploads and one-picture links. ?>
 							<div id="rapm-mobile-crop-picker" class="rapm-crop-picker" style="display:none;">
@@ -1697,6 +1701,7 @@ class RAPM_Upload_Handler {
 				</div><!-- .rapm-ed-layout -->
 
 			</form>
+			<?php RAPM_Approvals::render_forms( $is_edit ? $asset_id : 0 ); // 1.76.0: Approve, Reject, Restore previous ?>
 		</div>
 		<?php
 	}
@@ -1953,6 +1958,21 @@ class RAPM_Upload_Handler {
 			delete_post_meta( $asset_id, '_rapm_image_mobile_crop_anchor' );
 			delete_post_meta( $asset_id, '_rapm_image_mobile_synced_at' );
 			delete_post_meta( $asset_id, '_rapm_image_mobile_sync_error' );
+		}
+
+		// 1.76.0: the picture a person saw and saved from a link counts as
+		// approved by them (RAPM_Approvals), and the promotion's choice of
+		// what happens when a new picture lands in its folder.
+		foreach ( array( 'desktop' => $new_desktop_id, 'mobile' => $new_mobile_id ) as $which => $saved_id ) {
+			$picked = RAPM_Link_Source::last_fetch( $which );
+			if ( $saved_id && $picked && (int) $picked['attachment_id'] === (int) $saved_id && $picked['hash'] ) {
+				RAPM_Approvals::record( $asset_id, $which, $picked['hash'], array( 'method' => 'added-in-promo-manager', 'file_id' => $picked['file_id'], 'name' => $picked['name'] ) );
+				update_post_meta( $asset_id, '_rapm_image_' . $which . '_live_hash', $picked['hash'] );
+				RAPM_Approvals::clear_pending( $asset_id, $which, true );
+			}
+		}
+		if ( isset( $_POST['rapm_approval_mode'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- checked at the top of handle_save().
+			update_post_meta( $asset_id, RAPM_Approvals::MODE_META, 'hold' === $_POST['rapm_approval_mode'] ? 'hold' : 'auto' ); // phpcs:ignore WordPress.Security.NonceVerification
 		}
 
 		update_post_meta( $asset_id, '_rapm_kind', $kind_key );

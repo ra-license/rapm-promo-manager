@@ -82,6 +82,11 @@ class RAPM_Ready {
 				/* translators: 1: Computer picture / Phone picture */
 				$add( 'fail', sprintf( __( '%s: its Google Drive or Dropbox link failed. The last good copy is still showing.', 'rapm' ), $label ) );
 			}
+			if ( ! empty( $pic['held'] ) ) {
+				// 1.76.0: "Wait for approval" (RAPM_Approvals).
+				/* translators: 1: Computer picture / Phone picture */
+				$add( 'warn', sprintf( __( '%s: a new picture is waiting for approval. Open the promotion to approve or reject it; the current one is still showing.', 'rapm' ), $label ) );
+			}
 			$slot = RAPM_Slots::get( $info[ $which ] );
 			if ( $slot && $pic['w'] ) {
 				if ( RAPM_Slots::dimensions_match( $slot, $pic['w'], $pic['h'] ) ) {

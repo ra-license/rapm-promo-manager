@@ -52,6 +52,9 @@ class RAPM_Admin_List {
 				if ( get_post_meta( $post_id, '_rapm_image_desktop_sync_error', true ) || get_post_meta( $post_id, '_rapm_image_mobile_sync_error', true ) ) {
 					echo ' <span style="color:#b32d2e;" title="' . esc_attr__( 'A linked picture stopped updating — the last one that worked is still showing. Edit this asset for details.', 'rapm' ) . '">&#9888; ' . esc_html__( 'Link issue', 'rapm' ) . '</span>';
 				}
+				if ( class_exists( 'RAPM_Approvals' ) && RAPM_Approvals::has_pending( $post_id ) ) { // 1.76.0
+					echo ' <span style="color:#996800;" title="' . esc_attr__( 'A new picture arrived in this promotion\'s folder and is waiting for approval. Edit this asset to approve or reject it.', 'rapm' ) . '">&#9203; ' . esc_html__( 'Waiting for approval', 'rapm' ) . '</span>';
+				}
 				break;
 
 			case 'rapm_edit':

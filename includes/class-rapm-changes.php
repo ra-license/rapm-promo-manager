@@ -39,7 +39,8 @@ class RAPM_Changes {
 	);
 
 	/** Meta key endings written by the hourly link check and the forms' own bookkeeping. */
-	const SKIP_ENDINGS = array( '_synced_at', '_sync_error', '_waiting', '_folder_seen' );
+	// 1.76.0: approval bookkeeping (RAPM_Approvals) is written as its own entries instead.
+	const SKIP_ENDINGS = array( '_synced_at', '_sync_error', '_waiting', '_folder_seen', '_approvals', '_live_hash', '_previous_id', '_previous_hash', '_pending_id', '_pending_hash', '_pending_name', '_pending_file', '_pending_found_at', '_undo_used', '_blocked' );
 	const SKIP_KEYS    = array( '_rapm_link_check', '_rapm_from_gallery' );
 
 	/** Things changed in this request: key => type, id, name, created, deleted, fields. */
@@ -74,6 +75,19 @@ class RAPM_Changes {
 	public static function set_route( $route, $actor = '' ) {
 		self::$route = sanitize_key( $route );
 		self::$actor = sanitize_text_field( $actor );
+	}
+
+	/**
+	 * 1.76.0: writes one entry straight away for something that isn't a
+	 * field change, e.g. a picture approved or rejected (RAPM_Approvals).
+	 * $details is a list of array( field, from, to ).
+	 */
+	public static function event( $asset_id, $action, array $details ) {
+		$post = get_post( $asset_id );
+		if ( ! $post || 'rapm_asset' !== $post->post_type ) {
+			return;
+		}
+		self::write( 'promotion', (int) $asset_id, '', $post->post_title, sanitize_key( $action ), $details );
 	}
 
 	public static function table() {

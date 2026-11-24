@@ -53,6 +53,9 @@ class RAPM_Admin_Settings {
 			// 1.70.0: coupons that follow what the shopper looked at
 			// (RAPM_Interests). Off until R&A turns it on for a site.
 			'interests_enabled'       => 0,
+			// 1.76.0: who gets "New picture live" receipts with the Undo
+			// link (RAPM_Approvals). Empty = the site admin email.
+			'receipt_emails'          => '',
 		) + RAPM_Made_Cards::defaults(); // 1.71.0: cards made for shoppers.
 	}
 
@@ -127,6 +130,11 @@ class RAPM_Admin_Settings {
 		$out['ga_item_id'] = isset( $input['ga_item_id'] ) && 'id' === $input['ga_item_id'] ? 'id' : 'sku';
 
 		$out['interests_enabled'] = isset( $input['interests_enabled'] ) ? 1 : 0;
+
+		// 1.76.0: receipt addresses, one per line or comma-separated; only real addresses are kept.
+		$emails = isset( $input['receipt_emails'] ) ? preg_split( '/[\s,;]+/', (string) $input['receipt_emails'] ) : array();
+		$emails = array_filter( array_map( 'sanitize_email', $emails ), 'is_email' );
+		$out['receipt_emails'] = implode( "\n", array_values( array_unique( $emails ) ) );
 		RAPM_Made_Cards::sanitize_into( $input, $out ); // 1.71.0
 
 		$overrides = array();
@@ -356,6 +364,18 @@ class RAPM_Admin_Settings {
 						<?php RAPM_Made_Cards::render_settings( $opts ); // 1.71.0 ?>
 					</table>
 				<?php endif; ?>
+
+				<?php // 1.76.0: receipts for pictures that go live from a link (RAPM_Approvals). ?>
+				<h2 id="rapm-receipts"><?php esc_html_e( 'Receipts', 'rapm' ); ?></h2>
+				<table class="form-table">
+					<tr>
+						<th><label for="rapm-receipt-emails"><?php esc_html_e( 'Send receipts to', 'rapm' ); ?></label></th>
+						<td>
+							<textarea id="rapm-receipt-emails" name="<?php echo esc_attr( self::OPTION ); ?>[receipt_emails]" rows="3" class="large-text code"><?php echo esc_textarea( (string) $opts['receipt_emails'] ); ?></textarea>
+							<p class="description"><?php esc_html_e( 'One email address per line: the client\'s contact and R&A. Each time a new picture from a Google Drive link goes live, these addresses get a receipt with an Undo link (no sign-in needed, works once, for 7 days). They also hear when a picture is waiting for approval. Empty: the site\'s admin email.', 'rapm' ); ?></p>
+						</td>
+					</tr>
+				</table>
 
 				<?php // 1.59.0: promotion views and clicks in Google Analytics (RAPM_Track). ?>
 				<h2 id="rapm-ga"><?php esc_html_e( 'Google Analytics', 'rapm' ); ?></h2>
